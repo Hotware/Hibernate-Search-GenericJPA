@@ -16,7 +16,6 @@ import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 
 import org.apache.lucene.search.Query;
-import org.junit.Before;
 import org.junit.Test;
 
 import com.github.hotware.lucene.extension.hseach.entity.jpa.EntityManagerEntityProvider;
@@ -39,18 +38,17 @@ public class IntegrationTest {
 	private Place valinor;
 	private EntityManagerFactory emf;
 
-	@Before
-	public void setup() {
-		this.emf = Persistence.createEntityManagerFactory("EclipseLink");
+	public void setup(String persistence) {
+		this.emf = Persistence.createEntityManagerFactory(persistence);
 		EntityManager em = emf.createEntityManager();
 		try {
 			EntityTransaction tx = em.getTransaction();
 			tx.begin();
-			
+
 			@SuppressWarnings("unchecked")
-			List<Place> toDelete = new ArrayList<>(em.createQuery("SELECT a FROM Place a")
-					.getResultList());
-			for(Place place : toDelete) {
+			List<Place> toDelete = new ArrayList<>(em.createQuery(
+					"SELECT a FROM Place a").getResultList());
+			for (Place place : toDelete) {
 				em.remove(place);
 			}
 			em.flush();
@@ -106,27 +104,35 @@ public class IntegrationTest {
 
 	}
 
-	// FIXME: for some reason, this doesn't work anymore...
-	// @Test
-	// public void testHibernate() throws IOException {
-	// EntityManagerFactory emf = Persistence
-	// .createEntityManagerFactory("Hibernate");
-	// this.setup(emf);
-	// try {
-	// this.test(emf);
-	// } finally {
-	// emf.close();
-	// }
-	// }
-
-	@Test
-	public void testEclipseLink() throws IOException {
-		System.out.println("meta model parser seems to be ok.");
-		this.test();
+	public void shutdown() {
+		if (this.emf != null) {
+			this.emf.close();
+		}
 	}
 
 	@Test
-	public void testMetaModelParser() throws IOException {
+	public void testHibernate() throws IOException {
+		this.setup("Hibernate");
+		try {
+			this.metaModelParser();
+			this.integration();
+		} finally {
+			this.shutdown();
+		}
+	}
+
+	@Test
+	public void testEclipseLink() throws IOException {
+		this.setup("EclipseLink");
+		try {
+			this.metaModelParser();
+			this.integration();
+		} finally {
+			this.shutdown();
+		}
+	}
+
+	public void metaModelParser() throws IOException {
 		EntityProvider entityProvider = null;
 		SearchFactory searchFactory = null;
 		try {
@@ -150,7 +156,7 @@ public class IntegrationTest {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void test() throws IOException {
+	public void integration() throws IOException {
 		EntityProvider entityProvider = null;
 		SearchFactory searchFactory = null;
 		try {
@@ -269,7 +275,7 @@ public class IntegrationTest {
 							entityProvider, "sorcerers.name", "odalbert");
 					assertEquals(0, places.size());
 				}
-				
+
 				List<AdditionalPlace> additionalPlace = new ArrayList<>();
 				{
 					AdditionalPlace a = new AdditionalPlace();
@@ -290,10 +296,11 @@ public class IntegrationTest {
 				}
 				{
 					List<Place> places = this.findPlaces(searchFactory,
-							entityProvider, "additionalPlace.additionalPlace2.info", "toast");
+							entityProvider,
+							"additionalPlace.additionalPlace2.info", "toast");
 					assertEquals(1, places.size());
 				}
-				
+
 				additionalPlace.get(0).setInfo("addi2");
 				em.flush();
 				{
@@ -306,20 +313,22 @@ public class IntegrationTest {
 							entityProvider, "additionalPlace.info", "addi2");
 					assertEquals(1, places.size());
 				}
-				
+
 				additionalPlace.get(0).getAdditionalPlace2().setInfo("goal");
 				em.flush();
 				{
 					List<Place> places = this.findPlaces(searchFactory,
-							entityProvider, "additionalPlace.additionalPlace2.info", "goal");
+							entityProvider,
+							"additionalPlace.additionalPlace2.info", "goal");
 					assertEquals(1, places.size());
 				}
 				{
 					List<Place> places = this.findPlaces(searchFactory,
-							entityProvider, "additionalPlace.additionalPlace2.info", "toast");
+							entityProvider,
+							"additionalPlace.additionalPlace2.info", "toast");
 					assertEquals(0, places.size());
 				}
-				
+
 				additionalPlace.get(0).setInfo("addi");
 				additionalPlace.get(0).getAdditionalPlace2().setInfo("toast");
 				em.flush();
@@ -330,10 +339,11 @@ public class IntegrationTest {
 				}
 				{
 					List<Place> places = this.findPlaces(searchFactory,
-							entityProvider, "additionalPlace.additionalPlace2.info", "toast");
+							entityProvider,
+							"additionalPlace.additionalPlace2.info", "toast");
 					assertEquals(1, places.size());
 				}
-				
+
 				place.getAdditionalPlace().remove(additionalPlace.get(0));
 				additionalPlace.get(0).getPlace().remove(place);
 				em.flush();
@@ -344,7 +354,8 @@ public class IntegrationTest {
 				}
 				{
 					List<Place> places = this.findPlaces(searchFactory,
-							entityProvider, "additionalPlace.additionalPlace2.info", "toast");
+							entityProvider,
+							"additionalPlace.additionalPlace2.info", "toast");
 					assertEquals(0, places.size());
 				}
 			}

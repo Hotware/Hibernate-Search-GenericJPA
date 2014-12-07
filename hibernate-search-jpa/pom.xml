@@ -23,7 +23,7 @@
 	</build>
 
 	<properties>
-		<hibernate.version>4.3.0.Final</hibernate.version>
+		<hibernate.version>4.3.7.Final</hibernate.version>
 	</properties>
 
 	<dependencies>
@@ -82,13 +82,6 @@
 			<scope>test</scope>
 		</dependency>
 
-
-		<dependency>
-			<groupId>javax</groupId>
-			<artifactId>javaee-api</artifactId>
-			<version>7.0</version>
-			<scope>provided</scope>
-		</dependency>
 		<dependency>
 			<groupId>com.github.hotware</groupId>
 			<artifactId>hibernate-search-standalone</artifactId>

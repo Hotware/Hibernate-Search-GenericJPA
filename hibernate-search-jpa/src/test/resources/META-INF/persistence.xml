@@ -11,7 +11,7 @@
 		<class>com.github.hotware.lucene.extension.hsearch.jpa.test.entities.AdditionalPlace2</class>
 		<properties>
 			<property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbcDriver" />
-			<property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:mem:testdb" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:mem:hibernate" />
 			<property name="javax.persistence.jdbc.user" value="sa" />
 			<property name="javax.persistence.jdbc.password" value="" />
 			<property name="hibernate.dialect" value="org.hibernate.dialect.HSQLDialect" />
@@ -27,7 +27,7 @@
 		<class>com.github.hotware.lucene.extension.hsearch.jpa.test.entities.AdditionalPlace2</class>
 		<properties>
 			<property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbcDriver" />
-			<property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:mem:testdb" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:mem:eclipselink" />
 			<property name="javax.persistence.jdbc.user" value="sa" />
 			<property name="javax.persistence.jdbc.password" value="" />
 			<property name="eclipselink.ddl-generation" value="drop-and-create-tables" />
