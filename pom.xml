@@ -1,0 +1,91 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.github.hotware</groupId>
+	<artifactId>hibernate-search</artifactId>
+	<version>0.1.0.0</version>
+	<packaging>pom</packaging>
+	<name>hibernate-search</name>
+
+	<modules>
+		<module>hibernate-search-standalone</module>
+		<module>hibernate-search-jpa</module>
+	</modules>
+
+	<description>
+		Use the JPA Provider you want but still keep Hibernate-Search :)
+	</description>
+	<url>https://github.com/Hotware/Hibernate-Search-JPA</url>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+	</properties>
+
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+		<!-- TODO: Hibernate License -->
+		<license>
+			<name>Beerware License</name>
+			<url>https://raw.githubusercontent.com/Hotware/Lucene-Extension/master/BEERWARE.md</url>
+			<!-- TODO: what does this mean? repo? -->
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<id>s4ke</id>
+			<name>Martin Braun</name>
+			<email>martinbraun123@aol.com</email>
+			<url>https://github.com/s4ke</url>
+			<organization>Hotware</organization>
+			<organizationUrl>https://github.com/Hotware</organizationUrl>
+			<roles>
+				<role>architect</role>
+				<role>developer</role>
+			</roles>
+			<timezone>0</timezone>
+			<properties>
+				<picUrl>http://getdrunkonmovies.com/files/martin.jpg</picUrl>
+			</properties>
+		</developer>
+	</developers>
+
+	<build>
+		<plugins>
+			<plugin>
+				<!-- Deploy the web site -->
+				<groupId>com.github.github</groupId>
+				<artifactId>site-maven-plugin</artifactId>
+				<version>0.10</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>site</goal>
+						</goals>
+						<!-- select the Maven phase in which the plugin will be executed -->
+						<phase>site</phase>
+						<configuration>
+							<!-- Plugin configuration goes here -->
+							<server>github</server>
+
+							<!-- The commit message -->
+							<message>site for ${project.version}</message>
+							<!-- The location where the site is uploaded -->
+							<path>${project.version}</path>
+							<!-- Use merge or override the content -->
+							<merge>true</merge>
+							<force>true</force>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
