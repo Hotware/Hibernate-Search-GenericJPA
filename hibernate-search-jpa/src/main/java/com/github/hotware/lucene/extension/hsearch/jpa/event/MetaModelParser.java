@@ -49,6 +49,7 @@ public class MetaModelParser {
 	// only contains EntityTypes
 	private final Map<Class<?>, ManagedType<?>> managedTypes = new HashMap<>();
 	private final Map<Class<?>, Boolean> isRootType = new HashMap<>();
+	private final Set<Class<?>> totalVisitedEntities = new HashSet<>();
 
 	public Map<Class<?>, Map<Class<?>, Function<Object, Object>>> getRootParentAccessors() {
 		return rootParentAccessors;
@@ -60,6 +61,10 @@ public class MetaModelParser {
 
 	public Map<Class<?>, Boolean> getIsRootType() {
 		return isRootType;
+	}
+	
+	public Set<Class<?>> getIndexRelevantEntites() {
+		return this.totalVisitedEntities;
 	}
 
 	public void parse(Metamodel metaModel) {
@@ -74,6 +79,7 @@ public class MetaModelParser {
 					return meta2;
 				})));
 		Set<EntityType<?>> emptyVisited = Collections.emptySet();
+		this.totalVisitedEntities.clear();
 		for (EntityType<?> curEntType : metaModel.getEntities()) {
 			// we only consider Entities that are @Indexed here
 			if (curEntType.getJavaType().isAnnotationPresent(Indexed.class)) {
@@ -159,6 +165,7 @@ public class MetaModelParser {
 		Set<EntityType<?>> newVisited = new HashSet<>(visited);
 		// add the current entityType to the set
 		newVisited.add(entType);
+		this.totalVisitedEntities.add(entType.getJavaType());
 		// we don't want to visit already visited entities
 		// this should be okay to do, as cycles don't matter
 		// as long as we start from the original

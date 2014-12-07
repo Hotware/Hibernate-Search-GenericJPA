@@ -16,14 +16,17 @@ import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 
 import org.apache.lucene.search.Query;
+
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import com.github.hotware.lucene.extension.hseach.entity.jpa.EntityManagerEntityProvider;
 import com.github.hotware.lucene.extension.hsearch.entity.EntityProvider;
 import com.github.hotware.lucene.extension.hsearch.factory.SearchConfigurationImpl;
 import com.github.hotware.lucene.extension.hsearch.factory.SearchFactory;
 import com.github.hotware.lucene.extension.hsearch.factory.SearchFactoryFactory;
-import com.github.hotware.lucene.extension.hsearch.jpa.event.JPAEventProvider;
+import com.github.hotware.lucene.extension.hsearch.jpa.event.JPAEventSource;
 import com.github.hotware.lucene.extension.hsearch.jpa.event.MetaModelParser;
 import com.github.hotware.lucene.extension.hsearch.jpa.test.entities.AdditionalPlace;
 import com.github.hotware.lucene.extension.hsearch.jpa.test.entities.AdditionalPlace2;
@@ -32,6 +35,7 @@ import com.github.hotware.lucene.extension.hsearch.jpa.test.entities.Place;
 import com.github.hotware.lucene.extension.hsearch.jpa.test.entities.Sorcerer;
 import com.github.hotware.lucene.extension.hsearch.query.HSearchQuery;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class IntegrationTest {
 
 	private int valinorId = 0;
@@ -121,16 +125,17 @@ public class IntegrationTest {
 		}
 	}
 
-	@Test
-	public void testEclipseLink() throws IOException {
-		this.setup("EclipseLink");
-		try {
-			this.metaModelParser();
-			this.integration();
-		} finally {
-			this.shutdown();
-		}
-	}
+//	@Test
+//	public void testEclipseLink() throws IOException {
+//		this.setup("EclipseLink");
+//		try {
+//			this.metaModelParser();
+//			this.integration();
+//		} finally {
+//			this.shutdown();
+//		}
+//	}
+
 
 	public void metaModelParser() throws IOException {
 		EntityProvider entityProvider = null;
@@ -144,6 +149,8 @@ public class IntegrationTest {
 						.get(Sorcerer.class).get(Place.class);
 				Place place = (Place) func.apply(sorc);
 				assertEquals(this.valinor, place);
+				
+				assertEquals(4, parser.getIndexRelevantEntites().size());
 			}
 		} finally {
 			if (entityProvider != null) {
@@ -168,11 +175,11 @@ public class IntegrationTest {
 
 			MetaModelParser parser = new MetaModelParser();
 			parser.parse(em.getMetamodel());
-			JPAEventProvider eventProvider = JPAEventProvider.register(parser
-					.getManagedTypes().keySet(), true);
+			JPAEventSource eventSource = JPAEventSource.register(parser
+					.getIndexRelevantEntites(), true);
 
 			searchFactory = SearchFactoryFactory.createSearchFactory(
-					eventProvider, new SearchConfigurationImpl(), Arrays
+					eventSource, new SearchConfigurationImpl(), Arrays
 							.asList(Place.class, Sorcerer.class,
 									EmbeddableInfo.class,
 									AdditionalPlace.class,

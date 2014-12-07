@@ -17,7 +17,7 @@ import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.hibernate.search.spi.SearchFactoryBuilder;
 
-import com.github.hotware.lucene.extension.hsearch.event.NoEventEventProvider;
+import com.github.hotware.lucene.extension.hsearch.event.NoEventEventSource;
 import com.github.hotware.lucene.extension.hsearch.factory.SearchConfigurationImpl;
 import com.github.hotware.lucene.extension.hsearch.factory.SearchFactory;
 import com.github.hotware.lucene.extension.hsearch.factory.SearchFactoryFactory;
@@ -147,7 +147,7 @@ public class SearchFactoryTest extends TestCase {
 
 	public void test() throws IOException {
 		try (SearchFactory factory = SearchFactoryFactory.createSearchFactory(
-				new NoEventEventProvider(), new SearchConfigurationImpl(),
+				new NoEventEventSource(), new SearchConfigurationImpl(),
 				Arrays.asList(TopLevel.class, Embedded.class, Embedded2.class))) {
 
 			TopLevel tl = new TopLevel();

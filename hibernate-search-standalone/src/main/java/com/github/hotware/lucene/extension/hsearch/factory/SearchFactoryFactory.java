@@ -6,7 +6,7 @@ import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.hibernate.search.spi.SearchFactoryBuilder;
 
-import com.github.hotware.lucene.extension.hsearch.event.EventProvider;
+import com.github.hotware.lucene.extension.hsearch.event.EventSource;
 
 public final class SearchFactoryFactory {
 	
@@ -14,7 +14,7 @@ public final class SearchFactoryFactory {
 		throw new AssertionError("can't touch this!");
 	}
 
-	public static SearchFactory createSearchFactory(EventProvider eventProvider,
+	public static SearchFactory createSearchFactory(EventSource eventSource,
 			SearchConfiguration searchConfiguration, List<Class<?>> classes) {
 		SearchFactoryBuilder builder = new SearchFactoryBuilder();
 		builder.configuration(searchConfiguration).buildSearchFactory();
@@ -23,7 +23,7 @@ public final class SearchFactoryFactory {
 		});
 		SearchFactoryImplementor impl = builder.buildSearchFactory();
 		SearchFactory factory = new SearchFactoryImpl(impl);
-		eventProvider.setEventConsumer(factory);
+		eventSource.setEventConsumer(factory);
 		return factory;
 	}
 
