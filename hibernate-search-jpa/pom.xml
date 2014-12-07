@@ -22,6 +22,14 @@
 		</plugins>
 	</build>
 
+	<repositories>
+		<repository>
+			<id>objectdb</id>
+			<name>ObjectDB Repository</name>
+			<url>http://m2.objectdb.com</url>
+		</repository>
+	</repositories>
+
 	<properties>
 		<hibernate.version>4.3.7.Final</hibernate.version>
 	</properties>
@@ -81,7 +89,7 @@
 			<version>2.5.0</version>
 			<scope>test</scope>
 		</dependency>
-
+		
 		<dependency>
 			<groupId>com.github.hotware</groupId>
 			<artifactId>hibernate-search-standalone</artifactId>

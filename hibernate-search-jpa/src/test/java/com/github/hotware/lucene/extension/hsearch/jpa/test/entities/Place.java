@@ -68,7 +68,7 @@ public class Place {
 
 	@Override
 	public String toString() {
-		return "Place [id=" + id + ", name=" + name + ", sorcerers="
+		return "Place [id=" + this.getId() + ", name=" + this.getName() + ", sorcerers="
 				+ sorcerers + "]";
 	}
 

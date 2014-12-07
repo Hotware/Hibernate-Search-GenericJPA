@@ -45,7 +45,7 @@ public class Sorcerer {
 
 	@Override
 	public String toString() {
-		return "Sorcerer [id=" + id + ", name=" + name + "]";
+		return "Sorcerer [id=" + this.getId() + ", name=" + this.getName() + "]";
 	}
 
 	@ContainedIn
