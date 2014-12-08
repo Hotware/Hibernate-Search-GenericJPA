@@ -33,9 +33,16 @@ public interface HSearchQuery<T> {
 	public FullTextFilter enableFullTextFilter(String name);
 
 	public void disableFullTextFilter(String name);
-
-	//NEW METHODS:
 	
-	public <R> List<R> query(EntityProvider entityProvider, Class<R> returnedType);
+	public <R> List<R> query(EntityProvider entityProvider, Class<R> returnedType, Fetch fetchType);
+	
+	public default <R> List<R> query(EntityProvider entityProvider, Class<R> returnedType) {
+		return this.query(entityProvider, returnedType, Fetch.FIND_BY_ID);
+	}
+	
+	public static enum Fetch {
+		BATCH,
+		FIND_BY_ID
+	}
 
 }

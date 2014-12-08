@@ -35,11 +35,10 @@ import org.hibernate.search.annotations.IndexedEmbedded;
  * specific class. This could be used to propagate events up <br>
  * <br>
  * This could be used to propagate events up to the top entity, but
- * Hibernate-Search takes care of this via the @ContainedIn events, which
- * would is neat :). Either way, we still need this class to check whether the
- * classes are annotated properly (every entity has to know its parent via
- * 
- * @ContainedIn)
+ * Hibernate-Search takes care of this via the @ContainedIn events, which would
+ * is neat :). Either way, we still need this class to check whether the classes
+ * are annotated properly (every entity has to know its parent via
+ * {@link org.hibernate.search.annotations.ContainedIn}
  * 
  * @author Martin Braun
  */
@@ -50,25 +49,35 @@ public class MetaModelParser {
 	private final Map<Class<?>, ManagedType<?>> managedTypes = new HashMap<>();
 	private final Map<Class<?>, Boolean> isRootType = new HashMap<>();
 	private final Set<Class<?>> totalVisitedEntities = new HashSet<>();
+	private final Map<Class<?>, String> idProperties = new HashMap<>();
 
-	public Map<Class<?>, Map<Class<?>, Function<Object, Object>>> getRootParentAccessors() {
-		return rootParentAccessors;
+	public Map<Class<?>, Function<Object, Object>> getRootParentAccessorsForClass(
+			Class<?> clazz) {
+		return Collections.unmodifiableMap(this.rootParentAccessors.get(clazz));
 	}
 
 	public Map<Class<?>, ManagedType<?>> getManagedTypes() {
-		return managedTypes;
+		return Collections.unmodifiableMap(this.managedTypes);
 	}
 
 	public Map<Class<?>, Boolean> getIsRootType() {
-		return isRootType;
+		return Collections.unmodifiableMap(this.isRootType);
 	}
-	
+
 	public Set<Class<?>> getIndexRelevantEntites() {
-		return this.totalVisitedEntities;
+		return Collections.unmodifiableSet(this.totalVisitedEntities);
+	}
+
+	public Map<Class<?>, String> getIdProperties() {
+		return Collections.unmodifiableMap(this.idProperties);
 	}
 
 	public void parse(Metamodel metaModel) {
+		// clear the (old) state
+		this.isRootType.clear();
 		this.rootParentAccessors.clear();
+		this.managedTypes.clear();
+		this.idProperties.clear();
 		this.managedTypes.clear();
 		this.managedTypes.putAll(metaModel.getManagedTypes().stream()
 				.filter((meta3) -> {
@@ -83,6 +92,8 @@ public class MetaModelParser {
 		for (EntityType<?> curEntType : metaModel.getEntities()) {
 			// we only consider Entities that are @Indexed here
 			if (curEntType.getJavaType().isAnnotationPresent(Indexed.class)) {
+				this.idProperties.put(curEntType.getJavaType(),
+						this.getIdProperty(metaModel, curEntType));
 				this.isRootType.put(curEntType.getJavaType(), true);
 				Map<Class<? extends Annotation>, List<Attribute<?, ?>>> attributeForAnnotationType = this
 						.buildAttributeForAnnotationType(curEntType);
@@ -184,10 +195,11 @@ public class MetaModelParser {
 					if (attrType == PersistentAttributeType.ELEMENT_COLLECTION) {
 						throw new UnsupportedOperationException(
 								"Element Collections are not allowed as with plain JPA "
-										+ "as we haven't reliably proved, how to get the "
-										+ "events to update our index!");
+										+ "as we haven't reliably proved how to get the "
+										+ "events to update our index, yet!");
 					}
-					// Collections get updated in the owning entity :)
+					// Collections get updated in the owning entity (with
+					// EclipseLink) :)
 					// TODO: we should still test whether MANY_TO_MANY
 					// are fine as well, but they should
 					// if (attrType == PersistentAttributeType.MANY_TO_MANY) {
@@ -234,6 +246,22 @@ public class MetaModelParser {
 		return entityTypeClass;
 	}
 
+	@SuppressWarnings("unchecked")
+	private String getIdProperty(Metamodel metamodel, EntityType<?> entityType) {
+		String idProperty = null;
+		Set<?> singularAttributes = entityType.getSingularAttributes();
+		for (SingularAttribute<?, ?> singularAttribute : (Set<SingularAttribute<?, ?>>) singularAttributes) {
+			if (singularAttribute.isId()) {
+				idProperty = singularAttribute.getName();
+				break;
+			}
+		}
+		if (idProperty == null) {
+			throw new RuntimeException("id field not found");
+		}
+		return idProperty;
+	}
+
 	public static boolean isAnnotationPresent(Member member,
 			Class<? extends Annotation> annotationClass) {
 		boolean ret = false;
@@ -257,6 +285,8 @@ public class MetaModelParser {
 				ret = method.invoke(object);
 			} else if (member instanceof Field) {
 				Field field = (Field) member;
+				// just to make sure
+				field.setAccessible(true);
 				ret = field.get(object);
 			} else {
 				throw new AssertionError(

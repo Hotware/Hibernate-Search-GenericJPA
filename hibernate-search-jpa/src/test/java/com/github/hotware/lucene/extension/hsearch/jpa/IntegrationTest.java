@@ -16,6 +16,7 @@ import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 
 import org.apache.lucene.search.Query;
+import org.hibernate.search.query.dsl.QueryBuilder;
 
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -34,6 +35,7 @@ import com.github.hotware.lucene.extension.hsearch.jpa.test.entities.EmbeddableI
 import com.github.hotware.lucene.extension.hsearch.jpa.test.entities.Place;
 import com.github.hotware.lucene.extension.hsearch.jpa.test.entities.Sorcerer;
 import com.github.hotware.lucene.extension.hsearch.query.HSearchQuery;
+import com.github.hotware.lucene.extension.hsearch.query.HSearchQuery.Fetch;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class IntegrationTest {
@@ -144,8 +146,9 @@ public class IntegrationTest {
 			parser.parse(this.emf.getMetamodel());
 			{
 				Sorcerer sorc = this.valinor.getSorcerers().iterator().next();
-				Function<Object, Object> func = parser.getRootParentAccessors()
-						.get(Sorcerer.class).get(Place.class);
+				Function<Object, Object> func = parser
+						.getRootParentAccessorsForClass(Sorcerer.class).get(
+								Place.class);
 				Place place = (Place) func.apply(sorc);
 				assertEquals(this.valinor, place);
 
@@ -167,13 +170,13 @@ public class IntegrationTest {
 		SearchFactory searchFactory = null;
 		try {
 			EntityManager em;
+			MetaModelParser parser = new MetaModelParser();
+			parser.parse(this.emf.getMetamodel());
 			entityProvider = new EntityManagerEntityProvider(
-					em = emf.createEntityManager());
+					em = emf.createEntityManager(), parser.getIdProperties());
 			EntityTransaction tx = em.getTransaction();
 			tx.begin();
 
-			MetaModelParser parser = new MetaModelParser();
-			parser.parse(em.getMetamodel());
 			JPAEventSource eventSource = JPAEventSource.register(
 					parser.getIndexRelevantEntites(), true);
 
@@ -185,6 +188,40 @@ public class IntegrationTest {
 			{
 				searchFactory.index(em.createQuery("SELECT a FROM Place a")
 						.getResultList());
+			}
+
+			// TEST BATCH FETCHING
+			{
+				QueryBuilder qb = searchFactory.buildQueryBuilder()
+						.forEntity(Place.class).get();
+				Query query = qb
+						.bool()
+						.should(qb.keyword().onField("sorcerers.name")
+								.matching("saruman").createQuery())
+						.should(qb.keyword().onField("sorcerers.name")
+								.matching("gandalf").createQuery())
+						.createQuery();
+				HSearchQuery<Place> jpaQuery = searchFactory.createQuery(query,
+						Place.class);
+				List<Place> places = jpaQuery.query(entityProvider,
+						Place.class, Fetch.BATCH);
+				assertEquals(2, places.size());
+			}
+
+			//check whether we not just returned everything in the test before :D
+			{
+				QueryBuilder qb = searchFactory.buildQueryBuilder()
+						.forEntity(Place.class).get();
+				Query query = qb
+						.bool()
+						.should(qb.keyword().onField("sorcerers.name")
+								.matching("saruman").createQuery())
+						.createQuery();
+				HSearchQuery<Place> jpaQuery = searchFactory.createQuery(query,
+						Place.class);
+				List<Place> places = jpaQuery.query(entityProvider,
+						Place.class, Fetch.BATCH);
+				assertEquals(1, places.size());
 			}
 
 			{
@@ -377,11 +414,19 @@ public class IntegrationTest {
 
 	private List<Place> findPlaces(SearchFactory searchFactory,
 			EntityProvider entityProvider, String field, String value) {
+		return this.findPlaces(searchFactory, entityProvider, field, value,
+				Fetch.FIND_BY_ID);
+	}
+
+	private List<Place> findPlaces(SearchFactory searchFactory,
+			EntityProvider entityProvider, String field, String value,
+			Fetch fetchType) {
 		Query query = searchFactory.buildQueryBuilder().forEntity(Place.class)
 				.get().keyword().onField(field).matching(value).createQuery();
 		HSearchQuery<Place> jpaQuery = searchFactory.createQuery(query,
 				Place.class);
-		List<Place> places = jpaQuery.query(entityProvider, Place.class);
+		List<Place> places = jpaQuery.query(entityProvider, Place.class,
+				fetchType);
 		return places;
 	}
 

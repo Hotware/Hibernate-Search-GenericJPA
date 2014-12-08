@@ -20,14 +20,19 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 	private final AtomicBoolean frozen;
 	private final HibernateSearchQueryExecutor queryExec;
 
-	public HSearchQueryImpl(HSQuery hsquery, HibernateSearchQueryExecutor queryExec) {
+	public HSearchQueryImpl(HSQuery hsquery,
+			HibernateSearchQueryExecutor queryExec) {
 		this.hsquery = hsquery;
 		this.frozen = new AtomicBoolean(false);
 		this.queryExec = queryExec;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#sort(org.apache.lucene.search.Sort)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#sort(org
+	 * .apache.lucene.search.Sort)
 	 */
 	@Override
 	public HSearchQuery<T> sort(Sort sort) {
@@ -36,8 +41,12 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 		return this;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#filter(org.apache.lucene.search.Filter)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#filter
+	 * (org.apache.lucene.search.Filter)
 	 */
 	@Override
 	public HSearchQuery<T> filter(Filter filter) {
@@ -46,8 +55,12 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 		return this;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#firstResult(int)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#firstResult
+	 * (int)
 	 */
 	@Override
 	public HSearchQuery<T> firstResult(int firstResult) {
@@ -56,8 +69,12 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 		return this;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#maxResults(int)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#maxResults
+	 * (int)
 	 */
 	@Override
 	public HSearchQuery<T> maxResults(int maxResults) {
@@ -66,8 +83,12 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 		return this;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#getLuceneQuery()
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#getLuceneQuery
+	 * ()
 	 */
 	@Override
 	public Query getLuceneQuery() {
@@ -75,8 +96,12 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 		return this.hsquery.getLuceneQuery();
 	}
 
-	/* (non-Javadoc)
-	 * @see com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#queryDto(java.lang.Class)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#queryDto
+	 * (java.lang.Class)
 	 */
 	@Override
 	public <R> List<R> queryDto(Class<R> returnedType) {
@@ -84,8 +109,11 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 		return this.queryExec.executeHSQuery(this.hsquery, returnedType);
 	}
 
-	/* (non-Javadoc)
-	 * @see com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#queryProjection(java.lang.String)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#
+	 * queryProjection(java.lang.String)
 	 */
 	@Override
 	public List<Object[]> queryProjection(String... projection) {
@@ -94,20 +122,24 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 		List<Object[]> ret;
 		{
 			this.hsquery.getTimeoutManager().start();
-			
+
 			this.hsquery.projection(projection);
-			ret = this.hsquery.queryEntityInfos().stream().map((entityInfo) -> {
-				return entityInfo.getProjection();
-			}).collect(Collectors.toList());
-			
+			ret = this.hsquery.queryEntityInfos().stream()
+					.map((entityInfo) -> {
+						return entityInfo.getProjection();
+					}).collect(Collectors.toList());
+
 			this.hsquery.getTimeoutManager().stop();
 		}
 		this.hsquery.projection(projectedFieldsBefore);
 		return ret;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#queryResultSize()
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#
+	 * queryResultSize()
 	 */
 	@Override
 	public int queryResultSize() {
@@ -118,8 +150,11 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 		return resultSize;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#enableFullTextFilter(java.lang.String)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#
+	 * enableFullTextFilter(java.lang.String)
 	 */
 	@Override
 	public FullTextFilter enableFullTextFilter(String name) {
@@ -127,22 +162,34 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 		return hsquery.enableFullTextFilter(name);
 	}
 
-	/* (non-Javadoc)
-	 * @see com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#disableFullTextFilter(java.lang.String)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#
+	 * disableFullTextFilter(java.lang.String)
 	 */
 	@Override
 	public void disableFullTextFilter(String name) {
 		this.checkNotFrozen();
 		this.hsquery.disableFullTextFilter(name);
 	}
-	
+
 	@Override
 	public <R> List<R> query(EntityProvider entityProvider,
-			Class<R> returnedType) {
-		return this.queryProjection(ProjectionConstants.ID).stream()
-				.map((arr) -> {
-					return entityProvider.get(returnedType, arr[0]);
-				}).collect(Collectors.toList());
+			Class<R> returnedType, Fetch fetchType) {
+		List<R> ret;
+		List<Object[]> projected = this.queryProjection(ProjectionConstants.ID);
+		if (fetchType == Fetch.FIND_BY_ID) {
+			ret = projected.stream().map((arr) -> {
+				return entityProvider.get(returnedType, arr[0]);
+			}).collect(Collectors.toList());
+		} else {
+			ret = entityProvider.getBatch(returnedType,
+					projected.stream().map((arr) -> {
+						return arr[0];
+					}).collect(Collectors.toList()));
+		}
+		return ret;
 	}
 
 	private void checkNotFrozen() {
