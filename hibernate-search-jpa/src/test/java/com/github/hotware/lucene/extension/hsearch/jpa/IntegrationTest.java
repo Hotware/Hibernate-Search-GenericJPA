@@ -114,9 +114,20 @@ public class IntegrationTest {
 		}
 	}
 
+	// @Test
+	// public void testHibernate() throws IOException {
+	// this.setup("Hibernate");
+	// try {
+	// this.metaModelParser();
+	// this.integration();
+	// } finally {
+	// this.shutdown();
+	// }
+	// }
+
 	@Test
-	public void testHibernate() throws IOException {
-		this.setup("Hibernate");
+	public void testEclipseLink() throws IOException {
+		this.setup("EclipseLink");
 		try {
 			this.metaModelParser();
 			this.integration();
@@ -124,18 +135,6 @@ public class IntegrationTest {
 			this.shutdown();
 		}
 	}
-
-//	@Test
-//	public void testEclipseLink() throws IOException {
-//		this.setup("EclipseLink");
-//		try {
-//			this.metaModelParser();
-//			this.integration();
-//		} finally {
-//			this.shutdown();
-//		}
-//	}
-
 
 	public void metaModelParser() throws IOException {
 		EntityProvider entityProvider = null;
@@ -149,7 +148,7 @@ public class IntegrationTest {
 						.get(Sorcerer.class).get(Place.class);
 				Place place = (Place) func.apply(sorc);
 				assertEquals(this.valinor, place);
-				
+
 				assertEquals(4, parser.getIndexRelevantEntites().size());
 			}
 		} finally {
@@ -175,15 +174,12 @@ public class IntegrationTest {
 
 			MetaModelParser parser = new MetaModelParser();
 			parser.parse(em.getMetamodel());
-			JPAEventSource eventSource = JPAEventSource.register(parser
-					.getIndexRelevantEntites(), true);
+			JPAEventSource eventSource = JPAEventSource.register(
+					parser.getIndexRelevantEntites(), true);
 
 			searchFactory = SearchFactoryFactory.createSearchFactory(
-					eventSource, new SearchConfigurationImpl(), Arrays
-							.asList(Place.class, Sorcerer.class,
-									EmbeddableInfo.class,
-									AdditionalPlace.class,
-									AdditionalPlace2.class));
+					eventSource, new SearchConfigurationImpl(),
+					parser.getIndexRelevantEntites());
 
 			// at first: index all places we can find
 			{

@@ -1,6 +1,6 @@
 package com.github.hotware.lucene.extension.hsearch.factory;
 
-import java.util.List;
+import java.util.Collection;
 
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
@@ -15,7 +15,7 @@ public final class SearchFactoryFactory {
 	}
 
 	public static SearchFactory createSearchFactory(EventSource eventSource,
-			SearchConfiguration searchConfiguration, List<Class<?>> classes) {
+			SearchConfiguration searchConfiguration, Collection<Class<?>> classes) {
 		SearchFactoryBuilder builder = new SearchFactoryBuilder();
 		builder.configuration(searchConfiguration).buildSearchFactory();
 		classes.forEach((clazz) -> {
