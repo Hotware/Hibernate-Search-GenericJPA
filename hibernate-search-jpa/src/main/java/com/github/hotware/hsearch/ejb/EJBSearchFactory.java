@@ -80,9 +80,7 @@ public class EJBSearchFactory implements SearchFactory {
 						config,
 						this.parser.getIndexRelevantEntites());
 		//we don't need this anymore!
-		this.emf.close();
 		this.emf = null;
-
 	}
 
 	@PreDestroy
