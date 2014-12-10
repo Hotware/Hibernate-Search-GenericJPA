@@ -4,7 +4,7 @@
 	<groupId>com.github.hotware</groupId>
 	<artifactId>hibernate-search-standalone</artifactId>
 	<packaging>jar</packaging>
-	<version>0.1.0.0</version>
+	<version>0.1.0.1</version>
 	<name>hibernate-search-standalone</name>
 	<url>https://github.com/Hotware/Hibernate-Search-JPA/hibernate-search-standalone</url>
 

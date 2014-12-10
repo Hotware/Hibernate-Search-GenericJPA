@@ -5,10 +5,10 @@
 
 	<persistence-unit name="Hibernate" transaction-type="RESOURCE_LOCAL">
 		<provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
-		<class>com.github.hotware.lucene.extension.hsearch.jpa.test.entities.Sorcerer</class>
-		<class>com.github.hotware.lucene.extension.hsearch.jpa.test.entities.Place</class>
-		<class>com.github.hotware.lucene.extension.hsearch.jpa.test.entities.AdditionalPlace</class>
-		<class>com.github.hotware.lucene.extension.hsearch.jpa.test.entities.AdditionalPlace2</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.Sorcerer</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.Place</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace2</class>
 		<properties>
 			<property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbcDriver" />
 			<property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:mem:hibernate" />
@@ -21,10 +21,10 @@
 
 	<persistence-unit name="EclipseLink" transaction-type="RESOURCE_LOCAL">
 		<provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
-		<class>com.github.hotware.lucene.extension.hsearch.jpa.test.entities.Sorcerer</class>
-		<class>com.github.hotware.lucene.extension.hsearch.jpa.test.entities.Place</class>
-		<class>com.github.hotware.lucene.extension.hsearch.jpa.test.entities.AdditionalPlace</class>
-		<class>com.github.hotware.lucene.extension.hsearch.jpa.test.entities.AdditionalPlace2</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.Sorcerer</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.Place</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace2</class>
 		<properties>
 			<property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbcDriver" />
 			<property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:mem:eclipselink" />
