@@ -162,9 +162,14 @@ public class MetaModelParser {
 				}
 				Method method = null;
 				try {
-					//we shouldn't encounter any Booleans so we 
-					//don't have to check for is...() Methods
-					StringBuilder methodName = new StringBuilder("get");
+					//we shouldn't encounter any Booleans but we are nice
+					Class<?> type = getEntityTypeClass(declared);
+					StringBuilder methodName;
+					if(type.equals(boolean.class) || type.equals(Boolean.class)) {
+						methodName = new StringBuilder("is");
+					} else {
+						methodName = new StringBuilder("get");
+					}
 					methodName.append(String.valueOf(propertyName.charAt(0))
 							.toUpperCase());
 					if (propertyName.length() > 1) {
@@ -249,8 +254,7 @@ public class MetaModelParser {
 				})
 				.forEach(
 						(attribute) -> {
-							Class<?> entityTypeClass = this
-									.getEntityTypeClass(attribute);
+							Class<?> entityTypeClass = getEntityTypeClass(attribute);
 							this.parse((EntityType<?>) this.managedTypes
 									.get(entityTypeClass), entType
 									.getJavaType(), newVisited);
@@ -264,7 +268,7 @@ public class MetaModelParser {
 		});
 	}
 
-	private Class<?> getEntityTypeClass(Attribute<?, ?> attribute) {
+	private static Class<?> getEntityTypeClass(Attribute<?, ?> attribute) {
 		Class<?> entityTypeClass;
 		if (attribute instanceof PluralAttribute<?, ?, ?>) {
 			entityTypeClass = (((PluralAttribute<?, ?, ?>) attribute)

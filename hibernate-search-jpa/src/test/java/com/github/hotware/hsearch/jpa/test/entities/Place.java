@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
 import javax.persistence.GeneratedValue;
@@ -34,6 +35,7 @@ public class Place {
 	private Set<Sorcerer> sorcerers = new HashSet<>();
 	private List<AdditionalPlace> additionalPlace;
 	private List<EmbeddableInfo> info;
+	private boolean cool = true;
 
 	@Id
 	@DocumentId
@@ -44,6 +46,15 @@ public class Place {
 
 	public void setId(Integer id) {
 		this.id = id;
+	}
+	
+	@Column
+	public boolean isCool() {
+		return this.cool;
+	}
+	
+	public void setCool(boolean cool) {
+		this.cool = cool;
 	}
 
 	@Field(store = Store.NO, index = Index.YES)
