@@ -5,11 +5,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -45,7 +43,8 @@ import org.hibernate.search.annotations.IndexedEmbedded;
  */
 public class MetaModelParser {
 
-	private static final Logger LOGGER = Logger.getLogger(MetaModelParser.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(MetaModelParser.class
+			.getName());
 	private final Map<Class<?>, Map<Class<?>, Function<Object, Object>>> rootParentAccessors = new HashMap<>();
 	// only contains EntityTypes
 	private final Map<Class<?>, ManagedType<?>> managedTypes = new HashMap<>();
@@ -97,8 +96,7 @@ public class MetaModelParser {
 				this.idProperties.put(curEntType.getJavaType(),
 						this.getIdProperty(metaModel, curEntType));
 				this.isRootType.put(curEntType.getJavaType(), true);
-				// FIXME: implement this!
-				Map<Class<? extends Annotation>, List<Attribute<?, ?>>> attributeForAnnotationType = buildAttributeForAnnotationType(curEntType);
+				Map<Class<? extends Annotation>, Set<Attribute<?, ?>>> attributeForAnnotationType = buildAttributeForAnnotationType(curEntType);
 				// and do the recursion
 				this.doRecursion(attributeForAnnotationType, curEntType,
 						emptyVisited);
@@ -108,27 +106,26 @@ public class MetaModelParser {
 
 	public void parse(EntityType<?> curEntType, Class<?> cameFrom,
 			Set<EntityType<?>> visited) {
-		Map<Class<? extends Annotation>, List<Attribute<?, ?>>> attributeForAnnotationType = buildAttributeForAnnotationType(curEntType);
+		Map<Class<? extends Annotation>, Set<Attribute<?, ?>>> attributeForAnnotationType = buildAttributeForAnnotationType(curEntType);
 
 		Function<Object, Object> toRoot;
 		// first of all, lets build the parentAccessor for this entity
 		if (visited.size() > 0) {
 			// don't do this for the first entity
-			List<Attribute<?, ?>> cameFromAttributes = attributeForAnnotationType
-					.getOrDefault(ContainedIn.class, new ArrayList<>())
+			Set<Attribute<?, ?>> cameFromAttributes = attributeForAnnotationType
+					.getOrDefault(ContainedIn.class, new HashSet<>())
 					.stream()
 					.filter((attribute) -> {
-						Class<?> entityTypeClass = this
-								.getEntityTypeClass(attribute);
+						Class<?> entityTypeClass = getEntityTypeClass(attribute);
 						return entityTypeClass.equals(cameFrom);
-					}).collect(Collectors.toList());
+					}).collect(Collectors.toSet());
 			if (cameFromAttributes.size() != 1) {
 				throw new IllegalArgumentException(
 						"entity: "
 								+ curEntType.getJavaType()
 								+ " has not exactly 1 @ContainedIn for each Index-parent specified");
 			}
-			Attribute<?, ?> toParentAttribute = cameFromAttributes.get(0);
+			Attribute<?, ?> toParentAttribute = cameFromAttributes.iterator().next();
 			toRoot = (object) -> {
 				Object parentOfThis = member(toParentAttribute.getJavaMember(),
 						object);
@@ -142,74 +139,82 @@ public class MetaModelParser {
 		this.doRecursion(attributeForAnnotationType, curEntType, visited);
 	}
 
-	private static Map<Class<? extends Annotation>, List<Attribute<?, ?>>> buildAttributeForAnnotationType(
+	private static Map<Class<? extends Annotation>, Set<Attribute<?, ?>>> buildAttributeForAnnotationType(
 			EntityType<?> entType) {
-		Map<Class<? extends Annotation>, List<Attribute<?, ?>>> attributeForAnnotationType = new HashMap<>();
-		entType.getAttributes().forEach((declared) -> {
-			// FIXME: FIX for the issue with the fields:
-			// get the name of the attribute,
-			// then get the members for the attribute-type,
-			// then there should be one with the annotation
-			// we want to have.
-				String propertyName = declared.getName();
-				Field field;
-				try {
-					field = entType.getJavaType().getDeclaredField(propertyName);
-				} catch (NoSuchFieldException e) {
-					throw new AssertionError(
-							"expected to find a Field but didn't: "
-									+ propertyName);
-				}
-				Method method = null;
-				try {
-					//we shouldn't encounter any Booleans but we are nice
-					Class<?> type = getEntityTypeClass(declared);
-					StringBuilder methodName;
-					if(type.equals(boolean.class) || type.equals(Boolean.class)) {
-						methodName = new StringBuilder("is");
-					} else {
-						methodName = new StringBuilder("get");
-					}
-					methodName.append(String.valueOf(propertyName.charAt(0))
-							.toUpperCase());
-					if (propertyName.length() > 1) {
-						methodName.append(propertyName.substring(1));
-					}
-					method = entType.getJavaType().getMethod(
-							methodName.toString());
-				} catch (NoSuchMethodException e) {
-					LOGGER.warning("no getter for "
-							+ propertyName + " found.");
-				}
-				maybeAddToAttributeMap(declared, field, attributeForAnnotationType, IndexedEmbedded.class);
-				if(method != null) {
-					maybeAddToAttributeMap(declared, method, attributeForAnnotationType, IndexedEmbedded.class);
-				}
-				
-				maybeAddToAttributeMap(declared, field, attributeForAnnotationType, ContainedIn.class);
-				if(method != null) {
-					maybeAddToAttributeMap(declared, method, attributeForAnnotationType, ContainedIn.class);
-				}
-			});
+		Map<Class<? extends Annotation>, Set<Attribute<?, ?>>> attributeForAnnotationType = new HashMap<>();
+		entType.getAttributes()
+				.forEach(
+						(declared) -> {
+							String propertyName = declared.getName();
+							Field field;
+							try {
+								field = entType.getJavaType().getDeclaredField(
+										propertyName);
+							} catch (NoSuchFieldException e) {
+								throw new AssertionError(
+										"expected to find a Field but didn't: "
+												+ propertyName);
+							}
+							Method method = null;
+							try {
+								// we shouldn't encounter any Booleans but we
+								// are nice
+								Class<?> type = getEntityTypeClass(declared);
+								StringBuilder methodName;
+								if (type.equals(boolean.class)
+										|| type.equals(Boolean.class)) {
+									methodName = new StringBuilder("is");
+								} else {
+									methodName = new StringBuilder("get");
+								}
+								methodName.append(String.valueOf(
+										propertyName.charAt(0)).toUpperCase());
+								if (propertyName.length() > 1) {
+									methodName.append(propertyName.substring(1));
+								}
+								method = entType.getJavaType().getMethod(
+										methodName.toString());
+							} catch (NoSuchMethodException e) {
+								LOGGER.warning("no getter for " + propertyName
+										+ " found.");
+							}
+							maybeAddToAttributeMap(declared, field,
+									attributeForAnnotationType,
+									IndexedEmbedded.class);
+							if (method != null) {
+								maybeAddToAttributeMap(declared, method,
+										attributeForAnnotationType,
+										IndexedEmbedded.class);
+							}
+
+							maybeAddToAttributeMap(declared, field,
+									attributeForAnnotationType,
+									ContainedIn.class);
+							if (method != null) {
+								maybeAddToAttributeMap(declared, method,
+										attributeForAnnotationType,
+										ContainedIn.class);
+							}
+						});
 		return attributeForAnnotationType;
 	}
 
 	private static void maybeAddToAttributeMap(
 			Attribute<?, ?> declared,
 			Member member,
-			Map<Class<? extends Annotation>, List<Attribute<?, ?>>> attributeForAnnotationType,
+			Map<Class<? extends Annotation>, Set<Attribute<?, ?>>> attributeForAnnotationType,
 			final Class<? extends Annotation> annotationClass) {
 		if (isAnnotationPresent(member, annotationClass)) {
-			List<Attribute<?, ?>> list = attributeForAnnotationType
+			Set<Attribute<?, ?>> list = attributeForAnnotationType
 					.computeIfAbsent(annotationClass, (key) -> {
-						return new ArrayList<>();
+						return new HashSet<>();
 					});
 			list.add(declared);
 		}
 	}
 
 	private void doRecursion(
-			Map<Class<? extends Annotation>, List<Attribute<?, ?>>> attributeForAnnotationType,
+			Map<Class<? extends Annotation>, Set<Attribute<?, ?>>> attributeForAnnotationType,
 			EntityType<?> entType, Set<EntityType<?>> visited) {
 		// we don't change the original visited set.
 		Set<EntityType<?>> newVisited = new HashSet<>(visited);
@@ -220,11 +225,10 @@ public class MetaModelParser {
 		// this should be okay to do, as cycles don't matter
 		// as long as we start from the original
 		attributeForAnnotationType
-				.getOrDefault(IndexedEmbedded.class, new ArrayList<>())
+				.getOrDefault(IndexedEmbedded.class, new HashSet<>())
 				.stream()
 				.filter((attribute) -> {
-					Class<?> entityTypeClass = this
-							.getEntityTypeClass(attribute);
+					Class<?> entityTypeClass = getEntityTypeClass(attribute);
 					boolean notVisited = !visited.contains(this.managedTypes
 							.get(entityTypeClass));
 					PersistentAttributeType attrType = attribute
