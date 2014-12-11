@@ -144,6 +144,8 @@ public class IntegrationTest {
 			MetaModelParser parser = new MetaModelParser();
 			parser.parse(this.emf.getMetamodel());
 			{
+				//this test is not sufficient enough
+				//see: https://github.com/Hotware/Hibernate-Search-JPA/issues/3
 				Sorcerer sorc = this.valinor.getSorcerers().iterator().next();
 				Function<Object, Object> func = parser
 						.getRootParentAccessorsForClass(Sorcerer.class).get(
