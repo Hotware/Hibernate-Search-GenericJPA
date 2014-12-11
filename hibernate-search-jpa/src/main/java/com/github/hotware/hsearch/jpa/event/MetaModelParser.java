@@ -104,10 +104,14 @@ public class MetaModelParser {
 		}
 	}
 
-	public void parse(EntityType<?> curEntType, Class<?> cameFrom,
+	private void parse(EntityType<?> curEntType, Class<?> cameFrom,
 			Set<EntityType<?>> visited) {
+		//just to make sure we don't handle an entity twice:
+		if(visited.contains(curEntType)) {
+			return;
+		}
+		
 		Map<Class<? extends Annotation>, Set<Attribute<?, ?>>> attributeForAnnotationType = buildAttributeForAnnotationType(curEntType);
-
 		Function<Object, Object> toRoot;
 		// first of all, lets build the parentAccessor for this entity
 		if (visited.size() > 0) {
@@ -304,7 +308,7 @@ public class MetaModelParser {
 		return idProperty;
 	}
 
-	public static boolean isAnnotationPresent(Member member,
+	private static boolean isAnnotationPresent(Member member,
 			Class<? extends Annotation> annotationClass) {
 		boolean ret = false;
 		if (member instanceof Method) {
@@ -319,7 +323,7 @@ public class MetaModelParser {
 		return ret;
 	}
 
-	public static Object member(Member member, Object object) {
+	private static Object member(Member member, Object object) {
 		try {
 			Object ret;
 			if (member instanceof Method) {

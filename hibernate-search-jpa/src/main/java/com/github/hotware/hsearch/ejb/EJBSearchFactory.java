@@ -7,7 +7,6 @@ import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import javax.annotation.Resource;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 
@@ -40,15 +39,15 @@ public abstract class EJBSearchFactory implements SearchFactory {
 			.getName());
 	SearchFactory searchFactory;
 	MetaModelParser parser;
-	@Resource(name = "com.github.hotware.hsearch.configfile")
-	String configFile;
 
 	public EntityProvider entityProvider(EntityManager em) {
 		return new EntityManagerEntityProvider(em,
 				this.parser.getIdProperties());
 	}
-	
+
 	protected abstract EntityManagerFactory getEmf();
+
+	protected abstract String getConfigFile();
 
 	@PostConstruct
 	void init() {
@@ -57,26 +56,26 @@ public abstract class EJBSearchFactory implements SearchFactory {
 		JPAEventSource eventSource = JPAEventSource.register(
 				parser.getIndexRelevantEntites(), true);
 		SearchConfigurationImpl config;
-		if(this.configFile != null && !this.configFile.equals("")) {
-			LOGGER.info("using config @" + this.configFile);
-			try(InputStream is = this.getClass().getResourceAsStream(this.configFile)) {
+		if (this.getConfigFile() != null && !this.getConfigFile().equals("")) {
+			LOGGER.info("using config @" + this.getConfigFile());
+			try (InputStream is = this.getClass().getResourceAsStream(
+					this.getConfigFile())) {
 				Properties props = new Properties();
 				props.load(is);
 				config = new SearchConfigurationImpl(props);
 			} catch (IOException e) {
-				throw new RuntimeException("IOException while loading property file.", e);
+				throw new RuntimeException(
+						"IOException while loading property file.", e);
 			}
 		} else {
 			config = new SearchConfigurationImpl();
 		}
-		this.searchFactory = SearchFactoryFactory
-				.createSearchFactory(eventSource,
-						config,
-						this.parser.getIndexRelevantEntites());
+		this.searchFactory = SearchFactoryFactory.createSearchFactory(
+				eventSource, config, this.parser.getIndexRelevantEntites());
 	}
 
 	@PreDestroy
-	public void atShutdown() {
+	void atShutdown() {
 		try {
 			this.close();
 		} catch (IOException e) {
