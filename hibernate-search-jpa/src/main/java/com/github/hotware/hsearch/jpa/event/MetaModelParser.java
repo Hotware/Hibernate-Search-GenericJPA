@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import javax.persistence.metamodel.Attribute;
@@ -44,6 +45,7 @@ import org.hibernate.search.annotations.IndexedEmbedded;
  */
 public class MetaModelParser {
 
+	private static final Logger LOGGER = Logger.getLogger(MetaModelParser.class.getName());
 	private final Map<Class<?>, Map<Class<?>, Function<Object, Object>>> rootParentAccessors = new HashMap<>();
 	// only contains EntityTypes
 	private final Map<Class<?>, ManagedType<?>> managedTypes = new HashMap<>();
@@ -158,7 +160,7 @@ public class MetaModelParser {
 							"expected to find a Field but didn't: "
 									+ propertyName);
 				}
-				Method method;
+				Method method = null;
 				try {
 					StringBuilder methodName = new StringBuilder("get");
 					methodName.append(String.valueOf(propertyName.charAt(0))
@@ -169,14 +171,18 @@ public class MetaModelParser {
 					method = entType.getJavaType().getMethod(
 							methodName.toString());
 				} catch (NoSuchMethodException e) {
-					throw new IllegalArgumentException("no getter for "
+					LOGGER.warning("no getter for "
 							+ propertyName + " found.");
 				}
 				maybeAddToAttributeMap(declared, field, attributeForAnnotationType, IndexedEmbedded.class);
-				maybeAddToAttributeMap(declared, method, attributeForAnnotationType, IndexedEmbedded.class);
+				if(method != null) {
+					maybeAddToAttributeMap(declared, method, attributeForAnnotationType, IndexedEmbedded.class);
+				}
 				
 				maybeAddToAttributeMap(declared, field, attributeForAnnotationType, ContainedIn.class);
-				maybeAddToAttributeMap(declared, method, attributeForAnnotationType, ContainedIn.class);
+				if(method != null) {
+					maybeAddToAttributeMap(declared, method, attributeForAnnotationType, ContainedIn.class);
+				}
 			});
 		return attributeForAnnotationType;
 	}
