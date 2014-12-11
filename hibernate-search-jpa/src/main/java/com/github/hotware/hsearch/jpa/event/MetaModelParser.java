@@ -147,6 +147,10 @@ public class MetaModelParser {
 		Map<Class<? extends Annotation>, List<Attribute<?, ?>>> attributeForAnnotationType = new HashMap<>();
 		entType.getAttributes().forEach(
 				(declared) -> {
+					//FIXME: FIX for the issue withget the type of the attribute, 
+					//then get the members for the attribute-type,
+					//then there should be one with the annotation
+					//we want to have.
 					Member member = declared.getJavaMember();
 					if (isAnnotationPresent(member, IndexedEmbedded.class)) {
 						Class<? extends Annotation> annotationClass;
