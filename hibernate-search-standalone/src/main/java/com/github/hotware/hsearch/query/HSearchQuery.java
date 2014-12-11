@@ -34,10 +34,10 @@ public interface HSearchQuery<T> {
 
 	public void disableFullTextFilter(String name);
 	
-	public <R> List<R> query(EntityProvider entityProvider, Class<R> returnedType, Fetch fetchType);
+	public List<T> query(EntityProvider entityProvider, Fetch fetchType);
 	
-	public default <R> List<R> query(EntityProvider entityProvider, Class<R> returnedType) {
-		return this.query(entityProvider, returnedType, Fetch.FIND_BY_ID);
+	public default List<T> query(EntityProvider entityProvider) {
+		return this.query(entityProvider, Fetch.FIND_BY_ID);
 	}
 	
 	public static enum Fetch {

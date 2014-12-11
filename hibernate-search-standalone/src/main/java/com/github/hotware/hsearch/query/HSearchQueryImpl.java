@@ -1,7 +1,6 @@
 package com.github.hotware.hsearch.query;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.search.Filter;
@@ -17,14 +16,14 @@ import com.github.hotware.hsearch.entity.EntityProvider;
 public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 
 	private final HSQuery hsquery;
-	private final AtomicBoolean frozen;
 	private final HibernateSearchQueryExecutor queryExec;
+	private final Class<T> entityType;
 
 	public HSearchQueryImpl(HSQuery hsquery,
-			HibernateSearchQueryExecutor queryExec) {
+			HibernateSearchQueryExecutor queryExec, Class<T> entityType) {
 		this.hsquery = hsquery;
-		this.frozen = new AtomicBoolean(false);
 		this.queryExec = queryExec;
+		this.entityType = entityType;
 	}
 
 	/*
@@ -36,7 +35,6 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 	 */
 	@Override
 	public HSearchQuery<T> sort(Sort sort) {
-		this.checkNotFrozen();
 		this.hsquery.sort(sort);
 		return this;
 	}
@@ -50,7 +48,6 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 	 */
 	@Override
 	public HSearchQuery<T> filter(Filter filter) {
-		this.checkNotFrozen();
 		this.hsquery.filter(filter);
 		return this;
 	}
@@ -64,7 +61,6 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 	 */
 	@Override
 	public HSearchQuery<T> firstResult(int firstResult) {
-		this.checkNotFrozen();
 		this.hsquery.firstResult(firstResult);
 		return this;
 	}
@@ -78,7 +74,6 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 	 */
 	@Override
 	public HSearchQuery<T> maxResults(int maxResults) {
-		this.checkNotFrozen();
 		this.hsquery.maxResults(maxResults);
 		return this;
 	}
@@ -92,7 +87,6 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 	 */
 	@Override
 	public Query getLuceneQuery() {
-		this.checkNotFrozen();
 		return this.hsquery.getLuceneQuery();
 	}
 
@@ -105,7 +99,6 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 	 */
 	@Override
 	public <R> List<R> queryDto(Class<R> returnedType) {
-		this.frozen.set(true);
 		return this.queryExec.executeHSQuery(this.hsquery, returnedType);
 	}
 
@@ -117,7 +110,6 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 	 */
 	@Override
 	public List<Object[]> queryProjection(String... projection) {
-		this.frozen.set(true);
 		String[] projectedFieldsBefore = this.hsquery.getProjectedFields();
 		List<Object[]> ret;
 		{
@@ -143,7 +135,6 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 	 */
 	@Override
 	public int queryResultSize() {
-		this.frozen.set(true);
 		this.hsquery.getTimeoutManager().start();
 		int resultSize = this.hsquery.queryResultSize();
 		this.hsquery.getTimeoutManager().stop();
@@ -158,7 +149,6 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 	 */
 	@Override
 	public FullTextFilter enableFullTextFilter(String name) {
-		this.checkNotFrozen();
 		return hsquery.enableFullTextFilter(name);
 	}
 
@@ -170,33 +160,24 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 	 */
 	@Override
 	public void disableFullTextFilter(String name) {
-		this.checkNotFrozen();
 		this.hsquery.disableFullTextFilter(name);
 	}
 
 	@Override
-	public <R> List<R> query(EntityProvider entityProvider,
-			Class<R> returnedType, Fetch fetchType) {
-		List<R> ret;
+	public List<T> query(EntityProvider entityProvider, Fetch fetchType) {
+		List<T> ret;
 		List<Object[]> projected = this.queryProjection(ProjectionConstants.ID);
 		if (fetchType == Fetch.FIND_BY_ID) {
 			ret = projected.stream().map((arr) -> {
-				return entityProvider.get(returnedType, arr[0]);
+				return entityProvider.get(this.entityType, arr[0]);
 			}).collect(Collectors.toList());
 		} else {
-			ret = entityProvider.getBatch(returnedType,
-					projected.stream().map((arr) -> {
+			ret = entityProvider.getBatch(this.entityType, projected.stream()
+					.map((arr) -> {
 						return arr[0];
 					}).collect(Collectors.toList()));
 		}
 		return ret;
-	}
-
-	private void checkNotFrozen() {
-		if (this.frozen.get()) {
-			throw new IllegalStateException(
-					"this query was already used once and cannot be changed anymore");
-		}
 	}
 
 }

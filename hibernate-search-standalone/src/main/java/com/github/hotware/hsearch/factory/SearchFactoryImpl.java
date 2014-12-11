@@ -3,11 +3,14 @@ package com.github.hotware.hsearch.factory;
 import java.io.IOException;
 import java.util.Arrays;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.backend.spi.Worker;
+import org.hibernate.search.engine.impl.FilterDef;
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
+import org.hibernate.search.filter.FilterCachingStrategy;
 import org.hibernate.search.indexes.IndexReaderAccessor;
 import org.hibernate.search.query.dsl.QueryContextBuilder;
 import org.hibernate.search.query.engine.spi.HSQuery;
@@ -112,7 +115,32 @@ public class SearchFactoryImpl implements SearchFactory {
 		HSQuery hsQuery = this.searchFactoryImplementor.createHSQuery();
 		hsQuery.luceneQuery(query);
 		hsQuery.targetedEntities(Arrays.asList(targetedEntity));
-		return new HSearchQueryImpl<T>(hsQuery, this.queryExec);
+		return new HSearchQueryImpl<T>(hsQuery, this.queryExec, targetedEntity);
+	}
+
+	@Override
+	public FilterCachingStrategy getFilterCachingStrategy() {
+		return this.searchFactoryImplementor.getFilterCachingStrategy();
+	}
+
+	@Override
+	public FilterDef getFilterDefinition(String name) {
+		return this.searchFactoryImplementor.getFilterDefinition(name);
+	}
+
+	@Override
+	public int getFilterCacheBitResultsSize() {
+		return this.searchFactoryImplementor.getFilterCacheBitResultsSize();
+	}
+
+	@Override
+	public Analyzer getAnalyzer(String name) {
+		return this.searchFactoryImplementor.getAnalyzer(name);
+	}
+
+	@Override
+	public Analyzer getAnalyzer(Class<?> clazz) {
+		return this.searchFactoryImplementor.getAnalyzer(clazz);
 	}
 
 }

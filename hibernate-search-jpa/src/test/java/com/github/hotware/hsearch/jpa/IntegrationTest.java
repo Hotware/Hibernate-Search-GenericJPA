@@ -201,8 +201,7 @@ public class IntegrationTest {
 						.createQuery();
 				HSearchQuery<Place> jpaQuery = searchFactory.createQuery(query,
 						Place.class);
-				List<Place> places = jpaQuery.query(entityProvider,
-						Place.class, Fetch.BATCH);
+				List<Place> places = jpaQuery.query(entityProvider, Fetch.BATCH);
 				assertEquals(2, places.size());
 			}
 
@@ -217,8 +216,7 @@ public class IntegrationTest {
 						.createQuery();
 				HSearchQuery<Place> jpaQuery = searchFactory.createQuery(query,
 						Place.class);
-				List<Place> places = jpaQuery.query(entityProvider,
-						Place.class, Fetch.BATCH);
+				List<Place> places = jpaQuery.query(entityProvider, Fetch.BATCH);
 				assertEquals(1, places.size());
 			}
 
@@ -423,8 +421,7 @@ public class IntegrationTest {
 				.get().keyword().onField(field).matching(value).createQuery();
 		HSearchQuery<Place> jpaQuery = searchFactory.createQuery(query,
 				Place.class);
-		List<Place> places = jpaQuery.query(entityProvider, Place.class,
-				fetchType);
+		List<Place> places = jpaQuery.query(entityProvider, fetchType);
 		return places;
 	}
 
