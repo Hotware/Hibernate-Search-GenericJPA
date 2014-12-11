@@ -95,11 +95,12 @@ public class MetaModelParser {
 				this.idProperties.put(curEntType.getJavaType(),
 						this.getIdProperty(metaModel, curEntType));
 				this.isRootType.put(curEntType.getJavaType(), true);
-				Map<Class<? extends Annotation>, List<Attribute<?, ?>>> attributeForAnnotationType = this
-						.buildAttributeForAnnotationType(curEntType);
-				// and do the recursion
-				this.doRecursion(attributeForAnnotationType, curEntType,
-						emptyVisited);
+				//FIXME: implement this!
+//				Map<Class<? extends Annotation>, List<Attribute<?, ?>>> attributeForAnnotationType = this
+//						.buildAttributeForAnnotationType(curEntType);
+//				// and do the recursion
+//				this.doRecursion(attributeForAnnotationType, curEntType,
+//						emptyVisited);
 			}
 		}
 	}
