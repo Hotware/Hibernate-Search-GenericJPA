@@ -95,9 +95,8 @@ public class MetaModelParser {
 				this.idProperties.put(curEntType.getJavaType(),
 						this.getIdProperty(metaModel, curEntType));
 				this.isRootType.put(curEntType.getJavaType(), true);
-				//FIXME: implement this!
-				Map<Class<? extends Annotation>, List<Attribute<?, ?>>> attributeForAnnotationType = this
-						.buildAttributeForAnnotationType(curEntType);
+				// FIXME: implement this!
+				Map<Class<? extends Annotation>, List<Attribute<?, ?>>> attributeForAnnotationType = buildAttributeForAnnotationType(curEntType);
 				// and do the recursion
 				this.doRecursion(attributeForAnnotationType, curEntType,
 						emptyVisited);
@@ -107,8 +106,7 @@ public class MetaModelParser {
 
 	public void parse(EntityType<?> curEntType, Class<?> cameFrom,
 			Set<EntityType<?>> visited) {
-		Map<Class<? extends Annotation>, List<Attribute<?, ?>>> attributeForAnnotationType = this
-				.buildAttributeForAnnotationType(curEntType);
+		Map<Class<? extends Annotation>, List<Attribute<?, ?>>> attributeForAnnotationType = buildAttributeForAnnotationType(curEntType);
 
 		Function<Object, Object> toRoot;
 		// first of all, lets build the parentAccessor for this entity
@@ -142,36 +140,59 @@ public class MetaModelParser {
 		this.doRecursion(attributeForAnnotationType, curEntType, visited);
 	}
 
-	private Map<Class<? extends Annotation>, List<Attribute<?, ?>>> buildAttributeForAnnotationType(
+	private static Map<Class<? extends Annotation>, List<Attribute<?, ?>>> buildAttributeForAnnotationType(
 			EntityType<?> entType) {
 		Map<Class<? extends Annotation>, List<Attribute<?, ?>>> attributeForAnnotationType = new HashMap<>();
-		entType.getAttributes().forEach(
-				(declared) -> {
-					//FIXME: FIX for the issue withget the type of the attribute, 
-					//then get the members for the attribute-type,
-					//then there should be one with the annotation
-					//we want to have.
-					Member member = declared.getJavaMember();
-					if (isAnnotationPresent(member, IndexedEmbedded.class)) {
-						Class<? extends Annotation> annotationClass;
-						annotationClass = IndexedEmbedded.class;
-						List<Attribute<?, ?>> list = attributeForAnnotationType
-								.computeIfAbsent(annotationClass, (key) -> {
-									return new ArrayList<>();
-								});
-						list.add(declared);
+		entType.getAttributes().forEach((declared) -> {
+			// FIXME: FIX for the issue with the fields:
+			// get the name of the attribute,
+			// then get the members for the attribute-type,
+			// then there should be one with the annotation
+			// we want to have.
+				String propertyName = declared.getName();
+				Field field;
+				try {
+					field = entType.getJavaType().getDeclaredField(propertyName);
+				} catch (NoSuchFieldException e) {
+					throw new AssertionError(
+							"expected to find a Field but didn't: "
+									+ propertyName);
+				}
+				Method method;
+				try {
+					StringBuilder methodName = new StringBuilder("get");
+					methodName.append(String.valueOf(propertyName.charAt(0))
+							.toUpperCase());
+					if (propertyName.length() > 1) {
+						methodName.append(propertyName.substring(1));
 					}
-					if (isAnnotationPresent(member, ContainedIn.class)) {
-						Class<? extends Annotation> annotationClass;
-						annotationClass = ContainedIn.class;
-						List<Attribute<?, ?>> list = attributeForAnnotationType
-								.computeIfAbsent(annotationClass, (key) -> {
-									return new ArrayList<>();
-								});
-						list.add(declared);
-					}
-				});
+					method = entType.getJavaType().getMethod(
+							methodName.toString());
+				} catch (NoSuchMethodException e) {
+					throw new IllegalArgumentException("no getter for "
+							+ propertyName + " found.");
+				}
+				maybeAddToAttributeMap(declared, field, attributeForAnnotationType, IndexedEmbedded.class);
+				maybeAddToAttributeMap(declared, method, attributeForAnnotationType, IndexedEmbedded.class);
+				
+				maybeAddToAttributeMap(declared, field, attributeForAnnotationType, ContainedIn.class);
+				maybeAddToAttributeMap(declared, method, attributeForAnnotationType, ContainedIn.class);
+			});
 		return attributeForAnnotationType;
+	}
+
+	private static void maybeAddToAttributeMap(
+			Attribute<?, ?> declared,
+			Member member,
+			Map<Class<? extends Annotation>, List<Attribute<?, ?>>> attributeForAnnotationType,
+			final Class<? extends Annotation> annotationClass) {
+		if (isAnnotationPresent(member, annotationClass)) {
+			List<Attribute<?, ?>> list = attributeForAnnotationType
+					.computeIfAbsent(annotationClass, (key) -> {
+						return new ArrayList<>();
+					});
+			list.add(declared);
+		}
 	}
 
 	private void doRecursion(
