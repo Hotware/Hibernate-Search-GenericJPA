@@ -162,6 +162,8 @@ public class MetaModelParser {
 				}
 				Method method = null;
 				try {
+					//we shouldn't encounter any Booleans so we 
+					//don't have to check for is...() Methods
 					StringBuilder methodName = new StringBuilder("get");
 					methodName.append(String.valueOf(propertyName.charAt(0))
 							.toUpperCase());
