@@ -10,7 +10,6 @@ import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
-import javax.persistence.PersistenceContext;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
@@ -35,34 +34,26 @@ import com.github.hotware.hsearch.transaction.TransactionContext;
  * 
  * @author Martin Braun
  */
-public class EJBSearchFactory implements SearchFactory {
+public abstract class EJBSearchFactory implements SearchFactory {
 
 	private final Logger LOGGER = Logger.getLogger(EntityManagerFactory.class
 			.getName());
 	SearchFactory searchFactory;
-	@PersistenceContext
-	EntityManagerFactory emf;
 	MetaModelParser parser;
 	@Resource(name = "com.github.hotware.hsearch.configfile")
 	String configFile;
-	
-	public static EJBSearchFactory create(EntityManagerFactory emf, String configFile) {
-		EJBSearchFactory ret = new EJBSearchFactory();
-		ret.emf = emf;
-		ret.configFile = configFile;
-		ret.init();
-		return ret;
-	}
 
 	public EntityProvider entityProvider(EntityManager em) {
 		return new EntityManagerEntityProvider(em,
 				this.parser.getIdProperties());
 	}
+	
+	protected abstract EntityManagerFactory getEmf();
 
 	@PostConstruct
 	void init() {
 		this.parser = new MetaModelParser();
-		this.parser.parse(this.emf.getMetamodel());
+		this.parser.parse(this.getEmf().getMetamodel());
 		JPAEventSource eventSource = JPAEventSource.register(
 				parser.getIndexRelevantEntites(), true);
 		SearchConfigurationImpl config;
@@ -82,13 +73,15 @@ public class EJBSearchFactory implements SearchFactory {
 				.createSearchFactory(eventSource,
 						config,
 						this.parser.getIndexRelevantEntites());
-		//we don't need this anymore!
-		this.emf = null;
 	}
 
 	@PreDestroy
-	public void atShutdown() throws IOException {
-		this.close();
+	public void atShutdown() {
+		try {
+			this.close();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
