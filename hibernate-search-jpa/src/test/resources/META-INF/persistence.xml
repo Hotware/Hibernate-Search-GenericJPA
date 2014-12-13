@@ -36,4 +36,19 @@
 		</properties>
 	</persistence-unit>
 
+	<persistence-unit name="batoo">
+		<provider>org.batoo.jpa.core.BatooPersistenceProvider</provider>
+		<class>com.github.hotware.hsearch.jpa.test.entities.Sorcerer</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.Place</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace2</class>
+		<properties>
+			<property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbcDriver" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:mem:batoo" />
+			<property name="javax.persistence.jdbc.user" value="sa" />
+			<property name="javax.persistence.jdbc.password" value="" />
+			<property name="org.batoo.jpa.ddl" value="DROP" />
+		</properties>
+	</persistence-unit>
+
 </persistence>

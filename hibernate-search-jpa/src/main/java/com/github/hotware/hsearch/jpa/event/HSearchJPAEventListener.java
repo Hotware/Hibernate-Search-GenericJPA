@@ -10,26 +10,29 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreRemove;
 import javax.persistence.PreUpdate;
 
+import com.github.hotware.hsearch.factory.CustomSimpleInitializer;
+
 public final class HSearchJPAEventListener {
 
 	static final Set<Listener> listeners = new HashSet<>();
-	
+
 	@PreUpdate
 	public void preUpdate(Object entity) {
-		for(Listener listener : listeners) {
+		for (Listener listener : listeners) {
 			if (listener.preEvents()
-					&& listener.listenTo().contains(entity.getClass())) {
+					&& listener.listenTo().contains(
+							CustomSimpleInitializer.INSTANCE.getClass(entity))) {
 				listener.update(entity);
 			}
 		}
 	}
 
-
 	@PostUpdate
 	public void postUpdate(Object entity) {
-		for(Listener listener : listeners) {
+		for (Listener listener : listeners) {
 			if (!listener.preEvents()
-					&& listener.listenTo().contains(entity.getClass())) {
+					&& listener.listenTo().contains(
+							CustomSimpleInitializer.INSTANCE.getClass(entity))) {
 				listener.update(entity);
 			}
 		}
@@ -37,9 +40,10 @@ public final class HSearchJPAEventListener {
 
 	@PrePersist
 	public void prePersist(Object entity) {
-		for(Listener listener : listeners) {
+		for (Listener listener : listeners) {
 			if (listener.preEvents()
-					&& listener.listenTo().contains(entity.getClass())) {
+					&& listener.listenTo().contains(
+							CustomSimpleInitializer.INSTANCE.getClass(entity))) {
 				listener.persist(entity);
 			}
 		}
@@ -47,9 +51,10 @@ public final class HSearchJPAEventListener {
 
 	@PostPersist
 	public void postPersist(Object entity) {
-		for(Listener listener : listeners) {
+		for (Listener listener : listeners) {
 			if (!listener.preEvents()
-					&& listener.listenTo().contains(entity.getClass())) {
+					&& listener.listenTo().contains(
+							CustomSimpleInitializer.INSTANCE.getClass(entity))) {
 				listener.persist(entity);
 			}
 		}
@@ -57,9 +62,10 @@ public final class HSearchJPAEventListener {
 
 	@PreRemove
 	public void preRemove(Object entity) {
-		for(Listener listener : listeners) {
+		for (Listener listener : listeners) {
 			if (listener.preEvents()
-					&& listener.listenTo().contains(entity.getClass())) {
+					&& listener.listenTo().contains(
+							CustomSimpleInitializer.INSTANCE.getClass(entity))) {
 				listener.remove(entity);
 			}
 		}
@@ -67,9 +73,10 @@ public final class HSearchJPAEventListener {
 
 	@PostRemove
 	public void postRemove(Object entity) {
-		for(Listener listener : listeners) {
+		for (Listener listener : listeners) {
 			if (!listener.preEvents()
-					&& listener.listenTo().contains(entity.getClass())) {
+					&& listener.listenTo().contains(
+							CustomSimpleInitializer.INSTANCE.getClass(entity))) {
 				listener.remove(entity);
 			}
 		}

@@ -77,24 +77,12 @@ public class SearchFactoryImpl implements SearchFactory {
 		return this.searchFactoryImplementor.getStatistics();
 	}
 
-	@Override
-	public void doIndexWork(Iterable<?> entities, WorkType workType,
+	private void doIndexWork(Iterable<?> entities, WorkType workType,
 			TransactionContext tc) {
 		Worker worker = this.searchFactoryImplementor.getWorker();
 		for (Object object : entities) {
 			worker.performWork(new Work(object, workType), tc);
 		}
-	}
-
-	@Override
-	public void doIndexWork(Iterable<?> entities, WorkType workType) {
-		if (workType == WorkType.PURGE_ALL) {
-			throw new IllegalArgumentException(
-					"to purge all objects use the purgeAll method!");
-		}
-		TransactionContextImpl tc = new TransactionContextImpl();
-		this.doIndexWork(entities, workType, tc);
-		tc.end();
 	}
 
 	@Override
@@ -105,7 +93,6 @@ public class SearchFactoryImpl implements SearchFactory {
 		tc.end();
 	}
 
-	@Override
 	public void doIndexWork(Object entities, WorkType workType) {
 		this.doIndexWork(Arrays.asList(entities), workType);
 	}

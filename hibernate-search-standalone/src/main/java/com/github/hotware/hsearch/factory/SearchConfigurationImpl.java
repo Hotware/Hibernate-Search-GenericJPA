@@ -22,7 +22,6 @@ import org.hibernate.search.cfg.spi.SearchConfigurationBase;
 import org.hibernate.search.engine.service.classloading.impl.DefaultClassLoaderService;
 import org.hibernate.search.engine.service.classloading.spi.ClassLoaderService;
 import org.hibernate.search.engine.service.spi.Service;
-import org.hibernate.search.impl.SimpleInitializer;
 import org.hibernate.search.spi.InstanceInitializer;
 
 /**
@@ -53,7 +52,7 @@ public class SearchConfigurationImpl extends SearchConfigurationBase implements
 	}
 
 	public SearchConfigurationImpl(Properties properties) {
-		this(SimpleInitializer.INSTANCE, properties);
+		this(CustomSimpleInitializer.INSTANCE, properties);
 	}
 
 	public SearchConfigurationImpl(InstanceInitializer init,

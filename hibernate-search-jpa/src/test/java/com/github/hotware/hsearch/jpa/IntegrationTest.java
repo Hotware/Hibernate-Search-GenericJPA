@@ -136,6 +136,17 @@ public class IntegrationTest {
 			this.shutdown();
 		}
 	}
+	
+//	@Test
+//	public void testBatoo() throws IOException {
+//		this.setup("batoo");
+//		try {
+//			this.metaModelParser();
+//			this.integration();
+//		} finally {
+//			this.shutdown();
+//		}
+//	}
 
 	public void metaModelParser() throws IOException {
 		EntityProvider entityProvider = null;

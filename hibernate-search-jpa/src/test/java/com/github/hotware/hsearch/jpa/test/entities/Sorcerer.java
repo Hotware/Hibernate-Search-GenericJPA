@@ -14,10 +14,12 @@ import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.IndexedEmbedded;
 import org.hibernate.search.annotations.Store;
 
+import com.github.hotware.hsearch.annotations.InIndex;
 import com.github.hotware.hsearch.jpa.event.HSearchJPAEventListener;
 
 @Entity
 @EntityListeners({HSearchJPAEventListener.class})
+@InIndex
 public class Sorcerer {
 
 	private Integer id;

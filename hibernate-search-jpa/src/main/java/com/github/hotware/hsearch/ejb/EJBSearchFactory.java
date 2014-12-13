@@ -12,7 +12,6 @@ import javax.persistence.EntityManagerFactory;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
-import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.engine.impl.FilterDef;
 import org.hibernate.search.filter.FilterCachingStrategy;
 import org.hibernate.search.indexes.IndexReaderAccessor;
@@ -84,7 +83,8 @@ public abstract class EJBSearchFactory implements SearchFactory {
 	}
 
 	@Override
-	public void index(Iterable<?> entities, TransactionContext tc) {
+	public void index(Iterable<?> entities,
+			TransactionContext tc) {
 		this.searchFactory.index(entities, tc);
 	}
 
@@ -94,7 +94,8 @@ public abstract class EJBSearchFactory implements SearchFactory {
 	}
 
 	@Override
-	public void update(Iterable<?> entities, TransactionContext tc) {
+	public void update(Iterable<?> entities,
+			TransactionContext tc) {
 		this.searchFactory.update(entities, tc);
 	}
 
@@ -124,24 +125,9 @@ public abstract class EJBSearchFactory implements SearchFactory {
 	}
 
 	@Override
-	public void doIndexWork(Iterable<?> entities, WorkType workType,
+	public void delete(Iterable<?> entities,
 			TransactionContext tc) {
-		this.searchFactory.doIndexWork(entities, workType, tc);
-	}
-
-	@Override
-	public void delete(Iterable<?> entities, TransactionContext tc) {
 		this.searchFactory.delete(entities, tc);
-	}
-
-	@Override
-	public void doIndexWork(Iterable<?> entities, WorkType workType) {
-		this.searchFactory.doIndexWork(entities, workType);
-	}
-
-	@Override
-	public void doIndexWork(Object entities, WorkType workType) {
-		this.searchFactory.doIndexWork(entities, workType);
 	}
 
 	@Override

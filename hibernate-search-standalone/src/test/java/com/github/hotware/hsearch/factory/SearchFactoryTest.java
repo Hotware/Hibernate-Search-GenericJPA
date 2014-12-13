@@ -172,7 +172,7 @@ public class SearchFactoryTest extends TestCase {
 
 			// indexing starting from the contained entity should work as well
 			// :)
-			factory.doIndexWork(embedded2.get(0), WorkType.ADD);
+			factory.index(embedded2.get(0));
 
 			assertEquals(
 					1,
