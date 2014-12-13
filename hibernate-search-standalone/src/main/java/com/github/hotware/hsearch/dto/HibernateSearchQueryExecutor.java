@@ -28,19 +28,11 @@ public class HibernateSearchQueryExecutor {
 		this.dtoDescriptor = new DtoDescriptorImpl();
 	}
 
-	/**
-	 * @param hsQuery
-	 *            (will be modified internally!)
-	 */
 	public <T> List<T> executeHSQuery(HSQuery hsQuery, Class<T> clazz) {
 		return this.executeHSQuery(hsQuery, clazz,
 				DtoDescription.DEFAULT_PROFILE);
 	}
 
-	/**
-	 * @param hsQuery
-	 *            (will be modified internally!)
-	 */
 	public <T> List<T> executeHSQuery(HSQuery hsQuery, Class<T> returnedType,
 			String profile) {
 

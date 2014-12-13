@@ -7,15 +7,27 @@ import com.github.hotware.hsearch.event.EventConsumer;
 import com.github.hotware.hsearch.event.EventSource;
 
 /**
- * this JPAEventProvider calls the eventConsumer as soon as it gets the event.
+ * A EventSource to be used with classes annotated with
+ * {@link com.github.hotware.hsearch.jpa.event.HSearchJPAEventListener} as an
+ * EntityListener
  * 
  * <br>
  * <br>
+ * <p style="font-size:1.2em">
+ * <b>Attention</b>
+ * </p>
  * 
- * <b>for this to work with your JPA provider you have to make sure your
+ * <b>1. for this to work with your JPA provider you have to make sure your
  * provider calls event callbacks like {@link javax.persistence.PostPersist}
  * correctly on your object hierarchy. As of 13.12.2014 the only JPA provider
  * that was tested AND did this was EclipseLink 2.5.0.</b>
+ * 
+ * <br>
+ * <br>
+ * 
+ * <b>2. If you use this class together with a EntityIndexingInterceptor a
+ * collection Update is not distinguishable from a Update on the Entity
+ * containing it.</b>
  * 
  * <br>
  * <br>
@@ -33,7 +45,7 @@ import com.github.hotware.hsearch.event.EventSource;
  */
 public final class JPAEventSource implements EventSource,
 		HSearchJPAEventListener.Listener {
-	
+
 	private static boolean ALL_DISABLED = false;
 
 	private boolean disable = false;
@@ -89,7 +101,7 @@ public final class JPAEventSource implements EventSource,
 			this.eventConsumer.delete(entity);
 		}
 	}
-	
+
 	public static void disableAll(boolean disableAll) {
 		ALL_DISABLED = disableAll;
 	}
