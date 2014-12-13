@@ -52,7 +52,11 @@ public class SearchConfigurationImpl extends SearchConfigurationBase implements
 	}
 
 	public SearchConfigurationImpl(Properties properties) {
-		this(CustomSimpleInitializer.INSTANCE, properties);
+		this(SubClassSupportInstanceInitializer.INSTANCE, properties);
+	}
+	
+	public SearchConfigurationImpl(InstanceInitializer init) {
+		this(new Properties());
 	}
 
 	public SearchConfigurationImpl(InstanceInitializer init,

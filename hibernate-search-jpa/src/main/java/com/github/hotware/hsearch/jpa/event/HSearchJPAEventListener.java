@@ -10,7 +10,7 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreRemove;
 import javax.persistence.PreUpdate;
 
-import com.github.hotware.hsearch.factory.CustomSimpleInitializer;
+import com.github.hotware.hsearch.factory.SubClassSupportInstanceInitializer;
 
 public final class HSearchJPAEventListener {
 
@@ -21,7 +21,7 @@ public final class HSearchJPAEventListener {
 		for (Listener listener : listeners) {
 			if (listener.preEvents()
 					&& listener.listenTo().contains(
-							CustomSimpleInitializer.INSTANCE.getClass(entity))) {
+							SubClassSupportInstanceInitializer.INSTANCE.getClass(entity))) {
 				listener.update(entity);
 			}
 		}
@@ -32,7 +32,7 @@ public final class HSearchJPAEventListener {
 		for (Listener listener : listeners) {
 			if (!listener.preEvents()
 					&& listener.listenTo().contains(
-							CustomSimpleInitializer.INSTANCE.getClass(entity))) {
+							SubClassSupportInstanceInitializer.INSTANCE.getClass(entity))) {
 				listener.update(entity);
 			}
 		}
@@ -43,7 +43,7 @@ public final class HSearchJPAEventListener {
 		for (Listener listener : listeners) {
 			if (listener.preEvents()
 					&& listener.listenTo().contains(
-							CustomSimpleInitializer.INSTANCE.getClass(entity))) {
+							SubClassSupportInstanceInitializer.INSTANCE.getClass(entity))) {
 				listener.persist(entity);
 			}
 		}
@@ -54,7 +54,7 @@ public final class HSearchJPAEventListener {
 		for (Listener listener : listeners) {
 			if (!listener.preEvents()
 					&& listener.listenTo().contains(
-							CustomSimpleInitializer.INSTANCE.getClass(entity))) {
+							SubClassSupportInstanceInitializer.INSTANCE.getClass(entity))) {
 				listener.persist(entity);
 			}
 		}
@@ -65,7 +65,7 @@ public final class HSearchJPAEventListener {
 		for (Listener listener : listeners) {
 			if (listener.preEvents()
 					&& listener.listenTo().contains(
-							CustomSimpleInitializer.INSTANCE.getClass(entity))) {
+							SubClassSupportInstanceInitializer.INSTANCE.getClass(entity))) {
 				listener.remove(entity);
 			}
 		}
@@ -76,7 +76,7 @@ public final class HSearchJPAEventListener {
 		for (Listener listener : listeners) {
 			if (!listener.preEvents()
 					&& listener.listenTo().contains(
-							CustomSimpleInitializer.INSTANCE.getClass(entity))) {
+							SubClassSupportInstanceInitializer.INSTANCE.getClass(entity))) {
 				listener.remove(entity);
 			}
 		}
