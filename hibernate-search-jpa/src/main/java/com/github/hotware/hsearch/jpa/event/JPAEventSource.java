@@ -12,6 +12,20 @@ import com.github.hotware.hsearch.event.EventSource;
  * <br>
  * <br>
  * 
+ * <b>for this to work with your JPA provider you have to make sure your
+ * provider calls event callbacks like {@link javax.persistence.PostPersist}
+ * correctly on your object hierarchy. As of 13.12.2014 the only JPA provider
+ * that was tested AND did this was EclipseLink 2.5.0.</b>
+ * 
+ * <br>
+ * <br>
+ * 
+ * if your JPA provider is not supported by this class, then you can always
+ * implement a EventSource for it and supply it to this project's github.
+ * 
+ * <br>
+ * <br>
+ * 
  * TODO: maybe implement a batching Provider wrapping this to reduce the amount
  * of requests we get.
  * 
@@ -19,6 +33,8 @@ import com.github.hotware.hsearch.event.EventSource;
  */
 public final class JPAEventSource implements EventSource,
 		HSearchJPAEventListener.Listener {
+	
+	private static boolean ALL_DISABLED = false;
 
 	private boolean disable = false;
 	private final Set<Class<?>> listenTo;
@@ -47,7 +63,7 @@ public final class JPAEventSource implements EventSource,
 
 	@Override
 	public Set<Class<?>> listenTo() {
-		if (this.disable) {
+		if (ALL_DISABLED || this.disable) {
 			return Collections.emptySet();
 		}
 		return this.listenTo;
@@ -72,6 +88,10 @@ public final class JPAEventSource implements EventSource,
 		if (this.eventConsumer != null) {
 			this.eventConsumer.delete(entity);
 		}
+	}
+	
+	public static void disableAll(boolean disableAll) {
+		ALL_DISABLED = disableAll;
 	}
 
 	public static JPAEventSource register(Set<Class<?>> listenTo,

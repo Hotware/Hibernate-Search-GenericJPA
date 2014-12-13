@@ -29,6 +29,8 @@ import com.github.hotware.hsearch.query.HSearchQuery;
 import com.github.hotware.hsearch.transaction.TransactionContext;
 
 /**
+ * Base class to create SearchFactories in a EJB environment.
+ * Uses a JPAEventSource.
  * 
  * @author Martin Braun
  */
@@ -53,7 +55,7 @@ public abstract class EJBSearchFactory implements SearchFactory {
 		this.parser = new MetaModelParser();
 		this.parser.parse(this.getEmf().getMetamodel());
 		JPAEventSource eventSource = JPAEventSource.register(
-				parser.getIndexRelevantEntites(), true);
+				this.parser.getIndexRelevantEntites(), true);
 		SearchConfigurationImpl config;
 		if (this.getConfigFile() != null && !this.getConfigFile().equals("")) {
 			LOGGER.info("using config @" + this.getConfigFile());

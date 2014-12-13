@@ -13,7 +13,6 @@ import java.lang.annotation.Target;
  * supplied to all indexing related operations. Then the "least top level" class
  * that is annotated with @InIndex is used
  * 
- * 
  * @author Martin
  */
 @Target({ TYPE })
