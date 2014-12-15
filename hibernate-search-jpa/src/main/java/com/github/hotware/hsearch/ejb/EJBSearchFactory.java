@@ -2,6 +2,7 @@ package com.github.hotware.hsearch.ejb;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Logger;
 
@@ -29,8 +30,8 @@ import com.github.hotware.hsearch.query.HSearchQuery;
 import com.github.hotware.hsearch.transaction.TransactionContext;
 
 /**
- * Base class to create SearchFactories in a EJB environment.
- * Uses a JPAEventSource.
+ * Base class to create SearchFactories in a EJB environment. Uses a
+ * JPAEventSource.
  * 
  * @author Martin Braun
  */
@@ -49,6 +50,8 @@ public abstract class EJBSearchFactory implements SearchFactory {
 	protected abstract EntityManagerFactory getEmf();
 
 	protected abstract String getConfigFile();
+
+	protected abstract List<Class<?>> getAdditionalIndexedClasses();
 
 	@PostConstruct
 	void init() {
@@ -71,6 +74,9 @@ public abstract class EJBSearchFactory implements SearchFactory {
 		} else {
 			config = new SearchConfigurationImpl();
 		}
+		this.getAdditionalIndexedClasses().forEach((clazz) -> {
+			config.addClass(clazz);
+		});
 		this.searchFactory = SearchFactoryFactory.createSearchFactory(
 				eventSource, config, this.parser.getIndexRelevantEntites());
 	}
@@ -85,8 +91,7 @@ public abstract class EJBSearchFactory implements SearchFactory {
 	}
 
 	@Override
-	public void index(Iterable<?> entities,
-			TransactionContext tc) {
+	public void index(Iterable<?> entities, TransactionContext tc) {
 		this.searchFactory.index(entities, tc);
 	}
 
@@ -96,8 +101,7 @@ public abstract class EJBSearchFactory implements SearchFactory {
 	}
 
 	@Override
-	public void update(Iterable<?> entities,
-			TransactionContext tc) {
+	public void update(Iterable<?> entities, TransactionContext tc) {
 		this.searchFactory.update(entities, tc);
 	}
 
@@ -127,8 +131,7 @@ public abstract class EJBSearchFactory implements SearchFactory {
 	}
 
 	@Override
-	public void delete(Iterable<?> entities,
-			TransactionContext tc) {
+	public void delete(Iterable<?> entities, TransactionContext tc) {
 		this.searchFactory.delete(entities, tc);
 	}
 

@@ -87,7 +87,6 @@ public class Place {
 
 	@ManyToMany(cascade = CascadeType.ALL)
 	@IndexedEmbedded
-	@ContainedIn
 	public List<AdditionalPlace> getAdditionalPlace() {
 		return additionalPlace;
 	}
