@@ -14,8 +14,8 @@ import org.hibernate.search.annotations.Store;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
-import org.hibernate.search.engine.spi.SearchFactoryImplementor;
-import org.hibernate.search.spi.SearchFactoryBuilder;
+import org.hibernate.search.spi.SearchIntegrator;
+import org.hibernate.search.spi.SearchIntegratorBuilder;
 
 import com.github.hotware.hsearch.event.NoEventEventSource;
 import com.github.hotware.hsearch.factory.SearchConfigurationImpl;
@@ -117,12 +117,13 @@ public class SearchFactoryTest extends TestCase {
 		SearchConfiguration searchConfiguration = new SearchConfigurationImpl();
 		List<Class<?>> classes = Arrays.asList(TopLevel.class);
 
-		SearchFactoryBuilder builder = new SearchFactoryBuilder();
-		builder.configuration(searchConfiguration).buildSearchFactory();
+		SearchIntegratorBuilder builder = new SearchIntegratorBuilder();
+		// we have to build an integrator here (but we don't need it afterwards)
+		builder.configuration(searchConfiguration).buildSearchIntegrator();
 		classes.forEach((clazz) -> {
 			builder.addClass(clazz);
 		});
-		SearchFactoryImplementor impl = builder.buildSearchFactory();
+		SearchIntegrator impl = builder.buildSearchIntegrator();
 
 		TopLevel tl = new TopLevel();
 		tl.setId(123);

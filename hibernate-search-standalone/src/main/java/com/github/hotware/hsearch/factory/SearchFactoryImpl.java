@@ -9,7 +9,7 @@ import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.backend.spi.Worker;
 import org.hibernate.search.engine.impl.FilterDef;
-import org.hibernate.search.engine.spi.SearchFactoryImplementor;
+import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.filter.FilterCachingStrategy;
 import org.hibernate.search.indexes.IndexReaderAccessor;
 import org.hibernate.search.query.dsl.QueryContextBuilder;
@@ -23,12 +23,12 @@ import com.github.hotware.hsearch.transaction.TransactionContext;
 
 public class SearchFactoryImpl implements SearchFactory {
 
-	private final SearchFactoryImplementor searchFactoryImplementor;
+	private final ExtendedSearchIntegrator searchIntegrator;
 	private final HibernateSearchQueryExecutor queryExec;
 
-	public SearchFactoryImpl(SearchFactoryImplementor searchFactoryImplementor) {
+	public SearchFactoryImpl(ExtendedSearchIntegrator searchIntegrator) {
 		super();
-		this.searchFactoryImplementor = searchFactoryImplementor;
+		this.searchIntegrator = searchIntegrator;
 		this.queryExec = new HibernateSearchQueryExecutor();
 	}
 
@@ -49,37 +49,37 @@ public class SearchFactoryImpl implements SearchFactory {
 
 	@Override
 	public IndexReaderAccessor getIndexReaderAccessor() {
-		return this.searchFactoryImplementor.getIndexReaderAccessor();
+		return this.searchIntegrator.getIndexReaderAccessor();
 	}
 
 	@Override
 	public void close() throws IOException {
-		this.searchFactoryImplementor.close();
+		this.searchIntegrator.close();
 	}
 
 	@Override
 	public QueryContextBuilder buildQueryBuilder() {
-		return this.searchFactoryImplementor.buildQueryBuilder();
+		return this.searchIntegrator.buildQueryBuilder();
 	}
 
 	@Override
 	public void optimize() {
-		this.searchFactoryImplementor.optimize();
+		this.searchIntegrator.optimize();
 	}
 
 	@Override
 	public void optimize(Class<?> entity) {
-		this.searchFactoryImplementor.optimize(entity);
+		this.searchIntegrator.optimize(entity);
 	}
 
 	@Override
 	public Statistics getStatistics() {
-		return this.searchFactoryImplementor.getStatistics();
+		return this.searchIntegrator.getStatistics();
 	}
 
 	private void doIndexWork(Iterable<?> entities, WorkType workType,
 			TransactionContext tc) {
-		Worker worker = this.searchFactoryImplementor.getWorker();
+		Worker worker = this.searchIntegrator.getWorker();
 		for (Object object : entities) {
 			worker.performWork(new Work(object, workType), tc);
 		}
@@ -88,7 +88,7 @@ public class SearchFactoryImpl implements SearchFactory {
 	@Override
 	public void purgeAll(Class<?> entityClass) {
 		TransactionContextImpl tc = new TransactionContextImpl();
-		Worker worker = this.searchFactoryImplementor.getWorker();
+		Worker worker = this.searchIntegrator.getWorker();
 		worker.performWork(new Work(entityClass, null, WorkType.PURGE_ALL), tc);
 		tc.end();
 	}
@@ -99,7 +99,7 @@ public class SearchFactoryImpl implements SearchFactory {
 
 	@Override
 	public <T> HSearchQuery<T> createQuery(Query query, Class<T> targetedEntity) {
-		HSQuery hsQuery = this.searchFactoryImplementor.createHSQuery();
+		HSQuery hsQuery = this.searchIntegrator.createHSQuery();
 		hsQuery.luceneQuery(query);
 		hsQuery.targetedEntities(Arrays.asList(targetedEntity));
 		return new HSearchQueryImpl<T>(hsQuery, this.queryExec, targetedEntity);
@@ -107,27 +107,28 @@ public class SearchFactoryImpl implements SearchFactory {
 
 	@Override
 	public FilterCachingStrategy getFilterCachingStrategy() {
-		return this.searchFactoryImplementor.getFilterCachingStrategy();
+		
+		return this.searchIntegrator.getFilterCachingStrategy();
 	}
 
 	@Override
 	public FilterDef getFilterDefinition(String name) {
-		return this.searchFactoryImplementor.getFilterDefinition(name);
+		return this.searchIntegrator.getFilterDefinition(name);
 	}
 
 	@Override
 	public int getFilterCacheBitResultsSize() {
-		return this.searchFactoryImplementor.getFilterCacheBitResultsSize();
+		return this.searchIntegrator.getFilterCacheBitResultsSize();
 	}
 
 	@Override
 	public Analyzer getAnalyzer(String name) {
-		return this.searchFactoryImplementor.getAnalyzer(name);
+		return this.searchIntegrator.getAnalyzer(name);
 	}
 
 	@Override
 	public Analyzer getAnalyzer(Class<?> clazz) {
-		return this.searchFactoryImplementor.getAnalyzer(clazz);
+		return this.searchIntegrator.getAnalyzer(clazz);
 	}
 
 }

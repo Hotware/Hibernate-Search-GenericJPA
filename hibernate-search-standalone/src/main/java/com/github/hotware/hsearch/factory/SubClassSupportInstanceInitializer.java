@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.Map;
 
 import org.hibernate.search.backend.spi.Work;
-import org.hibernate.search.impl.SimpleInitializer;
+import org.hibernate.search.engine.impl.SimpleInitializer;
 import org.hibernate.search.spi.InstanceInitializer;
 
 import com.github.hotware.hsearch.annotations.InIndex;

@@ -4,7 +4,7 @@
 	<groupId>com.github.hotware</groupId>
 	<artifactId>hibernate-search-standalone</artifactId>
 	<packaging>jar</packaging>
-	<version>0.1.0.1</version>
+	<version>0.1.0.2</version>
 	<name>hibernate-search-standalone</name>
 	<url>https://github.com/Hotware/Hibernate-Search-JPA/hibernate-search-standalone</url>
 
@@ -32,7 +32,7 @@
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-search-engine</artifactId>
-			<version>5.0.0.Beta3</version>
+			<version>5.0.0.Final</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

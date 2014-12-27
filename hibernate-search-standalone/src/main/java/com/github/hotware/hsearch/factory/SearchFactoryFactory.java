@@ -3,8 +3,9 @@ package com.github.hotware.hsearch.factory;
 import java.util.Collection;
 
 import org.hibernate.search.cfg.spi.SearchConfiguration;
-import org.hibernate.search.engine.spi.SearchFactoryImplementor;
-import org.hibernate.search.spi.SearchFactoryBuilder;
+import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
+import org.hibernate.search.spi.SearchIntegrator;
+import org.hibernate.search.spi.SearchIntegratorBuilder;
 
 import com.github.hotware.hsearch.event.EventSource;
 
@@ -16,13 +17,14 @@ public final class SearchFactoryFactory {
 
 	public static SearchFactory createSearchFactory(EventSource eventSource,
 			SearchConfiguration searchConfiguration, Collection<Class<?>> classes) {
-		SearchFactoryBuilder builder = new SearchFactoryBuilder();
-		builder.configuration(searchConfiguration).buildSearchFactory();
+		SearchIntegratorBuilder builder = new SearchIntegratorBuilder();
+		//we have to build an integrator here (but we don't need it afterwards)
+		builder.configuration(searchConfiguration).buildSearchIntegrator();
 		classes.forEach((clazz) -> {
 			builder.addClass(clazz);
 		});
-		SearchFactoryImplementor impl = builder.buildSearchFactory();
-		SearchFactory factory = new SearchFactoryImpl(impl);
+		SearchIntegrator impl = builder.buildSearchIntegrator();
+		SearchFactory factory = new SearchFactoryImpl(impl.unwrap(ExtendedSearchIntegrator.class));
 		eventSource.setEventConsumer(factory);
 		return factory;
 	}
