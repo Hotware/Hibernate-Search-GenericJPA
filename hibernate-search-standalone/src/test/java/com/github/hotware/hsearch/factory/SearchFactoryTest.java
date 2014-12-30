@@ -1,5 +1,7 @@
 package com.github.hotware.hsearch.factory;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,11 +25,9 @@ import com.github.hotware.hsearch.event.NoEventEventSource;
 import com.github.hotware.hsearch.factory.SearchConfigurationImpl;
 import com.github.hotware.hsearch.factory.SearchFactory;
 import com.github.hotware.hsearch.factory.SearchFactoryFactory;
-import com.github.hotware.hsearch.factory.TransactionContextImpl;
+import com.github.hotware.hsearch.factory.Transaction;
 
-import junit.framework.TestCase;
-
-public class SearchFactoryTest extends TestCase {
+public class SearchFactoryTest {
 
 	@Indexed
 	public static class TopLevel {
@@ -145,7 +145,7 @@ public class SearchFactoryTest extends TestCase {
 		eb.setEmbedded2(embedded2);
 
 		tl.setEmbedded(eb);
-		TransactionContextImpl tc = new TransactionContextImpl();
+		Transaction tc = new Transaction();
 
 		impl.getWorker().performWork(new Work(tl, WorkType.ADD), tc);
 	}

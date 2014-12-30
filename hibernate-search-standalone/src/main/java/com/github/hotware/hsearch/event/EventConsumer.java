@@ -2,7 +2,7 @@ package com.github.hotware.hsearch.event;
 
 import java.util.Arrays;
 
-import com.github.hotware.hsearch.factory.TransactionContextImpl;
+import com.github.hotware.hsearch.factory.Transaction;
 import com.github.hotware.hsearch.transaction.TransactionContext;
 
 public interface EventConsumer {
@@ -14,7 +14,7 @@ public interface EventConsumer {
 	}
 
 	public default void index( Iterable<?> entities) {
-		TransactionContextImpl tc = new TransactionContextImpl();
+		Transaction tc = new Transaction();
 		this.index(entities, tc);
 		tc.end();
 	}
@@ -30,7 +30,7 @@ public interface EventConsumer {
 	}
 
 	public default void update( Iterable<?> entities) {
-		TransactionContextImpl tc = new TransactionContextImpl();
+		Transaction tc = new Transaction();
 		this.update(entities, tc);
 		tc.end();
 	}
@@ -46,7 +46,7 @@ public interface EventConsumer {
 	}
 	
 	public default void delete( Iterable<?> entities) {
-		TransactionContextImpl tc = new TransactionContextImpl();
+		Transaction tc = new Transaction();
 		this.delete(entities, tc);
 		tc.end();
 	}

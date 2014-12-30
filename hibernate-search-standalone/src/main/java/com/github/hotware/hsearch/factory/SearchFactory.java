@@ -30,7 +30,7 @@ public interface SearchFactory extends Closeable, EventConsumer {
 	public void purgeAll(Class<?> entityClass, TransactionContext tc);
 
 	public default void purgeAll(Class<?> entityClass) {
-		TransactionContextImpl tc = new TransactionContextImpl();
+		Transaction tc = new Transaction();
 		this.purgeAll(entityClass, tc);
 		tc.end();
 	}
@@ -49,7 +49,7 @@ public interface SearchFactory extends Closeable, EventConsumer {
 
 	public default void deleteByQuery(Class<?> entityClass,
 			DeletionQuery deletionQuery) {
-		TransactionContextImpl tc = new TransactionContextImpl();
+		Transaction tc = new Transaction();
 		this.deleteByQuery(entityClass, deletionQuery, tc);
 		tc.end();
 	}
