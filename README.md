@@ -1,6 +1,10 @@
 Hibernate-Search-JPA
 ====================
 
+NOTE: This version currently relies temporarily on this version of Hibernate-Search:
+
+https://github.com/s4ke/hibernate-search
+
 Hibernate-Search with the JPA provider you want.
 
 
