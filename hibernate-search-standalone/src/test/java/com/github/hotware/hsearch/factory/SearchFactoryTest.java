@@ -11,11 +11,13 @@ import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
 import org.hibernate.search.annotations.Store;
+import org.hibernate.search.backend.SingularTermQuery;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
+import org.junit.Test;
 
 import com.github.hotware.hsearch.event.NoEventEventSource;
 import com.github.hotware.hsearch.factory.SearchConfigurationImpl;
@@ -113,6 +115,7 @@ public class SearchFactoryTest extends TestCase {
 
 	}
 
+	@Test
 	public void testWithoutNewClasses() {
 		SearchConfiguration searchConfiguration = new SearchConfigurationImpl();
 		List<Class<?>> classes = Arrays.asList(TopLevel.class);
@@ -147,6 +150,7 @@ public class SearchFactoryTest extends TestCase {
 		impl.getWorker().performWork(new Work(tl, WorkType.ADD), tc);
 	}
 
+	@Test
 	public void test() throws IOException {
 		try (SearchFactory factory = SearchFactoryFactory.createSearchFactory(
 				new NoEventEventSource(), new SearchConfigurationImpl(),
@@ -179,6 +183,16 @@ public class SearchFactoryTest extends TestCase {
 					1,
 					factory.getStatistics().getNumberOfIndexedEntities(
 							TopLevel.class.getName()));
+
+			factory.deleteByQuery(TopLevel.class, new SingularTermQuery("id",
+					"123"));
+			assertEquals(
+					0,
+					factory.createQuery(
+							TopLevel.class, factory.buildQueryBuilder()
+											.forEntity(TopLevel.class).get().all()
+											.createQuery())
+							.queryResultSize());
 		}
 	}
 

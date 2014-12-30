@@ -98,11 +98,11 @@ public class SearchFactoryImpl implements SearchFactory {
 	}
 
 	@Override
-	public <T> HSearchQuery<T> createQuery(Query query, Class<T> targetedEntity) {
+	public <T> HSearchQuery<T> createQuery(Class<T> targetetEntity, Query query) {
 		HSQuery hsQuery = this.searchIntegrator.createHSQuery();
 		hsQuery.luceneQuery(query);
-		hsQuery.targetedEntities(Arrays.asList(targetedEntity));
-		return new HSearchQueryImpl<T>(hsQuery, this.queryExec, targetedEntity);
+		hsQuery.targetedEntities(Arrays.asList(targetetEntity));
+		return new HSearchQueryImpl<T>(hsQuery, this.queryExec, targetetEntity);
 	}
 
 	@Override
