@@ -5,6 +5,8 @@ import java.util.Arrays;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
+import org.hibernate.search.backend.DeletionQuery;
+import org.hibernate.search.backend.spi.DeleteByQueryWork;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.backend.spi.Worker;
@@ -86,11 +88,9 @@ public class SearchFactoryImpl implements SearchFactory {
 	}
 
 	@Override
-	public void purgeAll(Class<?> entityClass) {
-		TransactionContextImpl tc = new TransactionContextImpl();
+	public void purgeAll(Class<?> entityClass, TransactionContext tc) {
 		Worker worker = this.searchIntegrator.getWorker();
 		worker.performWork(new Work(entityClass, null, WorkType.PURGE_ALL), tc);
-		tc.end();
 	}
 
 	public void doIndexWork(Object entities, WorkType workType) {
@@ -107,7 +107,6 @@ public class SearchFactoryImpl implements SearchFactory {
 
 	@Override
 	public FilterCachingStrategy getFilterCachingStrategy() {
-		
 		return this.searchIntegrator.getFilterCachingStrategy();
 	}
 
@@ -127,8 +126,16 @@ public class SearchFactoryImpl implements SearchFactory {
 	}
 
 	@Override
-	public Analyzer getAnalyzer(Class<?> clazz) {
-		return this.searchIntegrator.getAnalyzer(clazz);
+	public Analyzer getAnalyzer(Class<?> entityClass) {
+		return this.searchIntegrator.getAnalyzer(entityClass);
+	}
+
+	@Override
+	public void deleteByQuery(Class<?> entityClass,
+			DeletionQuery deletionQuery, TransactionContext tc) {
+		Worker worker = this.searchIntegrator.getWorker();
+		worker.performWork(new DeleteByQueryWork(entityClass, deletionQuery),
+				tc);
 	}
 
 }
