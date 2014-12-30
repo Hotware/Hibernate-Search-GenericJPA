@@ -3,7 +3,7 @@ Hibernate-Search-JPA
 
 NOTE: This version currently relies temporarily on this version of Hibernate-Search:
 
-https://github.com/s4ke/hibernate-search
+https://github.com/s4ke/hibernate-search (branch deleteByQuery)
 
 Hibernate-Search with the JPA provider you want.
 
