@@ -35,7 +35,7 @@ public interface SearchFactory extends Closeable, EventConsumer {
 		tc.end();
 	}
 
-	public <T> HSearchQuery<T> createQuery(Class<T> targetetEntity, Query query);
+	public <T> HSearchQuery<T> createQuery(Class<T> targetedEntity, Query query);
 
 	public FilterCachingStrategy getFilterCachingStrategy();
 

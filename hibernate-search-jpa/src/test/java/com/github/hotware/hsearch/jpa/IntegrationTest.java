@@ -136,17 +136,17 @@ public class IntegrationTest {
 			this.shutdown();
 		}
 	}
-	
-//	@Test
-//	public void testBatoo() throws IOException {
-//		this.setup("batoo");
-//		try {
-//			this.metaModelParser();
-//			this.integration();
-//		} finally {
-//			this.shutdown();
-//		}
-//	}
+
+	// @Test
+	// public void testBatoo() throws IOException {
+	// this.setup("batoo");
+	// try {
+	// this.metaModelParser();
+	// this.integration();
+	// } finally {
+	// this.shutdown();
+	// }
+	// }
 
 	public void metaModelParser() throws IOException {
 		EntityProvider entityProvider = null;
@@ -155,8 +155,8 @@ public class IntegrationTest {
 			MetaModelParser parser = new MetaModelParser();
 			parser.parse(this.emf.getMetamodel());
 			{
-				//this test is not sufficient enough
-				//see: https://github.com/Hotware/Hibernate-Search-JPA/issues/3
+				// this test is not sufficient enough
+				// see: https://github.com/Hotware/Hibernate-Search-JPA/issues/3
 				Sorcerer sorc = this.valinor.getSorcerers().iterator().next();
 				Function<Object, Object> func = parser
 						.getRootParentAccessorsForClass(Sorcerer.class).get(
@@ -212,13 +212,15 @@ public class IntegrationTest {
 						.should(qb.keyword().onField("sorcerers.name")
 								.matching("gandalf").createQuery())
 						.createQuery();
-				HSearchQuery<Place> jpaQuery = searchFactory.createQuery(query,
-						Place.class);
-				List<Place> places = jpaQuery.query(entityProvider, Fetch.BATCH);
+				HSearchQuery<Place> jpaQuery = searchFactory.createQuery(
+						Place.class, query);
+				List<Place> places = jpaQuery
+						.query(entityProvider, Fetch.BATCH);
 				assertEquals(2, places.size());
 			}
 
-			//check whether we not just returned everything in the test before :D
+			// check whether we not just returned everything in the test before
+			// :D
 			{
 				QueryBuilder qb = searchFactory.buildQueryBuilder()
 						.forEntity(Place.class).get();
@@ -227,9 +229,10 @@ public class IntegrationTest {
 						.should(qb.keyword().onField("sorcerers.name")
 								.matching("saruman").createQuery())
 						.createQuery();
-				HSearchQuery<Place> jpaQuery = searchFactory.createQuery(query,
-						Place.class);
-				List<Place> places = jpaQuery.query(entityProvider, Fetch.BATCH);
+				HSearchQuery<Place> jpaQuery = searchFactory.createQuery(
+						Place.class, query);
+				List<Place> places = jpaQuery
+						.query(entityProvider, Fetch.BATCH);
 				assertEquals(1, places.size());
 			}
 
@@ -432,8 +435,8 @@ public class IntegrationTest {
 			Fetch fetchType) {
 		Query query = searchFactory.buildQueryBuilder().forEntity(Place.class)
 				.get().keyword().onField(field).matching(value).createQuery();
-		HSearchQuery<Place> jpaQuery = searchFactory.createQuery(query,
-				Place.class);
+		HSearchQuery<Place> jpaQuery = searchFactory.createQuery(Place.class,
+				query);
 		List<Place> places = jpaQuery.query(entityProvider, fetchType);
 		return places;
 	}

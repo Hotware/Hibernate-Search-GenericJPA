@@ -13,6 +13,7 @@ import javax.persistence.EntityManagerFactory;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
+import org.hibernate.search.backend.DeletionQuery;
 import org.hibernate.search.engine.impl.FilterDef;
 import org.hibernate.search.filter.FilterCachingStrategy;
 import org.hibernate.search.indexes.IndexReaderAccessor;
@@ -141,33 +142,44 @@ public abstract class EJBSearchFactory implements SearchFactory {
 	}
 
 	@Override
-	public <T> HSearchQuery<T> createQuery(Query query, Class<T> targetedEntity) {
-		return this.searchFactory.createQuery(query, targetedEntity);
-	}
-
-	@Override
 	public FilterCachingStrategy getFilterCachingStrategy() {
 		return this.searchFactory.getFilterCachingStrategy();
 	}
 
 	@Override
 	public FilterDef getFilterDefinition(String name) {
-		return this.getFilterDefinition(name);
+		return this.searchFactory.getFilterDefinition(name);
 	}
 
 	@Override
 	public int getFilterCacheBitResultsSize() {
-		return this.getFilterCacheBitResultsSize();
+		return this.searchFactory.getFilterCacheBitResultsSize();
 	}
 
 	@Override
 	public Analyzer getAnalyzer(String name) {
-		return this.getAnalyzer(name);
+		return this.searchFactory.getAnalyzer(name);
 	}
 
 	@Override
 	public Analyzer getAnalyzer(Class<?> clazz) {
-		return this.getAnalyzer(clazz);
+		return this.searchFactory.getAnalyzer(clazz);
+	}
+
+	@Override
+	public void purgeAll(Class<?> entityClass, TransactionContext tc) {
+		this.searchFactory.purgeAll(entityClass, tc);
+	}
+
+	@Override
+	public <T> HSearchQuery<T> createQuery(Class<T> targetedEntity, Query query) {
+		return this.searchFactory.createQuery(targetedEntity, query);
+	}
+
+	@Override
+	public void deleteByQuery(Class<?> entityClass,
+			DeletionQuery deletionQuery, TransactionContext tc) {
+		this.searchFactory.deleteByQuery(entityClass, deletionQuery, tc);
 	}
 
 }
