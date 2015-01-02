@@ -200,3 +200,14 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+
+hibernate-search-standalone/src/main/java/com/github/hotware/hsearch/factory/
+	SearchConfigurationImpl.java
+is originally from Hibernate Search and has the following Copyright Notice
+/*
+ * Hibernate Search, full-text search for your domain model
+ *
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root (of Hibernate-Search)
+ * directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
+ */
