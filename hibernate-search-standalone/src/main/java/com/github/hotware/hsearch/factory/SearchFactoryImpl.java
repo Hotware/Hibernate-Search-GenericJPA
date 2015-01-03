@@ -17,6 +17,7 @@ package com.github.hotware.hsearch.factory;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
@@ -87,6 +88,11 @@ public class SearchFactoryImpl implements SearchFactory {
 	@Override
 	public void optimize(Class<?> entity) {
 		this.searchIntegrator.optimize(entity);
+	}
+	
+	@Override
+	public Set<Class<?>> getIndexedEntities() {
+		return this.searchIntegrator.getIndexedTypes();
 	}
 
 	@Override

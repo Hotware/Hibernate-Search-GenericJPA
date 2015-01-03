@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
@@ -104,6 +105,11 @@ public abstract class EJBSearchFactory implements SearchFactory {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+	
+	@Override
+	public Set<Class<?>> getIndexedEntities() {
+		return this.searchFactory.getIndexedEntities();
 	}
 
 	@Override

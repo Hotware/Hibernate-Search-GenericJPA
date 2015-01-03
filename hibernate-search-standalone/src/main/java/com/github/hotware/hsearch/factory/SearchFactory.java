@@ -16,6 +16,7 @@
 package com.github.hotware.hsearch.factory;
 
 import java.io.Closeable;
+import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
@@ -33,6 +34,8 @@ import com.github.hotware.hsearch.transaction.TransactionContext;
 public interface SearchFactory extends Closeable, EventConsumer {
 
 	public IndexReaderAccessor getIndexReaderAccessor();
+	
+	public Set<Class<?>> getIndexedEntities();
 
 	public QueryContextBuilder buildQueryBuilder();
 

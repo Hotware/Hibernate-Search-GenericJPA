@@ -96,6 +96,14 @@ public final class HSearchJPAEventListener {
 			}
 		}
 	}
+	
+	public static void register(Listener listener) {
+		listeners.add(listener);
+	}
+	
+	public static void remove(Listener listener) {
+		listeners.remove(listener);
+	}
 
 	public static interface Listener {
 
