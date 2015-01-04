@@ -49,7 +49,7 @@ import org.hibernate.search.annotations.IndexedEmbedded;
  * specific class. This could be used to propagate events up <br>
  * <br>
  * This could be used to propagate events up to the top entity, but
- * Hibernate-Search takes care of this via the @ContainedIn events, which would
+ * Hibernate-Search takes care of this via the @ContainedIn events, which
  * is neat :). Either way, we still need this class to check whether the classes
  * are annotated properly (every entity has to know its parent via
  * {@link org.hibernate.search.annotations.ContainedIn}

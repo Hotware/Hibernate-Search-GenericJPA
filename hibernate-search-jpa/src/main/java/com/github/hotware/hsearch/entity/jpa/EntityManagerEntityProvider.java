@@ -32,6 +32,7 @@ public class EntityManagerEntityProvider implements EntityProvider {
 
 	private final EntityManager em;
 	private final Map<Class<?>, String> idProperties;
+	//TODO: add support for fetch profiles?
 
 	public EntityManagerEntityProvider(EntityManager em,
 			Map<Class<?>, String> idProperties) {
