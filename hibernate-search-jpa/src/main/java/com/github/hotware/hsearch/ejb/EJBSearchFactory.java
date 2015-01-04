@@ -30,7 +30,6 @@ import javax.persistence.EntityManagerFactory;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.backend.DeletionQuery;
-import org.hibernate.search.engine.impl.FilterDef;
 import org.hibernate.search.filter.FilterCachingStrategy;
 import org.hibernate.search.indexes.IndexReaderAccessor;
 import org.hibernate.search.query.dsl.QueryContextBuilder;
@@ -166,17 +165,7 @@ public abstract class EJBSearchFactory implements SearchFactory {
 	public FilterCachingStrategy getFilterCachingStrategy() {
 		return this.searchFactory.getFilterCachingStrategy();
 	}
-
-	@Override
-	public FilterDef getFilterDefinition(String name) {
-		return this.searchFactory.getFilterDefinition(name);
-	}
-
-	@Override
-	public int getFilterCacheBitResultsSize() {
-		return this.searchFactory.getFilterCacheBitResultsSize();
-	}
-
+	
 	@Override
 	public Analyzer getAnalyzer(String name) {
 		return this.searchFactory.getAnalyzer(name);

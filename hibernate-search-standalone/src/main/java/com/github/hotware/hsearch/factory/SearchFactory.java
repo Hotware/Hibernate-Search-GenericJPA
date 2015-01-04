@@ -21,7 +21,6 @@ import java.util.Set;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.backend.DeletionQuery;
-import org.hibernate.search.engine.impl.FilterDef;
 import org.hibernate.search.filter.FilterCachingStrategy;
 import org.hibernate.search.indexes.IndexReaderAccessor;
 import org.hibernate.search.query.dsl.QueryContextBuilder;
@@ -56,10 +55,6 @@ public interface SearchFactory extends Closeable, EventConsumer {
 	public <T> HSearchQuery<T> createQuery(Class<T> targetedEntity, Query query);
 
 	public FilterCachingStrategy getFilterCachingStrategy();
-
-	public FilterDef getFilterDefinition(String name);
-
-	public int getFilterCacheBitResultsSize();
 
 	public Analyzer getAnalyzer(String name);
 

@@ -26,7 +26,6 @@ import org.hibernate.search.backend.spi.DeleteByQueryWork;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.backend.spi.Worker;
-import org.hibernate.search.engine.impl.FilterDef;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.filter.FilterCachingStrategy;
 import org.hibernate.search.indexes.IndexReaderAccessor;
@@ -129,16 +128,6 @@ public class SearchFactoryImpl implements SearchFactory {
 	@Override
 	public FilterCachingStrategy getFilterCachingStrategy() {
 		return this.searchIntegrator.getFilterCachingStrategy();
-	}
-
-	@Override
-	public FilterDef getFilterDefinition(String name) {
-		return this.searchIntegrator.getFilterDefinition(name);
-	}
-
-	@Override
-	public int getFilterCacheBitResultsSize() {
-		return this.searchIntegrator.getFilterCacheBitResultsSize();
 	}
 
 	@Override
