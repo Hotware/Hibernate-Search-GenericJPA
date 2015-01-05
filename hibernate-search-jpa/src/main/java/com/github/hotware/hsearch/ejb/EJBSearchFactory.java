@@ -17,6 +17,7 @@ package com.github.hotware.hsearch.ejb;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -75,7 +76,8 @@ public abstract class EJBSearchFactory implements SearchFactory {
 	void init() {
 		this.parser = new MetaModelParser();
 		this.parser.parse(this.getEmf().getMetamodel());
-		Set<Class<?>> listenTo = this.parser.getIndexRelevantEntites();
+		Set<Class<?>> listenTo = new HashSet<>(
+				this.parser.getIndexRelevantEntites());
 		listenTo.removeAll(this.excludeFromAutomaticIndexing());
 		JPAEventSource eventSource = JPAEventSource.register(listenTo, true);
 		SearchConfigurationImpl config;
