@@ -32,10 +32,23 @@ import com.github.hotware.hsearch.transaction.TransactionContext;
 
 public interface SearchFactory extends Closeable, EventConsumer {
 
+	/**
+	 * provides means for getting vanilla Lucene IndexReaders. use this if you
+	 * need direct index access because the SearchFactory doesn't allow the
+	 * things you want to do
+	 * 
+	 * @return IndexReaderAccessor for this Searchfactory
+	 */
 	public IndexReaderAccessor getIndexReaderAccessor();
 	
+	/**
+	 * @return Set of all indexed Entities' classes.
+	 */
 	public Set<Class<?>> getIndexedEntities();
 
+	/**
+	 * @return
+	 */
 	public QueryContextBuilder buildQueryBuilder();
 
 	public void optimize();
@@ -43,7 +56,7 @@ public interface SearchFactory extends Closeable, EventConsumer {
 	public void optimize(Class<?> entityClass);
 
 	public Statistics getStatistics();
-	
+
 	public void purgeAll(Class<?> entityClass, TransactionContext tc);
 
 	public default void purgeAll(Class<?> entityClass) {
@@ -52,7 +65,7 @@ public interface SearchFactory extends Closeable, EventConsumer {
 		tc.end();
 	}
 
-	public <T> HSearchQuery<T> createQuery(Class<T> targetedEntity, Query query);
+	public HSearchQuery createQuery(Query query, Class<?>... targetedEntities);
 
 	public FilterCachingStrategy getFilterCachingStrategy();
 

@@ -262,28 +262,26 @@ public class IndexOperationsTest {
 		assertEquals(
 				count,
 				this.factory.createQuery(
-						Book.class,
 						this.factory.buildQueryBuilder().forEntity(Book.class)
-								.get().all().createQuery()).queryResultSize());
+								.get().all().createQuery(), Book.class)
+						.queryResultSize());
 	}
 
 	private List<Book> all() {
 		return this.factory
 				.createQuery(
-						Book.class,
 						this.factory.buildQueryBuilder().forEntity(Book.class)
-								.get().all().createQuery()).maxResults(10)
-				.queryDto(Book.class);
+								.get().all().createQuery(), Book.class)
+				.maxResults(10).queryDto(Book.class);
 	}
 
 	private Book id(int id) {
 		return this.factory
 				.createQuery(
-						Book.class,
 						this.factory.buildQueryBuilder().forEntity(Book.class)
 								.get().keyword().onField("id")
-								.matching(String.valueOf(id)).createQuery())
-				.maxResults(10).queryDto(Book.class).get(0);
+								.matching(String.valueOf(id)).createQuery(),
+						Book.class).maxResults(10).queryDto(Book.class).get(0);
 	}
 
 	@After

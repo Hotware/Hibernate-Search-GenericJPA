@@ -32,7 +32,8 @@ public class EntityManagerEntityProvider implements EntityProvider {
 
 	private final EntityManager em;
 	private final Map<Class<?>, String> idProperties;
-	//TODO: add support for fetch profiles?
+
+	// TODO: add support for fetch profiles?
 
 	public EntityManagerEntityProvider(EntityManager em,
 			Map<Class<?>, String> idProperties) {
@@ -46,24 +47,24 @@ public class EntityManagerEntityProvider implements EntityProvider {
 	}
 
 	@Override
-	public <T> T get(Class<T> entityClass, Object id) {
+	public Object get(Class<?> entityClass, Object id) {
 		return this.em.find(entityClass, id);
 	}
 
 	@Override
-	public <T> List<T> getBatch(Class<T> entityClass, List<Object> ids) {
-		List<T> ret = new ArrayList<>(ids.size());
+	public List<Object> getBatch(Class<?> entityClass, List<Object> ids) {
+		List<Object> ret = new ArrayList<>(ids.size());
 		if (ids.size() > 0) {
 			CriteriaBuilder cb = this.em.getCriteriaBuilder();
-			CriteriaQuery<T> q = cb.createQuery(entityClass);
-			Root<T> ent = q.from(entityClass);
+			CriteriaQuery<?> q = cb.createQuery(entityClass);
+			Root<?> ent = q.from(entityClass);
 			String idProperty = this.idProperties.get(entityClass);
 			In<Object> in = cb.in(ent.get(idProperty));
 			for (Object id : ids) {
 				in.value(id);
 			}
-			ret.addAll(this.em.createQuery(q.select(ent).where(in))
-					.getResultList());
+			ret.addAll(this.em.createQuery(
+					q.multiselect(ent).where(in)).getResultList());
 		}
 		return ret;
 	}

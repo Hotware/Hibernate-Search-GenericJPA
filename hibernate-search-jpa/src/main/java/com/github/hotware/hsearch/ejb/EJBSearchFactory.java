@@ -182,8 +182,8 @@ public abstract class EJBSearchFactory implements SearchFactory {
 	}
 
 	@Override
-	public <T> HSearchQuery<T> createQuery(Class<T> targetedEntity, Query query) {
-		return this.searchFactory.createQuery(targetedEntity, query);
+	public HSearchQuery createQuery(Query query, Class<?>... targetedEntities) {
+		return this.searchFactory.createQuery(query, targetedEntities);
 	}
 
 	@Override

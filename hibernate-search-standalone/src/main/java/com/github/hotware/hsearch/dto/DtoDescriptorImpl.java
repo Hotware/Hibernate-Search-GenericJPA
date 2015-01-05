@@ -18,8 +18,10 @@ package com.github.hotware.hsearch.dto;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.github.hotware.hsearch.dto.DtoDescriptor.DtoDescription.FieldDescription;
 import com.github.hotware.hsearch.dto.annotations.DtoField;
@@ -30,7 +32,7 @@ public class DtoDescriptorImpl implements DtoDescriptor {
 
 	@Override
 	public DtoDescription getDtoDescription(Class<?> clazz) {
-		final Map<String, List<FieldDescription>> fieldDescriptionsForProfile = new HashMap<>();
+		final Map<String, Set<FieldDescription>> fieldDescriptionsForProfile = new HashMap<>();
 		DtoOverEntity[] dtoOverEntity = clazz
 				.getAnnotationsByType(DtoOverEntity.class);
 		if (dtoOverEntity.length != 1) {
@@ -69,12 +71,20 @@ public class DtoDescriptorImpl implements DtoDescriptor {
 								// change this!
 								fieldName = field.getName();
 							}
-							List<FieldDescription> fieldDescriptions = fieldDescriptionsForProfile
+							Set<FieldDescription> fieldDescriptions = fieldDescriptionsForProfile
 									.computeIfAbsent(profileName, (key) -> {
-										return new ArrayList<>();
+										return new HashSet<>();
 									});
-							fieldDescriptions.add(new FieldDescription(
-									fieldName, field));
+							FieldDescription fieldDesc = new FieldDescription(
+									fieldName, field);
+							if (fieldDescriptions.contains(fieldDesc)) {
+								throw new IllegalArgumentException(
+										"profile "
+												+ profileName
+												+ " already has a field to project from for "
+												+ field);
+							}
+							fieldDescriptions.add(fieldDesc);
 						});
 					});
 		if (fieldDescriptionsForProfile.isEmpty()) {

@@ -15,7 +15,10 @@
  */
 package com.github.hotware.hsearch.query;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.search.Filter;
@@ -24,21 +27,23 @@ import org.apache.lucene.search.Sort;
 import org.hibernate.search.engine.ProjectionConstants;
 import org.hibernate.search.filter.FullTextFilter;
 import org.hibernate.search.query.engine.spi.HSQuery;
+import org.hibernate.search.spi.SearchIntegrator;
 
 import com.github.hotware.hsearch.dto.HibernateSearchQueryExecutor;
 import com.github.hotware.hsearch.entity.EntityProvider;
 
-public class HSearchQueryImpl<T> implements HSearchQuery<T> {
+public class HSearchQueryImpl implements HSearchQuery {
 
 	private final HSQuery hsquery;
 	private final HibernateSearchQueryExecutor queryExec;
-	private final Class<T> entityType;
+	private final SearchIntegrator searchIntegrator;
 
 	public HSearchQueryImpl(HSQuery hsquery,
-			HibernateSearchQueryExecutor queryExec, Class<T> entityType) {
+			HibernateSearchQueryExecutor queryExec,
+			SearchIntegrator searchIntegrator) {
 		this.hsquery = hsquery;
 		this.queryExec = queryExec;
-		this.entityType = entityType;
+		this.searchIntegrator = searchIntegrator;
 	}
 
 	/*
@@ -49,7 +54,7 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 	 * .apache.lucene.search.Sort)
 	 */
 	@Override
-	public HSearchQuery<T> sort(Sort sort) {
+	public HSearchQuery sort(Sort sort) {
 		this.hsquery.sort(sort);
 		return this;
 	}
@@ -62,7 +67,7 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 	 * (org.apache.lucene.search.Filter)
 	 */
 	@Override
-	public HSearchQuery<T> filter(Filter filter) {
+	public HSearchQuery filter(Filter filter) {
 		this.hsquery.filter(filter);
 		return this;
 	}
@@ -75,7 +80,7 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 	 * (int)
 	 */
 	@Override
-	public HSearchQuery<T> firstResult(int firstResult) {
+	public HSearchQuery firstResult(int firstResult) {
 		this.hsquery.firstResult(firstResult);
 		return this;
 	}
@@ -88,7 +93,7 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 	 * (int)
 	 */
 	@Override
-	public HSearchQuery<T> maxResults(int maxResults) {
+	public HSearchQuery maxResults(int maxResults) {
 		this.hsquery.maxResults(maxResults);
 		return this;
 	}
@@ -178,21 +183,55 @@ public class HSearchQueryImpl<T> implements HSearchQuery<T> {
 		this.hsquery.disableFullTextFilter(name);
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
-	public List<T> query(EntityProvider entityProvider, Fetch fetchType) {
-		List<T> ret;
-		List<Object[]> projected = this.queryProjection(ProjectionConstants.ID);
+	public List query(EntityProvider entityProvider, Fetch fetchType) {
+		List<Object> ret;
+		List<Object[]> projected = this.queryProjection(
+				ProjectionConstants.OBJECT_CLASS, ProjectionConstants.ID);
 		if (fetchType == Fetch.FIND_BY_ID) {
 			ret = projected.stream().map((arr) -> {
-				return entityProvider.get(this.entityType, arr[0]);
+				return entityProvider.get((Class<?>) arr[0], arr[1]);
 			}).collect(Collectors.toList());
 		} else {
-			ret = entityProvider.getBatch(this.entityType, projected.stream()
-					.map((arr) -> {
-						return arr[0];
-					}).collect(Collectors.toList()));
+			ret = new ArrayList<>(projected.size());
+			Map<Class<?>, List<Object>> idsForClass = new HashMap<>();
+			List<Object> originalOrder = new ArrayList<>();
+			Map<Object, Object> idToObject = new HashMap<>();
+			// split the ids for each class (and also make sure the original
+			// order is saved. this is needed even for only one class)
+			projected.stream().forEach((arr) -> {
+				originalOrder.add(arr[1]);
+				idsForClass.computeIfAbsent((Class<?>) arr[0], (clazz) -> {
+					return new ArrayList<>();
+				}).add(arr[1]);
+			});
+			// get all entities of the same type in one batch
+			idsForClass.entrySet().forEach(
+					(Map.Entry<Class<?>, List<Object>> entry) -> {
+						entityProvider
+								.getBatch(entry.getKey(), entry.getValue())
+								.stream()
+								.forEach(
+										(object) -> {
+											Object id = this.searchIntegrator
+													.getIndexBinding(
+															entry.getKey())
+													.getDocumentBuilder()
+													.getId(object);
+											Object value = object;
+											idToObject.put(id, value);
+										});
+					});
+			// and put everything back into order
+			originalOrder.stream().forEach((id) -> {
+				ret.add(idToObject.get(id));
+			});
+		}
+		if (ret.size() != projected.size()) {
+			throw new AssertionError(
+					"returned size was not equal to projected size");
 		}
 		return ret;
 	}
-
 }

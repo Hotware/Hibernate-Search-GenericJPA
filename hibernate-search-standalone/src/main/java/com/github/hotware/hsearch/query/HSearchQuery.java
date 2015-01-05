@@ -24,18 +24,18 @@ import org.hibernate.search.filter.FullTextFilter;
 
 import com.github.hotware.hsearch.entity.EntityProvider;
 
-public interface HSearchQuery<T> {
+public interface HSearchQuery {
 
 	// TODO: check if more methods are from hsquery are needed here
 	// FIXME: faceting is definitely needed!
 
-	public HSearchQuery<T> sort(Sort sort);
+	public HSearchQuery sort(Sort sort);
 
-	public HSearchQuery<T> filter(Filter filter);
+	public HSearchQuery filter(Filter filter);
 
-	public HSearchQuery<T> firstResult(int firstResult);
+	public HSearchQuery firstResult(int firstResult);
 
-	public HSearchQuery<T> maxResults(int maxResults);
+	public HSearchQuery maxResults(int maxResults);
 
 	public Query getLuceneQuery();
 
@@ -49,9 +49,11 @@ public interface HSearchQuery<T> {
 
 	public void disableFullTextFilter(String name);
 	
-	public List<T> query(EntityProvider entityProvider, Fetch fetchType);
+	@SuppressWarnings("rawtypes")
+	public List query(EntityProvider entityProvider, Fetch fetchType);
 	
-	public default List<T> query(EntityProvider entityProvider) {
+	@SuppressWarnings("rawtypes")
+	public default List query(EntityProvider entityProvider) {
 		return this.query(entityProvider, Fetch.FIND_BY_ID);
 	}
 	

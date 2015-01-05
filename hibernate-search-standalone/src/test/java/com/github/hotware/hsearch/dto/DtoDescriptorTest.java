@@ -39,9 +39,20 @@ public class DtoDescriptorTest extends TestCase {
 		String fieldTwo;
 
 	}
-	
+
 	public static class B {
-		
+
+	}
+
+	@DtoOverEntity(entityClass = C.class)
+	public static class C {
+
+		// this should be the reason for an exception
+		// when used with the Descriptor
+		@DtoField
+		@DtoField
+		String field;
+
 	}
 
 	public void testDescriptor() {
@@ -49,23 +60,36 @@ public class DtoDescriptorTest extends TestCase {
 		DtoDescription description = descriptor.getDtoDescription(A.class);
 		assertEquals(A.class, description.getDtoClass());
 		assertEquals(B.class, description.getEntityClass());
-		assertEquals(1, description.getFieldDescriptionsForProfile("toast").size());
-		assertEquals("toastFieldName",
-				description.getFieldDescriptionsForProfile("toast").get(0)
-						.getFieldName());
+		assertEquals(1, description.getFieldDescriptionsForProfile("toast")
+				.size());
+		assertEquals("toastFieldName", description
+				.getFieldDescriptionsForProfile("toast").iterator().next()
+				.getFieldName());
 		assertEquals(
 				2,
 				description.getFieldDescriptionsForProfile(
 						DtoDescription.DEFAULT_PROFILE).size());
-		assertEquals(
-				"fieldOne",
-				description
-						.getFieldDescriptionsForProfile(DtoDescription.DEFAULT_PROFILE)
-						.get(0).getFieldName());
-		assertEquals(
-				"fieldTwo",
-				description
-						.getFieldDescriptionsForProfile(DtoDescription.DEFAULT_PROFILE)
-						.get(1).getFieldName());
+
+		int found = 0;
+		for (DtoDescription.FieldDescription fDesc : description
+				.getFieldDescriptionsForProfile(DtoDescription.DEFAULT_PROFILE)) {
+			if ("fieldOne".equals(fDesc.getFieldName())) {
+				++found;
+			} else if ("fieldTwo".equals(fDesc.getFieldName())) {
+				++found;
+			}
+		}
+		if (found != 2) {
+			fail("the default profile for " + A.class
+					+ " should have 2 different FieldDescriptions");
+		}
+
+		try {
+			descriptor.getDtoDescription(C.class);
+			fail("invalid description with two fieldnames annotated to one field in the same profile"
+					+ " should yield an exception");
+		} catch (IllegalArgumentException e) {
+
+		}
 	}
 }

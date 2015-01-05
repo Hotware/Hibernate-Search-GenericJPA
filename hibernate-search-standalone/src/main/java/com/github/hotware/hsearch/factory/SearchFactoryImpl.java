@@ -16,7 +16,9 @@
 package com.github.hotware.hsearch.factory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -88,7 +90,7 @@ public class SearchFactoryImpl implements SearchFactory {
 	public void optimize(Class<?> entity) {
 		this.searchIntegrator.optimize(entity);
 	}
-	
+
 	@Override
 	public Set<Class<?>> getIndexedEntities() {
 		return this.searchIntegrator.getIndexedTypes();
@@ -118,11 +120,13 @@ public class SearchFactoryImpl implements SearchFactory {
 	}
 
 	@Override
-	public <T> HSearchQuery<T> createQuery(Class<T> targetedEntity, Query query) {
+	public HSearchQuery createQuery(Query query, Class<?>... targetedEntities) {
 		HSQuery hsQuery = this.searchIntegrator.createHSQuery();
 		hsQuery.luceneQuery(query);
-		hsQuery.targetedEntities(Arrays.asList(targetedEntity));
-		return new HSearchQueryImpl<T>(hsQuery, this.queryExec, targetedEntity);
+		// to make sure no entity is used twice
+		hsQuery.targetedEntities(new ArrayList<>(new HashSet<>(Arrays
+				.asList(targetedEntities))));
+		return new HSearchQueryImpl(hsQuery, this.queryExec, this.searchIntegrator);
 	}
 
 	@Override

@@ -18,26 +18,44 @@ package com.github.hotware.hsearch.dto;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.github.hotware.hsearch.dto.annotations.DtoField;
 
+/**
+ * Parser Interface for Dto Objects to project from the index (no more manual
+ * projections)
+ * 
+ * @author Martin Braun
+ */
 public interface DtoDescriptor {
 
+	/**
+	 * parses a class annotated with @DtoOverEntity and attempts to create a
+	 * valid DtoDescription out of it
+	 * 
+	 * @param clazz
+	 *            the class to parse
+	 * @return a valid DtoDescription
+	 * @throws IllegalArgumentException
+	 *             when the Dto-Class is annotated in a wrong way (i.e. the 2
+	 *             fieldNames for one field in the same profile)
+	 */
 	public DtoDescription getDtoDescription(Class<?> clazz);
 
 	public final class DtoDescription {
 
-		public static final String DEFAULT_PROFILE = (String) getDefaultValueForAnnotationMethod(DtoField.class,
-						"profileName");
-		public static final String DEFAULT_FIELD_NAME = (String) getDefaultValueForAnnotationMethod(DtoField.class, "fieldName");
-		
+		public static final String DEFAULT_PROFILE = (String) getDefaultValueForAnnotationMethod(
+				DtoField.class, "profileName");
+		public static final String DEFAULT_FIELD_NAME = (String) getDefaultValueForAnnotationMethod(
+				DtoField.class, "fieldName");
 
 		public static Object getDefaultValueForAnnotationMethod(
 				Class<? extends Annotation> annotationClass, String name) {
 			try {
-				return annotationClass.getDeclaredMethod(name).getDefaultValue();
+				return annotationClass.getDeclaredMethod(name)
+						.getDefaultValue();
 			} catch (NoSuchMethodException e) {
 				throw new RuntimeException(e);
 			} catch (SecurityException e) {
@@ -47,25 +65,26 @@ public interface DtoDescriptor {
 
 		private final Class<?> dtoClass;
 		private final Class<?> entityClass;
-		private final Map<String, List<FieldDescription>> fieldNamesForProfile;
+		private final Map<String, Set<FieldDescription>> fieldNamesForProfile;
 
 		public DtoDescription(Class<?> dtoClass, Class<?> entityClass,
-				Map<String, List<FieldDescription>> fieldNamesForProfile) {
+				Map<String, Set<FieldDescription>> fieldNamesForProfile) {
 			super();
 			this.dtoClass = dtoClass;
 			this.entityClass = entityClass;
 			this.fieldNamesForProfile = fieldNamesForProfile;
 		}
 
-		public List<FieldDescription> getFieldDescriptionsForProfile(String profile) {
-			return Collections.unmodifiableList(this.fieldNamesForProfile
-					.getOrDefault(profile, Collections.emptyList()));
+		public Set<FieldDescription> getFieldDescriptionsForProfile(
+				String profile) {
+			return Collections.unmodifiableSet(this.fieldNamesForProfile
+					.getOrDefault(profile, Collections.emptySet()));
 		}
 
 		public Class<?> getEntityClass() {
 			return this.entityClass;
 		}
-		
+
 		public Class<?> getDtoClass() {
 			return this.dtoClass;
 		}

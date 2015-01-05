@@ -41,6 +41,7 @@ import com.github.hotware.hsearch.factory.SearchConfigurationImpl;
 import com.github.hotware.hsearch.factory.SearchFactory;
 import com.github.hotware.hsearch.factory.SearchFactoryFactory;
 import com.github.hotware.hsearch.factory.Transaction;
+import com.github.hotware.hsearch.query.HSearchQuery;
 
 public class SearchFactoryTest {
 
@@ -201,14 +202,10 @@ public class SearchFactoryTest {
 
 			factory.deleteByQuery(TopLevel.class, new SingularTermQuery("id",
 					"123"));
-			assertEquals(
-					0,
-					factory.createQuery(
-							TopLevel.class, factory.buildQueryBuilder()
-											.forEntity(TopLevel.class).get().all()
-											.createQuery())
-							.queryResultSize());
+			HSearchQuery query = factory.createQuery(factory
+					.buildQueryBuilder().forEntity(TopLevel.class).get().all()
+					.createQuery(), TopLevel.class);
+			assertEquals(0, query.queryResultSize());
 		}
 	}
-
 }
