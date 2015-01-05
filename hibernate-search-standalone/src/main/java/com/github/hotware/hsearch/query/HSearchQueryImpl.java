@@ -183,7 +183,7 @@ public class HSearchQueryImpl implements HSearchQuery {
 		this.hsquery.disableFullTextFilter(name);
 	}
 
-	@SuppressWarnings("rawtypes")
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public List query(EntityProvider entityProvider, Fetch fetchType) {
 		List<Object> ret;
