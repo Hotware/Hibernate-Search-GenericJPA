@@ -51,8 +51,9 @@ public class EntityManagerEntityProvider implements EntityProvider {
 		return this.em.find(entityClass, id);
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
-	public List<Object> getBatch(Class<?> entityClass, List<Object> ids) {
+	public List getBatch(Class<?> entityClass, List<Object> ids) {
 		List<Object> ret = new ArrayList<>(ids.size());
 		if (ids.size() > 0) {
 			CriteriaBuilder cb = this.em.getCriteriaBuilder();
