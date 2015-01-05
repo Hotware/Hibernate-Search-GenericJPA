@@ -69,12 +69,15 @@ public abstract class EJBSearchFactory implements SearchFactory {
 
 	protected abstract List<Class<?>> getAdditionalIndexedClasses();
 
+	protected abstract List<Class<?>> excludeFromAutomaticIndexing();
+
 	@PostConstruct
 	void init() {
 		this.parser = new MetaModelParser();
 		this.parser.parse(this.getEmf().getMetamodel());
-		JPAEventSource eventSource = JPAEventSource.register(
-				this.parser.getIndexRelevantEntites(), true);
+		Set<Class<?>> listenTo = this.parser.getIndexRelevantEntites();
+		listenTo.removeAll(this.excludeFromAutomaticIndexing());
+		JPAEventSource eventSource = JPAEventSource.register(listenTo, true);
 		SearchConfigurationImpl config;
 		if (this.getConfigFile() != null && !this.getConfigFile().equals("")) {
 			LOGGER.info("using config @" + this.getConfigFile());
@@ -105,7 +108,11 @@ public abstract class EJBSearchFactory implements SearchFactory {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
+	public Set<Class<?>> getIndexRelevantEntitiesFromJPA() {
+		return this.parser.getIndexRelevantEntites();
+	}
+
 	@Override
 	public Set<Class<?>> getIndexedEntities() {
 		return this.searchFactory.getIndexedEntities();
@@ -165,7 +172,7 @@ public abstract class EJBSearchFactory implements SearchFactory {
 	public FilterCachingStrategy getFilterCachingStrategy() {
 		return this.searchFactory.getFilterCachingStrategy();
 	}
-	
+
 	@Override
 	public Analyzer getAnalyzer(String name) {
 		return this.searchFactory.getAnalyzer(name);
