@@ -256,7 +256,10 @@ public class IntegrationTest {
 			{
 				Place valinorDb = em.find(Place.class, valinorId);
 				valinorDb.setName("Valinor123");
-				em.flush();
+				
+				tx.commit();
+				tx = em.getTransaction();
+				tx.begin();
 				// check if we find the renamed version in the index
 				{
 					List<Place> places = this.findPlaces(searchFactory,
@@ -271,10 +274,11 @@ public class IntegrationTest {
 							entityProvider, "name", "valinor");
 					assertEquals(0, places.size());
 				}
-
-				// and name it back
+				
 				valinorDb.setName("Valinor");
-				em.flush();
+				tx.commit();
+				tx = em.getTransaction();
+				tx.begin();
 
 				// we should find it again
 				{
@@ -292,7 +296,9 @@ public class IntegrationTest {
 					embeddableInfo.add(e1);
 				}
 				valinorDb.setInfo(embeddableInfo);
-				em.flush();
+				tx.commit();
+				tx = em.getTransaction();
+				tx.begin();
 			}
 
 			{
@@ -313,7 +319,9 @@ public class IntegrationTest {
 
 				// this won't trigger a postUpdate on Place, but on Sorcerer
 				newSorcerer.setName("Odalbert");
-				em.flush();
+				tx.commit();
+				tx = em.getTransaction();
+				tx.begin();
 
 				{
 					List<Place> places = this.findPlaces(searchFactory,
@@ -322,7 +330,9 @@ public class IntegrationTest {
 				}
 
 				newSorcerer.setPlace(null);
-				em.flush();
+				tx.commit();
+				tx = em.getTransaction();
+				tx.begin();
 				{
 					List<Place> places = this.findPlaces(searchFactory,
 							entityProvider, "sorcerers.name", "odalbert");
@@ -335,10 +345,14 @@ public class IntegrationTest {
 				}
 
 				newSorcerer.setPlace(place);
-				em.flush();
+				tx.commit();
+				tx = em.getTransaction();
+				tx.begin();
 
 				place.getSorcerers().remove(newSorcerer);
-				em.flush();
+				tx.commit();
+				tx = em.getTransaction();
+				tx.begin();
 				{
 					List<Place> places = this.findPlaces(searchFactory,
 							entityProvider, "sorcerers.name", "odalbert");
@@ -357,7 +371,9 @@ public class IntegrationTest {
 					additionalPlace.add(a);
 				}
 				place.setAdditionalPlace(new ArrayList<>(additionalPlace));
-				em.flush();
+				tx.commit();
+				tx = em.getTransaction();
+				tx.begin();
 				{
 					List<Place> places = this.findPlaces(searchFactory,
 							entityProvider, "additionalPlace.info", "addi");
@@ -371,7 +387,9 @@ public class IntegrationTest {
 				}
 
 				additionalPlace.get(0).setInfo("addi2");
-				em.flush();
+				tx.commit();
+				tx = em.getTransaction();
+				tx.begin();
 				{
 					List<Place> places = this.findPlaces(searchFactory,
 							entityProvider, "additionalPlace.info", "addi");
@@ -384,7 +402,9 @@ public class IntegrationTest {
 				}
 
 				additionalPlace.get(0).getAdditionalPlace2().setInfo("goal");
-				em.flush();
+				tx.commit();
+				tx = em.getTransaction();
+				tx.begin();
 				{
 					List<Place> places = this.findPlaces(searchFactory,
 							entityProvider,
@@ -400,7 +420,9 @@ public class IntegrationTest {
 
 				additionalPlace.get(0).setInfo("addi");
 				additionalPlace.get(0).getAdditionalPlace2().setInfo("toast");
-				em.flush();
+				tx.commit();
+				tx = em.getTransaction();
+				tx.begin();
 				{
 					List<Place> places = this.findPlaces(searchFactory,
 							entityProvider, "additionalPlace.info", "addi");
@@ -415,7 +437,9 @@ public class IntegrationTest {
 
 				place.getAdditionalPlace().remove(additionalPlace.get(0));
 				additionalPlace.get(0).getPlace().remove(place);
-				em.flush();
+				tx.commit();
+				tx = em.getTransaction();
+				tx.begin();
 				{
 					List<Place> places = this.findPlaces(searchFactory,
 							entityProvider, "additionalPlace.info", "addi");
