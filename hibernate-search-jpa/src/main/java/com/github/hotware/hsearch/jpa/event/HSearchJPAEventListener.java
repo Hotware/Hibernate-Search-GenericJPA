@@ -27,6 +27,7 @@ import javax.persistence.PreUpdate;
 
 import com.github.hotware.hsearch.factory.SubClassSupportInstanceInitializer;
 
+@Deprecated
 public final class HSearchJPAEventListener {
 
 	static final Set<Listener> listeners = new HashSet<>();

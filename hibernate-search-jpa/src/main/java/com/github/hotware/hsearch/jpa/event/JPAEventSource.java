@@ -58,6 +58,7 @@ import com.github.hotware.hsearch.event.EventSource;
  * 
  * @author Martin Braun
  */
+@Deprecated
 public final class JPAEventSource implements EventSource,
 		HSearchJPAEventListener.Listener {
 
