@@ -22,13 +22,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.TermQuery;
 import org.hibernate.search.annotations.ContainedIn;
 import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
 import org.hibernate.search.annotations.Store;
-import org.hibernate.search.backend.SingularTermQuery;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
@@ -200,8 +201,8 @@ public class SearchFactoryTest {
 					factory.getStatistics().getNumberOfIndexedEntities(
 							TopLevel.class.getName()));
 
-			factory.deleteByQuery(TopLevel.class, new SingularTermQuery("id",
-					"123"));
+			factory.purge(TopLevel.class, new TermQuery(new Term("id",
+					"123")));
 			HSearchQuery query = factory.createQuery(factory
 					.buildQueryBuilder().forEntity(TopLevel.class).get().all()
 					.createQuery(), TopLevel.class);

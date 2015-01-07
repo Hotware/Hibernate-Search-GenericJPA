@@ -17,6 +17,7 @@ package com.github.hotware.hsearch.ejb;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -30,7 +31,6 @@ import javax.persistence.EntityManagerFactory;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
-import org.hibernate.search.backend.DeletionQuery;
 import org.hibernate.search.filter.FilterCachingStrategy;
 import org.hibernate.search.indexes.IndexReaderAccessor;
 import org.hibernate.search.query.dsl.QueryContextBuilder;
@@ -195,10 +195,31 @@ public abstract class EJBSearchFactory implements SearchFactory {
 		return this.searchFactory.createQuery(query, targetedEntities);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.github.hotware.hsearch.factory.SearchFactory#purge(java.lang.Class, java.io.Serializable, com.github.hotware.hsearch.transaction.TransactionContext)
+	 */
 	@Override
-	public void deleteByQuery(Class<?> entityClass,
-			DeletionQuery deletionQuery, TransactionContext tc) {
-		this.searchFactory.deleteByQuery(entityClass, deletionQuery, tc);
+	public void purge(Class<?> entityClass, Serializable id,
+			TransactionContext tc) {
+		this.searchFactory.purge(entityClass, id, tc);
 	}
+
+	/* (non-Javadoc)
+	 * @see com.github.hotware.hsearch.factory.SearchFactory#purge(java.lang.Iterable, com.github.hotware.hsearch.transaction.TransactionContext)
+	 */
+	@Override
+	public void purge(Iterable<?> entities, TransactionContext tc) {
+		this.searchFactory.purge(entities, tc);
+	}
+
+	/* (non-Javadoc)
+	 * @see com.github.hotware.hsearch.factory.SearchFactory#purge(java.lang.Class, org.apache.lucene.search.Query, com.github.hotware.hsearch.transaction.TransactionContext)
+	 */
+	@Override
+	public void purge(Class<?> entityClass, Query query, TransactionContext tc) {
+		this.searchFactory.purge(entityClass, query, tc);
+	}
+	
+	
 
 }

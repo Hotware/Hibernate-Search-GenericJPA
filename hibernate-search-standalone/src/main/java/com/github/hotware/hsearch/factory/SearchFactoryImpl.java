@@ -16,6 +16,7 @@
 package com.github.hotware.hsearch.factory;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -23,11 +24,10 @@ import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
-import org.hibernate.search.backend.DeletionQuery;
-import org.hibernate.search.backend.spi.DeleteByQueryWork;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.backend.spi.Worker;
+import org.hibernate.search.engine.ProjectionConstants;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.filter.FilterCachingStrategy;
 import org.hibernate.search.indexes.IndexReaderAccessor;
@@ -63,6 +63,11 @@ public class SearchFactoryImpl implements SearchFactory {
 
 	@Override
 	public void delete(Iterable<?> entities, TransactionContext tc) {
+		this.purge(entities, tc);
+	}
+
+	@Override
+	public void purge(Iterable<?> entities, TransactionContext tc) {
 		this.doIndexWork(entities, WorkType.PURGE, tc);
 	}
 
@@ -126,7 +131,8 @@ public class SearchFactoryImpl implements SearchFactory {
 		// to make sure no entity is used twice
 		hsQuery.targetedEntities(new ArrayList<>(new HashSet<>(Arrays
 				.asList(targetedEntities))));
-		return new HSearchQueryImpl(hsQuery, this.queryExec, this.searchIntegrator);
+		return new HSearchQueryImpl(hsQuery, this.queryExec,
+				this.searchIntegrator);
 	}
 
 	@Override
@@ -145,11 +151,33 @@ public class SearchFactoryImpl implements SearchFactory {
 	}
 
 	@Override
-	public void deleteByQuery(Class<?> entityClass,
-			DeletionQuery deletionQuery, TransactionContext tc) {
+	public void purge(Class<?> entityClass, Query query, TransactionContext tc) {
+		HSearchQuery hsQuery = this.createQuery(query, entityClass);
+		int count = hsQuery.queryResultSize();
+		int processed = 0;
+		while (processed < count) {
+			hsQuery.firstResult(processed).maxResults(10);
+			processed += 10;
+			for (Object[] vals : hsQuery.queryProjection(
+					ProjectionConstants.OBJECT_CLASS, ProjectionConstants.ID)) {
+				this.purge(entityClass, (Serializable) vals[1], tc);
+			}
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * com.github.hotware.hsearch.factory.SearchFactory#purge(java.lang.Class,
+	 * java.io.Serializable,
+	 * com.github.hotware.hsearch.transaction.TransactionContext)
+	 */
+	@Override
+	public void purge(Class<?> entityClass, Serializable id,
+			TransactionContext tc) {
 		Worker worker = this.searchIntegrator.getWorker();
-		worker.performWork(new DeleteByQueryWork(entityClass, deletionQuery),
-				tc);
+		worker.performWork(new Work(entityClass, id, WorkType.PURGE), tc);
 	}
 
 }

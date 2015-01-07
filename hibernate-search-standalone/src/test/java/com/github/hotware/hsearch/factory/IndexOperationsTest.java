@@ -24,12 +24,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.TermQuery;
 import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
-import org.hibernate.search.backend.SingularTermQuery;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -246,13 +247,13 @@ public class IndexOperationsTest {
 		assertNotEquals(this.all(), l);
 
 		this.factory
-				.deleteByQuery(Book.class, new SingularTermQuery("id", "1"));
+				.purge(Book.class, new TermQuery(new Term("id", "1")));
 		this.assertCount(1);
 
 		{
 			Transaction tc = new Transaction();
-			this.factory.deleteByQuery(Book.class, new SingularTermQuery("id",
-					"2"), tc);
+			this.factory.purge(Book.class, new TermQuery(new Term("id",
+					"2")), tc);
 			tc.end();
 		}
 		this.assertCount(0);
