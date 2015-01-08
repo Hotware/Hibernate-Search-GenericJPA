@@ -141,7 +141,7 @@ public class JPAUpdateSource implements UpdateSource {
 
 							Map<Class<?>, List<UpdateInfo>> updatesPerEntity = new HashMap<>();
 							for (Object update : query.getResultList()) {
-								Integer eventCase = evi.getEventTypeAccessor()
+								Integer eventType = evi.getEventTypeAccessor()
 										.apply(update);
 								for (IdInfo idInfo : evi.getIdInfos()) {
 									Class<?> entityClass = idInfo
@@ -156,7 +156,7 @@ public class JPAUpdateSource implements UpdateSource {
 																JPAUpdateSource.this.batchSize);
 													}).add(
 													new UpdateInfo(id,
-															eventCase));
+															eventType));
 								}
 								toRemove.add(update);
 							}

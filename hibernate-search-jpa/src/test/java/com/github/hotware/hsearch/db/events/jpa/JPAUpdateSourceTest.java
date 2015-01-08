@@ -81,13 +81,13 @@ public class JPAUpdateSourceTest {
 						List<UpdateInfo> updateInfos) {
 					for (UpdateInfo updateInfo : updateInfos) {
 						Object id = updateInfo.getId();
-						int eventCase = updateInfo.getEventType();
+						int eventType = updateInfo.getEventType();
 						if (id.equals(2) && entityClass.equals(Place.class)
-								&& eventCase == EventType.INSERT) {
+								&& eventType == EventType.INSERT) {
 							gotEvent[0] = true;
 						} else if (id.equals(3)
 								&& entityClass.equals(Sorcerer.class)
-								&& eventCase == EventType.INSERT) {
+								&& eventType == EventType.INSERT) {
 							gotEvent[1] = true;
 						}
 					}
