@@ -15,40 +15,18 @@
  */
 package com.github.hotware.hsearch.db.events;
 
-import java.util.List;
-
 /**
  * @author Martin
  *
  */
-public interface UpdateConsumer {
+public final class EventType {
 	
-	public void updateEvent(Class<?> entityClass, List<UpdateInfo> updateInfo);
-	
-	public static class UpdateInfo {
-		private final Object id;
-		private final int eventType;
-
-		public UpdateInfo(Object id, int eventType) {
-			super();
-			this.id = id;
-			this.eventType = eventType;
-		}
-
-		/**
-		 * @return the id
-		 */
-		public Object getId() {
-			return this.id;
-		}
-
-		/**
-		 * @return the eventCase
-		 */
-		public int getEventType() {
-			return this.eventType;
-		}
-
+	private EventType() {
+		throw new AssertionError("can't touch this!");
 	}
 
+	public static final int DELETE = -1;
+	public static final int UPDATE = -2;
+	public static final int INSERT = -3;
+	
 }

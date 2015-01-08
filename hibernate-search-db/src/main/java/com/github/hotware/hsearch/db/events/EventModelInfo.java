@@ -28,17 +28,17 @@ public class EventModelInfo {
 	private final Class<?> updateClass;
 	private final String tableName;
 	private final String originalTableName;
-	private final Function<Object, Integer> caseAccessor;
+	private final Function<Object, Integer> eventTypeAccessor;
 	private final List<IdInfo> idInfos;
 
 	public EventModelInfo(Class<?> updateClass, String tableName,
-			String originalTableName, Function<Object, Integer> caseAccessor,
+			String originalTableName, Function<Object, Integer> eventTypeAccessor,
 			List<IdInfo> idInfos) {
 		super();
 		this.updateClass = updateClass;
 		this.tableName = tableName;
 		this.originalTableName = originalTableName;
-		this.caseAccessor = caseAccessor;
+		this.eventTypeAccessor = eventTypeAccessor;
 		this.idInfos = idInfos;
 	}
 
@@ -64,10 +64,10 @@ public class EventModelInfo {
 	}
 
 	/**
-	 * @return the caseAccessor
+	 * @return the eventTypeAccessor
 	 */
-	public Function<Object, Integer> getCaseAccessor() {
-		return caseAccessor;
+	public Function<Object, Integer> getEventTypeAccessor() {
+		return eventTypeAccessor;
 	}
 
 	/**
@@ -86,7 +86,7 @@ public class EventModelInfo {
 	public String toString() {
 		return "EventModelInfo [tableName=" + tableName
 				+ ", originalTableName=" + originalTableName
-				+ ", caseAccessor=" + caseAccessor + ", idInfos=" + idInfos
+				+ ", eventTypeAccessor=" + eventTypeAccessor + ", idInfos=" + idInfos
 				+ "]";
 	}
 

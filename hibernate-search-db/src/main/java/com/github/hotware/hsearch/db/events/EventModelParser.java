@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import com.github.hotware.hsearch.db.events.annotations.Case;
+import com.github.hotware.hsearch.db.events.annotations.Event;
 import com.github.hotware.hsearch.db.events.annotations.IdFor;
 import com.github.hotware.hsearch.db.events.annotations.Updates;
 
@@ -38,7 +38,7 @@ public class EventModelParser {
 		List<EventModelInfo> ret = new ArrayList<>();
 		for (Class<?> clazz : updateClasses) {
 			Updates updates = clazz.getAnnotation(Updates.class);
-			java.lang.reflect.Member caseMember = null;
+			java.lang.reflect.Member eventTypeMember = null;
 			List<EventModelInfo.IdInfo> idInfos = new ArrayList<>();
 			if (updates != null) {
 				ParseMembersReturn forFields;
@@ -54,10 +54,10 @@ public class EventModelParser {
 					if (forFields.foundAnything()) {
 						if (!forFields.foundBoth()) {
 							throw new IllegalArgumentException(
-									"you have to annotate either Fields OR Methods with both @IdFor AND @Case");
+									"you have to annotate either Fields OR Methods with both @IdFor AND @Event");
 						}
-						if (pmr.caseMember != null) {
-							caseMember = pmr.caseMember;
+						if (pmr.eventTypeMember != null) {
+							eventTypeMember = pmr.eventTypeMember;
 						}
 					}
 				}
@@ -71,16 +71,16 @@ public class EventModelParser {
 							idInfos);
 					if (forFields.foundAnything() && pmr.foundAnything()) {
 						throw new IllegalArgumentException(
-								"you have to either annotate Fields or Methods with @Case "
+								"you have to either annotate Fields or Methods with @Event "
 										+ "and @IdFor, not both");
 					}
 					if (pmr.foundAnything()) {
 						if (!pmr.foundBoth()) {
 							throw new IllegalArgumentException(
-									"you have to annotate either Fields OR Methods with both @IdFor AND @Case");
+									"you have to annotate either Fields OR Methods with both @IdFor AND @Event");
 						}
-						if (pmr.caseMember != null) {
-							caseMember = pmr.caseMember;
+						if (pmr.eventTypeMember != null) {
+							eventTypeMember = pmr.eventTypeMember;
 						}
 					}
 				}
@@ -88,9 +88,9 @@ public class EventModelParser {
 				throw new IllegalArgumentException(
 						"Updates class does not host @Updates. Class: " + clazz);
 			}
-			if (caseMember == null) {
+			if (eventTypeMember == null) {
 				throw new IllegalArgumentException(
-						"no Integer Field found hosting @Case in Class: "
+						"no Integer Field found hosting @Event in Class: "
 								+ clazz
 								+ ". check if your Fields OR Methods are correctly annotated!");
 			}
@@ -102,14 +102,14 @@ public class EventModelParser {
 			}
 
 			// TODO: Exception for wrong values
-			final Member caseMemberFinal = caseMember;
-			Function<Object, Integer> caseAccessor = (Object object) -> {
+			final Member eventTypeMemberFinal = eventTypeMember;
+			Function<Object, Integer> eventTypeAccessor = (Object object) -> {
 				try {
-					if (caseMemberFinal instanceof Method) {
-						return (Integer) ((Method) caseMemberFinal)
+					if (eventTypeMemberFinal instanceof Method) {
+						return (Integer) ((Method) eventTypeMemberFinal)
 								.invoke(object);
-					} else if (caseMemberFinal instanceof Field) {
-						return (Integer) ((Field) caseMemberFinal).get(object);
+					} else if (eventTypeMemberFinal instanceof Field) {
+						return (Integer) ((Field) eventTypeMemberFinal).get(object);
 					} else {
 						throw new AssertionError();
 					}
@@ -120,22 +120,22 @@ public class EventModelParser {
 			};
 
 			ret.add(new EventModelInfo(clazz, updates.tableName(), updates
-					.originalTableName(), caseAccessor, idInfos));
+					.originalTableName(), eventTypeAccessor, idInfos));
 
 		}
 		return ret;
 	}
 
 	private static class ParseMembersReturn {
-		Member caseMember;
+		Member eventTypeMember;
 		boolean foundIdInfos;
 
 		public boolean foundAnything() {
-			return this.caseMember != null || this.foundIdInfos;
+			return this.eventTypeMember != null || this.foundIdInfos;
 		}
 
 		public boolean foundBoth() {
-			return this.caseMember != null && this.foundIdInfos;
+			return this.eventTypeMember != null && this.foundIdInfos;
 		}
 
 	}
@@ -145,23 +145,23 @@ public class EventModelParser {
 		ParseMembersReturn ret = new ParseMembersReturn();
 		for (Member member : members) {
 			IdFor idFor = this.getAnnotation(member, IdFor.class);
-			Case eventCase = this.getAnnotation(member, Case.class);
-			if (idFor != null && eventCase != null) {
+			Event event = this.getAnnotation(member, Event.class);
+			if (idFor != null && event != null) {
 				throw new IllegalArgumentException(
-						"@IdFor and @Case can not be on the same Field. Class: "
+						"@IdFor and @Event can not be on the same Field. Class: "
 								+ clazz + ". Member: " + member);
 			}
-			if (eventCase != null) {
+			if (event != null) {
 				if (!this.getType(member).equals(Integer.class)) {
 					throw new IllegalArgumentException(
-							"Field hosting @Case is no Field of type Integer.  Class: "
+							"Field hosting @Event is no Field of type Integer.  Class: "
 									+ clazz + ". Field: " + member);
 				}
-				if (ret.caseMember == null) {
-					ret.caseMember = member;
+				if (ret.eventTypeMember == null) {
+					ret.eventTypeMember = member;
 				} else {
 					throw new IllegalArgumentException(
-							"class cannot have two caseFields. Class: " + clazz);
+							"class cannot have two @Event members. Class: " + clazz);
 				}
 			}
 			if (idFor != null) {

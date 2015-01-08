@@ -13,42 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.hotware.hsearch.db.events;
+package com.github.hotware.hsearch.db.events.annotations;
 
-import java.util.List;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
 /**
+ * used to identify the field which contains the information about what
+ * operation happened on the database
+ * 
  * @author Martin
- *
  */
-public interface UpdateConsumer {
-	
-	public void updateEvent(Class<?> entityClass, List<UpdateInfo> updateInfo);
-	
-	public static class UpdateInfo {
-		private final Object id;
-		private final int eventType;
-
-		public UpdateInfo(Object id, int eventType) {
-			super();
-			this.id = id;
-			this.eventType = eventType;
-		}
-
-		/**
-		 * @return the id
-		 */
-		public Object getId() {
-			return this.id;
-		}
-
-		/**
-		 * @return the eventCase
-		 */
-		public int getEventType() {
-			return this.eventType;
-		}
-
-	}
+@Target({ FIELD, METHOD })
+@Retention(RUNTIME)
+public @interface Event {
 
 }

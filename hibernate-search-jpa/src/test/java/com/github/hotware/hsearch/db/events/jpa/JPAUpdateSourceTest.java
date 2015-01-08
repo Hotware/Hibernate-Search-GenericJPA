@@ -29,8 +29,8 @@ import javax.persistence.Persistence;
 
 import org.junit.Test;
 
-import com.github.hotware.hsearch.db.events.EventCase;
 import com.github.hotware.hsearch.db.events.EventModelParser;
+import com.github.hotware.hsearch.db.events.EventType;
 import com.github.hotware.hsearch.db.events.UpdateConsumer;
 import com.github.hotware.hsearch.jpa.test.entities.Place;
 import com.github.hotware.hsearch.jpa.test.entities.PlaceSorcererUpdates;
@@ -59,7 +59,7 @@ public class JPAUpdateSourceTest {
 					EntityTransaction tx = em.getTransaction();
 					tx.begin();
 					PlaceSorcererUpdates update = new PlaceSorcererUpdates();
-					update.setEventCase(EventCase.INSERT);
+					update.setEventType(EventType.INSERT);
 					update.setId(1);
 					update.setPlaceId(2);
 					update.setSorcererId(3);
@@ -81,13 +81,13 @@ public class JPAUpdateSourceTest {
 						List<UpdateInfo> updateInfos) {
 					for (UpdateInfo updateInfo : updateInfos) {
 						Object id = updateInfo.getId();
-						int eventCase = updateInfo.getEventCase();
+						int eventCase = updateInfo.getEventType();
 						if (id.equals(2) && entityClass.equals(Place.class)
-								&& eventCase == EventCase.INSERT) {
+								&& eventCase == EventType.INSERT) {
 							gotEvent[0] = true;
 						} else if (id.equals(3)
 								&& entityClass.equals(Sorcerer.class)
-								&& eventCase == EventCase.INSERT) {
+								&& eventCase == EventType.INSERT) {
 							gotEvent[1] = true;
 						}
 					}

@@ -26,7 +26,7 @@ import org.junit.Test;
 import com.github.hotware.hsearch.db.events.EventModelInfo;
 import com.github.hotware.hsearch.db.events.EventModelInfo.IdInfo;
 import com.github.hotware.hsearch.db.events.EventModelParser;
-import com.github.hotware.hsearch.db.events.annotations.Case;
+import com.github.hotware.hsearch.db.events.annotations.Event;
 import com.github.hotware.hsearch.db.events.annotations.IdFor;
 import com.github.hotware.hsearch.db.events.annotations.Updates;
 import com.github.hotware.hsearch.db.test.entities.Place;
@@ -52,7 +52,7 @@ public class EventModelParserTest {
 			placeUpdate.setId(123123);
 			placeUpdate.setPlaceId(1);
 			placeUpdate.setSorcererId(2);
-			placeUpdate.setEventCase(EventCase.INSERT);
+			placeUpdate.setEventType(EventType.INSERT);
 
 			List<EventModelInfo.IdInfo> idInfos = infos.get(0).getIdInfos();
 			idInfos.sort(new Comparator<EventModelInfo.IdInfo>() {
@@ -80,8 +80,8 @@ public class EventModelParserTest {
 			assertEquals(1, idInfos.get(0).getIdAccessor().apply(placeUpdate));
 			assertEquals(2, idInfos.get(1).getIdAccessor().apply(placeUpdate));
 
-			assertEquals((Integer) EventCase.INSERT, infos.get(0)
-					.getCaseAccessor().apply(placeUpdate));
+			assertEquals((Integer) EventType.INSERT, infos.get(0)
+					.getEventTypeAccessor().apply(placeUpdate));
 		}
 
 		{
@@ -93,7 +93,7 @@ public class EventModelParserTest {
 			placeUpdate.setId(123123);
 			placeUpdate.setPlaceId(1);
 			placeUpdate.setSorcererId(2);
-			placeUpdate.setEventCase(EventCase.INSERT);
+			placeUpdate.setEventType(EventType.INSERT);
 
 			List<EventModelInfo.IdInfo> idInfos = infos.get(0).getIdInfos();
 			idInfos.sort(new Comparator<EventModelInfo.IdInfo>() {
@@ -121,8 +121,8 @@ public class EventModelParserTest {
 			assertEquals(1, idInfos.get(0).getIdAccessor().apply(placeUpdate));
 			assertEquals(2, idInfos.get(1).getIdAccessor().apply(placeUpdate));
 
-			assertEquals((Integer) EventCase.INSERT, infos.get(0)
-					.getCaseAccessor().apply(placeUpdate));
+			assertEquals((Integer) EventType.INSERT, infos.get(0)
+					.getEventTypeAccessor().apply(placeUpdate));
 		}
 
 		{
@@ -179,8 +179,8 @@ public class EventModelParserTest {
 	@Updates(originalTableName = "orig", tableName = "tbl")
 	private static class Mixed {
 
-		@Case
-		private Integer eventCase;
+		@Event
+		private Integer eventType;
 
 		@IdFor(entityClass = Place.class, columns = "tblId1", columnsInOriginal = "origId1")
 		private Integer id1;
@@ -197,7 +197,7 @@ public class EventModelParserTest {
 	@Updates(originalTableName = "orig", tableName = "tbl")
 	private static class Mixed2 {
 
-		private Integer eventCase;
+		private Integer eventType;
 
 		@IdFor(entityClass = Place.class, columns = "tblId1", columnsInOriginal = "origId1")
 		private Integer id1;
@@ -205,17 +205,17 @@ public class EventModelParserTest {
 		@IdFor(entityClass = Sorcerer.class, columns = "tblId2", columnsInOriginal = "origId2")
 		private Integer id2;
 
-		@Case
-		public Integer getEventCase() {
-			return this.eventCase;
+		@Event
+		public Integer getEventType() {
+			return this.eventType;
 		}
 
 	}
 
 	private static class ForgotUpdates {
 
-		@Case
-		private Integer eventCase;
+		@Event
+		private Integer eventType;
 
 		@IdFor(entityClass = Place.class, columns = "tblId1", columnsInOriginal = "origId1")
 		private Integer id1;
@@ -229,7 +229,7 @@ public class EventModelParserTest {
 	private static class ForgotCase {
 
 		@SuppressWarnings("unused")
-		private Integer eventCase;
+		private Integer eventType;
 
 		@IdFor(entityClass = Place.class, columns = "tblId1", columnsInOriginal = "origId1")
 		private Integer id1;
@@ -242,8 +242,8 @@ public class EventModelParserTest {
 	@Updates(originalTableName = "orig", tableName = "tbl")
 	private static class ForgotIds {
 
-		@Case
-		private Integer eventCase;
+		@Event
+		private Integer eventType;
 
 		@SuppressWarnings("unused")
 		private Integer id1;

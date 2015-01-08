@@ -15,7 +15,7 @@
  */
 package com.github.hotware.hsearch.db.test.entities;
 
-import com.github.hotware.hsearch.db.events.annotations.Case;
+import com.github.hotware.hsearch.db.events.annotations.Event;
 import com.github.hotware.hsearch.db.events.annotations.IdFor;
 import com.github.hotware.hsearch.db.events.annotations.Updates;
 
@@ -31,7 +31,7 @@ public class PlaceSorcererUpdatesMethod {
 
 	private Integer sorcererId;
 
-	private Integer eventCase;
+	private Integer eventType;
 	
 	/**
 	 * @return the placeId
@@ -59,20 +59,19 @@ public class PlaceSorcererUpdatesMethod {
 	}
 
 	/**
-	 * @return the eventCase
+	 * @return the eventType
 	 */
-	// contains the case (which event occured)
-	@Case
-	public Integer getEventCase() {
-		return eventCase;
+	@Event
+	public Integer getEventType() {
+		return eventType;
 	}
 
 	/**
-	 * @param eventCase
-	 *            the eventCase to set
+	 * @param eventType
+	 *            the eventType to set
 	 */
-	public void setEventCase(Integer eventCase) {
-		this.eventCase = eventCase;
+	public void setEventType(Integer eventType) {
+		this.eventType = eventType;
 	}
 
 	/**
