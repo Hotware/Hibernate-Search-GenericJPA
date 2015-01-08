@@ -22,7 +22,7 @@ import com.github.hotware.hsearch.db.events.annotations.Updates;
 /**
  * @author Martin
  */
-@Updates(tableName = "PlaceUpdates", originalTableName = "Place")
+@Updates(tableName = "PlaceUpdates", originalTableName = "Place_Sorcerer")
 public class PlaceUpdates {
 
 	private Integer id;
@@ -30,9 +30,27 @@ public class PlaceUpdates {
 	@IdFor(entityClass = Place.class, columns = "placeId", columnsInOriginal = "id")
 	private Integer placeId;
 
+	@IdFor(entityClass = Sorcerer.class, columns = "sorcererId", columnsInOriginal = "sorc_id")
+	private Integer sorcererId;
+
 	// contains the case (which event occured)
 	@Case
 	private Integer eventCase;
+
+	/**
+	 * @return the sorcererId
+	 */
+	public Integer getSorcererId() {
+		return sorcererId;
+	}
+
+	/**
+	 * @param sorcererId
+	 *            the sorcererId to set
+	 */
+	public void setSorcererId(Integer sorcererId) {
+		this.sorcererId = sorcererId;
+	}
 
 	/**
 	 * @return the eventCase

@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.hotware.hsearch.jpa.test.entities;
+package com.github.hotware.hsearch.db.test.entities;
 
 /**
  * @author Martin
  *
  */
-public class Place {
+public class Sorcerer {
 
 }

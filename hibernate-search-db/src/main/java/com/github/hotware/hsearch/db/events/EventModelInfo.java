@@ -17,6 +17,7 @@ package com.github.hotware.hsearch.db.events;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author Martin
@@ -26,15 +27,15 @@ public class EventModelInfo {
 
 	private final String tableName;
 	private final String originalTableName;
-	private final java.lang.reflect.Field caseField;
+	private final Function<Object, Integer> caseAccessor;
 	private final List<IdInfo> idInfos;
 
 	public EventModelInfo(String tableName, String originalTableName,
-			java.lang.reflect.Field caseField, List<IdInfo> idInfos) {
+			Function<Object, Integer> caseAccessor, List<IdInfo> idInfos) {
 		super();
 		this.tableName = tableName;
 		this.originalTableName = originalTableName;
-		this.caseField = caseField;
+		this.caseAccessor = caseAccessor;
 		this.idInfos = idInfos;
 	}
 
@@ -53,10 +54,10 @@ public class EventModelInfo {
 	}
 
 	/**
-	 * @return the caseField
+	 * @return the caseAccessor
 	 */
-	public java.lang.reflect.Field getCaseField() {
-		return caseField;
+	public Function<Object, Integer> getCaseAccessor() {
+		return caseAccessor;
 	}
 
 	/**
@@ -74,31 +75,33 @@ public class EventModelInfo {
 	@Override
 	public String toString() {
 		return "EventModelInfo [tableName=" + tableName
-				+ ", originalTableName=" + originalTableName + ", caseField="
-				+ caseField + ", idInfos=" + idInfos + "]";
+				+ ", originalTableName=" + originalTableName
+				+ ", caseAccessor=" + caseAccessor + ", idInfos=" + idInfos
+				+ "]";
 	}
 
 	public static class IdInfo {
 
-		private final java.lang.reflect.Field field;
+		private final Function<Object, Object> idAccessor;
 		private final Class<?> entityClass;
 		private final String[] columns;
 		private final String[] columnsInOriginal;
 
-		public IdInfo(java.lang.reflect.Field field, Class<?> entityClass,
-				String[] columns, String[] columnsInOriginal) {
+		public IdInfo(Function<Object, Object> idAccessor,
+				Class<?> entityClass, String[] columns,
+				String[] columnsInOriginal) {
 			super();
-			this.field = field;
+			this.idAccessor = idAccessor;
 			this.entityClass = entityClass;
 			this.columns = columns;
 			this.columnsInOriginal = columnsInOriginal;
 		}
 
 		/**
-		 * @return the field
+		 * @return the idAccessor
 		 */
-		public java.lang.reflect.Field getField() {
-			return field;
+		public Function<Object, Object> getIdAccessor() {
+			return idAccessor;
 		}
 
 		/**
@@ -129,8 +132,8 @@ public class EventModelInfo {
 		 */
 		@Override
 		public String toString() {
-			return "IdInfo [field=" + field + ", entityClass=" + entityClass
-					+ ", columns=" + Arrays.toString(columns)
+			return "IdInfo [idAccessor=" + idAccessor + ", entityClass="
+					+ entityClass + ", columns=" + Arrays.toString(columns)
 					+ ", columnsInOriginal="
 					+ Arrays.toString(columnsInOriginal) + "]";
 		}

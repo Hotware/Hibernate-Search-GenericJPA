@@ -13,11 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.hotware.hsearch.jpa.test.entities;
-
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
+package com.github.hotware.hsearch.db.test.entities;
 
 import com.github.hotware.hsearch.db.events.annotations.Case;
 import com.github.hotware.hsearch.db.events.annotations.IdFor;
@@ -26,21 +22,57 @@ import com.github.hotware.hsearch.db.events.annotations.Updates;
 /**
  * @author Martin
  */
-@Entity
-@Updates(tableName = "PlaceUpdates", originalTableName = "Place")
-public class PlaceUpdates {
+@Updates(tableName = "PlaceUpdates", originalTableName = "Place_Sorcerer")
+public class PlaceUpdatesMethod {
 
-	@Id
 	private Integer id;
 
-	@IdFor(entityClass = Place.class, columns = "placeId", columnsInOriginal = "id")
-	@Column
 	private Integer placeId;
 
-	//contains the case (which event occured)
-	@Case
-	@Column
+	private Integer sorcererId;
+
 	private Integer eventCase;
+
+	/**
+	 * @return the placeId
+	 */
+	@IdFor(entityClass = Place.class, columns = "placeId", columnsInOriginal = "id")
+	public Integer getPlaceId() {
+		return placeId;
+	}
+
+	/**
+	 * @return the sorcererId
+	 */
+	@IdFor(entityClass = Sorcerer.class, columns = "sorcererId", columnsInOriginal = "sorc_id")
+	public Integer getSorcererId() {
+		return sorcererId;
+	}
+
+	/**
+	 * @param sorcererId
+	 *            the sorcererId to set
+	 */
+	public void setSorcererId(Integer sorcererId) {
+		this.sorcererId = sorcererId;
+	}
+
+	/**
+	 * @return the eventCase
+	 */
+	// contains the case (which event occured)
+	@Case
+	public Integer getEventCase() {
+		return eventCase;
+	}
+
+	/**
+	 * @param eventCase
+	 *            the eventCase to set
+	 */
+	public void setEventCase(Integer eventCase) {
+		this.eventCase = eventCase;
+	}
 
 	/**
 	 * @return the id
@@ -55,13 +87,6 @@ public class PlaceUpdates {
 	 */
 	public void setId(Integer id) {
 		this.id = id;
-	}
-
-	/**
-	 * @return the placeId
-	 */
-	public Integer getPlaceId() {
-		return placeId;
 	}
 
 	/**
