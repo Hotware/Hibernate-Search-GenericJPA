@@ -3,12 +3,13 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.github.hotware</groupId>
 	<artifactId>hibernate-search-parent</artifactId>
-	<version>0.1.0.3</version>
+	<version>0.1.0.4</version>
 	<packaging>pom</packaging>
 	<name>hibernate-search</name>
 
 	<modules>
 		<module>hibernate-search-standalone</module>
+		<module>hibernate-search-db</module>
 		<module>hibernate-search-jpa</module>
 	</modules>
 

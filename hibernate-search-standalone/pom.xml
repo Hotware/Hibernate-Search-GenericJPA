@@ -4,12 +4,11 @@
 	<artifactId>hibernate-search-standalone</artifactId>
 	<packaging>jar</packaging>
 	<name>hibernate-search-standalone</name>
-	<url>https://github.com/Hotware/Hibernate-Search-JPA/hibernate-search-standalone</url>
 	
 	<parent>
         <artifactId>hibernate-search-parent</artifactId>
         <groupId>com.github.hotware</groupId>
-        <version>0.1.0.3</version>
+        <version>0.1.0.4</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 

@@ -1,9 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<artifactId>hibernate-search-jpa</artifactId>
+	<artifactId>hibernate-search-db</artifactId>
 	<packaging>jar</packaging>
-	<name>hibernate-search-jpa</name>
+	<name>hibernate-search-db</name>
 	
 	<parent>
         <artifactId>hibernate-search-parent</artifactId>
@@ -26,14 +26,6 @@
 		</plugins>
 	</build>
 
-	<repositories>
-		<repository>
-			<id>objectdb</id>
-			<name>ObjectDB Repository</name>
-			<url>http://m2.objectdb.com</url>
-		</repository>
-	</repositories>
-
 	<properties>
 		<hibernate.version>4.3.7.Final</hibernate.version>
 	</properties>
@@ -45,6 +37,7 @@
 			<version>4.11</version>
 			<scope>test</scope>
 		</dependency>
+		
 		<!-- connection pooling -->
 		<dependency>
 			<groupId>commons-dbcp</groupId>
@@ -60,32 +53,6 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!-- Hibernate stuff for testing follows -->
-		<dependency>
-			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-entitymanager</artifactId>
-			<version>${hibernate.version}</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-core</artifactId>
-			<version>${hibernate.version}</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-c3p0</artifactId>
-			<version>${hibernate.version}</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-ehcache</artifactId>
-			<version>${hibernate.version}</version>
-			<scope>test</scope>
-		</dependency>
-
 		<!-- Eclipselink -->
 		<dependency>
 			<groupId>org.eclipse.persistence</groupId>
@@ -94,34 +61,9 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!-- Batoo Dependencies -->
-		<dependency>
-			<groupId>org.batoo.jpa</groupId>
-			<artifactId>batoo-jpa</artifactId>
-			<version>2.0.1.1</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>javax.validation</groupId>
-			<artifactId>validation-api</artifactId>
-			<version>1.0.0.GA</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.jolbox</groupId>
-			<artifactId>bonecp</artifactId>
-			<version>0.8.0.RELEASE</version>
-			<scope>test</scope>
-		</dependency>
-
 		<dependency>
 			<groupId>com.github.hotware</groupId>
 			<artifactId>hibernate-search-standalone</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.github.hotware</groupId>
-			<artifactId>hibernate-search-db</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
