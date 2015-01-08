@@ -31,7 +31,9 @@ import org.junit.Test;
 import com.github.hotware.hsearch.db.events.EventCase;
 import com.github.hotware.hsearch.db.events.EventModelParser;
 import com.github.hotware.hsearch.db.events.UpdateConsumer;
+import com.github.hotware.hsearch.jpa.test.entities.Place;
 import com.github.hotware.hsearch.jpa.test.entities.PlaceSorcererUpdates;
+import com.github.hotware.hsearch.jpa.test.entities.Sorcerer;
 
 /**
  * @author Martin
@@ -76,9 +78,12 @@ public class JPAUpdateSourceTest {
 				@Override
 				public void updateEvent(Class<?> entityClass, Object id,
 						int eventCase) {
-					if (id.equals(2)) {
+					if (id.equals(2) && entityClass.equals(Place.class)
+							&& eventCase == EventCase.INSERT) {
 						gotEvent[0] = true;
-					} else if (id.equals(3)) {
+					} else if (id.equals(3)
+							&& entityClass.equals(Sorcerer.class)
+							&& eventCase == EventCase.INSERT) {
 						gotEvent[1] = true;
 					}
 				}
@@ -104,7 +109,7 @@ public class JPAUpdateSourceTest {
 					em.close();
 				}
 			}
-			
+
 		} finally {
 			emf.close();
 		}
