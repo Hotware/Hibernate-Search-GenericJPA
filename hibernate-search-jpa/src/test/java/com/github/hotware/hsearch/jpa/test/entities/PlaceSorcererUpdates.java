@@ -41,7 +41,6 @@ public class PlaceSorcererUpdates {
 	@Column
 	private Integer sorcererId;
 
-	// contains the case (which event occured)
 	@Event
 	@Column
 	private Integer eventType;

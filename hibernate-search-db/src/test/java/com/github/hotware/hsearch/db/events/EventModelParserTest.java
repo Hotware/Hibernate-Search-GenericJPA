@@ -158,7 +158,7 @@ public class EventModelParserTest {
 		{
 			EventModelParser parser = new EventModelParser();
 			try {
-				parser.parse(Arrays.asList(ForgotCase.class));
+				parser.parse(Arrays.asList(ForgotEvent.class));
 				fail("Exception expected");
 			} catch (IllegalArgumentException e) {
 
@@ -226,7 +226,7 @@ public class EventModelParserTest {
 	}
 
 	@Updates(originalTableName = "orig", tableName = "tbl")
-	private static class ForgotCase {
+	private static class ForgotEvent {
 
 		@SuppressWarnings("unused")
 		private Integer eventType;
