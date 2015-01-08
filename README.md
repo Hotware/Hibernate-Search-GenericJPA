@@ -1,6 +1,8 @@
 Hibernate-Search-JPA
 ====================
 
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Hotware/Hibernate-Search-JPA?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 NOTE: This version currently relies temporarily on this version of Hibernate-Search:
 
 https://github.com/s4ke/hibernate-search (branch deleteByQuery)
