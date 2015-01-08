@@ -24,7 +24,7 @@ import org.junit.Test;
 
 import com.github.hotware.hsearch.db.events.EventModelInfo;
 import com.github.hotware.hsearch.db.events.EventModelParser;
-import com.github.hotware.hsearch.jpa.test.entities.PlaceUpdates;
+import com.github.hotware.hsearch.db.test.entities.PlaceUpdates;
 
 /**
  * @author Martin
@@ -33,10 +33,21 @@ import com.github.hotware.hsearch.jpa.test.entities.PlaceUpdates;
 public class EventModelParserTest {
 
 	@Test
-	public void test() {
+	public void test() throws IllegalArgumentException, IllegalAccessException {
 		EventModelParser parser = new EventModelParser();
 		List<EventModelInfo> infos = parser.parse(Arrays.asList(PlaceUpdates.class));
 		System.out.println(infos);
+		
+		PlaceUpdates placeUpdate = new PlaceUpdates();
+		placeUpdate.setId(123123);
+		placeUpdate.setPlaceId(1);
+		placeUpdate.setEventCase(EventCase.INSERT);
+		
+		assertEquals("placeId", infos.get(0).getIdInfos().get(0).getColumns()[0]);
+		assertEquals("id", infos.get(0).getIdInfos().get(0).getColumnsInOriginal()[0]);
+		
+		assertEquals(1, infos.get(0).getIdInfos().get(0).getField().get(placeUpdate));
+		assertEquals(EventCase.INSERT, infos.get(0).getCaseField().get(placeUpdate));
 	}
 
 }

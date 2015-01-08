@@ -36,6 +36,7 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
+import com.github.hotware.hsearch.db.test.entities.Place;
 import com.github.hotware.hsearch.entity.EntityProvider;
 import com.github.hotware.hsearch.entity.jpa.EntityManagerEntityProvider;
 import com.github.hotware.hsearch.factory.SearchConfigurationImpl;
@@ -46,7 +47,6 @@ import com.github.hotware.hsearch.jpa.event.MetaModelParser;
 import com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace;
 import com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace2;
 import com.github.hotware.hsearch.jpa.test.entities.EmbeddableInfo;
-import com.github.hotware.hsearch.jpa.test.entities.Place;
 import com.github.hotware.hsearch.jpa.test.entities.Sorcerer;
 import com.github.hotware.hsearch.query.HSearchQuery;
 import com.github.hotware.hsearch.query.HSearchQuery.Fetch;
