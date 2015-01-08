@@ -63,6 +63,8 @@ public class EventModelParserTest {
 				}
 
 			});
+			
+			assertEquals(PlaceUpdates.class, infos.get(0).getUpdateClass());
 
 			assertEquals(Place.class, idInfos.get(0).getEntityClass());
 			assertEquals("placeId", idInfos.get(0).getColumns()[0]);
@@ -74,6 +76,7 @@ public class EventModelParserTest {
 
 			assertEquals(1, idInfos.get(0).getIdAccessor().apply(placeUpdate));
 			assertEquals(2, idInfos.get(1).getIdAccessor().apply(placeUpdate));
+			
 			assertEquals((Integer) EventCase.INSERT, infos.get(0)
 					.getCaseAccessor().apply(placeUpdate));
 		}
@@ -99,6 +102,8 @@ public class EventModelParserTest {
 
 			});
 
+			assertEquals(PlaceUpdatesMethod.class, infos.get(0).getUpdateClass());
+			
 			assertEquals(Place.class, idInfos.get(0).getEntityClass());
 			assertEquals("placeId", idInfos.get(0).getColumns()[0]);
 			assertEquals("id", idInfos.get(0).getColumnsInOriginal()[0]);
@@ -109,6 +114,7 @@ public class EventModelParserTest {
 
 			assertEquals(1, idInfos.get(0).getIdAccessor().apply(placeUpdate));
 			assertEquals(2, idInfos.get(1).getIdAccessor().apply(placeUpdate));
+			
 			assertEquals((Integer) EventCase.INSERT, infos.get(0)
 					.getCaseAccessor().apply(placeUpdate));
 		}

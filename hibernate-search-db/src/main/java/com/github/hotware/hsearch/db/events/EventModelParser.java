@@ -119,7 +119,7 @@ public class EventModelParser {
 				}
 			};
 
-			ret.add(new EventModelInfo(updates.tableName(), updates
+			ret.add(new EventModelInfo(clazz, updates.tableName(), updates
 					.originalTableName(), caseAccessor, idInfos));
 
 		}

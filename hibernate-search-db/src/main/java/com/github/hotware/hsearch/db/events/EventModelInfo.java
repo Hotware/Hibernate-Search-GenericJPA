@@ -25,18 +25,28 @@ import java.util.function.Function;
  */
 public class EventModelInfo {
 
+	private final Class<?> updateClass;
 	private final String tableName;
 	private final String originalTableName;
 	private final Function<Object, Integer> caseAccessor;
 	private final List<IdInfo> idInfos;
 
-	public EventModelInfo(String tableName, String originalTableName,
-			Function<Object, Integer> caseAccessor, List<IdInfo> idInfos) {
+	public EventModelInfo(Class<?> updateClass, String tableName,
+			String originalTableName, Function<Object, Integer> caseAccessor,
+			List<IdInfo> idInfos) {
 		super();
+		this.updateClass = updateClass;
 		this.tableName = tableName;
 		this.originalTableName = originalTableName;
 		this.caseAccessor = caseAccessor;
 		this.idInfos = idInfos;
+	}
+
+	/**
+	 * @return the updateClass
+	 */
+	public Class<?> getUpdateClass() {
+		return updateClass;
 	}
 
 	/**
