@@ -32,7 +32,7 @@ public class PlaceUpdatesMethod {
 	private Integer sorcererId;
 
 	private Integer eventCase;
-
+	
 	/**
 	 * @return the placeId
 	 */
@@ -40,6 +40,7 @@ public class PlaceUpdatesMethod {
 	public Integer getPlaceId() {
 		return placeId;
 	}
+
 
 	/**
 	 * @return the sorcererId
@@ -88,7 +89,7 @@ public class PlaceUpdatesMethod {
 	public void setId(Integer id) {
 		this.id = id;
 	}
-
+	
 	/**
 	 * @param placeId
 	 *            the placeId to set
