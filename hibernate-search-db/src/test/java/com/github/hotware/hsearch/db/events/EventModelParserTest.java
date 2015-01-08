@@ -30,8 +30,8 @@ import com.github.hotware.hsearch.db.events.annotations.Case;
 import com.github.hotware.hsearch.db.events.annotations.IdFor;
 import com.github.hotware.hsearch.db.events.annotations.Updates;
 import com.github.hotware.hsearch.db.test.entities.Place;
-import com.github.hotware.hsearch.db.test.entities.PlaceUpdates;
-import com.github.hotware.hsearch.db.test.entities.PlaceUpdatesMethod;
+import com.github.hotware.hsearch.db.test.entities.PlaceSorcererUpdates;
+import com.github.hotware.hsearch.db.test.entities.PlaceSorcererUpdatesMethod;
 import com.github.hotware.hsearch.db.test.entities.Sorcerer;
 
 /**
@@ -46,9 +46,9 @@ public class EventModelParserTest {
 		{
 			EventModelParser parser = new EventModelParser();
 			List<EventModelInfo> infos = parser.parse(Arrays
-					.asList(PlaceUpdates.class));
+					.asList(PlaceSorcererUpdates.class));
 			System.out.println(infos);
-			PlaceUpdates placeUpdate = new PlaceUpdates();
+			PlaceSorcererUpdates placeUpdate = new PlaceSorcererUpdates();
 			placeUpdate.setId(123123);
 			placeUpdate.setPlaceId(1);
 			placeUpdate.setSorcererId(2);
@@ -63,8 +63,11 @@ public class EventModelParserTest {
 				}
 
 			});
-			
-			assertEquals(PlaceUpdates.class, infos.get(0).getUpdateClass());
+
+			assertEquals(PlaceSorcererUpdates.class, infos.get(0)
+					.getUpdateClass());
+			assertEquals("PlaceSorcererUpdates", infos.get(0).getTableName());
+			assertEquals("Place_Sorcerer", infos.get(0).getOriginalTableName());
 
 			assertEquals(Place.class, idInfos.get(0).getEntityClass());
 			assertEquals("placeId", idInfos.get(0).getColumns()[0]);
@@ -76,7 +79,7 @@ public class EventModelParserTest {
 
 			assertEquals(1, idInfos.get(0).getIdAccessor().apply(placeUpdate));
 			assertEquals(2, idInfos.get(1).getIdAccessor().apply(placeUpdate));
-			
+
 			assertEquals((Integer) EventCase.INSERT, infos.get(0)
 					.getCaseAccessor().apply(placeUpdate));
 		}
@@ -84,9 +87,9 @@ public class EventModelParserTest {
 		{
 			EventModelParser parser = new EventModelParser();
 			List<EventModelInfo> infos = parser.parse(Arrays
-					.asList(PlaceUpdatesMethod.class));
+					.asList(PlaceSorcererUpdatesMethod.class));
 			System.out.println(infos);
-			PlaceUpdatesMethod placeUpdate = new PlaceUpdatesMethod();
+			PlaceSorcererUpdatesMethod placeUpdate = new PlaceSorcererUpdatesMethod();
 			placeUpdate.setId(123123);
 			placeUpdate.setPlaceId(1);
 			placeUpdate.setSorcererId(2);
@@ -102,8 +105,11 @@ public class EventModelParserTest {
 
 			});
 
-			assertEquals(PlaceUpdatesMethod.class, infos.get(0).getUpdateClass());
-			
+			assertEquals(PlaceSorcererUpdatesMethod.class, infos.get(0)
+					.getUpdateClass());
+			assertEquals("PlaceSorcererUpdates", infos.get(0).getTableName());
+			assertEquals("Place_Sorcerer", infos.get(0).getOriginalTableName());
+
 			assertEquals(Place.class, idInfos.get(0).getEntityClass());
 			assertEquals("placeId", idInfos.get(0).getColumns()[0]);
 			assertEquals("id", idInfos.get(0).getColumnsInOriginal()[0]);
@@ -114,7 +120,7 @@ public class EventModelParserTest {
 
 			assertEquals(1, idInfos.get(0).getIdAccessor().apply(placeUpdate));
 			assertEquals(2, idInfos.get(1).getIdAccessor().apply(placeUpdate));
-			
+
 			assertEquals((Integer) EventCase.INSERT, infos.get(0)
 					.getCaseAccessor().apply(placeUpdate));
 		}
@@ -138,7 +144,7 @@ public class EventModelParserTest {
 
 			}
 		}
-		
+
 		{
 			EventModelParser parser = new EventModelParser();
 			try {
@@ -148,7 +154,7 @@ public class EventModelParserTest {
 
 			}
 		}
-		
+
 		{
 			EventModelParser parser = new EventModelParser();
 			try {
@@ -158,7 +164,7 @@ public class EventModelParserTest {
 
 			}
 		}
-		
+
 		{
 			EventModelParser parser = new EventModelParser();
 			try {
@@ -205,7 +211,7 @@ public class EventModelParserTest {
 		}
 
 	}
-	
+
 	private static class ForgotUpdates {
 
 		@Case
@@ -218,7 +224,7 @@ public class EventModelParserTest {
 		private Integer id2;
 
 	}
-	
+
 	@Updates(originalTableName = "orig", tableName = "tbl")
 	private static class ForgotCase {
 
@@ -232,7 +238,7 @@ public class EventModelParserTest {
 		private Integer id2;
 
 	}
-	
+
 	@Updates(originalTableName = "orig", tableName = "tbl")
 	private static class ForgotIds {
 

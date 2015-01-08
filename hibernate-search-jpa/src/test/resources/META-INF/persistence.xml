@@ -25,6 +25,7 @@
 		<class>com.github.hotware.hsearch.jpa.test.entities.Place</class>
 		<class>com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace</class>
 		<class>com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace2</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.PlaceSorcererUpdates</class>
 		<properties>
 			<property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbcDriver" />
 			<property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:mem:eclipselink" />

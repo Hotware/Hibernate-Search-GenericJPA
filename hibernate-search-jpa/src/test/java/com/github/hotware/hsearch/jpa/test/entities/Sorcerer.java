@@ -30,7 +30,6 @@ import org.hibernate.search.annotations.IndexedEmbedded;
 import org.hibernate.search.annotations.Store;
 
 import com.github.hotware.hsearch.annotations.InIndex;
-import com.github.hotware.hsearch.db.test.entities.Place;
 import com.github.hotware.hsearch.jpa.event.HSearchJPAEventListener;
 
 @Entity

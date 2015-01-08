@@ -21,6 +21,8 @@ package com.github.hotware.hsearch.db.events;
  */
 public interface UpdateConsumer {
 	
-	public void updateEvent(Class<?> entityClass, Object id);
+	// TODO: maybe create a batch method at some point.
+	
+	public void updateEvent(Class<?> entityClass, Object id, int eventCase);
 
 }

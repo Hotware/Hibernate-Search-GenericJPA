@@ -15,8 +15,24 @@
  */
 package com.github.hotware.hsearch.db.events.jpa;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.EntityTransaction;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
+
+import com.github.hotware.hsearch.db.events.EventModelInfo;
 import com.github.hotware.hsearch.db.events.UpdateConsumer;
 import com.github.hotware.hsearch.db.events.UpdateSource;
+import com.github.hotware.hsearch.db.events.EventModelInfo.IdInfo;
 
 /**
  * @author Martin
@@ -24,7 +40,30 @@ import com.github.hotware.hsearch.db.events.UpdateSource;
  */
 public class JPAUpdateSource implements UpdateSource {
 
+	private final List<EventModelInfo> eventModelInfos;
 	private UpdateConsumer updateConsumer;
+	private final EntityManagerFactory emf;
+	private ScheduledExecutorService exec;
+	private final long timeOut;
+	private final TimeUnit timeUnit;
+	private final int batchSize;
+
+	/**
+	 * 
+	 */
+	public JPAUpdateSource(List<EventModelInfo> eventModelInfos,
+			EntityManagerFactory emf, long timeOut, TimeUnit timeUnit,
+			int batchSize) {
+		this.eventModelInfos = eventModelInfos;
+		this.emf = emf;
+		this.timeOut = timeOut;
+		this.timeUnit = timeUnit;
+		if (batchSize <= 0) {
+			throw new IllegalArgumentException(
+					"batchSize must be greater than 0");
+		}
+		this.batchSize = batchSize;
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -45,9 +84,89 @@ public class JPAUpdateSource implements UpdateSource {
 	 */
 	@Override
 	public void start() {
-		if(this.updateConsumer == null) {
+		if (this.updateConsumer == null) {
 			throw new IllegalStateException("updateConsumer was null!");
 		}
+		this.exec = Executors.newScheduledThreadPool(1);
+		this.exec.scheduleWithFixedDelay(new Runnable() {
+
+			@Override
+			public void run() {
+				EntityManager em = null;
+				try {
+					em = JPAUpdateSource.this.emf.createEntityManager();
+					EntityTransaction tx;
+					try {
+						// YAY JPA...
+						// throwing unchecked exceptions without having a valid
+						// getter present is so cool.
+						tx = em.getTransaction();
+					} catch (IllegalStateException e) {
+						tx = null;
+					}
+					if (tx != null) {
+						tx.begin();
+					}
+					for (EventModelInfo evi : JPAUpdateSource.this.eventModelInfos) {
+						CriteriaBuilder cb = em.getCriteriaBuilder();
+						long count;
+						{
+							CriteriaQuery<Long> countQuery = cb
+									.createQuery(Long.class);
+							countQuery.select(cb.count(countQuery.from(evi
+									.getUpdateClass())));
+							count = em.createQuery(countQuery)
+									.getSingleResult();
+						}
+
+						CriteriaQuery<?> q = cb.createQuery(evi
+								.getUpdateClass());
+						Root<?> ent = q.from(evi.getUpdateClass());
+						TypedQuery<?> query = em
+								.createQuery(q.multiselect(ent));
+						query.setMaxResults(JPAUpdateSource.this.batchSize);
+
+						long processed = 0;
+						while (processed < count) {
+							// ... who designed this API???
+							query.setFirstResult((int) processed);
+							List<Object> toRemove = new ArrayList<>(JPAUpdateSource.this.batchSize);
+							for (Object update : query.getResultList()) {
+								Integer eventCase = evi.getCaseAccessor()
+										.apply(update);
+								for (IdInfo idInfo : evi.getIdInfos()) {
+									Class<?> entityClass = idInfo
+											.getEntityClass();
+									Object id = idInfo.getIdAccessor().apply(
+											update);
+									// TODO: maybe create a batch method at some point.
+									JPAUpdateSource.this.updateConsumer
+											.updateEvent(entityClass, id,
+													eventCase);
+								}
+								toRemove.add(update);
+							}
+							for(Object rem : toRemove) {
+								em.remove(rem);
+							}
+							em.flush();
+							processed += JPAUpdateSource.this.batchSize;
+							// clear memory :)
+							em.clear();
+						}
+					}
+					if (tx != null) {
+						tx.commit();
+					}
+					// entityProvider.getB
+				} finally {
+					if (em != null) {
+						em.close();
+					}
+				}
+			}
+
+		}, 0, this.timeOut, this.timeUnit);
 	}
 
 	/*
@@ -57,7 +176,9 @@ public class JPAUpdateSource implements UpdateSource {
 	 */
 	@Override
 	public void stop() {
-		
+		if (this.exec != null) {
+			this.exec.shutdown();
+		}
 	}
 
 }

@@ -26,14 +26,6 @@
 		</plugins>
 	</build>
 
-	<repositories>
-		<repository>
-			<id>objectdb</id>
-			<name>ObjectDB Repository</name>
-			<url>http://m2.objectdb.com</url>
-		</repository>
-	</repositories>
-
 	<properties>
 		<hibernate.version>4.3.7.Final</hibernate.version>
 	</properties>
