@@ -43,7 +43,7 @@ public interface UpdateConsumer {
 		}
 
 		/**
-		 * @return the eventCase
+		 * @return the eventType
 		 */
 		public int getEventType() {
 			return this.eventType;
