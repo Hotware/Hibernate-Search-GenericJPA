@@ -16,7 +16,9 @@
 package com.github.hotware.hsearch.db.events.jpa;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -31,6 +33,7 @@ import javax.persistence.criteria.Root;
 
 import com.github.hotware.hsearch.db.events.EventModelInfo;
 import com.github.hotware.hsearch.db.events.UpdateConsumer;
+import com.github.hotware.hsearch.db.events.UpdateConsumer.UpdateInfo;
 import com.github.hotware.hsearch.db.events.UpdateSource;
 import com.github.hotware.hsearch.db.events.EventModelInfo.IdInfo;
 
@@ -56,6 +59,9 @@ public class JPAUpdateSource implements UpdateSource {
 			int batchSize) {
 		this.eventModelInfos = eventModelInfos;
 		this.emf = emf;
+		if (timeOut <= 0) {
+			throw new IllegalArgumentException("timeout must be greater than 0");
+		}
 		this.timeOut = timeOut;
 		this.timeUnit = timeUnit;
 		if (batchSize <= 0) {
@@ -130,7 +136,10 @@ public class JPAUpdateSource implements UpdateSource {
 						while (processed < count) {
 							// ... who designed this API???
 							query.setFirstResult((int) processed);
-							List<Object> toRemove = new ArrayList<>(JPAUpdateSource.this.batchSize);
+							List<Object> toRemove = new ArrayList<>(
+									JPAUpdateSource.this.batchSize);
+
+							Map<Class<?>, List<UpdateInfo>> updatesPerEntity = new HashMap<>();
 							for (Object update : query.getResultList()) {
 								Integer eventCase = evi.getCaseAccessor()
 										.apply(update);
@@ -139,14 +148,25 @@ public class JPAUpdateSource implements UpdateSource {
 											.getEntityClass();
 									Object id = idInfo.getIdAccessor().apply(
 											update);
-									// TODO: maybe create a batch method at some point.
-									JPAUpdateSource.this.updateConsumer
-											.updateEvent(entityClass, id,
-													eventCase);
+									updatesPerEntity
+											.computeIfAbsent(
+													entityClass,
+													(clazz) -> {
+														return new ArrayList<>(
+																JPAUpdateSource.this.batchSize);
+													}).add(
+													new UpdateInfo(id,
+															eventCase));
 								}
 								toRemove.add(update);
 							}
-							for(Object rem : toRemove) {
+							for (Map.Entry<Class<?>, List<UpdateInfo>> entry : updatesPerEntity
+									.entrySet()) {
+								JPAUpdateSource.this.updateConsumer
+										.updateEvent(entry.getKey(),
+												entry.getValue());
+							}
+							for (Object rem : toRemove) {
 								em.remove(rem);
 							}
 							em.flush();
@@ -158,7 +178,6 @@ public class JPAUpdateSource implements UpdateSource {
 					if (tx != null) {
 						tx.commit();
 					}
-					// entityProvider.getB
 				} finally {
 					if (em != null) {
 						em.close();

@@ -23,8 +23,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * used to identify the field which contains which operation happened on the
- * database
+ * used to identify the field which contains the information about what
+ * operation happened on the database
  * 
  * @author Martin
  */

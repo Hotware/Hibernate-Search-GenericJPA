@@ -18,6 +18,7 @@ package com.github.hotware.hsearch.db.events.jpa;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.util.List;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
@@ -76,15 +77,19 @@ public class JPAUpdateSourceTest {
 			updateSource.setUpdateConsumer(new UpdateConsumer() {
 
 				@Override
-				public void updateEvent(Class<?> entityClass, Object id,
-						int eventCase) {
-					if (id.equals(2) && entityClass.equals(Place.class)
-							&& eventCase == EventCase.INSERT) {
-						gotEvent[0] = true;
-					} else if (id.equals(3)
-							&& entityClass.equals(Sorcerer.class)
-							&& eventCase == EventCase.INSERT) {
-						gotEvent[1] = true;
+				public void updateEvent(Class<?> entityClass,
+						List<UpdateInfo> updateInfos) {
+					for (UpdateInfo updateInfo : updateInfos) {
+						Object id = updateInfo.getId();
+						int eventCase = updateInfo.getEventCase();
+						if (id.equals(2) && entityClass.equals(Place.class)
+								&& eventCase == EventCase.INSERT) {
+							gotEvent[0] = true;
+						} else if (id.equals(3)
+								&& entityClass.equals(Sorcerer.class)
+								&& eventCase == EventCase.INSERT) {
+							gotEvent[1] = true;
+						}
 					}
 				}
 			});

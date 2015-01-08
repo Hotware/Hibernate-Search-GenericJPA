@@ -15,14 +15,40 @@
  */
 package com.github.hotware.hsearch.db.events;
 
+import java.util.List;
+
 /**
  * @author Martin
  *
  */
 public interface UpdateConsumer {
 	
-	// TODO: maybe create a batch method at some point.
+	public void updateEvent(Class<?> entityClass, List<UpdateInfo> updateInfo);
 	
-	public void updateEvent(Class<?> entityClass, Object id, int eventCase);
+	public static class UpdateInfo {
+		private final Object id;
+		private final int eventCase;
+
+		public UpdateInfo(Object id, int eventCase) {
+			super();
+			this.id = id;
+			this.eventCase = eventCase;
+		}
+
+		/**
+		 * @return the id
+		 */
+		public Object getId() {
+			return id;
+		}
+
+		/**
+		 * @return the eventCase
+		 */
+		public int getEventCase() {
+			return eventCase;
+		}
+
+	}
 
 }
