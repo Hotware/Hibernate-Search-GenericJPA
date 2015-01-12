@@ -26,7 +26,6 @@ import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
-import javax.persistence.FlushModeType;
 
 import org.junit.Test;
 
@@ -40,7 +39,6 @@ import com.github.hotware.hsearch.jpa.test.entities.Sorcerer;
 
 /**
  * @author Martin
- *
  */
 public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 
