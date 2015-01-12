@@ -39,6 +39,7 @@ public class EventModelParser {
 		for (Class<?> clazz : updateClasses) {
 			Updates updates = clazz.getAnnotation(Updates.class);
 			java.lang.reflect.Member eventTypeMember = null;
+			String eventTypeColumn = null;
 			List<EventModelInfo.IdInfo> idInfos = new ArrayList<>();
 			if (updates != null) {
 				ParseMembersReturn forFields;
@@ -58,6 +59,7 @@ public class EventModelParser {
 						}
 						if (pmr.eventTypeMember != null) {
 							eventTypeMember = pmr.eventTypeMember;
+							eventTypeColumn = pmr.eventTypeColumn;
 						}
 					}
 				}
@@ -81,6 +83,7 @@ public class EventModelParser {
 						}
 						if (pmr.eventTypeMember != null) {
 							eventTypeMember = pmr.eventTypeMember;
+							eventTypeColumn = pmr.eventTypeColumn;
 						}
 					}
 				}
@@ -109,7 +112,8 @@ public class EventModelParser {
 						return (Integer) ((Method) eventTypeMemberFinal)
 								.invoke(object);
 					} else if (eventTypeMemberFinal instanceof Field) {
-						return (Integer) ((Field) eventTypeMemberFinal).get(object);
+						return (Integer) ((Field) eventTypeMemberFinal)
+								.get(object);
 					} else {
 						throw new AssertionError();
 					}
@@ -118,9 +122,9 @@ public class EventModelParser {
 					throw new RuntimeException(e);
 				}
 			};
-
 			ret.add(new EventModelInfo(clazz, updates.tableName(), updates
-					.originalTableName(), eventTypeAccessor, idInfos));
+					.originalTableName(), eventTypeAccessor, eventTypeColumn,
+					idInfos));
 
 		}
 		return ret;
@@ -129,6 +133,7 @@ public class EventModelParser {
 	private static class ParseMembersReturn {
 		Member eventTypeMember;
 		boolean foundIdInfos;
+		String eventTypeColumn;
 
 		public boolean foundAnything() {
 			return this.eventTypeMember != null || this.foundIdInfos;
@@ -159,9 +164,11 @@ public class EventModelParser {
 				}
 				if (ret.eventTypeMember == null) {
 					ret.eventTypeMember = member;
+					ret.eventTypeColumn = event.column();
 				} else {
 					throw new IllegalArgumentException(
-							"class cannot have two @Event members. Class: " + clazz);
+							"class cannot have two @Event members. Class: "
+									+ clazz);
 				}
 			}
 			if (idFor != null) {
@@ -180,7 +187,11 @@ public class EventModelParser {
 						throw new RuntimeException(e);
 					}
 				};
-				// TODO: Exception for wrong values
+				if (idFor.columns().length != idFor.columnsInOriginal().length) {
+					throw new IllegalArgumentException(
+							"the count of IdFor-columns in the update table has to "
+									+ "match the count of Id-columns in the original");
+				}
 				EventModelInfo.IdInfo idInfo = new EventModelInfo.IdInfo(
 						idAccessor, idFor.entityClass(), idFor.columns(),
 						idFor.columnsInOriginal());

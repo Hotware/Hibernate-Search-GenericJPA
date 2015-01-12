@@ -13,25 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.hotware.hsearch.db.events.annotations;
-
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+package com.github.hotware.hsearch.db.events;
 
 /**
- * used to identify the field which contains the information about what
- * operation happened on the database
- * 
  * @author Martin
+ *
  */
-@Target({ FIELD, METHOD })
-@Retention(RUNTIME)
-public @interface Event {
-
-	String column() default "eventType";
+public interface TriggerSQLStringSource {
+	
+	public String getTriggerDropString(EventModelInfo eventModelInfo, int eventType);
+	
+	public String getTriggerCreationString(EventModelInfo eventModelInfo, int eventType);
 	
 }

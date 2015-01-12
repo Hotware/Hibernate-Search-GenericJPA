@@ -29,16 +29,19 @@ public class EventModelInfo {
 	private final String tableName;
 	private final String originalTableName;
 	private final Function<Object, Integer> eventTypeAccessor;
+	private final String eventTypeColumn;
 	private final List<IdInfo> idInfos;
 
 	public EventModelInfo(Class<?> updateClass, String tableName,
-			String originalTableName, Function<Object, Integer> eventTypeAccessor,
-			List<IdInfo> idInfos) {
+			String originalTableName,
+			Function<Object, Integer> eventTypeAccessor,
+			String eventTypeColumn, List<IdInfo> idInfos) {
 		super();
 		this.updateClass = updateClass;
 		this.tableName = tableName;
 		this.originalTableName = originalTableName;
 		this.eventTypeAccessor = eventTypeAccessor;
+		this.eventTypeColumn = eventTypeColumn;
 		this.idInfos = idInfos;
 	}
 
@@ -77,6 +80,13 @@ public class EventModelInfo {
 		return idInfos;
 	}
 
+	/**
+	 * @return the eventTypeColumn
+	 */
+	public String getEventTypeColumn() {
+		return eventTypeColumn;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -84,10 +94,11 @@ public class EventModelInfo {
 	 */
 	@Override
 	public String toString() {
-		return "EventModelInfo [tableName=" + tableName
-				+ ", originalTableName=" + originalTableName
-				+ ", eventTypeAccessor=" + eventTypeAccessor + ", idInfos=" + idInfos
-				+ "]";
+		return "EventModelInfo [updateClass=" + updateClass + ", tableName="
+				+ tableName + ", originalTableName=" + originalTableName
+				+ ", eventTypeAccessor=" + eventTypeAccessor
+				+ ", eventTypeColumn=" + eventTypeColumn + ", idInfos="
+				+ idInfos + "]";
 	}
 
 	public static class IdInfo {

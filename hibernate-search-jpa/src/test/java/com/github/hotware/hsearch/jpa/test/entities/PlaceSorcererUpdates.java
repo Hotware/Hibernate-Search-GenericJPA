@@ -17,6 +17,8 @@ package com.github.hotware.hsearch.jpa.test.entities;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
 import com.github.hotware.hsearch.db.events.annotations.Event;
@@ -31,13 +33,14 @@ import com.github.hotware.hsearch.db.events.annotations.Updates;
 public class PlaceSorcererUpdates {
 
 	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 
-	@IdFor(entityClass = Place.class, columns = "placeId", columnsInOriginal = "id")
+	@IdFor(entityClass = Place.class, columns = "placeId", columnsInOriginal = "Place_ID")
 	@Column
 	private Integer placeId;
 
-	@IdFor(entityClass = Sorcerer.class, columns = "sorcererId", columnsInOriginal = "sorc_id")
+	@IdFor(entityClass = Sorcerer.class, columns = "sorcererId", columnsInOriginal = "sorcerers_ID")
 	@Column
 	private Integer sorcererId;
 
