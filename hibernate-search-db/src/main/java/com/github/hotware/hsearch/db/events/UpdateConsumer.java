@@ -22,15 +22,17 @@ import java.util.List;
  *
  */
 public interface UpdateConsumer {
-	
-	public void updateEvent(Class<?> entityClass, List<UpdateInfo> updateInfo);
-	
+
+	public void updateEvent(List<UpdateInfo> updateInfo);
+
 	public static class UpdateInfo {
+		private final Class<?> entityClass;
 		private final Object id;
 		private final int eventType;
 
-		public UpdateInfo(Object id, int eventType) {
+		public UpdateInfo(Class<?> entityClass, Object id, int eventType) {
 			super();
+			this.entityClass = entityClass;
 			this.id = id;
 			this.eventType = eventType;
 		}
@@ -47,6 +49,13 @@ public interface UpdateConsumer {
 		 */
 		public int getEventType() {
 			return this.eventType;
+		}
+
+		/**
+		 * @return the entityClass
+		 */
+		public Class<?> getEntityClass() {
+			return entityClass;
 		}
 
 	}

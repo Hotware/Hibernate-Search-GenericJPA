@@ -77,16 +77,18 @@ public class JPAUpdateSourceTest {
 			updateSource.setUpdateConsumer(new UpdateConsumer() {
 
 				@Override
-				public void updateEvent(Class<?> entityClass,
-						List<UpdateInfo> updateInfos) {
+				public void updateEvent(List<UpdateInfo> updateInfos) {
 					for (UpdateInfo updateInfo : updateInfos) {
 						Object id = updateInfo.getId();
 						int eventType = updateInfo.getEventType();
-						if (id.equals(2) && entityClass.equals(Place.class)
+						if (id.equals(2)
+								&& updateInfo.getEntityClass().equals(
+										Place.class)
 								&& eventType == EventType.INSERT) {
 							gotEvent[0] = true;
 						} else if (id.equals(3)
-								&& entityClass.equals(Sorcerer.class)
+								&& updateInfo.getEntityClass().equals(
+										Sorcerer.class)
 								&& eventType == EventType.INSERT) {
 							gotEvent[1] = true;
 						}

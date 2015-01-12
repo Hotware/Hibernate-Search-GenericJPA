@@ -155,7 +155,7 @@ public class JPAUpdateSource implements UpdateSource {
 														return new ArrayList<>(
 																JPAUpdateSource.this.batchSize);
 													}).add(
-													new UpdateInfo(id,
+													new UpdateInfo(entityClass, id,
 															eventType));
 								}
 								toRemove.add(update);
@@ -163,8 +163,7 @@ public class JPAUpdateSource implements UpdateSource {
 							for (Map.Entry<Class<?>, List<UpdateInfo>> entry : updatesPerEntity
 									.entrySet()) {
 								JPAUpdateSource.this.updateConsumer
-										.updateEvent(entry.getKey(),
-												entry.getValue());
+										.updateEvent(entry.getValue());
 							}
 							for (Object rem : toRemove) {
 								em.remove(rem);
