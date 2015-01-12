@@ -46,22 +46,39 @@ public abstract class DatabaseIntegrationTest {
 			EntityTransaction tx = em.getTransaction();
 			tx.begin();
 
-			@SuppressWarnings("unchecked")
-			List<Place> toDelete = new ArrayList<>(em.createQuery(
-					"SELECT a FROM Place a").getResultList());
-			for (Place place : toDelete) {
-				em.remove(place);
+			{
+				@SuppressWarnings("unchecked")
+				List<Place> toDelete = new ArrayList<>(em.createQuery(
+						"SELECT a FROM Place a").getResultList());
+				for (Place place : toDelete) {
+					em.remove(place);
+				}
+				em.flush();
 			}
-			em.flush();
-			
-			@SuppressWarnings("unchecked")
-			List<PlaceSorcererUpdates> toDelete2 = new ArrayList<>(em.createQuery(
-					"SELECT a FROM PlaceSorcererUpdates a").getResultList());
-			for (PlaceSorcererUpdates val : toDelete2) {
-				em.remove(val);
-			}
-			em.flush();			
 
+			{
+				@SuppressWarnings("unchecked")
+				List<Sorcerer> toDelete = new ArrayList<>(em.createQuery(
+						"SELECT a FROM Sorcerer a").getResultList());
+				for (Sorcerer place : toDelete) {
+					em.remove(place);
+				}
+				em.flush();
+			}
+
+			{
+				@SuppressWarnings("unchecked")
+				List<PlaceSorcererUpdates> toDelete2 = new ArrayList<>(em
+						.createQuery("SELECT a FROM PlaceSorcererUpdates a")
+						.getResultList());
+				for (PlaceSorcererUpdates val : toDelete2) {
+					em.remove(val);
+				}
+				em.flush();
+			}
+			tx.commit();
+
+			tx.begin();
 			Sorcerer gandalf = new Sorcerer();
 			gandalf.setName("Gandalf");
 			em.persist(gandalf);
@@ -111,6 +128,6 @@ public abstract class DatabaseIntegrationTest {
 			}
 		}
 
-	}	
-	
+	}
+
 }

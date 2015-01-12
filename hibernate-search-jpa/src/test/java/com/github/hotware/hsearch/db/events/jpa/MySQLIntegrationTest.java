@@ -15,6 +15,7 @@
  */
 package com.github.hotware.hsearch.db.events.jpa;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.sql.SQLException;
@@ -25,6 +26,7 @@ import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
+import javax.persistence.FlushModeType;
 
 import org.junit.Test;
 
@@ -32,7 +34,9 @@ import com.github.hotware.hsearch.db.events.EventModelInfo;
 import com.github.hotware.hsearch.db.events.EventModelParser;
 import com.github.hotware.hsearch.db.events.EventType;
 import com.github.hotware.hsearch.db.events.MySQLTriggerSQLStringSource;
+import com.github.hotware.hsearch.jpa.test.entities.Place;
 import com.github.hotware.hsearch.jpa.test.entities.PlaceSorcererUpdates;
+import com.github.hotware.hsearch.jpa.test.entities.Sorcerer;
 
 /**
  * @author Martin
@@ -49,9 +53,9 @@ public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 			em = this.emf.createEntityManager();
 			EntityTransaction tx = em.getTransaction();
 			tx.begin();
-
 			java.sql.Connection connection = em
 					.unwrap(java.sql.Connection.class);
+			connection.setAutoCommit(false);
 
 			EventModelParser parser = new EventModelParser();
 			EventModelInfo info = parser.parse(
@@ -78,13 +82,69 @@ public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 				connection.rollback();
 				exceptionString = e.getMessage();
 			}
+			tx.commit();
+
+			tx.begin();
+			int countBefore = em
+					.createQuery("SELECT a FROM PlaceSorcererUpdates a")
+					.getResultList().size();
+			em.flush();
+			tx.commit();
+
+			tx.begin();
+			Place valinorDb = em.find(Place.class, this.valinorId);
+			Sorcerer randomNewGuy = new Sorcerer();
+			randomNewGuy.setId(-42);
+			randomNewGuy.setName("randomNewGuy");
+			randomNewGuy.setPlace(valinorDb);
+			em.persist(randomNewGuy);
+			valinorDb.getSorcerers().add(randomNewGuy);
+			tx.commit();
+
+			tx.begin();
+			assertEquals(countBefore + 1,
+					em.createQuery("SELECT a FROM PlaceSorcererUpdates a")
+							.getResultList().size());
+			tx.commit();
+
+			tx.begin();
+			assertEquals(
+					1,
+					em.createQuery(
+							"SELECT a FROM PlaceSorcererUpdates a WHERE a.eventType = "
+									+ EventType.INSERT).getResultList().size());
+			tx.commit();
+
+			tx.begin();
+			valinorDb.getSorcerers().remove(randomNewGuy);
+			em.remove(randomNewGuy);
+			tx.commit();
+
+			tx.begin();
+			assertEquals(countBefore + 2,
+					em.createQuery("SELECT a FROM PlaceSorcererUpdates a")
+							.getResultList().size());
+			tx.commit();
+
+			tx.begin();
+			assertEquals(
+					1,
+					em.createQuery(
+							"SELECT a FROM PlaceSorcererUpdates a WHERE a.eventType = "
+									+ EventType.DELETE).getResultList().size());
+			tx.commit();
+
+			// as we are testing on a mapping relation we cannot check whether
+			// the UPDATE triggers are set up correctly. but because of the
+			// nature how the triggers are created everything should be fine
+
+			tx.begin();
 
 			for (String dropString : dropStrings) {
 				Statement statement = connection.createStatement();
 				System.out.println("DROP: " + connection.nativeSQL(dropString));
 				statement.addBatch(connection.nativeSQL(dropString));
 				statement.executeBatch();
-				connection.commit();
 			}
 
 			tx.commit();

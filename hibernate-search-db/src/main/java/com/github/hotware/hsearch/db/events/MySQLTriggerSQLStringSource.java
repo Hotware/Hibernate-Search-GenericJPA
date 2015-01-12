@@ -24,10 +24,8 @@ import com.github.hotware.hsearch.db.events.EventModelInfo.IdInfo;
 public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 
 	private static final String PRE_TRIGGER = "";
-	// TODO: even allow Table names with i.e. #TRIGGER_NAME# as their name.
-	// maybe use String.format(...) here instead of placeholders
 	private static final String CREATE_TRIGGER_SQL_FORMAT = ""
-			+ "CREATE TRIGGER %s AFTER %s ON %s         \n"
+			+ "CREATE TRIGGER %s AFTER %s ON %s             \n"
 			+ "FOR EACH ROW                                 \n"
 			+ "BEGIN                                        \n"
 			+ "    INSERT INTO placesorcererupdates(%s, %s) \n"

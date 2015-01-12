@@ -108,4 +108,16 @@ public class PlaceSorcererUpdates {
 		this.placeId = placeId;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "PlaceSorcererUpdates [id=" + id + ", placeId=" + placeId
+				+ ", sorcererId=" + sorcererId + ", eventType=" + eventType
+				+ "]";
+	}
+
 }

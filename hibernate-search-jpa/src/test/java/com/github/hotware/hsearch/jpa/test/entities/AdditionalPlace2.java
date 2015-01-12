@@ -29,7 +29,7 @@ import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Store;
 
 import com.github.hotware.hsearch.annotations.InIndex;
-import com.github.hotware.hsearch.jpa.event.HSearchJPAEventListener;
+import com.github.hotware.hsearch.jpa.events.HSearchJPAEventListener;
 
 @Entity
 @EntityListeners(HSearchJPAEventListener.class)
