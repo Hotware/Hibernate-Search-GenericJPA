@@ -18,6 +18,8 @@ package com.github.hotware.hsearch.db.events.jpa;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -130,6 +132,19 @@ public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 					em.createQuery(
 							"SELECT a FROM PlaceSorcererUpdates a WHERE a.eventType = "
 									+ EventType.DELETE).getResultList().size());
+			tx.commit();
+
+			tx.begin();
+			DatabaseMetaData md = connection.getMetaData();
+			ResultSet rs = md.getTables(null, null, "%", null);
+			while (rs.next()) {
+				ResultSet cols = md
+						.getColumns(null, null, rs.getString(3), "%");
+				while (cols.next()) {
+					System.out.println(rs.getString(3) + ": " + cols.getString(4));
+				}
+			}
+
 			tx.commit();
 
 			// as we are testing on a mapping relation we cannot check whether
