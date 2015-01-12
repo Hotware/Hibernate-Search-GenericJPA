@@ -113,6 +113,9 @@ public class JPAUpdateSource implements UpdateSource {
 					if (tx != null) {
 						tx.begin();
 					}
+					// FIXME: implement this so sorting by id works
+					// correctly like described in
+					// https://github.com/Hotware/Hibernate-Search-JPA/issues/16
 					for (EventModelInfo evi : JPAUpdateSource.this.eventModelInfos) {
 						CriteriaBuilder cb = em.getCriteriaBuilder();
 						long count;
@@ -155,8 +158,8 @@ public class JPAUpdateSource implements UpdateSource {
 														return new ArrayList<>(
 																JPAUpdateSource.this.batchSize);
 													}).add(
-													new UpdateInfo(entityClass, id,
-															eventType));
+													new UpdateInfo(entityClass,
+															id, eventType));
 								}
 								toRemove.add(update);
 							}
