@@ -141,7 +141,7 @@ public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 
 			JPAUpdateSource updateSource = new JPAUpdateSource(
 					parser.parse(Arrays.asList(PlaceSorcererUpdates.class,
-							PlaceUpdates.class)), emf, 1, TimeUnit.SECONDS, 100);
+							PlaceUpdates.class)), emf, 1, TimeUnit.SECONDS, 1);
 			updateSource.setUpdateConsumer(new UpdateConsumer() {
 
 				@Override
@@ -152,7 +152,7 @@ public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 			});
 			
 			updateSource.start();
-			Thread.sleep(3000);
+			Thread.sleep(1000);
 			tx.begin();
 			assertEquals(0,
 					em.createQuery("SELECT a FROM PlaceSorcererUpdates a")

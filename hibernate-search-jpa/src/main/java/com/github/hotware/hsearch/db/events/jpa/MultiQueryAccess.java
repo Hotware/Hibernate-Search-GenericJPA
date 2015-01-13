@@ -110,6 +110,17 @@ public class MultiQueryAccess {
 		return this.scheduled != null;
 	}
 
+	public void addToNextValuePosition(Class<?> clazz, Long change) {
+		Long oldValue = this.processed.get(clazz);
+		Long newValue = oldValue + change;
+		if (newValue < 0L) {
+			throw new IllegalArgumentException(
+					"change would set the next values"
+					+ " position to something less than 0");
+		}
+		this.processed.put(clazz, newValue);
+	}
+
 	public Object get() {
 		if (this.scheduled == null) {
 			throw new IllegalStateException(

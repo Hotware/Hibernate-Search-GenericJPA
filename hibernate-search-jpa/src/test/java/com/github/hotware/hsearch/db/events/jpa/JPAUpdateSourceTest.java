@@ -51,7 +51,7 @@ public class JPAUpdateSourceTest {
 			EventModelParser parser = new EventModelParser();
 			JPAUpdateSource updateSource = new JPAUpdateSource(
 					parser.parse(Arrays.asList(PlaceSorcererUpdates.class, PlaceUpdates.class)),
-					emf, 1, TimeUnit.SECONDS, 100);
+					emf, 1, TimeUnit.SECONDS, 2);
 
 			{
 				EntityManager em = null;

@@ -141,12 +141,12 @@ public class JPAUpdateSource implements UpdateSource {
 				tx.begin();
 			}
 			MultiQueryAccess query = this.query(this.eventModelInfos, em);
-			List<Object> toRemove = new ArrayList<>(this.batchSize);
+			List<Object[]> toRemove = new ArrayList<>(this.batchSize);
 			List<UpdateInfo> updateInfos = new ArrayList<>(this.batchSize);
 			long processed = 0;
 			while (query.next()) {
 				Object val = query.get();
-				toRemove.add(val);
+				toRemove.add(new Object[] { query.entityClass(), val });
 				EventModelInfo evi = this.updateClassToEventModelInfo.get(query
 						.entityClass());
 				for (IdInfo info : evi.getIdInfos()) {
@@ -156,8 +156,10 @@ public class JPAUpdateSource implements UpdateSource {
 				}
 				if (++processed % this.batchSize == 0) {
 					this.updateConsumer.updateEvent(updateInfos);
-					for (Object rem : toRemove) {
-						em.remove(rem);
+					for (Object[] rem : toRemove) {
+						// the class is in rem[0], the entity is in rem[1]
+						query.addToNextValuePosition((Class<?>) rem[0], -1L);
+						em.remove(rem[1]);
 					}
 					toRemove.clear();
 					updateInfos.clear();
@@ -168,8 +170,10 @@ public class JPAUpdateSource implements UpdateSource {
 			}
 			if (updateInfos.size() > 0) {
 				this.updateConsumer.updateEvent(updateInfos);
-				for (Object rem : toRemove) {
-					em.remove(rem);
+				for (Object[] rem : toRemove) {
+					// the class is in rem[0], the entity is in rem[1]
+					query.addToNextValuePosition((Class<?>) rem[0], -1L);
+					em.remove(rem[1]);
 				}
 				toRemove.clear();
 				updateInfos.clear();
