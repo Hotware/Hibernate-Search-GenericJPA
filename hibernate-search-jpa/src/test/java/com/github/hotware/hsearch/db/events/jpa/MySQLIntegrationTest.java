@@ -25,6 +25,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
@@ -35,6 +36,7 @@ import com.github.hotware.hsearch.db.events.EventModelInfo;
 import com.github.hotware.hsearch.db.events.EventModelParser;
 import com.github.hotware.hsearch.db.events.EventType;
 import com.github.hotware.hsearch.db.events.MySQLTriggerSQLStringSource;
+import com.github.hotware.hsearch.db.events.UpdateConsumer;
 import com.github.hotware.hsearch.jpa.test.entities.Place;
 import com.github.hotware.hsearch.jpa.test.entities.PlaceSorcererUpdates;
 import com.github.hotware.hsearch.jpa.test.entities.PlaceUpdates;
@@ -46,7 +48,8 @@ import com.github.hotware.hsearch.jpa.test.entities.Sorcerer;
 public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 
 	@Test
-	public void testMySQLIntegration() throws SQLException {
+	public void testMySQLIntegration() throws SQLException,
+			InterruptedException {
 		this.setup("EclipseLink_MySQL");
 
 		EntityManager em = null;
@@ -60,7 +63,8 @@ public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 
 			EventModelParser parser = new EventModelParser();
 			EventModelInfo info = parser.parse(
-					Arrays.asList(PlaceSorcererUpdates.class, PlaceUpdates.class)).get(0);
+					Arrays.asList(PlaceSorcererUpdates.class,
+							PlaceUpdates.class)).get(0);
 			List<String> dropStrings = new ArrayList<>();
 			String exceptionString = null;
 			MySQLTriggerSQLStringSource triggerSource = new MySQLTriggerSQLStringSource();
@@ -135,6 +139,26 @@ public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 									+ EventType.DELETE).getResultList().size());
 			tx.commit();
 
+			JPAUpdateSource updateSource = new JPAUpdateSource(
+					parser.parse(Arrays.asList(PlaceSorcererUpdates.class,
+							PlaceUpdates.class)), emf, 1, TimeUnit.SECONDS, 100);
+			updateSource.setUpdateConsumer(new UpdateConsumer() {
+
+				@Override
+				public void updateEvent(List<UpdateInfo> arg0) {
+					
+				}
+
+			});
+			
+			updateSource.start();
+			Thread.sleep(3000);
+			tx.begin();
+			assertEquals(0,
+					em.createQuery("SELECT a FROM PlaceSorcererUpdates a")
+							.getResultList().size());
+			tx.commit();
+
 			tx.begin();
 			DatabaseMetaData md = connection.getMetaData();
 			ResultSet rs = md.getTables(null, null, "%", null);
@@ -142,7 +166,8 @@ public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 				ResultSet cols = md
 						.getColumns(null, null, rs.getString(3), "%");
 				while (cols.next()) {
-					System.out.println(rs.getString(3) + ": " + cols.getString(4));
+					System.out.println(rs.getString(3) + ": "
+							+ cols.getString(4));
 				}
 			}
 
