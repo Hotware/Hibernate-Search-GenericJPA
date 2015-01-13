@@ -27,6 +27,7 @@
 		<class>com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace</class>
 		<class>com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace2</class>
 		<class>com.github.hotware.hsearch.jpa.test.entities.PlaceSorcererUpdates</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.PlaceUpdates</class>
 		<properties>
 			<property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbcDriver" />
 			<property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:mem:eclipselink" />
@@ -46,6 +47,7 @@
 		<class>com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace</class>
 		<class>com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace2</class>
 		<class>com.github.hotware.hsearch.jpa.test.entities.PlaceSorcererUpdates</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.PlaceUpdates</class>
 		<properties>
 			<property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver" />
 			<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/hsearch-test" />

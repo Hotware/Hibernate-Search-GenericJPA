@@ -34,6 +34,7 @@ import com.github.hotware.hsearch.db.events.EventType;
 import com.github.hotware.hsearch.db.events.UpdateConsumer;
 import com.github.hotware.hsearch.jpa.test.entities.Place;
 import com.github.hotware.hsearch.jpa.test.entities.PlaceSorcererUpdates;
+import com.github.hotware.hsearch.jpa.test.entities.PlaceUpdates;
 import com.github.hotware.hsearch.jpa.test.entities.Sorcerer;
 
 /**
@@ -49,7 +50,7 @@ public class JPAUpdateSourceTest {
 		try {
 			EventModelParser parser = new EventModelParser();
 			JPAUpdateSource updateSource = new JPAUpdateSource(
-					parser.parse(Arrays.asList(PlaceSorcererUpdates.class)),
+					parser.parse(Arrays.asList(PlaceSorcererUpdates.class, PlaceUpdates.class)),
 					emf, 1, TimeUnit.SECONDS, 100);
 
 			{

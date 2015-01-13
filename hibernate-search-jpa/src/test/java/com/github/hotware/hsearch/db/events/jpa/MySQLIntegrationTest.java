@@ -37,6 +37,7 @@ import com.github.hotware.hsearch.db.events.EventType;
 import com.github.hotware.hsearch.db.events.MySQLTriggerSQLStringSource;
 import com.github.hotware.hsearch.jpa.test.entities.Place;
 import com.github.hotware.hsearch.jpa.test.entities.PlaceSorcererUpdates;
+import com.github.hotware.hsearch.jpa.test.entities.PlaceUpdates;
 import com.github.hotware.hsearch.jpa.test.entities.Sorcerer;
 
 /**
@@ -59,7 +60,7 @@ public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 
 			EventModelParser parser = new EventModelParser();
 			EventModelInfo info = parser.parse(
-					Arrays.asList(PlaceSorcererUpdates.class)).get(0);
+					Arrays.asList(PlaceSorcererUpdates.class, PlaceUpdates.class)).get(0);
 			List<String> dropStrings = new ArrayList<>();
 			String exceptionString = null;
 			MySQLTriggerSQLStringSource triggerSource = new MySQLTriggerSQLStringSource();

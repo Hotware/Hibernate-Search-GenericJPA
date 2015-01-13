@@ -25,6 +25,8 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 
+import org.junit.After;
+
 import com.github.hotware.hsearch.jpa.test.entities.Place;
 import com.github.hotware.hsearch.jpa.test.entities.PlaceSorcererUpdates;
 import com.github.hotware.hsearch.jpa.test.entities.Sorcerer;
@@ -128,6 +130,13 @@ public abstract class DatabaseIntegrationTest {
 			}
 		}
 
+	}
+	
+	@After
+	public void __shutDown() {
+		if(this.emf != null) {
+			this.emf.close();
+		}
 	}
 
 }
