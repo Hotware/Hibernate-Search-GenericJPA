@@ -113,6 +113,7 @@ public interface SearchFactory extends Closeable, EventConsumer {
 	 * this first queries for all matching documents and then deletes them by
 	 * their id
 	 */
+	@Deprecated
 	public void purge(Class<?> entityClass, Query query, TransactionContext tc);
 
 }
