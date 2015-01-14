@@ -18,8 +18,10 @@ package com.github.hotware.hsearch.db.events.jpa;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
 import javax.persistence.Query;
 
 /**
@@ -30,8 +32,12 @@ public class MultiQueryAccess {
 
 	private final Map<Class<?>, Long> currentCountMap;
 	private final Map<Class<?>, Query> queryMap;
-	private final Map<Class<?>, Long> processed;
 	private final Comparator<ObjectClassWrapper> comparator;
+	private final int batchSize;
+
+	private final Map<Class<?>, Long> processed;
+	private final Map<Class<?>, LinkedList<Object>> values;
+
 	private Object scheduled;
 	private Class<?> entityClass;
 
@@ -48,13 +54,35 @@ public class MultiQueryAccess {
 
 	}
 
+	/**
+	 * this doesn't do real batching as it has a batchSize of 1
+	 */
 	public MultiQueryAccess(Map<Class<?>, Long> countMap,
 			Map<Class<?>, Query> queryMap,
 			Comparator<ObjectClassWrapper> comparator) {
+		this(countMap, queryMap, comparator, 1);
+	}
+
+	/**
+	 * this does batching
+	 */
+	public MultiQueryAccess(Map<Class<?>, Long> countMap,
+			Map<Class<?>, Query> queryMap,
+			Comparator<ObjectClassWrapper> comparator, int batchSize) {
+		if (countMap.size() != queryMap.size()) {
+			throw new IllegalArgumentException(
+					"countMap.size() must be equal to queryMap.size()");
+		}
 		this.currentCountMap = countMap;
 		this.queryMap = queryMap;
 		this.comparator = comparator;
+		this.batchSize = batchSize;
 		this.processed = new HashMap<>();
+		this.values = new HashMap<>();
+		for (Class<?> clazz : queryMap.keySet()) {
+			this.values.put(clazz, new LinkedList<>());
+			this.processed.put(clazz, 0L);
+		}
 	}
 
 	public boolean next() {
@@ -64,21 +92,19 @@ public class MultiQueryAccess {
 		for (Map.Entry<Class<?>, Query> entry : this.queryMap.entrySet()) {
 			Class<?> entityClass = entry.getKey();
 			Query query = entry.getValue();
-			Long processed = this.processed.computeIfAbsent(entityClass,
-					(clazz) -> {
-						return 0L;
-					});
 			if (!this.currentCountMap.get(entityClass).equals(0L)) {
-				// yay JPA...
-				query.setFirstResult(toInt(processed));
-				// TODO: Batching?
-				query.setMaxResults(1);
-				@SuppressWarnings("unchecked")
-				List<Object> val = query.getResultList();
-				if (val.size() != 1) {
-					throw new AssertionError("list size was not equal to 1");
+				if (this.values.get(entityClass).size() == 0) {
+					//the last batch is empty. get a new one
+					Long processed = this.processed.get(entityClass);
+					// yay JPA...
+					query.setFirstResult(toInt(processed));
+					query.setMaxResults(this.batchSize);
+					@SuppressWarnings("unchecked")
+					List<Object> list = query.getResultList();
+					this.values.get(entityClass).addAll(list);
 				}
-				tmp.add(new ObjectClassWrapper(val.get(0), entityClass));
+				Object val = this.values.get(entityClass).getFirst();
+				tmp.add(new ObjectClassWrapper(val, entityClass));
 			}
 		}
 		tmp.sort(this.comparator);
@@ -86,6 +112,7 @@ public class MultiQueryAccess {
 			ObjectClassWrapper arr = tmp.get(0);
 			this.scheduled = arr.object;
 			this.entityClass = arr.clazz;
+			this.values.get(entityClass).pop();
 			Long processed = this.processed.get(arr.clazz);
 			Long newProcessed = this.processed.computeIfPresent(arr.clazz, (
 					clazz, old) -> {
@@ -116,7 +143,7 @@ public class MultiQueryAccess {
 		if (newValue < 0L) {
 			throw new IllegalArgumentException(
 					"change would set the next values"
-					+ " position to something less than 0");
+							+ " position to something less than 0");
 		}
 		this.processed.put(clazz, newValue);
 	}

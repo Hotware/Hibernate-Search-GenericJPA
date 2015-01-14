@@ -141,7 +141,7 @@ public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 
 			JPAUpdateSource updateSource = new JPAUpdateSource(
 					parser.parse(Arrays.asList(PlaceSorcererUpdates.class,
-							PlaceUpdates.class)), emf, 1, TimeUnit.SECONDS, 1);
+							PlaceUpdates.class)), emf, 1, TimeUnit.SECONDS, 1, 1);
 			updateSource.setUpdateConsumer(new UpdateConsumer() {
 
 				@Override
