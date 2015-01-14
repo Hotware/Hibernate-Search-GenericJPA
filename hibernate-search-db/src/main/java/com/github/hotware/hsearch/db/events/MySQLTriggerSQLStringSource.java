@@ -44,11 +44,11 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 					+ " PRIMARY KEY (id)                      \n"
 					+ ");                                     \n",
 			UNIQUE_ID_TABLE_NAME);
-	
+
 	private static final String DROP_UNIQUE_ID_PROCEDURE = String.format(
 			"DROP PROCEDURE IF EXISTS %s;                 \n",
 			UNIQUE_ID_PROCEDURE_NAME);
-	
+
 	private static final String CREATE_UNIQUE_ID_PROCEDURE = String.format(
 			"CREATE PROCEDURE %s                          \n"
 					+ "(OUT ret BIGINT)                   \n"
@@ -136,7 +136,9 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 	}
 
 	private String getTriggerName(String originalTableName, int eventType) {
-		return originalTableName + "_updates_" + EventType.toString(eventType);
+		return new StringBuilder().append(originalTableName)
+				.append("_updates_").append(EventType.toString(eventType))
+				.toString();
 	}
-
+	
 }
