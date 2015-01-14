@@ -109,7 +109,9 @@ public class JPAUpdateSource implements UpdateSource {
 					}
 				});
 			} catch (SecurityException | NoSuchMethodException e) {
-				throw new RuntimeException(e);
+				throw new RuntimeException(
+						"could not access the \"getId()\" method of class: "
+								+ evi.getUpdateClass());
 			}
 		}
 	}
