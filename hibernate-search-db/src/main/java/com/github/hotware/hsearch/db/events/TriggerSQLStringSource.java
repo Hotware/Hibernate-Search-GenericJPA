@@ -21,6 +21,8 @@ package com.github.hotware.hsearch.db.events;
  */
 public interface TriggerSQLStringSource {
 	
+	public String[] getSetupCode();
+	
 	public String getTriggerDropString(EventModelInfo eventModelInfo, int eventType);
 	
 	public String getTriggerCreationString(EventModelInfo eventModelInfo, int eventType);

@@ -60,7 +60,7 @@ public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 			java.sql.Connection connection = em
 					.unwrap(java.sql.Connection.class);
 			connection.setAutoCommit(false);
-
+			
 			EventModelParser parser = new EventModelParser();
 			EventModelInfo info = parser.parse(
 					Arrays.asList(PlaceSorcererUpdates.class,
@@ -68,6 +68,12 @@ public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 			List<String> dropStrings = new ArrayList<>();
 			String exceptionString = null;
 			MySQLTriggerSQLStringSource triggerSource = new MySQLTriggerSQLStringSource();
+			for(String str : triggerSource.getSetupCode()){
+				Statement statement = connection.createStatement();
+				statement.addBatch(connection.nativeSQL(str));
+				statement.executeBatch();
+				connection.commit();
+			}
 			try {
 				for (int eventType : EventType.values()) {
 					String triggerCreationString = triggerSource
@@ -141,16 +147,17 @@ public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 
 			JPAUpdateSource updateSource = new JPAUpdateSource(
 					parser.parse(Arrays.asList(PlaceSorcererUpdates.class,
-							PlaceUpdates.class)), emf, 1, TimeUnit.SECONDS, 1, 1);
+							PlaceUpdates.class)), emf, 1, TimeUnit.SECONDS, 1,
+					1);
 			updateSource.setUpdateConsumer(new UpdateConsumer() {
 
 				@Override
 				public void updateEvent(List<UpdateInfo> arg0) {
-					
+
 				}
 
 			});
-			
+
 			updateSource.start();
 			Thread.sleep(1000);
 			tx.begin();

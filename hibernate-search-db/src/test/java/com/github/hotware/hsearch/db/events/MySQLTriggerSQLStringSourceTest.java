@@ -29,12 +29,15 @@ public class MySQLTriggerSQLStringSourceTest {
 	@Test
 	public void test() {
 		EventModelParser parser = new EventModelParser();
-		EventModelInfo info = parser.parse(Arrays
-				.asList(PlaceSorcererUpdates.class)).get(0);
+		EventModelInfo info = parser.parse(
+				Arrays.asList(PlaceSorcererUpdates.class)).get(0);
 		MySQLTriggerSQLStringSource triggerSource = new MySQLTriggerSQLStringSource();
-		for(int eventType : EventType.values()) {
-			String triggerCreationString = triggerSource.getTriggerCreationString(info, eventType);
-			String triggerDropString = triggerSource.getTriggerDropString(info, eventType);
+		System.out.println(Arrays.asList(triggerSource.getSetupCode()));
+		for (int eventType : EventType.values()) {
+			String triggerCreationString = triggerSource
+					.getTriggerCreationString(info, eventType);
+			String triggerDropString = triggerSource.getTriggerDropString(info,
+					eventType);
 			System.out.println("CREATE: " + triggerCreationString);
 			System.out.println("DROP: " + triggerDropString);
 		}
