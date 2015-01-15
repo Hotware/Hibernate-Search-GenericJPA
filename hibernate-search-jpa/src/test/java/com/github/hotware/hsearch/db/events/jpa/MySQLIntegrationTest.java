@@ -67,6 +67,19 @@ public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 							PlaceUpdates.class)).get(0);
 			List<String> dropStrings = new ArrayList<>();
 			String exceptionString = null;
+			// this is just for the unit tests to work properly.
+			// normally we shouldn'tdelete the unique_id table or we could run
+			// into trouble
+			{
+				Statement statement = connection.createStatement();
+				statement
+						.addBatch(connection
+								.nativeSQL("DROP TABLE IF EXISTS "
+										+ MySQLTriggerSQLStringSource.DEFAULT_UNIQUE_ID_TABLE_NAME));
+				statement.executeBatch();
+				connection.commit();
+			}
+
 			MySQLTriggerSQLStringSource triggerSource = new MySQLTriggerSQLStringSource();
 			for (String str : triggerSource.getSetupCode()) {
 				Statement statement = connection.createStatement();

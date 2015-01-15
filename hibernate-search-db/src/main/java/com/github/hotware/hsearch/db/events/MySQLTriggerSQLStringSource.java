@@ -23,7 +23,7 @@ import com.github.hotware.hsearch.db.events.EventModelInfo.IdInfo;
  */
 public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 
-	public static final String DEFAULT_UNIQUE_ID_TABLE_NAME = "`_____unique____id______`";
+	public static final String DEFAULT_UNIQUE_ID_TABLE_NAME = "`_____unique____id____hsearch`";
 	public static final String DEFAULT_UNIQUE_ID_PROCEDURE_NAME = "get_unique_id_hsearch";
 
 	private static final String CREATE_TRIGGER_ORIGINAL_TABLE_SQL_FORMAT = ""
@@ -49,7 +49,7 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 	// we don't support dropping the unique_id_table_name
 	// because otherwise we would lose information about the last used
 	// ids
-	private String createTriggerCleanUpSqlFormat;
+	private String createTriggerCleanUpSQLFormat;
 	private String createUniqueIdTable;
 	private String dropUniqueIdProcedure;
 	private String createUniqueIdProcedure;
@@ -83,7 +83,7 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 						+ "	SET ret = last_insert_id();       \n"
 						+ "END;                               \n",
 				uniqueIdProcedureName, uniqueIdTableName);
-		this.createTriggerCleanUpSqlFormat = CREATE_TRIGGER_CLEANUP_SQL_FORMAT
+		this.createTriggerCleanUpSQLFormat = CREATE_TRIGGER_CLEANUP_SQL_FORMAT
 				.replaceAll("#UNIQUE_ID_TABLE_NAME#", this.uniqueIdTableName);
 	}
 
@@ -138,14 +138,14 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 					"eventModelInfo didn't contain any idInfos");
 		}
 		String eventTypeValue = String.valueOf(eventType);
-		String createTriggerOriginalTableSql = new StringBuilder().append(
+		String createTriggerOriginalTableSQL = new StringBuilder().append(
 				String.format(CREATE_TRIGGER_ORIGINAL_TABLE_SQL_FORMAT,
 						triggerName, EventType.toString(eventType),
 						originalTableName, uniqueIdProcedureName,
 						eventTypeColumn, idColumnNames.toString(),
 						eventTypeValue, valuesFromOriginal.toString()))
 				.toString();
-		return new String[] { createTriggerOriginalTableSql };
+		return new String[] { createTriggerOriginalTableSQL };
 	}
 
 	/*
@@ -183,11 +183,11 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 	 */
 	@Override
 	public String[] getSpecificSetupCode(EventModelInfo eventModelInfo) {
-		String createTriggerCleanUpSql = String.format(
-				this.createTriggerCleanUpSqlFormat,
+		String createTriggerCleanUpSQL = String.format(
+				this.createTriggerCleanUpSQLFormat,
 				this.getCleanUpTriggerName(eventModelInfo.getTableName()),
 				eventModelInfo.getTableName());
-		return new String[] { createTriggerCleanUpSql };
+		return new String[] { createTriggerCleanUpSQL };
 	}
 
 	/*
