@@ -60,7 +60,7 @@ public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 			java.sql.Connection connection = em
 					.unwrap(java.sql.Connection.class);
 			connection.setAutoCommit(false);
-			
+
 			EventModelParser parser = new EventModelParser();
 			EventModelInfo info = parser.parse(
 					Arrays.asList(PlaceSorcererUpdates.class,
@@ -68,26 +68,37 @@ public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 			List<String> dropStrings = new ArrayList<>();
 			String exceptionString = null;
 			MySQLTriggerSQLStringSource triggerSource = new MySQLTriggerSQLStringSource();
-			for(String str : triggerSource.getSetupCode()){
+			for (String str : triggerSource.getSetupCode()) {
 				Statement statement = connection.createStatement();
 				statement.addBatch(connection.nativeSQL(str));
 				statement.executeBatch();
 				connection.commit();
 			}
 			try {
-				for (int eventType : EventType.values()) {
-					String triggerCreationString = triggerSource
-							.getTriggerCreationString(info, eventType);
-					String triggerDropString = triggerSource
-							.getTriggerDropString(info, eventType);
-					System.out.println("CREATE: "
-							+ connection.nativeSQL(triggerCreationString));
-					dropStrings.add(triggerDropString);
+				for (String setupCode : triggerSource
+						.getSpecificSetupCode(info)) {
 					Statement statement = connection.createStatement();
-					statement.addBatch(connection
-							.nativeSQL(triggerCreationString));
+					statement.addBatch(connection.nativeSQL(setupCode));
 					statement.executeBatch();
 					connection.commit();
+				}
+				dropStrings.addAll(Arrays.asList(triggerSource
+						.getSpecificUnSetupCode(info)));
+				for (int eventType : EventType.values()) {
+					String[] triggerCreationStrings = triggerSource
+							.getTriggerCreationCode(info, eventType);
+					String[] triggerDropStrings = triggerSource
+							.getTriggerDropCode(info, eventType);
+					for (String triggerCreationString : triggerCreationStrings) {
+						System.out.println("CREATE: "
+								+ connection.nativeSQL(triggerCreationString));
+						dropStrings.addAll(Arrays.asList(triggerDropStrings));
+						Statement statement = connection.createStatement();
+						statement.addBatch(connection
+								.nativeSQL(triggerCreationString));
+						statement.executeBatch();
+						connection.commit();
+					}
 				}
 			} catch (Exception e) {
 				connection.rollback();

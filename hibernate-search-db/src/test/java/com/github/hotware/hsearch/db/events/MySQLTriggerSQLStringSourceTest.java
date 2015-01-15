@@ -34,12 +34,12 @@ public class MySQLTriggerSQLStringSourceTest {
 		MySQLTriggerSQLStringSource triggerSource = new MySQLTriggerSQLStringSource();
 		System.out.println(Arrays.asList(triggerSource.getSetupCode()));
 		for (int eventType : EventType.values()) {
-			String triggerCreationString = triggerSource
-					.getTriggerCreationString(info, eventType);
-			String triggerDropString = triggerSource.getTriggerDropString(info,
+			String[] triggerCreationString = triggerSource
+					.getTriggerCreationCode(info, eventType);
+			String[] triggerDropString = triggerSource.getTriggerDropCode(info,
 					eventType);
-			System.out.println("CREATE: " + triggerCreationString);
-			System.out.println("DROP: " + triggerDropString);
+			System.out.println("CREATE: " + Arrays.asList(triggerCreationString));
+			System.out.println("DROP: " + Arrays.asList(triggerDropString));
 		}
 	}
 

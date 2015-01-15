@@ -23,9 +23,10 @@ import com.github.hotware.hsearch.db.events.EventModelInfo.IdInfo;
  */
 public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 
-	private static final String UNIQUE_ID_PROCEDURE_NAME = "get_unique_id_hsearch";
-	private static final String PRE_TRIGGER = "";
-	private static final String CREATE_TRIGGER_SQL_FORMAT = ""
+	public static final String DEFAULT_UNIQUE_ID_TABLE_NAME = "`_____unique____id______`";
+	public static final String DEFAULT_UNIQUE_ID_PROCEDURE_NAME = "get_unique_id_hsearch";
+
+	private static final String CREATE_TRIGGER_ORIGINAL_TABLE_SQL_FORMAT = ""
 			+ "CREATE TRIGGER %s AFTER %s ON %s                 \n"
 			+ "FOR EACH ROW                                     \n"
 			+ "BEGIN                                            \n"
@@ -33,30 +34,58 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 			+ "    INSERT INTO placesorcererupdates(id, %s, %s) \n"
 			+ "		VALUES(@unique_id, %s, %s);                 \n"
 			+ "END;                                             \n";
-	private static final String POST_TRIGGER = "";
+	private static final String CREATE_TRIGGER_CLEANUP_SQL_FORMAT = ""
+			+ "CREATE TRIGGER %s AFTER DELETE ON %s                  \n"
+			+ "FOR EACH ROW                                          \n"
+			+ "BEGIN                                                 \n"
+			+ "DELETE FROM #UNIQUE_ID_TABLE_NAME# WHERE id = OLD.id; \n"
+			+ "END;                                                  \n";
 	private static final String DROP_TRIGGER_SQL_FORMAT = ""
-			+ "DROP TRIGGER IF EXISTS %s;";
+			+ "DROP TRIGGER IF EXISTS %s;\n";
 
-	private static final String UNIQUE_ID_TABLE_NAME = "`_____unique____id______`";
-	private static final String CREATE_UNIQUE_ID_TABLE = String.format(
-			"CREATE TABLE IF NOT EXISTS %s (                  \n"
-					+ "id BIGINT(64) NOT NULL AUTO_INCREMENT, \n"
-					+ " PRIMARY KEY (id)                      \n"
-					+ ");                                     \n",
-			UNIQUE_ID_TABLE_NAME);
+	private final String uniqueIdTableName;
+	private final String uniqueIdProcedureName;
 
-	private static final String DROP_UNIQUE_ID_PROCEDURE = String.format(
-			"DROP PROCEDURE IF EXISTS %s;                 \n",
-			UNIQUE_ID_PROCEDURE_NAME);
+	// we don't support dropping the unique_id_table_name
+	// because otherwise we would lose information about the last used
+	// ids
+	private String createTriggerCleanUpSqlFormat;
+	private String createUniqueIdTable;
+	private String dropUniqueIdProcedure;
+	private String createUniqueIdProcedure;
 
-	private static final String CREATE_UNIQUE_ID_PROCEDURE = String.format(
-			"CREATE PROCEDURE %s                          \n"
-					+ "(OUT ret BIGINT)                   \n"
-					+ "BEGIN                              \n"
-					+ "	INSERT INTO %s VALUES ();         \n"
-					+ "	SET ret = last_insert_id();       \n"
-					+ "END;                               \n",
-			UNIQUE_ID_PROCEDURE_NAME, UNIQUE_ID_TABLE_NAME);
+	public MySQLTriggerSQLStringSource() {
+		this(DEFAULT_UNIQUE_ID_TABLE_NAME, DEFAULT_UNIQUE_ID_PROCEDURE_NAME);
+	}
+
+	public MySQLTriggerSQLStringSource(String uniqueIdTableName,
+			String uniqueIdProcedureName) {
+		this.uniqueIdTableName = uniqueIdTableName;
+		this.uniqueIdProcedureName = uniqueIdProcedureName;
+		this.init();
+	}
+
+	private void init() {
+		this.createUniqueIdTable = String.format(
+				"CREATE TABLE IF NOT EXISTS %s (                  \n"
+						+ "id BIGINT(64) NOT NULL AUTO_INCREMENT, \n"
+						+ " PRIMARY KEY (id)                      \n"
+						+ ");                                     \n",
+				uniqueIdTableName);
+		this.dropUniqueIdProcedure = String.format(
+				"DROP PROCEDURE IF EXISTS %s;                 \n",
+				uniqueIdProcedureName);
+		this.createUniqueIdProcedure = String.format(
+				"CREATE PROCEDURE %s                          \n"
+						+ "(OUT ret BIGINT)                   \n"
+						+ "BEGIN                              \n"
+						+ "	INSERT INTO %s VALUES ();         \n"
+						+ "	SET ret = last_insert_id();       \n"
+						+ "END;                               \n",
+				uniqueIdProcedureName, uniqueIdTableName);
+		this.createTriggerCleanUpSqlFormat = CREATE_TRIGGER_CLEANUP_SQL_FORMAT
+				.replaceAll("#UNIQUE_ID_TABLE_NAME#", this.uniqueIdTableName);
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -67,8 +96,8 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 	 */
 	@Override
 	public String[] getSetupCode() {
-		return new String[] { CREATE_UNIQUE_ID_TABLE, DROP_UNIQUE_ID_PROCEDURE,
-				CREATE_UNIQUE_ID_PROCEDURE };
+		return new String[] { createUniqueIdTable, dropUniqueIdProcedure,
+				createUniqueIdProcedure };
 	}
 
 	/*
@@ -79,7 +108,7 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 	 * (com.github.hotware.hsearch.db.events.EventModelInfo, int)
 	 */
 	@Override
-	public String getTriggerCreationString(EventModelInfo eventModelInfo,
+	public String[] getTriggerCreationCode(EventModelInfo eventModelInfo,
 			int eventType) {
 		String originalTableName = eventModelInfo.getOriginalTableName();
 		String triggerName = this.getTriggerName(
@@ -109,14 +138,14 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 					"eventModelInfo didn't contain any idInfos");
 		}
 		String eventTypeValue = String.valueOf(eventType);
-		String sql = new StringBuilder(PRE_TRIGGER)
-				.append(String.format(CREATE_TRIGGER_SQL_FORMAT, triggerName,
-						EventType.toString(eventType), originalTableName,
-						UNIQUE_ID_PROCEDURE_NAME, eventTypeColumn,
-						idColumnNames.toString(), eventTypeValue,
-						valuesFromOriginal.toString())).append(POST_TRIGGER)
+		String createTriggerOriginalTableSql = new StringBuilder().append(
+				String.format(CREATE_TRIGGER_ORIGINAL_TABLE_SQL_FORMAT,
+						triggerName, EventType.toString(eventType),
+						originalTableName, uniqueIdProcedureName,
+						eventTypeColumn, idColumnNames.toString(),
+						eventTypeValue, valuesFromOriginal.toString()))
 				.toString();
-		return sql;
+		return new String[] { createTriggerOriginalTableSql };
 	}
 
 	/*
@@ -127,18 +156,50 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 	 * (com.github.hotware.hsearch.db.events.EventModelInfo, int)
 	 */
 	@Override
-	public String getTriggerDropString(EventModelInfo eventModelInfo,
+	public String[] getTriggerDropCode(EventModelInfo eventModelInfo,
 			int eventType) {
 		String triggerName = this.getTriggerName(
 				eventModelInfo.getOriginalTableName(), eventType);
-		return String.format(DROP_TRIGGER_SQL_FORMAT, triggerName)
-				.toUpperCase();
+		return new String[] { String.format(DROP_TRIGGER_SQL_FORMAT,
+				triggerName).toUpperCase() };
 	}
 
 	private String getTriggerName(String originalTableName, int eventType) {
 		return new StringBuilder().append(originalTableName)
-				.append("_updates_").append(EventType.toString(eventType))
-				.toString();
+				.append("_updates_hsearch_")
+				.append(EventType.toString(eventType)).toString();
 	}
-	
+
+	private String getCleanUpTriggerName(String updatesTableName) {
+		return new StringBuilder().append(updatesTableName)
+				.append("_cleanup_hsearch").toString();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see com.github.hotware.hsearch.db.events.TriggerSQLStringSource#
+	 * getSpecificSetupCode(com.github.hotware.hsearch.db.events.EventModelInfo)
+	 */
+	@Override
+	public String[] getSpecificSetupCode(EventModelInfo eventModelInfo) {
+		String createTriggerCleanUpSql = String.format(
+				this.createTriggerCleanUpSqlFormat,
+				this.getCleanUpTriggerName(eventModelInfo.getTableName()),
+				eventModelInfo.getTableName());
+		return new String[] { createTriggerCleanUpSql };
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see com.github.hotware.hsearch.db.events.TriggerSQLStringSource#
+	 * getSpecificUnSetupCode
+	 * (com.github.hotware.hsearch.db.events.EventModelInfo)
+	 */
+	@Override
+	public String[] getSpecificUnSetupCode(EventModelInfo eventModelInfo) {
+		return new String[] { String.format(DROP_TRIGGER_SQL_FORMAT,
+				this.getCleanUpTriggerName(eventModelInfo.getTableName())) };
+	}
 }

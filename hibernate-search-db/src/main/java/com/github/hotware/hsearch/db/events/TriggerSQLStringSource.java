@@ -23,8 +23,12 @@ public interface TriggerSQLStringSource {
 	
 	public String[] getSetupCode();
 	
-	public String getTriggerDropString(EventModelInfo eventModelInfo, int eventType);
+	public String[] getSpecificSetupCode(EventModelInfo eventModelInfo);
 	
-	public String getTriggerCreationString(EventModelInfo eventModelInfo, int eventType);
+	public String[] getSpecificUnSetupCode(EventModelInfo eventModelInfo);
+	
+	public String[] getTriggerCreationCode(EventModelInfo eventModelInfo, int eventType);
+	
+	public String[] getTriggerDropCode(EventModelInfo eventModelInfo, int eventType);
 	
 }
