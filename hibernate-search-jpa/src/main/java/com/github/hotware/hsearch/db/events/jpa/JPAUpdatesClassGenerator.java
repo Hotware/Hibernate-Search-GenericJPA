@@ -20,5 +20,7 @@ package com.github.hotware.hsearch.db.events.jpa;
  *
  */
 public class JPAUpdatesClassGenerator {
+	
+	
 
 }

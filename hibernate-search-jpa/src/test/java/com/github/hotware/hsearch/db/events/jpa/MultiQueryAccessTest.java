@@ -77,7 +77,7 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 			{
 				PlaceSorcererUpdates up = new PlaceSorcererUpdates();
 				up.setEventType(EventType.INSERT);
-				up.setId(1);
+				up.setId(1L);
 				up.setPlaceId(123123);
 				up.setSorcererId(123);
 				em.persist(up);
@@ -87,7 +87,7 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 			{
 				PlaceSorcererUpdates up = new PlaceSorcererUpdates();
 				up.setEventType(EventType.INSERT);
-				up.setId(2);
+				up.setId(2L);
 				up.setPlaceId(123123);
 				up.setSorcererId(123);
 				em.persist(up);
@@ -98,7 +98,7 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 			{
 				PlaceSorcererUpdates up = new PlaceSorcererUpdates();
 				up.setEventType(EventType.UPDATE);
-				up.setId(3);
+				up.setId(3L);
 				up.setPlaceId(123123);
 				up.setSorcererId(123);
 				em.persist(up);

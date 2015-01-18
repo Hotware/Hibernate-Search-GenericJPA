@@ -61,7 +61,7 @@ public class JPAUpdateSourceTest {
 					tx.begin();
 					PlaceSorcererUpdates update = new PlaceSorcererUpdates();
 					update.setEventType(EventType.INSERT);
-					update.setId(1);
+					update.setId(1L);
 					update.setPlaceId(2);
 					update.setSorcererId(3);
 					em.persist(update);

@@ -31,7 +31,7 @@ import com.github.hotware.hsearch.db.events.annotations.Updates;
 public class PlaceSorcererUpdates {
 
 	@Id
-	private Integer id;
+	private Long id;
 
 	@IdFor(entityClass = Place.class, columns = "placeId", columnsInOriginal = "Place_ID")
 	@Column
@@ -78,7 +78,7 @@ public class PlaceSorcererUpdates {
 	/**
 	 * @return the id
 	 */
-	public Integer getId() {
+	public Long getId() {
 		return id;
 	}
 
@@ -86,7 +86,7 @@ public class PlaceSorcererUpdates {
 	 * @param id
 	 *            the id to set
 	 */
-	public void setId(Integer id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 

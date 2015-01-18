@@ -51,6 +51,7 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 	// ids
 	private String createTriggerCleanUpSQLFormat;
 	private String createUniqueIdTable;
+	private String dropUniqueIdTable;
 	private String dropUniqueIdProcedure;
 	private String createUniqueIdProcedure;
 
@@ -71,10 +72,12 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 						+ "id BIGINT(64) NOT NULL AUTO_INCREMENT, \n"
 						+ " PRIMARY KEY (id)                      \n"
 						+ ");                                     \n",
-				uniqueIdTableName);
+				this.uniqueIdTableName);
+		this.dropUniqueIdTable = String.format("DROP TABLE IF EXISTS %s;",
+				this.uniqueIdTableName);
 		this.dropUniqueIdProcedure = String.format(
 				"DROP PROCEDURE IF EXISTS %s;                 \n",
-				uniqueIdProcedureName);
+				this.uniqueIdProcedureName);
 		this.createUniqueIdProcedure = String.format(
 				"CREATE PROCEDURE %s                          \n"
 						+ "(OUT ret BIGINT)                   \n"
@@ -82,7 +85,7 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 						+ "	INSERT INTO %s VALUES ();         \n"
 						+ "	SET ret = last_insert_id();       \n"
 						+ "END;                               \n",
-				uniqueIdProcedureName, uniqueIdTableName);
+				this.uniqueIdProcedureName, this.uniqueIdTableName);
 		this.createTriggerCleanUpSQLFormat = CREATE_TRIGGER_CLEANUP_SQL_FORMAT
 				.replaceAll("#UNIQUE_ID_TABLE_NAME#", this.uniqueIdTableName);
 	}
@@ -201,5 +204,16 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 	public String[] getSpecificUnSetupCode(EventModelInfo eventModelInfo) {
 		return new String[] { String.format(DROP_TRIGGER_SQL_FORMAT,
 				this.getCleanUpTriggerName(eventModelInfo.getTableName())) };
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see com.github.hotware.hsearch.db.events.TriggerSQLStringSource#
+	 * getRecreateUniqueIdTableCode()
+	 */
+	@Override
+	public String[] getRecreateUniqueIdTableCode() {
+		return new String[] { this.dropUniqueIdTable, this.createUniqueIdTable };
 	}
 }
