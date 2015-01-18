@@ -21,8 +21,6 @@ import static org.junit.Assert.fail;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -32,10 +30,7 @@ import javax.persistence.EntityTransaction;
 
 import org.junit.Test;
 
-import com.github.hotware.hsearch.db.events.EventModelInfo;
-import com.github.hotware.hsearch.db.events.EventModelParser;
 import com.github.hotware.hsearch.db.events.EventType;
-import com.github.hotware.hsearch.db.events.MySQLTriggerSQLStringSource;
 import com.github.hotware.hsearch.db.events.UpdateConsumer;
 import com.github.hotware.hsearch.jpa.test.entities.Place;
 import com.github.hotware.hsearch.jpa.test.entities.PlaceSorcererUpdates;
@@ -51,6 +46,7 @@ public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 	public void testMySQLIntegration() throws SQLException,
 			InterruptedException {
 		this.setup("EclipseLink_MySQL");
+		this.setupTriggers();
 
 		EntityManager em = null;
 		try {
@@ -61,62 +57,6 @@ public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 					.unwrap(java.sql.Connection.class);
 			connection.setAutoCommit(false);
 
-			EventModelParser parser = new EventModelParser();
-			EventModelInfo info = parser.parse(
-					Arrays.asList(PlaceSorcererUpdates.class,
-							PlaceUpdates.class)).get(0);
-			List<String> dropStrings = new ArrayList<>();
-			String exceptionString = null;
-			// this is just for the unit tests to work properly.
-			// normally we shouldn'tdelete the unique_id table or we could run
-			// into trouble
-			{
-				Statement statement = connection.createStatement();
-				statement
-						.addBatch(connection
-								.nativeSQL("DROP TABLE IF EXISTS "
-										+ MySQLTriggerSQLStringSource.DEFAULT_UNIQUE_ID_TABLE_NAME));
-				statement.executeBatch();
-				connection.commit();
-			}
-
-			MySQLTriggerSQLStringSource triggerSource = new MySQLTriggerSQLStringSource();
-			for (String str : triggerSource.getSetupCode()) {
-				Statement statement = connection.createStatement();
-				statement.addBatch(connection.nativeSQL(str));
-				statement.executeBatch();
-				connection.commit();
-			}
-			try {
-				for (String setupCode : triggerSource
-						.getSpecificSetupCode(info)) {
-					Statement statement = connection.createStatement();
-					statement.addBatch(connection.nativeSQL(setupCode));
-					statement.executeBatch();
-					connection.commit();
-				}
-				dropStrings.addAll(Arrays.asList(triggerSource
-						.getSpecificUnSetupCode(info)));
-				for (int eventType : EventType.values()) {
-					String[] triggerCreationStrings = triggerSource
-							.getTriggerCreationCode(info, eventType);
-					String[] triggerDropStrings = triggerSource
-							.getTriggerDropCode(info, eventType);
-					for (String triggerCreationString : triggerCreationStrings) {
-						System.out.println("CREATE: "
-								+ connection.nativeSQL(triggerCreationString));
-						dropStrings.addAll(Arrays.asList(triggerDropStrings));
-						Statement statement = connection.createStatement();
-						statement.addBatch(connection
-								.nativeSQL(triggerCreationString));
-						statement.executeBatch();
-						connection.commit();
-					}
-				}
-			} catch (Exception e) {
-				connection.rollback();
-				exceptionString = e.getMessage();
-			}
 			tx.commit();
 
 			tx.begin();
@@ -203,21 +143,8 @@ public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 			}
 
 			tx.commit();
-
-			// as we are testing on a mapping relation we cannot check whether
-			// the UPDATE triggers are set up correctly. but because of the
-			// nature how the triggers are created everything should be fine
-
-			tx.begin();
-
-			for (String dropString : dropStrings) {
-				Statement statement = connection.createStatement();
-				System.out.println("DROP: " + connection.nativeSQL(dropString));
-				statement.addBatch(connection.nativeSQL(dropString));
-				statement.executeBatch();
-			}
-
-			tx.commit();
+			
+			
 
 			if (exceptionString != null) {
 				fail(exceptionString);
@@ -226,6 +153,7 @@ public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 			if (em != null) {
 				em.close();
 			}
+			this.tearDownTriggers();
 		}
 	}
 }

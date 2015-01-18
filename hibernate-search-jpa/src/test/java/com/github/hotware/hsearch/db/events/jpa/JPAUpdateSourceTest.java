@@ -110,7 +110,7 @@ public class JPAUpdateSourceTest {
 				em = emf.createEntityManager();
 				EntityTransaction tx = em.getTransaction();
 				tx.begin();
-				assertEquals(null, em.find(PlaceSorcererUpdates.class, 1));
+				assertEquals(null, em.find(PlaceSorcererUpdates.class, 1L));
 				tx.commit();
 			} finally {
 				if (em != null) {

@@ -15,7 +15,10 @@
  */
 package com.github.hotware.hsearch.db.events.jpa;
 
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,8 +30,13 @@ import javax.persistence.Persistence;
 
 import org.junit.After;
 
+import com.github.hotware.hsearch.db.events.EventModelInfo;
+import com.github.hotware.hsearch.db.events.EventModelParser;
+import com.github.hotware.hsearch.db.events.EventType;
+import com.github.hotware.hsearch.db.events.MySQLTriggerSQLStringSource;
 import com.github.hotware.hsearch.jpa.test.entities.Place;
 import com.github.hotware.hsearch.jpa.test.entities.PlaceSorcererUpdates;
+import com.github.hotware.hsearch.jpa.test.entities.PlaceUpdates;
 import com.github.hotware.hsearch.jpa.test.entities.Sorcerer;
 
 /**
@@ -40,8 +48,11 @@ public abstract class DatabaseIntegrationTest {
 	protected int valinorId = 0;
 	protected Place valinor;
 	protected EntityManagerFactory emf;
+	protected EventModelParser parser = new EventModelParser();
+	protected String exceptionString;
+	protected List<String> dropStrings;
 
-	public void setup(String persistence) {
+	public void setup(String persistence) throws SQLException {
 		this.emf = Persistence.createEntityManagerFactory(persistence);
 		EntityManager em = emf.createEntityManager();
 		try {
@@ -131,10 +142,112 @@ public abstract class DatabaseIntegrationTest {
 		}
 
 	}
-	
+
+	public void setupTriggers() throws SQLException {
+		EntityManager em = this.emf.createEntityManager();
+		try {
+			EntityTransaction tx = em.getTransaction();
+			tx.begin();
+			EventModelInfo info = parser.parse(
+					Arrays.asList(PlaceSorcererUpdates.class,
+							PlaceUpdates.class)).get(0);
+
+			java.sql.Connection connection = em
+					.unwrap(java.sql.Connection.class);
+			connection.setAutoCommit(false);
+
+			dropStrings = new ArrayList<>();
+			// this is just for the unit tests to work properly.
+			// normally we shouldn'tdelete the unique_id table or we could run
+			// into trouble
+			{
+				Statement statement = connection.createStatement();
+				statement
+						.addBatch(connection
+								.nativeSQL("DROP TABLE IF EXISTS "
+										+ MySQLTriggerSQLStringSource.DEFAULT_UNIQUE_ID_TABLE_NAME));
+				statement.executeBatch();
+				connection.commit();
+			}
+
+			MySQLTriggerSQLStringSource triggerSource = new MySQLTriggerSQLStringSource();
+			for (String str : triggerSource.getSetupCode()) {
+				Statement statement = connection.createStatement();
+				statement.addBatch(connection.nativeSQL(str));
+				statement.executeBatch();
+				connection.commit();
+			}
+			try {
+				for (String setupCode : triggerSource
+						.getSpecificSetupCode(info)) {
+					Statement statement = connection.createStatement();
+					statement.addBatch(connection.nativeSQL(setupCode));
+					statement.executeBatch();
+					connection.commit();
+				}
+				dropStrings.addAll(Arrays.asList(triggerSource
+						.getSpecificUnSetupCode(info)));
+				for (int eventType : EventType.values()) {
+					String[] triggerCreationStrings = triggerSource
+							.getTriggerCreationCode(info, eventType);
+					String[] triggerDropStrings = triggerSource
+							.getTriggerDropCode(info, eventType);
+					for (String triggerCreationString : triggerCreationStrings) {
+						System.out.println("CREATE: "
+								+ connection.nativeSQL(triggerCreationString));
+						dropStrings.addAll(Arrays.asList(triggerDropStrings));
+						Statement statement = connection.createStatement();
+						statement.addBatch(connection
+								.nativeSQL(triggerCreationString));
+						statement.executeBatch();
+						connection.commit();
+					}
+				}
+			} catch (Exception e) {
+				connection.rollback();
+				exceptionString = e.getMessage();
+			}
+			tx.commit();
+		} finally {
+			if (em != null) {
+				em.close();
+			}
+		}
+	}
+
+	public void tearDownTriggers() throws SQLException {
+		EntityManager em = this.emf.createEntityManager();
+		try {
+			EntityTransaction tx = em.getTransaction();
+
+			// as we are testing on a mapping relation we cannot check whether
+			// the UPDATE triggers are set up correctly. but because of the
+			// nature how the triggers are created everything should be fine
+
+			tx.begin();
+
+			java.sql.Connection connection = em
+					.unwrap(java.sql.Connection.class);
+			connection.setAutoCommit(false);
+
+			for (String dropString : dropStrings) {
+				Statement statement = connection.createStatement();
+				System.out.println("DROP: " + connection.nativeSQL(dropString));
+				statement.addBatch(connection.nativeSQL(dropString));
+				statement.executeBatch();
+			}
+
+			tx.commit();
+		} finally {
+			if (em != null) {
+				em.close();
+			}
+		}
+	}
+
 	@After
 	public void __shutDown() {
-		if(this.emf != null) {
+		if (this.emf != null) {
 			this.emf.close();
 		}
 	}
