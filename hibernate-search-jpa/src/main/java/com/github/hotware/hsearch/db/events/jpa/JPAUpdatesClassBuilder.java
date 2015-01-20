@@ -18,6 +18,7 @@ package com.github.hotware.hsearch.db.events.jpa;
 import com.github.hotware.hsearch.db.id.DefaultToOriginalIdBridge;
 import com.github.hotware.hsearch.db.id.ToOriginalIdBridge;
 
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -92,26 +93,47 @@ public class JPAUpdatesClassBuilder {
 		this.idColumns = idColumns;
 	}
 
+	public void build(OutputStream out, String className) {
+
+	}
+
 	public static final class IdColumn {
+		private Class<?> idClass;
 		private Class<?> entityClass;
 		private String[] columns;
 		private String[] columnsInOriginal;
 		private Class<? extends ToOriginalIdBridge> toOriginalIdBridge;
 
-		public IdColumn(Class<?> entityClass, String[] columns,
-				String[] columnsInOriginal,
+		public IdColumn(Class<?> idClass, Class<?> entityClass,
+				String[] columns, String[] columnsInOriginal,
 				Class<? extends ToOriginalIdBridge> toOriginalIdBridge) {
 			super();
+			this.idClass = idClass;
 			this.entityClass = entityClass;
 			this.columns = columns;
 			this.columnsInOriginal = columnsInOriginal;
 			this.toOriginalIdBridge = toOriginalIdBridge;
 		}
 
-		public IdColumn(Class<?> entityClass, String[] columns,
-				String[] columnsInOriginal) {
-			this(entityClass, columns, columnsInOriginal,
+		public IdColumn(Class<?> idClass, Class<?> entityClass,
+				String[] columns, String[] columnsInOriginal) {
+			this(idClass, entityClass, columns, columnsInOriginal,
 					DefaultToOriginalIdBridge.class);
+		}
+
+		/**
+		 * @return the idClass
+		 */
+		public Class<?> getIdClass() {
+			return idClass;
+		}
+
+		/**
+		 * @param idClass
+		 *            the idClass to set
+		 */
+		public void setIdClass(Class<?> idClass) {
+			this.idClass = idClass;
 		}
 
 		/**

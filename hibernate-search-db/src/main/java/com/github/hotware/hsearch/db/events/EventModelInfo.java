@@ -15,7 +15,6 @@
  */
 package com.github.hotware.hsearch.db.events;
 
-import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
@@ -46,10 +45,6 @@ public class EventModelInfo {
 		this.eventTypeAccessor = eventTypeAccessor;
 		this.eventTypeColumn = eventTypeColumn;
 		this.idInfos = idInfos;
-	}
-
-	public void build(OutputStream out, String className) {
-		
 	}
 
 	/**
