@@ -30,6 +30,11 @@ public interface TriggerSQLStringSource {
 	 * your index might lose information!). This is a really expensive process
 	 * and should only be done if your database is running out of ids for all
 	 * the update instances.
+	 * 
+	 * However, this shouldn't be a real world problem :D
+	 * 
+	 * http://stackoverflow.com/questions/277608/is-bigint-large-enough-for-an-
+	 * event-log-table
 	 */
 	public String[] getRecreateUniqueIdTableCode();
 

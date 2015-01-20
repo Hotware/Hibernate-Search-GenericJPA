@@ -22,7 +22,10 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-/** 
+import com.github.hotware.hsearch.db.id.DefaultToOriginalIdBridge;
+import com.github.hotware.hsearch.db.id.ToOriginalIdBridge;
+
+/**
  * @author Martin
  */
 @Target({ FIELD, METHOD })
@@ -49,5 +52,7 @@ public @interface IdFor {
 	 *         <b>has to be in the same order as columns</b>
 	 */
 	public String[] columnsInOriginal();
+	
+	public Class<? extends ToOriginalIdBridge> bridge() default DefaultToOriginalIdBridge.class;
 
 }

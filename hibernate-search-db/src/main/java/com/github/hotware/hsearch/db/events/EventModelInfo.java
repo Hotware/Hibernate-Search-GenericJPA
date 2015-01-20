@@ -15,9 +15,12 @@
  */
 package com.github.hotware.hsearch.db.events;
 
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
+
+import com.github.hotware.hsearch.db.id.ToOriginalIdBridge;
 
 /**
  * @author Martin
@@ -43,6 +46,10 @@ public class EventModelInfo {
 		this.eventTypeAccessor = eventTypeAccessor;
 		this.eventTypeColumn = eventTypeColumn;
 		this.idInfos = idInfos;
+	}
+
+	public void build(OutputStream out, String className) {
+		
 	}
 
 	/**
@@ -107,15 +114,17 @@ public class EventModelInfo {
 		private final Class<?> entityClass;
 		private final String[] columns;
 		private final String[] columnsInOriginal;
+		private final ToOriginalIdBridge toOriginalBridge;
 
 		public IdInfo(Function<Object, Object> idAccessor,
 				Class<?> entityClass, String[] columns,
-				String[] columnsInOriginal) {
+				String[] columnsInOriginal, ToOriginalIdBridge toOriginalBridge) {
 			super();
 			this.idAccessor = idAccessor;
 			this.entityClass = entityClass;
 			this.columns = columns;
 			this.columnsInOriginal = columnsInOriginal;
+			this.toOriginalBridge = toOriginalBridge;
 		}
 
 		/**
@@ -144,6 +153,13 @@ public class EventModelInfo {
 		 */
 		public String[] getColumnsInOriginal() {
 			return columnsInOriginal;
+		}
+
+		/**
+		 * @return the toOriginalBridge
+		 */
+		public ToOriginalIdBridge getToOriginalBridge() {
+			return toOriginalBridge;
 		}
 
 		/*

@@ -27,6 +27,7 @@ import java.util.function.Function;
 import com.github.hotware.hsearch.db.events.annotations.Event;
 import com.github.hotware.hsearch.db.events.annotations.IdFor;
 import com.github.hotware.hsearch.db.events.annotations.Updates;
+import com.github.hotware.hsearch.db.id.ToOriginalIdBridge;
 
 /**
  * @author Martin
@@ -173,12 +174,19 @@ public class EventModelParser {
 			}
 			if (idFor != null) {
 				ret.foundIdInfos = true;
+				ToOriginalIdBridge toOriginalBridge;
+				try {
+					toOriginalBridge = idFor.bridge().newInstance();
+				} catch (IllegalAccessException | InstantiationException e) {
+					throw new RuntimeException(e);
+				}
 				Function<Object, Object> idAccessor = (Object object) -> {
+					Object val;
 					try {
 						if (member instanceof Method) {
-							return ((Method) member).invoke(object);
+							val = ((Method) member).invoke(object);
 						} else if (member instanceof Field) {
-							return ((Field) member).get(object);
+							val = ((Field) member).get(object);
 						} else {
 							throw new AssertionError();
 						}
@@ -186,6 +194,7 @@ public class EventModelParser {
 							| InvocationTargetException e) {
 						throw new RuntimeException(e);
 					}
+					return toOriginalBridge.toOriginal(val);
 				};
 				if (idFor.columns().length != idFor.columnsInOriginal().length) {
 					throw new IllegalArgumentException(
@@ -194,7 +203,7 @@ public class EventModelParser {
 				}
 				EventModelInfo.IdInfo idInfo = new EventModelInfo.IdInfo(
 						idAccessor, idFor.entityClass(), idFor.columns(),
-						idFor.columnsInOriginal());
+						idFor.columnsInOriginal(), toOriginalBridge);
 				idInfos.add(idInfo);
 			}
 		}
