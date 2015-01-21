@@ -169,12 +169,12 @@ public class JPAUpdatesClassBuilder {
 							idColumn.entityClass.getSimpleName().toLowerCase(),
 							i++), Modifier.PRIVATE);
 			if (idColumn.nonEmbeddedType) {
-				builder.addAnnotation(AnnotationSpec.builder(Column.class)
+				fieldBuilder.addAnnotation(AnnotationSpec.builder(Column.class)
 						.addMember("name", "$S", idColumn.columns[0]).build());
 			} else {
 				// FIXME: fix this to properly support Embedded stuff
 				// (AttributeOverrides)
-				builder.addAnnotation(Embedded.class);
+				fieldBuilder.addAnnotation(Embedded.class);
 			}
 			builder.addAnnotation(AnnotationSpec
 					.builder(IdFor.class)

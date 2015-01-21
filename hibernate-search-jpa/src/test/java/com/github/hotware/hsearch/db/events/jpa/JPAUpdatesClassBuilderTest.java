@@ -34,7 +34,7 @@ public class JPAUpdatesClassBuilderTest {
 		builder.tableName("tableName")
 				.originalTableName("originalTableName")
 				.idColumn(
-						IdColumn.of(Long.class, false, Place.class,
+						IdColumn.of(Long.class, true, Place.class,
 								new String[] { "placeId" },
 								new String[] { "Place_ID" }))
 				.build(System.out, "pack", "MyUpdateClass");
