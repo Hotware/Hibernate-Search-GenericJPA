@@ -41,7 +41,7 @@ public class PlaceSorcererUpdates {
 	@Column
 	private Integer sorcererId;
 
-	@Event
+	@Event(column = "eventType")
 	@Column
 	private Integer eventType;
 

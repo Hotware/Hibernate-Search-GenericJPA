@@ -152,7 +152,12 @@ public class JPAUpdatesClassBuilder {
 												.addMember("name", "$S",
 														"hsearchEventCase")
 												.build())
-								.addAnnotation(Event.class).build())
+								.addAnnotation(
+										AnnotationSpec
+												.builder(Event.class)
+												.addMember("column", "$S",
+														"hsearchEventCase")
+												.build()).build())
 				.addMethod(
 						MethodSpec
 								.methodBuilder("getId")
@@ -176,19 +181,21 @@ public class JPAUpdatesClassBuilder {
 				// (AttributeOverrides)
 				fieldBuilder.addAnnotation(Embedded.class);
 			}
-			fieldBuilder.addAnnotation(AnnotationSpec
-					.builder(IdFor.class)
-					.addMember("entityClass", "$T.class", idColumn.entityClass)
-					.addMember(
-							"columns",
-							arrayStringAnnotationFormat(idColumn.columns.length),
-							(Object[]) idColumn.columns)
-					.addMember(
-							"columnsInOriginal",
-							arrayStringAnnotationFormat(idColumn.columnsInOriginal.length),
-							(Object[]) idColumn.columnsInOriginal)
-					.addMember("bridge", "$T.class",
-							idColumn.toOriginalIdBridge).build());
+			fieldBuilder
+					.addAnnotation(AnnotationSpec
+							.builder(IdFor.class)
+							.addMember("entityClass", "$T.class",
+									idColumn.entityClass)
+							.addMember(
+									"columns",
+									arrayStringAnnotationFormat(idColumn.columns.length),
+									(Object[]) idColumn.columns)
+							.addMember(
+									"columnsInOriginal",
+									arrayStringAnnotationFormat(idColumn.columnsInOriginal.length),
+									(Object[]) idColumn.columnsInOriginal)
+							.addMember("bridge", "$T.class",
+									idColumn.toOriginalIdBridge).build());
 			builder.addField(fieldBuilder.build());
 		}
 		JavaFile javaFile = JavaFile.builder(packageName, builder.build())

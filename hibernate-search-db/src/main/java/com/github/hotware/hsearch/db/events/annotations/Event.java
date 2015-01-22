@@ -32,6 +32,6 @@ import java.lang.annotation.Target;
 @Retention(RUNTIME)
 public @interface Event {
 
-	String column() default "eventType";
+	String column();
 	
 }

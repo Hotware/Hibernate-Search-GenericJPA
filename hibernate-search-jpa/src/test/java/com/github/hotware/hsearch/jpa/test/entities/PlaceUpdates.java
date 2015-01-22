@@ -38,7 +38,7 @@ public class PlaceUpdates {
 	@Column
 	private Integer placeId;
 
-	@Event
+	@Event(column = "eventType")
 	@Column
 	private Integer eventType;
 

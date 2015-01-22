@@ -61,7 +61,7 @@ public class PlaceSorcererUpdatesMethod {
 	/**
 	 * @return the eventType
 	 */
-	@Event
+	@Event(column = "eventType")
 	public Integer getEventType() {
 		return eventType;
 	}

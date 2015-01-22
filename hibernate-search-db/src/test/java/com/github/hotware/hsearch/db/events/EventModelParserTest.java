@@ -179,7 +179,7 @@ public class EventModelParserTest {
 	@Updates(originalTableName = "orig", tableName = "tbl")
 	private static class Mixed {
 
-		@Event
+		@Event(column = "eventType")
 		private Integer eventType;
 
 		@IdFor(entityClass = Place.class, columns = "tblId1", columnsInOriginal = "origId1")
@@ -205,7 +205,7 @@ public class EventModelParserTest {
 		@IdFor(entityClass = Sorcerer.class, columns = "tblId2", columnsInOriginal = "origId2")
 		private Integer id2;
 
-		@Event
+		@Event(column = "eventType")
 		public Integer getEventType() {
 			return this.eventType;
 		}
@@ -214,7 +214,7 @@ public class EventModelParserTest {
 
 	private static class ForgotUpdates {
 
-		@Event
+		@Event(column = "eventType")
 		private Integer eventType;
 
 		@IdFor(entityClass = Place.class, columns = "tblId1", columnsInOriginal = "origId1")
@@ -242,7 +242,7 @@ public class EventModelParserTest {
 	@Updates(originalTableName = "orig", tableName = "tbl")
 	private static class ForgotIds {
 
-		@Event
+		@Event(column = "eventType")
 		private Integer eventType;
 
 		@SuppressWarnings("unused")
