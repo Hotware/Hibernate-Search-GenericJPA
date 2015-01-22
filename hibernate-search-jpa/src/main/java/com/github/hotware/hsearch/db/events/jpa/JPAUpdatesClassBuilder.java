@@ -176,7 +176,7 @@ public class JPAUpdatesClassBuilder {
 				// (AttributeOverrides)
 				fieldBuilder.addAnnotation(Embedded.class);
 			}
-			builder.addAnnotation(AnnotationSpec
+			fieldBuilder.addAnnotation(AnnotationSpec
 					.builder(IdFor.class)
 					.addMember("entityClass", "$T.class", idColumn.entityClass)
 					.addMember(
