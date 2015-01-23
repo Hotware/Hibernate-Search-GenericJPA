@@ -262,6 +262,14 @@ public class JPAUpdatesClassBuilder {
 					columnsInOriginal);
 		}
 
+		public static IdColumn of(Class<?> idClass, boolean nonEmbeddedType,
+				Class<?> entityClass, String[] columns,
+				String[] columnsInOriginal,
+				Class<? extends ToOriginalIdBridge> toOriginalIdBridge) {
+			return new IdColumn(idClass, nonEmbeddedType, entityClass, columns,
+					columnsInOriginal, toOriginalIdBridge);
+		}
+
 		/**
 		 * @return the idClass
 		 */
