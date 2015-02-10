@@ -29,6 +29,9 @@ public interface EntityProvider extends Closeable {
 
 	public Object get(Class<?> entityClass, Object id);
 
+	/**
+	 * ATTENTION: ORDER IS NOT PRESERVED!
+	 */
 	@SuppressWarnings("rawtypes")
 	public List getBatch(Class<?> entityClass, List<Object> id);
 

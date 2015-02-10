@@ -42,7 +42,7 @@ import com.github.hotware.hsearch.db.events.EventModelInfo.IdInfo;
 import com.github.hotware.hsearch.db.events.jpa.MultiQueryAccess.ObjectClassWrapper;
 
 /**
- * @author Martin
+ * @author Martin Braun
  *
  */
 public class JPAUpdateSource implements UpdateSource {
@@ -148,8 +148,7 @@ public class JPAUpdateSource implements UpdateSource {
 						try {
 							// YAY JPA...
 							// throwing unchecked exceptions without having a
-							// valid
-							// getter present is so cool.
+							// valid getter present is so cool.
 						tx = em.getTransaction();
 					} catch (IllegalStateException e) {
 						tx = null;

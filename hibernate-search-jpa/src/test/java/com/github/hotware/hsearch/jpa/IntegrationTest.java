@@ -31,6 +31,7 @@ import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 
 import org.apache.lucene.search.Query;
+import org.eclipse.persistence.descriptors.ClassDescriptor;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -147,8 +148,25 @@ public class IntegrationTest {
 		try {
 			this.metaModelParser();
 			this.integration();
+			this.eclipseLinkSessionDescriptor("EclipseLink");
 		} finally {
 			this.shutdown();
+		}
+	}
+
+	public void eclipseLinkSessionDescriptor(String persistence) {
+		this.emf = Persistence.createEntityManagerFactory(persistence);
+		EntityManager em = emf.createEntityManager();
+		try {
+			org.eclipse.persistence.sessions.Session session = em
+					.unwrap(org.eclipse.persistence.sessions.Session.class);
+			for (ClassDescriptor descriptor : session.getDescriptors().values()) {
+				System.out.println(descriptor.getTableName());
+			}
+		} finally {
+			if (em != null) {
+				em.close();
+			}
 		}
 	}
 
@@ -256,7 +274,7 @@ public class IntegrationTest {
 			{
 				Place valinorDb = em.find(Place.class, valinorId);
 				valinorDb.setName("Valinor123");
-				
+
 				tx.commit();
 				tx = em.getTransaction();
 				tx.begin();
@@ -274,7 +292,7 @@ public class IntegrationTest {
 							entityProvider, "name", "valinor");
 					assertEquals(0, places.size());
 				}
-				
+
 				valinorDb.setName("Valinor");
 				tx.commit();
 				tx = em.getTransaction();

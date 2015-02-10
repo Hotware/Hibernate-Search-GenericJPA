@@ -46,6 +46,7 @@ import com.github.hotware.hsearch.jpa.test.entities.Sorcerer;
 public abstract class DatabaseIntegrationTest {
 
 	protected int valinorId = 0;
+	protected int helmsDeepId = 0;
 	protected Place valinor;
 	protected EntityManagerFactory emf;
 	protected EventModelParser parser = new EventModelParser();
@@ -129,7 +130,8 @@ public abstract class DatabaseIntegrationTest {
 			valinor.setSorcerers(sorcerersAtValinor);
 			em.persist(valinor);
 
-			valinorId = valinor.getId();
+			this.valinorId = valinor.getId();
+			this.helmsDeepId = helmsDeep.getId();
 
 			this.valinor = valinor;
 

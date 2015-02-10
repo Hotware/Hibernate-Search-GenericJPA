@@ -6,27 +6,23 @@
  * You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
-
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.hotware.hsearch.db.events;
+package com.github.hotware.hsearch.entity;
 
 /**
- * Source for updates on entities. This does no hierarchy checks yet it just
- * delivers information about which entry in which table has changed
- * 
- * @author Martin Braun
+ * @author Martin
+ *
  */
-public interface UpdateSource {
-
-	public void setUpdateConsumer(UpdateConsumer updateConsumer);
-
-	public void start();
-
-	public void stop();
+public interface ReusableEntityProvider extends EntityProvider {
+	
+	public void close();
+	
+	public void open();
 
 }

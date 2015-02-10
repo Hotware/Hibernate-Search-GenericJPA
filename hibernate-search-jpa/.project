@@ -2,10 +2,7 @@
 <projectDescription>
   <name>hibernate-search-jpa</name>
   <comment>Use the JPA Provider you want but still keep Hibernate-Search :). NO_M2ECLIPSE_SUPPORT: Project files created with the maven-eclipse-plugin are not supported in M2Eclipse.</comment>
-  <projects>
-    <project>hibernate-search-standalone</project>
-    <project>hibernate-search-db</project>
-  </projects>
+  <projects/>
   <buildSpec>
     <buildCommand>
       <name>org.eclipse.wst.common.project.facet.core.builder</name>
