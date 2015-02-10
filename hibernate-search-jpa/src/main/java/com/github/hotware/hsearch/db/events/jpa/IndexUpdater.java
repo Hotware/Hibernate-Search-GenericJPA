@@ -35,8 +35,7 @@ import com.github.hotware.hsearch.entity.ReusableEntityProvider;
 import com.github.hotware.hsearch.factory.Transaction;
 
 /**
- * @author Martin
- *
+ * @author Martin Braun
  */
 public class IndexUpdater implements UpdateConsumer {
 
@@ -49,20 +48,29 @@ public class IndexUpdater implements UpdateConsumer {
 
 	private final Map<Class<?>, IndexInformation> indexInformations;
 	private final Map<Class<?>, List<Class<?>>> containedInIndexOf;
-	private final Map<Class<?>, SingularTermQuery.Type> idsTypesForEntities;
+	private final Map<Class<?>, SingularTermQuery.Type> idTypesForEntities;
 	private final ReusableEntityProvider entityProvider;
-	private final ExtendedSearchIntegrator searchIntegrator;
+	private IndexWrapper indexWrapper;
+
+	public IndexUpdater(Map<Class<?>, IndexInformation> indexInformations,
+			Map<Class<?>, List<Class<?>>> containedInIndexOf,
+			Map<Class<?>, Type> idTypesForEntities,
+			ReusableEntityProvider entityProvider, IndexWrapper indexWrapper) {
+		this.indexInformations = indexInformations;
+		this.containedInIndexOf = containedInIndexOf;
+		this.idTypesForEntities = idTypesForEntities;
+		this.entityProvider = entityProvider;
+		this.indexWrapper = indexWrapper;
+	}
 
 	public IndexUpdater(Map<Class<?>, IndexInformation> indexInformations,
 			Map<Class<?>, List<Class<?>>> containedInIndexOf,
 			Map<Class<?>, Type> idsTypesForEntities,
 			ReusableEntityProvider entityProvider,
 			ExtendedSearchIntegrator searchIntegrator) {
-		this.indexInformations = indexInformations;
-		this.containedInIndexOf = containedInIndexOf;
-		this.idsTypesForEntities = idsTypesForEntities;
-		this.entityProvider = entityProvider;
-		this.searchIntegrator = searchIntegrator;
+		this(indexInformations, containedInIndexOf, idsTypesForEntities,
+				entityProvider, (IndexWrapper) null);
+		this.indexWrapper = new DefaultIndexWrapper(searchIntegrator);
 	}
 
 	@Override
@@ -79,13 +87,15 @@ public class IndexUpdater implements UpdateConsumer {
 					Object id = updateInfo.getId();
 					switch (eventType) {
 					case EventType.INSERT:
-						this.insert(entityClass, inIndexOf, id, tx);
+						this.indexWrapper.index(entityClass, inIndexOf, id, tx);
 						break;
 					case EventType.UPDATE:
-						this.update(entityClass, inIndexOf, id, tx);
+						this.indexWrapper
+								.update(entityClass, inIndexOf, id, tx);
 						break;
 					case EventType.DELETE:
-						this.delete(entityClass, inIndexOf, id, tx);
+						this.indexWrapper
+								.delete(entityClass, inIndexOf, id, tx);
 						break;
 					default:
 						LOGGER.warn("unknown eventType-id found: " + eventType);
@@ -101,49 +111,6 @@ public class IndexUpdater implements UpdateConsumer {
 		}
 	}
 
-	private void delete(Class<?> entityClass, List<Class<?>> inIndexOf,
-			Object id, Transaction tx) {
-		for (int i = 0; i < inIndexOf.size(); ++i) {
-			Class<?> indexClass = inIndexOf.get(i);
-			IndexInformation info = this.indexInformations.get(indexClass);
-			String field = info.idsForEntities.get(entityClass);
-			DocumentFieldMetadata metaDataForField = this.searchIntegrator
-					.getDocumentBuilderContainedEntity(indexClass)
-					.getMetadata().getDocumentFieldMetadataFor(field);
-			SingularTermQuery.Type idType = this.idsTypesForEntities
-					.get(entityClass);
-			Object idValueForDeletion;
-			if (idType == SingularTermQuery.Type.STRING) {
-				FieldBridge fb = metaDataForField.getFieldBridge();
-				if (!(fb instanceof TwoWayStringBridge)) {
-					throw new IllegalArgumentException(
-							"no TwoWayStringBridge found for field: " + field);
-				}
-				idValueForDeletion = ((TwoWayStringBridge) fb)
-						.objectToString(id);
-			} else {
-				idValueForDeletion = id;
-			}
-			this.searchIntegrator.getWorker().performWork(
-					new DeleteByQueryWork(indexClass, new SingularTermQuery(
-							field, idValueForDeletion, idType)), tx);
-		}
-	}
-
-	private void update(Class<?> entityClass, List<Class<?>> inIndexOf,
-			Object id, Transaction tx) {
-		Object entity = this.entityProvider.get(entityClass, id);
-		this.searchIntegrator.getWorker().performWork(
-				new Work(entity, WorkType.UPDATE), tx);
-	}
-
-	private void insert(Class<?> entityClass, List<Class<?>> inIndexOf,
-			Object id, Transaction tx) {
-		Object entity = this.entityProvider.get(entityClass, id);
-		this.searchIntegrator.getWorker().performWork(
-				new Work(entity, WorkType.INDEX), tx);
-	}
-
 	public static class IndexInformation {
 
 		final Class<?> mainEntity;
@@ -153,6 +120,82 @@ public class IndexUpdater implements UpdateConsumer {
 				Map<Class<?>, String> idsForEntities) {
 			this.mainEntity = mainEntity;
 			this.idsForEntities = idsForEntities;
+		}
+
+	}
+
+	public static interface IndexWrapper {
+
+		public void delete(Class<?> entityClass, List<Class<?>> inIndexOf,
+				Object id, Transaction tx);
+
+		public void update(Class<?> entityClass, List<Class<?>> inIndexOf,
+				Object id, Transaction tx);
+
+		public void index(Class<?> entityClass, List<Class<?>> inIndexOf,
+				Object id, Transaction tx);
+
+	}
+
+	//TODO: Integration test this!
+	
+	private class DefaultIndexWrapper implements IndexWrapper {
+
+		private final ExtendedSearchIntegrator searchIntegrator;
+
+		public DefaultIndexWrapper(ExtendedSearchIntegrator searchIntegrator) {
+			this.searchIntegrator = searchIntegrator;
+		}
+
+		@Override
+		public void delete(Class<?> entityClass, List<Class<?>> inIndexOf,
+				Object id, Transaction tx) {
+			for (int i = 0; i < inIndexOf.size(); ++i) {
+				Class<?> indexClass = inIndexOf.get(i);
+				IndexInformation info = IndexUpdater.this.indexInformations
+						.get(indexClass);
+				String field = info.idsForEntities.get(entityClass);
+				DocumentFieldMetadata metaDataForField = this.searchIntegrator
+						.getDocumentBuilderContainedEntity(indexClass)
+						.getMetadata().getDocumentFieldMetadataFor(field);
+				SingularTermQuery.Type idType = IndexUpdater.this.idTypesForEntities
+						.get(entityClass);
+				Object idValueForDeletion;
+				if (idType == SingularTermQuery.Type.STRING) {
+					FieldBridge fb = metaDataForField.getFieldBridge();
+					if (!(fb instanceof TwoWayStringBridge)) {
+						throw new IllegalArgumentException(
+								"no TwoWayStringBridge found for field: "
+										+ field);
+					}
+					idValueForDeletion = ((TwoWayStringBridge) fb)
+							.objectToString(id);
+				} else {
+					idValueForDeletion = id;
+				}
+				this.searchIntegrator.getWorker().performWork(
+						new DeleteByQueryWork(indexClass,
+								new SingularTermQuery(field,
+										idValueForDeletion, idType)), tx);
+			}
+		}
+
+		@Override
+		public void update(Class<?> entityClass, List<Class<?>> inIndexOf,
+				Object id, Transaction tx) {
+			Object entity = IndexUpdater.this.entityProvider.get(entityClass,
+					id);
+			this.searchIntegrator.getWorker().performWork(
+					new Work(entity, WorkType.UPDATE), tx);
+		}
+
+		@Override
+		public void index(Class<?> entityClass, List<Class<?>> inIndexOf,
+				Object id, Transaction tx) {
+			Object entity = IndexUpdater.this.entityProvider.get(entityClass,
+					id);
+			this.searchIntegrator.getWorker().performWork(
+					new Work(entity, WorkType.INDEX), tx);
 		}
 
 	}
