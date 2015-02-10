@@ -27,6 +27,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.search.backend.SingularTermQuery;
+import org.hibernate.search.cfg.spi.SearchConfiguration;
+import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
+import org.hibernate.search.spi.SearchIntegratorBuilder;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.github.hotware.hsearch.db.events.EventType;
@@ -34,7 +38,10 @@ import com.github.hotware.hsearch.db.events.UpdateConsumer.UpdateInfo;
 import com.github.hotware.hsearch.db.events.jpa.IndexUpdater.IndexInformation;
 import com.github.hotware.hsearch.db.events.jpa.IndexUpdater.IndexWrapper;
 import com.github.hotware.hsearch.entity.ReusableEntityProvider;
+import com.github.hotware.hsearch.factory.SearchConfigurationImpl;
 import com.github.hotware.hsearch.factory.Transaction;
+import com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace;
+import com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace2;
 import com.github.hotware.hsearch.jpa.test.entities.Place;
 import com.github.hotware.hsearch.jpa.test.entities.Sorcerer;
 
@@ -43,21 +50,29 @@ import com.github.hotware.hsearch.jpa.test.entities.Sorcerer;
  */
 public class IndexUpdaterTest {
 
-	@Test
-	public void testWithoutIndex() {
-		Map<Class<?>, String> idsForEntities = new HashMap<>();
-		idsForEntities.put(Sorcerer.class, "sorcerer.id");
-		idsForEntities.put(Place.class, "id");
-		Map<Class<?>, IndexInformation> indexInformations = new HashMap<>();
-		indexInformations.put(Place.class, new IndexInformation(Place.class,
-				idsForEntities));
-		Map<Class<?>, List<Class<?>>> containedInIndexOf = new HashMap<>();
-		containedInIndexOf.put(Sorcerer.class, Arrays.asList(Place.class));
-		containedInIndexOf.put(Place.class, Arrays.asList(Place.class));
-		Map<Class<?>, SingularTermQuery.Type> idTypesForEntities = new HashMap<>();
-		idTypesForEntities.put(Place.class, SingularTermQuery.Type.INT);
-		idTypesForEntities.put(Sorcerer.class, SingularTermQuery.Type.INT);
-		ReusableEntityProvider entityProvider = new ReusableEntityProvider() {
+	Map<Class<?>, String> idsForEntities;
+	Map<Class<?>, IndexInformation> indexInformations;
+	Map<Class<?>, List<Class<?>>> containedInIndexOf;
+	Map<Class<?>, SingularTermQuery.Type> idTypesForEntities;
+	ReusableEntityProvider entityProvider;
+	List<UpdateInfo> updateInfos;
+
+	@Before
+	public void setup() {
+		this.idsForEntities = new HashMap<>();
+		this.idsForEntities.put(Place.class, "id");
+		this.idsForEntities.put(Sorcerer.class, "sorcerers.id");
+		this.indexInformations = new HashMap<>();
+		this.indexInformations.put(Place.class, new IndexInformation(
+				Place.class, this.idsForEntities));
+		this.containedInIndexOf = new HashMap<>();
+		this.containedInIndexOf.put(Sorcerer.class, Arrays.asList(Place.class));
+		this.containedInIndexOf.put(Place.class, Arrays.asList(Place.class));
+		this.idTypesForEntities = new HashMap<>();
+		this.idTypesForEntities.put(Place.class, SingularTermQuery.Type.STRING);
+		this.idTypesForEntities.put(Sorcerer.class,
+				SingularTermQuery.Type.STRING);
+		this.entityProvider = new ReusableEntityProvider() {
 
 			@SuppressWarnings("rawtypes")
 			@Override
@@ -67,20 +82,25 @@ public class IndexUpdaterTest {
 
 			@Override
 			public Object get(Class<?> entityClass, Object id) {
-				return IndexUpdaterTest.this.obj(entityClass, id);
+				return IndexUpdaterTest.this.obj(entityClass);
 			}
 
 			@Override
 			public void open() {
-				
+
 			}
 
 			@Override
 			public void close() {
-				
+
 			}
-			
+
 		};
+		this.updateInfos = this.createUpdateInfos();
+	}
+
+	@Test
+	public void testWithoutIndex() {
 		List<UpdateInfo> updateInfos = this.createUpdateInfos();
 		Set<UpdateInfo> updateInfoSet = new HashSet<>(updateInfos);
 		IndexWrapper indexWrapper = new IndexWrapper() {
@@ -88,49 +108,108 @@ public class IndexUpdaterTest {
 			@Override
 			public void delete(Class<?> entityClass, List<Class<?>> inIndexOf,
 					Object id, Transaction tx) {
-				Object obj = IndexUpdaterTest.this.obj(entityClass, id);
+				Object obj = IndexUpdaterTest.this.obj(entityClass);
 				System.out.println(entityClass);
 				System.out.println(updateInfoSet);
 				System.out.println(obj);
-				assertTrue(updateInfoSet.remove(new UpdateInfo(entityClass, (Integer) id, EventType.DELETE)));
+				assertTrue(updateInfoSet.remove(new UpdateInfo(entityClass,
+						(Integer) id, EventType.DELETE)));
 			}
 
 			@Override
 			public void update(Class<?> entityClass, List<Class<?>> inIndexOf,
 					Object id, Transaction tx) {
-				Object obj = IndexUpdaterTest.this.obj(entityClass, id);
+				Object obj = IndexUpdaterTest.this.obj(entityClass);
 				System.out.println(entityClass);
 				System.out.println(updateInfoSet);
 				System.out.println(obj);
-				assertTrue(updateInfoSet.remove(new UpdateInfo(entityClass, (Integer) id, EventType.UPDATE)));
+				assertTrue(updateInfoSet.remove(new UpdateInfo(entityClass,
+						(Integer) id, EventType.UPDATE)));
 			}
 
 			@Override
 			public void index(Class<?> entityClass, List<Class<?>> inIndexOf,
 					Object id, Transaction tx) {
-				Object obj = IndexUpdaterTest.this.obj(entityClass, id);
+				Object obj = IndexUpdaterTest.this.obj(entityClass);
 				System.out.println(entityClass);
 				System.out.println(updateInfoSet);
 				System.out.println(obj);
-				assertTrue(updateInfoSet.remove(new UpdateInfo(entityClass, (Integer) id, EventType.INSERT)));
+				assertTrue(updateInfoSet.remove(new UpdateInfo(entityClass,
+						(Integer) id, EventType.INSERT)));
 			}
 
 		};
-		IndexUpdater updater = new IndexUpdater(indexInformations,
-				containedInIndexOf, idTypesForEntities, entityProvider,
-				indexWrapper);
+		IndexUpdater updater = new IndexUpdater(this.indexInformations,
+				this.containedInIndexOf, this.idTypesForEntities,
+				this.entityProvider, indexWrapper);
 		updater.updateEvent(updateInfos);
 		assertEquals("didn't get all the events", 0, updateInfoSet.size());
 	}
-	
-	private Object obj(Class<?> entityClass, Object id) {
-		if(entityClass.equals(Place.class)) {
-			Place place = new Place();
-			place.setId((Integer) id);
+
+	@Test
+	public void testWithIndex() {
+		SearchConfiguration searchConfiguration = new SearchConfigurationImpl();
+		List<Class<?>> classes = Arrays.asList(Place.class, Sorcerer.class,
+				AdditionalPlace.class, AdditionalPlace2.class);
+
+		SearchIntegratorBuilder builder = new SearchIntegratorBuilder();
+		// we have to build an integrator here (but we don't need it afterwards)
+		builder.configuration(searchConfiguration).buildSearchIntegrator();
+		classes.forEach((clazz) -> {
+			builder.addClass(clazz);
+		});
+		ExtendedSearchIntegrator impl = (ExtendedSearchIntegrator) builder
+				.buildSearchIntegrator();
+
+		IndexUpdater updater = new IndexUpdater(this.indexInformations,
+				this.containedInIndexOf, this.idTypesForEntities,
+				this.entityProvider, impl);
+		this.reset(updater, impl);
+		
+		this.tryOutDelete(updater, impl, 0, 1, Place.class);
+		this.tryOutDelete(updater, impl, 0, 2, Sorcerer.class);
+	}
+
+	private void reset(IndexUpdater updater, ExtendedSearchIntegrator impl) {
+		updater.updateEvent(this.createUpdateInfoForInsert());
+		assertEquals(
+				1,
+				impl.createHSQuery()
+						.targetedEntities(Arrays.asList(Place.class))
+						.luceneQuery(
+								impl.buildQueryBuilder().forEntity(Place.class)
+										.get().all().createQuery())
+						.queryResultSize());
+	}
+
+	private void tryOutDelete(IndexUpdater updater,
+			ExtendedSearchIntegrator impl, int expectedCount, Object id,
+			Class<?> clazz) {
+		updater.updateEvent(Arrays.asList(new UpdateInfo(clazz, id,
+				EventType.DELETE)));
+		assertEquals(
+				expectedCount,
+				impl.createHSQuery()
+						.targetedEntities(Arrays.asList(Place.class))
+						.luceneQuery(
+								impl.buildQueryBuilder().forEntity(Place.class)
+										.get().all().createQuery())
+						.queryResultSize());
+		this.reset(updater, impl);
+	}
+
+	private Object obj(Class<?> entityClass) {
+		Sorcerer sorcerer = new Sorcerer();
+		sorcerer.setId(2);
+		Place place = new Place();
+		place.setId(1);
+		place.setName("Valinor");
+		sorcerer.setPlace(place);
+		sorcerer.setName("Saruman");
+		place.setSorcerers(new HashSet<>(Arrays.asList(sorcerer)));
+		if (entityClass.equals(Place.class)) {
 			return place;
-		} else if(entityClass.equals(Sorcerer.class)) {
-			Sorcerer sorcerer = new Sorcerer();
-			sorcerer.setId((Integer) id);
+		} else if (entityClass.equals(Sorcerer.class)) {
 			return sorcerer;
 		} else {
 			throw new AssertionError("shouldn't happen!");
@@ -139,13 +218,22 @@ public class IndexUpdaterTest {
 
 	private List<UpdateInfo> createUpdateInfos() {
 		List<UpdateInfo> ret = new ArrayList<>();
-		ret.add(new UpdateInfo(Place.class, 1, EventType.INSERT));
+
+		ret.addAll(this.createUpdateInfoForInsert());
+
 		ret.add(new UpdateInfo(Place.class, 1, EventType.UPDATE));
 		ret.add(new UpdateInfo(Place.class, 1, EventType.DELETE));
 
-		ret.add(new UpdateInfo(Sorcerer.class, 2, EventType.INSERT));
 		ret.add(new UpdateInfo(Sorcerer.class, 2, EventType.UPDATE));
 		ret.add(new UpdateInfo(Sorcerer.class, 2, EventType.DELETE));
+
+		return ret;
+	}
+
+	private List<UpdateInfo> createUpdateInfoForInsert() {
+		List<UpdateInfo> ret = new ArrayList<>();
+		ret.add(new UpdateInfo(Place.class, 1, EventType.INSERT));
+		ret.add(new UpdateInfo(Sorcerer.class, 2, EventType.INSERT));
 		return ret;
 	}
 

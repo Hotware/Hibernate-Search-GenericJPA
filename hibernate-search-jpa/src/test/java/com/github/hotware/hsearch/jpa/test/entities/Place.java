@@ -83,7 +83,7 @@ public class Place {
 		this.name = name;
 	}
 
-	@IndexedEmbedded(depth = 3)
+	@IndexedEmbedded(depth = 3, includeEmbeddedObjectId = true)
 	@ContainedIn
 	@OneToMany(cascade = CascadeType.ALL)
 	public Set<Sorcerer> getSorcerers() {

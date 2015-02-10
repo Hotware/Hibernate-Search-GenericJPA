@@ -17,17 +17,11 @@ package com.github.hotware.hsearch.jpa.test.entities;
 
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
-import javax.persistence.PostUpdate;
 
 @Embeddable
 public class EmbeddableInfo {
 	
 	private int ownerId;
-	
-	@PostUpdate()
-	public void postUpdateEmbeddableInfo() {
-		System.out.println("embeddableInfo: PostUpdate");
-	}
 	
 	private String info;
 

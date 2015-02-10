@@ -58,7 +58,8 @@ public class SearchConfigurationImpl extends SearchConfigurationBase implements
 	private final InstanceInitializer initializer;
 	private SearchMapping programmaticMapping;
 	private boolean transactionsExpected = true;
-	private boolean indexMetadataComplete = false;
+	//TODO: is this correct?
+	private boolean indexMetadataComplete = true;
 	private boolean idProvidedImplicit = false;
 	private ClassLoaderService classLoaderService;
 	private ReflectionManager reflectionManager;

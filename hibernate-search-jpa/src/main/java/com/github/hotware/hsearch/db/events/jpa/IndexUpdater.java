@@ -15,6 +15,7 @@
  */
 package com.github.hotware.hsearch.db.events.jpa;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,9 +25,10 @@ import org.hibernate.search.backend.spi.DeleteByQueryWork;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.bridge.FieldBridge;
-import org.hibernate.search.bridge.TwoWayStringBridge;
+import org.hibernate.search.bridge.StringBridge;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.metadata.impl.DocumentFieldMetadata;
+import org.hibernate.search.engine.spi.DocumentBuilderContainedEntity;
 import org.jboss.logging.Logger;
 
 import com.github.hotware.hsearch.db.events.EventType;
@@ -137,14 +139,16 @@ public class IndexUpdater implements UpdateConsumer {
 
 	}
 
-	//TODO: Integration test this!
-	
+	// TODO: Integration test this!
+
 	private class DefaultIndexWrapper implements IndexWrapper {
 
 		private final ExtendedSearchIntegrator searchIntegrator;
+		private final Map<Class<?>, DocumentFieldMetadata> metaDataForIdFields;
 
 		public DefaultIndexWrapper(ExtendedSearchIntegrator searchIntegrator) {
 			this.searchIntegrator = searchIntegrator;
+			this.metaDataForIdFields = new HashMap<>();
 		}
 
 		@Override
@@ -154,21 +158,43 @@ public class IndexUpdater implements UpdateConsumer {
 				Class<?> indexClass = inIndexOf.get(i);
 				IndexInformation info = IndexUpdater.this.indexInformations
 						.get(indexClass);
-				String field = info.idsForEntities.get(entityClass);
-				DocumentFieldMetadata metaDataForField = this.searchIntegrator
-						.getDocumentBuilderContainedEntity(indexClass)
-						.getMetadata().getDocumentFieldMetadataFor(field);
+				final String field = info.idsForEntities.get(entityClass);
+				DocumentFieldMetadata metaDataForIdField = this.metaDataForIdFields
+						.computeIfAbsent(
+								indexClass,
+								(Class<?> indexClazz) -> {
+									if (this.searchIntegrator.getIndexedTypes()
+											.contains(indexClazz)) {
+										return this.searchIntegrator
+												.getIndexBinding(indexClazz)
+												.getDocumentBuilder()
+												.getMetadata()
+												.getDocumentFieldMetadataFor(
+														field);
+									} else {
+										DocumentBuilderContainedEntity builder = this.searchIntegrator
+												.getDocumentBuilderContainedEntity(indexClazz);
+										if (builder == null) {
+											throw new IllegalArgumentException(
+													"no DocumentBuilder found for: "
+															+ indexClazz);
+										}
+										return builder.getMetadata()
+												.getDocumentFieldMetadataFor(
+														field);
+									}
+								});
 				SingularTermQuery.Type idType = IndexUpdater.this.idTypesForEntities
 						.get(entityClass);
 				Object idValueForDeletion;
 				if (idType == SingularTermQuery.Type.STRING) {
-					FieldBridge fb = metaDataForField.getFieldBridge();
-					if (!(fb instanceof TwoWayStringBridge)) {
+					FieldBridge fb = metaDataForIdField.getFieldBridge();
+					if (!(fb instanceof StringBridge)) {
 						throw new IllegalArgumentException(
 								"no TwoWayStringBridge found for field: "
 										+ field);
 					}
-					idValueForDeletion = ((TwoWayStringBridge) fb)
+					idValueForDeletion = ((StringBridge) fb)
 							.objectToString(id);
 				} else {
 					idValueForDeletion = id;
