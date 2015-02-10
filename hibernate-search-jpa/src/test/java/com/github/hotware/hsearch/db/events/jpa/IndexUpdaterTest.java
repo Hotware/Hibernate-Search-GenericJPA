@@ -15,11 +15,16 @@
  */
 package com.github.hotware.hsearch.db.events.jpa;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.hibernate.search.backend.SingularTermQuery;
 import org.junit.Test;
@@ -54,58 +59,82 @@ public class IndexUpdaterTest {
 		idTypesForEntities.put(Sorcerer.class, SingularTermQuery.Type.INT);
 		ReusableEntityProvider entityProvider = new ReusableEntityProvider() {
 
+			@SuppressWarnings("rawtypes")
 			@Override
-			public List getBatch(Class<?> arg0, List<Object> arg1) {
-				// TODO Auto-generated method stub
-				return null;
+			public List getBatch(Class<?> entityClass, List<Object> ids) {
+				throw new AssertionError("not to be used in his test!");
 			}
 
 			@Override
-			public Object get(Class<?> arg0, Object arg1) {
-				// TODO Auto-generated method stub
-				return null;
+			public Object get(Class<?> entityClass, Object id) {
+				return IndexUpdaterTest.this.obj(entityClass, id);
 			}
 
 			@Override
 			public void open() {
-				// TODO Auto-generated method stub
-
+				
 			}
 
 			@Override
 			public void close() {
-				// TODO Auto-generated method stub
-
+				
 			}
+			
 		};
+		List<UpdateInfo> updateInfos = this.createUpdateInfos();
+		Set<UpdateInfo> updateInfoSet = new HashSet<>(updateInfos);
 		IndexWrapper indexWrapper = new IndexWrapper() {
 
 			@Override
 			public void delete(Class<?> entityClass, List<Class<?>> inIndexOf,
 					Object id, Transaction tx) {
-				// TODO Auto-generated method stub
-
+				Object obj = IndexUpdaterTest.this.obj(entityClass, id);
+				System.out.println(entityClass);
+				System.out.println(updateInfoSet);
+				System.out.println(obj);
+				assertTrue(updateInfoSet.remove(new UpdateInfo(entityClass, (Integer) id, EventType.DELETE)));
 			}
 
 			@Override
 			public void update(Class<?> entityClass, List<Class<?>> inIndexOf,
 					Object id, Transaction tx) {
-				// TODO Auto-generated method stub
-
+				Object obj = IndexUpdaterTest.this.obj(entityClass, id);
+				System.out.println(entityClass);
+				System.out.println(updateInfoSet);
+				System.out.println(obj);
+				assertTrue(updateInfoSet.remove(new UpdateInfo(entityClass, (Integer) id, EventType.UPDATE)));
 			}
 
 			@Override
 			public void index(Class<?> entityClass, List<Class<?>> inIndexOf,
 					Object id, Transaction tx) {
-				// TODO Auto-generated method stub
-
+				Object obj = IndexUpdaterTest.this.obj(entityClass, id);
+				System.out.println(entityClass);
+				System.out.println(updateInfoSet);
+				System.out.println(obj);
+				assertTrue(updateInfoSet.remove(new UpdateInfo(entityClass, (Integer) id, EventType.INSERT)));
 			}
 
 		};
 		IndexUpdater updater = new IndexUpdater(indexInformations,
 				containedInIndexOf, idTypesForEntities, entityProvider,
 				indexWrapper);
-		updater.updateEvent(this.createUpdateInfos());
+		updater.updateEvent(updateInfos);
+		assertEquals("didn't get all the events", 0, updateInfoSet.size());
+	}
+	
+	private Object obj(Class<?> entityClass, Object id) {
+		if(entityClass.equals(Place.class)) {
+			Place place = new Place();
+			place.setId((Integer) id);
+			return place;
+		} else if(entityClass.equals(Sorcerer.class)) {
+			Sorcerer sorcerer = new Sorcerer();
+			sorcerer.setId((Integer) id);
+			return sorcerer;
+		} else {
+			throw new AssertionError("shouldn't happen!");
+		}
 	}
 
 	private List<UpdateInfo> createUpdateInfos() {
