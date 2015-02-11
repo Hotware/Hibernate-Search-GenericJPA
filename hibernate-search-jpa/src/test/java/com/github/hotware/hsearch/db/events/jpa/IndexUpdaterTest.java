@@ -56,9 +56,11 @@ public class IndexUpdaterTest {
 	Map<Class<?>, SingularTermQuery.Type> idTypesForEntities;
 	ReusableEntityProvider entityProvider;
 	List<UpdateInfo> updateInfos;
+	boolean changed;
 
 	@Before
 	public void setup() {
+		this.changed = false;
 		this.idsForEntities = new HashMap<>();
 		this.idsForEntities.put(Place.class, "id");
 		this.idsForEntities.put(Sorcerer.class, "sorcerers.id");
@@ -165,9 +167,12 @@ public class IndexUpdaterTest {
 				this.containedInIndexOf, this.idTypesForEntities,
 				this.entityProvider, impl);
 		this.reset(updater, impl);
-		
+
 		this.tryOutDelete(updater, impl, 0, 1, Place.class);
 		this.tryOutDelete(updater, impl, 0, 2, Sorcerer.class);
+		
+		this.tryOutUpdate(updater, impl, 0, 1, Place.class, "name", "Valinor");
+		this.tryOutUpdate(updater, impl, 0, 2, Sorcerer.class, "sorcerers.name", "Saruman");
 	}
 
 	private void reset(IndexUpdater updater, ExtendedSearchIntegrator impl) {
@@ -198,14 +203,40 @@ public class IndexUpdaterTest {
 		this.reset(updater, impl);
 	}
 
+	private void tryOutUpdate(IndexUpdater updater,
+			ExtendedSearchIntegrator impl, int expectedCount, Object id,
+			Class<?> clazz, String field, String originalMatch) {
+		this.changed = true;
+		updater.updateEvent(Arrays.asList(new UpdateInfo(clazz, id,
+				EventType.UPDATE)));
+		assertEquals(
+				expectedCount,
+				impl.createHSQuery()
+						.targetedEntities(Arrays.asList(Place.class))
+						.luceneQuery(
+								impl.buildQueryBuilder().forEntity(Place.class)
+										.get().keyword().onField(field)
+										.matching(originalMatch).createQuery())
+						.queryResultSize());
+		this.changed = false;
+	}
+
 	private Object obj(Class<?> entityClass) {
 		Sorcerer sorcerer = new Sorcerer();
 		sorcerer.setId(2);
 		Place place = new Place();
 		place.setId(1);
-		place.setName("Valinor");
+		if (!this.changed) {
+			place.setName("Valinor");
+		} else {
+			place.setName("Alinor");
+		}
 		sorcerer.setPlace(place);
-		sorcerer.setName("Saruman");
+		if (!this.changed) {
+			sorcerer.setName("Saruman");
+		} else {
+			sorcerer.setName("Aruman");
+		}
 		place.setSorcerers(new HashSet<>(Arrays.asList(sorcerer)));
 		if (entityClass.equals(Place.class)) {
 			return place;

@@ -139,8 +139,6 @@ public class IndexUpdater implements UpdateConsumer {
 
 	}
 
-	// TODO: Integration test this!
-
 	private class DefaultIndexWrapper implements IndexWrapper {
 
 		private final ExtendedSearchIntegrator searchIntegrator;
