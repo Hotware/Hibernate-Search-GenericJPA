@@ -27,6 +27,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.search.backend.SingularTermQuery;
+import org.hibernate.search.backend.spi.Work;
+import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
@@ -170,15 +172,52 @@ public class IndexUpdaterTest {
 
 		this.tryOutDelete(updater, impl, 0, 1, Place.class);
 		this.tryOutDelete(updater, impl, 0, 2, Sorcerer.class);
-		
+
 		this.tryOutUpdate(updater, impl, 0, 1, Place.class, "name", "Valinor");
-		this.tryOutUpdate(updater, impl, 0, 2, Sorcerer.class, "sorcerers.name", "Saruman");
+		this.tryOutUpdate(updater, impl, 0, 2, Sorcerer.class,
+				"sorcerers.name", "Saruman");
 	}
 
 	private void reset(IndexUpdater updater, ExtendedSearchIntegrator impl) {
+		{
+			Transaction tx = new Transaction();
+			impl.getWorker().performWork(
+					new Work(Place.class, null, WorkType.PURGE_ALL), tx);
+			tx.end();
+			this.assertCount(impl, 0);
+		}
+
+		updater.updateEvent(Arrays.asList(new UpdateInfo(Sorcerer.class, 2,
+				EventType.INSERT)));
+		this.assertCount(impl, 1);
+
+		{
+			Transaction tx = new Transaction();
+			impl.getWorker().performWork(
+					new Work(Place.class, null, WorkType.PURGE_ALL), tx);
+			tx.end();
+			this.assertCount(impl, 0);
+		}
+
+		updater.updateEvent(Arrays.asList(new UpdateInfo(Place.class, 1,
+				EventType.INSERT)));
+		this.assertCount(impl, 1);
+
+		{
+			Transaction tx = new Transaction();
+			impl.getWorker().performWork(
+					new Work(Place.class, null, WorkType.PURGE_ALL), tx);
+			tx.end();
+			this.assertCount(impl, 0);
+		}
+
 		updater.updateEvent(this.createUpdateInfoForInsert());
+		this.assertCount(impl, 1);
+	}
+
+	private void assertCount(ExtendedSearchIntegrator impl, int count) {
 		assertEquals(
-				1,
+				count,
 				impl.createHSQuery()
 						.targetedEntities(Arrays.asList(Place.class))
 						.luceneQuery(
@@ -219,6 +258,7 @@ public class IndexUpdaterTest {
 										.matching(originalMatch).createQuery())
 						.queryResultSize());
 		this.changed = false;
+		this.reset(updater, impl);
 	}
 
 	private Object obj(Class<?> entityClass) {
