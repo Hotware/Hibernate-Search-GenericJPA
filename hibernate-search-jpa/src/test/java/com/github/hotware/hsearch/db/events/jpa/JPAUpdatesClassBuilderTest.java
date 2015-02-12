@@ -22,6 +22,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 import org.junit.Test;
@@ -44,7 +45,7 @@ public class JPAUpdatesClassBuilderTest {
 		String asString = this.buildCode("");
 		Class<?> clazz = InMemoryCompiler.compile(asString, "MyUpdateClass");
 		EventModelParser parser = new EventModelParser();
-		List<EventModelInfo> infos = parser.parse(Arrays.asList(clazz));
+		List<EventModelInfo> infos = parser.parse(new HashSet<>(Arrays.asList(clazz)));
 		EventModelInfo info = infos.get(0);
 		assertTrue(info.getEventTypeAccessor() != null);
 		assertEquals("hsearchEventCase", info.getEventTypeColumn());

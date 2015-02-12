@@ -81,7 +81,7 @@ public class IndexUpdaterTest {
 			@SuppressWarnings("rawtypes")
 			@Override
 			public List getBatch(Class<?> entityClass, List<Object> ids) {
-				throw new AssertionError("not to be used in his test!");
+				throw new AssertionError("not to be used in this test!");
 			}
 
 			@Override

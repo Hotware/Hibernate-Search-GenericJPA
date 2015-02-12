@@ -24,6 +24,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -163,8 +164,8 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 		Map<Class<?>, Long> countMap = new HashMap<>();
 		Map<Class<?>, Query> queryMap = new HashMap<>();
 		EventModelParser parser = new EventModelParser();
-		List<EventModelInfo> infos = parser.parse(Arrays.asList(
-				PlaceSorcererUpdates.class, PlaceUpdates.class));
+		List<EventModelInfo> infos = parser.parse(new HashSet<>(Arrays.asList(
+				PlaceSorcererUpdates.class, PlaceUpdates.class)));
 		for (EventModelInfo evi : infos) {
 			CriteriaBuilder cb = em.getCriteriaBuilder();
 			long count;

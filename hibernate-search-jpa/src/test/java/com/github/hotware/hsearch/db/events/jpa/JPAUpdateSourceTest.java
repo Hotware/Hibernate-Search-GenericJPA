@@ -18,6 +18,7 @@ package com.github.hotware.hsearch.db.events.jpa;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -50,7 +51,7 @@ public class JPAUpdateSourceTest {
 		try {
 			EventModelParser parser = new EventModelParser();
 			JPAUpdateSource updateSource = new JPAUpdateSource(
-					parser.parse(Arrays.asList(PlaceSorcererUpdates.class, PlaceUpdates.class)),
+					parser.parse(new HashSet<>(Arrays.asList(PlaceSorcererUpdates.class, PlaceUpdates.class))),
 					emf, 1, TimeUnit.SECONDS, 2, 2);
 
 			{

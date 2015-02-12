@@ -31,7 +31,7 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 			+ "FOR EACH ROW                                     \n"
 			+ "BEGIN                                            \n"
 			+ "    CALL %s(@unique_id);                         \n"
-			+ "    INSERT INTO placesorcererupdates(id, %s, %s) \n"
+			+ "    INSERT INTO %s(id, %s, %s) \n"
 			+ "		VALUES(@unique_id, %s, %s);                 \n"
 			+ "END;                                             \n";
 	private static final String CREATE_TRIGGER_CLEANUP_SQL_FORMAT = ""
@@ -116,6 +116,7 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 		String originalTableName = eventModelInfo.getOriginalTableName();
 		String triggerName = this.getTriggerName(
 				eventModelInfo.getOriginalTableName(), eventType);
+		String tableName = eventModelInfo.getTableName();
 		String eventTypeColumn = eventModelInfo.getEventTypeColumn();
 		StringBuilder valuesFromOriginal = new StringBuilder();
 		StringBuilder idColumnNames = new StringBuilder();
@@ -144,7 +145,7 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 		String createTriggerOriginalTableSQL = new StringBuilder().append(
 				String.format(CREATE_TRIGGER_ORIGINAL_TABLE_SQL_FORMAT,
 						triggerName, EventType.toString(eventType),
-						originalTableName, uniqueIdProcedureName,
+						originalTableName, uniqueIdProcedureName, tableName,
 						eventTypeColumn, idColumnNames.toString(),
 						eventTypeValue, valuesFromOriginal.toString()))
 				.toString();

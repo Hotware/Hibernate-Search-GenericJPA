@@ -22,6 +22,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -110,8 +111,8 @@ public class MySQLIntegrationTest extends DatabaseIntegrationTest {
 			tx.commit();
 
 			JPAUpdateSource updateSource = new JPAUpdateSource(
-					parser.parse(Arrays.asList(PlaceSorcererUpdates.class,
-							PlaceUpdates.class)), emf, 1, TimeUnit.SECONDS, 1,
+					parser.parse(new HashSet<>(Arrays.asList(PlaceSorcererUpdates.class,
+							PlaceUpdates.class))), emf, 1, TimeUnit.SECONDS, 1,
 					1);
 			updateSource.setUpdateConsumer(new UpdateConsumer() {
 

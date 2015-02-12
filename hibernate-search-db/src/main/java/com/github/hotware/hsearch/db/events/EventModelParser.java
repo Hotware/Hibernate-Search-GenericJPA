@@ -22,6 +22,7 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 import com.github.hotware.hsearch.db.events.annotations.Event;
@@ -35,7 +36,7 @@ import com.github.hotware.hsearch.db.id.ToOriginalIdBridge;
  */
 public class EventModelParser {
 
-	public List<EventModelInfo> parse(List<Class<?>> updateClasses) {
+	public List<EventModelInfo> parse(Set<Class<?>> updateClasses) {
 		List<EventModelInfo> ret = new ArrayList<>();
 		for (Class<?> clazz : updateClasses) {
 			Updates updates = clazz.getAnnotation(Updates.class);

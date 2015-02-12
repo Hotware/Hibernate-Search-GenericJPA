@@ -16,6 +16,8 @@
 package com.github.hotware.hsearch.db.events;
 
 import java.util.Arrays;
+import java.util.HashSet;
+
 import org.junit.Test;
 
 import com.github.hotware.hsearch.db.test.entities.PlaceSorcererUpdates;
@@ -30,7 +32,8 @@ public class MySQLTriggerSQLStringSourceTest {
 	public void test() {
 		EventModelParser parser = new EventModelParser();
 		EventModelInfo info = parser.parse(
-				Arrays.asList(PlaceSorcererUpdates.class)).get(0);
+				new HashSet<>(Arrays.asList(PlaceSorcererUpdates.class)))
+				.get(0);
 		MySQLTriggerSQLStringSource triggerSource = new MySQLTriggerSQLStringSource();
 		System.out.println(Arrays.asList(triggerSource.getSetupCode()));
 		for (int eventType : EventType.values()) {
@@ -38,7 +41,8 @@ public class MySQLTriggerSQLStringSourceTest {
 					.getTriggerCreationCode(info, eventType);
 			String[] triggerDropString = triggerSource.getTriggerDropCode(info,
 					eventType);
-			System.out.println("CREATE: " + Arrays.asList(triggerCreationString));
+			System.out.println("CREATE: "
+					+ Arrays.asList(triggerCreationString));
 			System.out.println("DROP: " + Arrays.asList(triggerDropString));
 		}
 	}

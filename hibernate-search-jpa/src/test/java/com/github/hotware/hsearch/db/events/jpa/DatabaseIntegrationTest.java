@@ -38,6 +38,7 @@ import com.github.hotware.hsearch.jpa.test.entities.Place;
 import com.github.hotware.hsearch.jpa.test.entities.PlaceSorcererUpdates;
 import com.github.hotware.hsearch.jpa.test.entities.PlaceUpdates;
 import com.github.hotware.hsearch.jpa.test.entities.Sorcerer;
+import com.github.hotware.hsearch.jpa.test.entities.SorcererUpdates;
 
 /**
  * @author Martin
@@ -57,86 +58,8 @@ public abstract class DatabaseIntegrationTest {
 		this.emf = Persistence.createEntityManagerFactory(persistence);
 		EntityManager em = emf.createEntityManager();
 		try {
-			EntityTransaction tx = em.getTransaction();
-			tx.begin();
-
-			{
-				@SuppressWarnings("unchecked")
-				List<Place> toDelete = new ArrayList<>(em.createQuery(
-						"SELECT a FROM Place a").getResultList());
-				for (Place place : toDelete) {
-					em.remove(place);
-				}
-				em.flush();
-			}
-
-			{
-				@SuppressWarnings("unchecked")
-				List<Sorcerer> toDelete = new ArrayList<>(em.createQuery(
-						"SELECT a FROM Sorcerer a").getResultList());
-				for (Sorcerer place : toDelete) {
-					em.remove(place);
-				}
-				em.flush();
-			}
-
-			{
-				@SuppressWarnings("unchecked")
-				List<PlaceSorcererUpdates> toDelete2 = new ArrayList<>(em
-						.createQuery("SELECT a FROM PlaceSorcererUpdates a")
-						.getResultList());
-				for (PlaceSorcererUpdates val : toDelete2) {
-					em.remove(val);
-				}
-				em.flush();
-			}
-			tx.commit();
-
-			tx.begin();
-			Sorcerer gandalf = new Sorcerer();
-			gandalf.setName("Gandalf");
-			em.persist(gandalf);
-
-			Sorcerer saruman = new Sorcerer();
-			saruman.setName("Saruman");
-			em.persist(saruman);
-
-			Sorcerer radagast = new Sorcerer();
-			radagast.setName("Radagast");
-			em.persist(radagast);
-
-			Sorcerer alatar = new Sorcerer();
-			alatar.setName("Alatar");
-			em.persist(alatar);
-
-			Sorcerer pallando = new Sorcerer();
-			pallando.setName("Pallando");
-			em.persist(pallando);
-
-			// populate this database with some stuff
-			Place helmsDeep = new Place();
-			helmsDeep.setName("Helm's Deep");
-			Set<Sorcerer> sorcerersAtHelmsDeep = new HashSet<>();
-			sorcerersAtHelmsDeep.add(gandalf);
-			gandalf.setPlace(helmsDeep);
-			helmsDeep.setSorcerers(sorcerersAtHelmsDeep);
-			em.persist(helmsDeep);
-
-			Place valinor = new Place();
-			valinor.setName("Valinor");
-			Set<Sorcerer> sorcerersAtValinor = new HashSet<>();
-			sorcerersAtValinor.add(saruman);
-			saruman.setPlace(valinor);
-			valinor.setSorcerers(sorcerersAtValinor);
-			em.persist(valinor);
-
-			this.valinorId = valinor.getId();
-			this.helmsDeepId = helmsDeep.getId();
-
-			this.valinor = valinor;
-
-			em.flush();
-			tx.commit();
+			this.deleteAllData(em);
+			this.setupData(em);
 		} finally {
 			if (em != null) {
 				em.close();
@@ -145,14 +68,100 @@ public abstract class DatabaseIntegrationTest {
 
 	}
 
+	protected void setupData(EntityManager em) {
+		EntityTransaction tx = em.getTransaction();
+		tx.begin();
+		Sorcerer gandalf = new Sorcerer();
+		gandalf.setName("Gandalf");
+		em.persist(gandalf);
+
+		Sorcerer saruman = new Sorcerer();
+		saruman.setName("Saruman");
+		em.persist(saruman);
+
+		Sorcerer radagast = new Sorcerer();
+		radagast.setName("Radagast");
+		em.persist(radagast);
+
+		Sorcerer alatar = new Sorcerer();
+		alatar.setName("Alatar");
+		em.persist(alatar);
+
+		Sorcerer pallando = new Sorcerer();
+		pallando.setName("Pallando");
+		em.persist(pallando);
+
+		// populate this database with some stuff
+		Place helmsDeep = new Place();
+		helmsDeep.setName("Helm's Deep");
+		Set<Sorcerer> sorcerersAtHelmsDeep = new HashSet<>();
+		sorcerersAtHelmsDeep.add(gandalf);
+		gandalf.setPlace(helmsDeep);
+		helmsDeep.setSorcerers(sorcerersAtHelmsDeep);
+		em.persist(helmsDeep);
+
+		Place valinor = new Place();
+		valinor.setName("Valinor");
+		Set<Sorcerer> sorcerersAtValinor = new HashSet<>();
+		sorcerersAtValinor.add(saruman);
+		saruman.setPlace(valinor);
+		valinor.setSorcerers(sorcerersAtValinor);
+		em.persist(valinor);
+
+		this.valinorId = valinor.getId();
+		this.helmsDeepId = helmsDeep.getId();
+
+		this.valinor = valinor;
+
+		em.flush();
+		tx.commit();
+	}
+
+	protected void deleteAllData(EntityManager em) {
+		EntityTransaction tx = em.getTransaction();
+		tx.begin();
+
+		{
+			@SuppressWarnings("unchecked")
+			List<Place> toDelete = new ArrayList<>(em.createQuery(
+					"SELECT a FROM Place a").getResultList());
+			for (Place place : toDelete) {
+				em.remove(place);
+			}
+			em.flush();
+		}
+
+		{
+			@SuppressWarnings("unchecked")
+			List<Sorcerer> toDelete = new ArrayList<>(em.createQuery(
+					"SELECT a FROM Sorcerer a").getResultList());
+			for (Sorcerer place : toDelete) {
+				em.remove(place);
+			}
+			em.flush();
+		}
+
+		{
+			@SuppressWarnings("unchecked")
+			List<PlaceSorcererUpdates> toDelete2 = new ArrayList<>(em
+					.createQuery("SELECT a FROM PlaceSorcererUpdates a")
+					.getResultList());
+			for (PlaceSorcererUpdates val : toDelete2) {
+				em.remove(val);
+			}
+			em.flush();
+		}
+		tx.commit();
+	}
+
 	public void setupTriggers() throws SQLException {
 		EntityManager em = this.emf.createEntityManager();
 		try {
 			EntityTransaction tx = em.getTransaction();
 			tx.begin();
-			EventModelInfo info = parser.parse(
-					Arrays.asList(PlaceSorcererUpdates.class,
-							PlaceUpdates.class)).get(0);
+			List<EventModelInfo> infos = parser.parse(new HashSet<>(Arrays
+					.asList(PlaceSorcererUpdates.class, PlaceUpdates.class,
+							SorcererUpdates.class)));
 
 			java.sql.Connection connection = em
 					.unwrap(java.sql.Connection.class);
@@ -179,35 +188,41 @@ public abstract class DatabaseIntegrationTest {
 				statement.executeBatch();
 				connection.commit();
 			}
-			try {
-				for (String setupCode : triggerSource
-						.getSpecificSetupCode(info)) {
-					Statement statement = connection.createStatement();
-					statement.addBatch(connection.nativeSQL(setupCode));
-					statement.executeBatch();
-					connection.commit();
-				}
-				dropStrings.addAll(Arrays.asList(triggerSource
-						.getSpecificUnSetupCode(info)));
-				for (int eventType : EventType.values()) {
-					String[] triggerCreationStrings = triggerSource
-							.getTriggerCreationCode(info, eventType);
-					String[] triggerDropStrings = triggerSource
-							.getTriggerDropCode(info, eventType);
-					for (String triggerCreationString : triggerCreationStrings) {
-						System.out.println("CREATE: "
-								+ connection.nativeSQL(triggerCreationString));
-						dropStrings.addAll(Arrays.asList(triggerDropStrings));
+			for (EventModelInfo info : infos) {
+				try {
+					for (String setupCode : triggerSource
+							.getSpecificSetupCode(info)) {
 						Statement statement = connection.createStatement();
-						statement.addBatch(connection
-								.nativeSQL(triggerCreationString));
+						statement.addBatch(connection.nativeSQL(setupCode));
 						statement.executeBatch();
 						connection.commit();
 					}
+					dropStrings.addAll(Arrays.asList(triggerSource
+							.getSpecificUnSetupCode(info)));
+					for (int eventType : EventType.values()) {
+						String[] triggerCreationStrings = triggerSource
+								.getTriggerCreationCode(info, eventType);
+						String[] triggerDropStrings = triggerSource
+								.getTriggerDropCode(info, eventType);
+						for (String triggerCreationString : triggerCreationStrings) {
+							System.out.println("CREATE: "
+									+ connection
+											.nativeSQL(triggerCreationString));
+							dropStrings.addAll(Arrays
+									.asList(triggerDropStrings));
+							Statement statement = connection.createStatement();
+							statement.addBatch(connection
+									.nativeSQL(triggerCreationString));
+							statement.executeBatch();
+							connection.commit();
+						}
+					}
+				} catch (Exception e) {
+					connection.rollback();
+					exceptionString = e.getMessage();
+					// for some reason we don't throw the exception here.
+					// there is a legit reason for this though
 				}
-			} catch (Exception e) {
-				connection.rollback();
-				exceptionString = e.getMessage();
 			}
 			tx.commit();
 		} finally {

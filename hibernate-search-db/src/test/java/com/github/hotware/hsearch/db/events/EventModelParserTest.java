@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 
 import org.junit.Test;
@@ -45,8 +46,8 @@ public class EventModelParserTest {
 
 		{
 			EventModelParser parser = new EventModelParser();
-			List<EventModelInfo> infos = parser.parse(Arrays
-					.asList(PlaceSorcererUpdates.class));
+			List<EventModelInfo> infos = parser.parse(new HashSet<>(Arrays
+					.asList(PlaceSorcererUpdates.class)));
 			System.out.println(infos);
 			PlaceSorcererUpdates placeUpdate = new PlaceSorcererUpdates();
 			placeUpdate.setId(123123);
@@ -86,8 +87,8 @@ public class EventModelParserTest {
 
 		{
 			EventModelParser parser = new EventModelParser();
-			List<EventModelInfo> infos = parser.parse(Arrays
-					.asList(PlaceSorcererUpdatesMethod.class));
+			List<EventModelInfo> infos = parser.parse(new HashSet<>(Arrays
+					.asList(PlaceSorcererUpdatesMethod.class)));
 			System.out.println(infos);
 			PlaceSorcererUpdatesMethod placeUpdate = new PlaceSorcererUpdatesMethod();
 			placeUpdate.setId(123123);
@@ -128,7 +129,7 @@ public class EventModelParserTest {
 		{
 			EventModelParser parser = new EventModelParser();
 			try {
-				parser.parse(Arrays.asList(Mixed.class));
+				parser.parse(new HashSet<>(Arrays.asList(Mixed.class)));
 				fail("Exception expected");
 			} catch (IllegalArgumentException e) {
 
@@ -138,7 +139,7 @@ public class EventModelParserTest {
 		{
 			EventModelParser parser = new EventModelParser();
 			try {
-				parser.parse(Arrays.asList(Mixed2.class));
+				parser.parse(new HashSet<>(Arrays.asList(Mixed2.class)));
 				fail("Exception expected");
 			} catch (IllegalArgumentException e) {
 
@@ -148,7 +149,7 @@ public class EventModelParserTest {
 		{
 			EventModelParser parser = new EventModelParser();
 			try {
-				parser.parse(Arrays.asList(ForgotUpdates.class));
+				parser.parse(new HashSet<>(Arrays.asList(ForgotUpdates.class)));
 				fail("Exception expected");
 			} catch (IllegalArgumentException e) {
 
@@ -158,7 +159,7 @@ public class EventModelParserTest {
 		{
 			EventModelParser parser = new EventModelParser();
 			try {
-				parser.parse(Arrays.asList(ForgotEvent.class));
+				parser.parse(new HashSet<>(Arrays.asList(ForgotEvent.class)));
 				fail("Exception expected");
 			} catch (IllegalArgumentException e) {
 
@@ -168,7 +169,7 @@ public class EventModelParserTest {
 		{
 			EventModelParser parser = new EventModelParser();
 			try {
-				parser.parse(Arrays.asList(ForgotIds.class));
+				parser.parse(new HashSet<>(Arrays.asList(ForgotIds.class)));
 				fail("Exception expected");
 			} catch (IllegalArgumentException e) {
 

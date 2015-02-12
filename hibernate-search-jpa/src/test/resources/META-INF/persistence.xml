@@ -47,6 +47,7 @@
 		<class>com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace</class>
 		<class>com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace2</class>
 		<class>com.github.hotware.hsearch.jpa.test.entities.PlaceSorcererUpdates</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.SorcererUpdates</class>
 		<class>com.github.hotware.hsearch.jpa.test.entities.PlaceUpdates</class>
 		<properties>
 			<property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver" />

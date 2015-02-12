@@ -24,28 +24,43 @@ import com.github.hotware.hsearch.db.events.annotations.IdFor;
 import com.github.hotware.hsearch.db.events.annotations.Updates;
 
 /**
- * @author Martin
+ * @author Martin Braun
  *
  */
 @Entity
-@Updates(tableName = "PlaceUpdates", originalTableName = "Place")
-public class PlaceUpdates {
+@Updates(tableName = "SorcererUpdates", originalTableName = "Sorcerer")
+public class SorcererUpdates {
 
 	@Id
-	private Integer id;
+	private Long id;
 
-	@IdFor(entityClass = Place.class, columns = "placeId", columnsInOriginal = "id")
+	@IdFor(entityClass = Sorcerer.class, columns = "sorcererId", columnsInOriginal = "id")
 	@Column
-	private Integer placeId;
+	private Integer sorcererId;
 
 	@Event(column = "eventType")
 	@Column
 	private Integer eventType;
 
 	/**
+	 * @return the sorcererId
+	 */
+	public Integer getSorcererId() {
+		return sorcererId;
+	}
+
+	/**
+	 * @param sorcererId
+	 *            the sorcererId to set
+	 */
+	public void setSorcererId(Integer sorcererId) {
+		this.sorcererId = sorcererId;
+	}
+
+	/**
 	 * @return the id
 	 */
-	public Integer getId() {
+	public Long getId() {
 		return id;
 	}
 
@@ -53,23 +68,8 @@ public class PlaceUpdates {
 	 * @param id
 	 *            the id to set
 	 */
-	public void setId(Integer id) {
+	public void setId(Long id) {
 		this.id = id;
-	}
-
-	/**
-	 * @return the placeId
-	 */
-	public Integer getPlaceId() {
-		return placeId;
-	}
-
-	/**
-	 * @param placeId
-	 *            the placeId to set
-	 */
-	public void setPlaceId(Integer placeId) {
-		this.placeId = placeId;
 	}
 
 	/**
@@ -94,8 +94,11 @@ public class PlaceUpdates {
 	 */
 	@Override
 	public String toString() {
-		return "PlaceUpdates [id=" + id + ", placeId=" + placeId
-				+ ", eventType=" + eventType + "]";
+		StringBuilder builder = new StringBuilder();
+		builder.append("SorcererUpdates [id=").append(id)
+				.append(", sorcererId=").append(sorcererId)
+				.append(", eventType=").append(eventType).append("]");
+		return builder.toString();
 	}
 
 }
