@@ -91,8 +91,8 @@ public class SearchConfigurationImpl extends SearchConfigurationBase implements
 				"hibernate.search.lucene_version",
 				(key) -> {
 					LOGGER.info("defaulting to Lucene Version: "
-							+ Version.LUCENE_4_10_2.toString());
-					return Version.LUCENE_4_10_2.toString();
+							+ Version.LUCENE_4_10_3.toString());
+					return Version.LUCENE_4_10_3.toString();
 				});
 		this.reflectionManager = new JavaReflectionManager();
 		this.providedServices = new HashMap<Class<? extends Service>, Object>();
