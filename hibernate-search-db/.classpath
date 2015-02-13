@@ -14,6 +14,6 @@
 	<classpathentry kind="var" path="M2_REPO/org/apache/lucene/lucene-facet/4.10.3/lucene-facet-4.10.3.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/apache/lucene/lucene-queries/4.10.3/lucene-queries-4.10.3.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/apache/lucene/lucene-queryparser/4.10.3/lucene-queryparser-4.10.3.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/1_hibernate-search-standalone"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/hibernate-search-standalone"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
