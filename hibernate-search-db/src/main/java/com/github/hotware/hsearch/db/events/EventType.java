@@ -16,8 +16,10 @@
 package com.github.hotware.hsearch.db.events;
 
 /**
- * @author Martin
- *
+ * Contains constants that describe the different Database-Events that are
+ * relevant to the index
+ * 
+ * @author Martin Braun
  */
 public final class EventType {
 

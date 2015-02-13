@@ -20,6 +20,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,7 +53,8 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 
 	@Test
 	public void test() throws NoSuchFieldException, SecurityException,
-			SQLException {
+			SQLException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException, NoSuchMethodException {
 		this.setup("EclipseLink");
 
 		EntityManager em = null;
@@ -120,7 +122,7 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 
 			{
 				PlaceUpdates up = new PlaceUpdates();
-				up.setEventType(EventType.INSERT);
+				up.setEventType(EventType.DELETE);
 				up.setId(2);
 				up.setPlaceId(233);
 				em.persist(up);
@@ -140,12 +142,22 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 
 			tx.commit();
 
+			List<Integer> eventOder = new ArrayList<>(Arrays.asList(
+					EventType.INSERT, EventType.UPDATE, EventType.DELETE));
+
 			tx.begin();
 			{
 				MultiQueryAccess access = this.query(em);
 				int cnt = 0;
 				while (access.next()) {
-					access.get();
+					Object obj = access.get();
+					if (obj instanceof PlaceUpdates) {
+						eventOder.remove(0).compareTo(
+								((PlaceUpdates) obj).getEventType());
+					} else if (obj instanceof PlaceSorcererUpdates) {
+						eventOder.remove(0).compareTo(
+								((PlaceSorcererUpdates) obj).getEventType());
+					}
 					++cnt;
 				}
 				assertEquals(3, cnt);

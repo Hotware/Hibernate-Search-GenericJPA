@@ -18,8 +18,15 @@ package com.github.hotware.hsearch.db.events;
 import com.github.hotware.hsearch.db.events.EventModelInfo.IdInfo;
 
 /**
- * @author Martin
- *
+ * Implementation of a {@link TriggerSQLStringSource} that can be used with
+ * MySQL (or compatible) Databases. <br>
+ * <br>
+ * In order to provide uniqueness between the Update tables it uses a procedure
+ * that generates unique ids. This procedure does this with auxilliary table
+ * that only has a autoincrement id. A row is inserted everytime a unique id is
+ * needed and that id is retrieved via MySQLs last_insert_id() and then returned
+ * 
+ * @author Martin Braun
  */
 public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 

@@ -16,8 +16,11 @@
 package com.github.hotware.hsearch.db.events;
 
 /**
- * @author Martin
- *
+ * Classes that implement this interface provide means to create the Triggers
+ * needed on the database to write C_UD information about entities in the index
+ * into the specific Updates-Table.
+ * 
+ * @author Martin Braun
  */
 public interface TriggerSQLStringSource {
 
@@ -38,15 +41,48 @@ public interface TriggerSQLStringSource {
 	 */
 	public String[] getRecreateUniqueIdTableCode();
 
+	/**
+	 * this is executed first
+	 */
 	public String[] getSetupCode();
 
+	/**
+	 * this has to be executed before every call to getTriggerCreationCode
+	 * 
+	 * @param eventModelInfo
+	 *            the EventModelInfo/type this corresponds to
+	 */
 	public String[] getSpecificSetupCode(EventModelInfo eventModelInfo);
 
+	/**
+	 * this removes all changes made by
+	 * {@link #getSpecificSetupCode(EventModelInfo)}
+	 * 
+	 * @param eventModelInfo
+	 *            the EventModelInfo/type this corresponds to
+	 */
 	public String[] getSpecificUnSetupCode(EventModelInfo eventModelInfo);
 
+	/**
+	 * this creates a specific trigger
+	 * 
+	 * @param eventModelInfo
+	 *            the EventModelInfo/type this corresponds to
+	 * @param eventType
+	 *            see {@link EventType}
+	 */
 	public String[] getTriggerCreationCode(EventModelInfo eventModelInfo,
 			int eventType);
 
+	/**
+	 * this removes a specific trigger created by
+	 * {@link #getTriggerCreationCode(EventModelInfo, int)}
+	 * 
+	 * @param eventModelInfo
+	 *            the EventModelInfo/type this corresponds to
+	 * @param eventType
+	 *            see {@link EventType}
+	 */
 	public String[] getTriggerDropCode(EventModelInfo eventModelInfo,
 			int eventType);
 
