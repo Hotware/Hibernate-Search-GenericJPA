@@ -112,6 +112,7 @@ public class IndexUpdater implements UpdateConsumer {
 			}
 			tx.end();
 		} catch (Exception e) {
+			LOGGER.warn("Error while updating the index! Your index might be corrupt!");
 			throw new RuntimeException(
 					"Error while updating the index! Your index might be corrupt!");
 		} finally {
