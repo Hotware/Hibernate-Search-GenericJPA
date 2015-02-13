@@ -206,6 +206,9 @@ public class JPAUpdateSource implements UpdateSource {
 					if (tx != null) {
 						tx.commit();
 					}
+				} catch (Exception e) {
+					throw new RuntimeException(
+							"Error occured during Update processing!");
 				} finally {
 					if (em != null) {
 						em.close();

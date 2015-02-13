@@ -111,6 +111,9 @@ public class IndexUpdater implements UpdateConsumer {
 				}
 			}
 			tx.end();
+		} catch (Exception e) {
+			throw new RuntimeException(
+					"Error while updating the index! Your index might be corrupt!");
 		} finally {
 			this.entityProvider.close();
 		}
