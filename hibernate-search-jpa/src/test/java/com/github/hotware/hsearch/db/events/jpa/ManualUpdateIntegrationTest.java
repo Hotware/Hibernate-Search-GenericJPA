@@ -39,7 +39,8 @@ import org.junit.Test;
 
 import com.github.hotware.hsearch.db.events.EventModelInfo;
 import com.github.hotware.hsearch.db.events.EventModelParser;
-import com.github.hotware.hsearch.db.events.jpa.IndexUpdater.IndexInformation;
+import com.github.hotware.hsearch.db.events.IndexUpdater;
+import com.github.hotware.hsearch.db.events.IndexUpdater.IndexInformation;
 import com.github.hotware.hsearch.entity.ReusableEntityProvider;
 import com.github.hotware.hsearch.entity.jpa.JPAReusableEntityProvider;
 import com.github.hotware.hsearch.factory.SearchConfigurationImpl;

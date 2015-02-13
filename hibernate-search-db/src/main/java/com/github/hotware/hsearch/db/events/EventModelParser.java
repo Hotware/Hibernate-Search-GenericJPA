@@ -31,8 +31,14 @@ import com.github.hotware.hsearch.db.events.annotations.Updates;
 import com.github.hotware.hsearch.db.id.ToOriginalIdBridge;
 
 /**
+ * This class has means to parse Classes annotated with {@Updates}
+ * into their respective representation as a {@link EventModelInfo}.
+ * <br>
+ * <br>
+ * It also checks the classes for the right annotations and does basic integrity
+ * checking of this information
+ * 
  * @author Martin
- *
  */
 public class EventModelParser {
 
