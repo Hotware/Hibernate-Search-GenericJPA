@@ -19,30 +19,21 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
-
+import org.junit.Before;
 import org.junit.Test;
 
-import com.github.hotware.hsearch.db.events.EventModelInfo;
 import com.github.hotware.hsearch.db.events.EventModelParser;
 import com.github.hotware.hsearch.db.events.EventType;
-import com.github.hotware.hsearch.db.events.jpa.MultiQueryAccess.ObjectClassWrapper;
 import com.github.hotware.hsearch.jpa.test.entities.PlaceSorcererUpdates;
 import com.github.hotware.hsearch.jpa.test.entities.PlaceUpdates;
 
@@ -51,10 +42,9 @@ import com.github.hotware.hsearch.jpa.test.entities.PlaceUpdates;
  */
 public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 
-	@Test
-	public void test() throws NoSuchFieldException, SecurityException,
-			SQLException, IllegalAccessException, IllegalArgumentException,
-			InvocationTargetException, NoSuchMethodException {
+	@Before
+	public void setup() throws NoSuchFieldException, SecurityException,
+			SQLException {
 		this.setup("EclipseLink");
 
 		EntityManager em = null;
@@ -63,6 +53,7 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 
 			EntityTransaction tx = em.getTransaction();
 
+			// hacky, this doesn't belong in the setup method, but whatever
 			tx.begin();
 			{
 				MultiQueryAccess access = this.query(em);
@@ -141,9 +132,24 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 			}
 
 			tx.commit();
+		} finally {
+			if (em != null) {
+				em.close();
+			}
+		}
+	}
+
+	@Test
+	public void test() throws NoSuchFieldException, SecurityException,
+			SQLException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException, NoSuchMethodException {
+		EntityManager em = null;
+		try {
+			em = this.emf.createEntityManager();
+			EntityTransaction tx = em.getTransaction();
 
 			List<Integer> eventOder = new ArrayList<>(Arrays.asList(
-					EventType.INSERT, EventType.UPDATE, EventType.DELETE));
+					EventType.INSERT, EventType.DELETE, EventType.UPDATE));
 
 			tx.begin();
 			{
@@ -152,10 +158,10 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 				while (access.next()) {
 					Object obj = access.get();
 					if (obj instanceof PlaceUpdates) {
-						eventOder.remove(0).compareTo(
+						assertEquals(eventOder.remove(0),
 								((PlaceUpdates) obj).getEventType());
 					} else if (obj instanceof PlaceSorcererUpdates) {
-						eventOder.remove(0).compareTo(
+						assertEquals(eventOder.remove(0),
 								((PlaceSorcererUpdates) obj).getEventType());
 					}
 					++cnt;
@@ -171,54 +177,17 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 		}
 	}
 
+	/**
+	 * this uses the behaviour of JPAUpdateSource to validate it
+	 */
 	private MultiQueryAccess query(EntityManager em)
 			throws NoSuchFieldException, SecurityException {
-		Map<Class<?>, Long> countMap = new HashMap<>();
-		Map<Class<?>, Query> queryMap = new HashMap<>();
 		EventModelParser parser = new EventModelParser();
-		List<EventModelInfo> infos = parser.parse(new HashSet<>(Arrays.asList(
-				PlaceSorcererUpdates.class, PlaceUpdates.class)));
-		for (EventModelInfo evi : infos) {
-			CriteriaBuilder cb = em.getCriteriaBuilder();
-			long count;
-			{
-				CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
-				countQuery
-						.select(cb.count(countQuery.from(evi.getUpdateClass())));
-				count = em.createQuery(countQuery).getSingleResult();
-			}
-			countMap.put(evi.getUpdateClass(), count);
-
-			{
-				CriteriaQuery<?> q = cb.createQuery(evi.getUpdateClass());
-				Root<?> ent = q.from(evi.getUpdateClass());
-				q = q.orderBy(cb.asc(ent.get("id")));
-				TypedQuery<?> query = em.createQuery(q.multiselect(ent));
-				queryMap.put(evi.getUpdateClass(), query);
-			}
-
-		}
-		MultiQueryAccess access = new MultiQueryAccess(
-				countMap,
-				queryMap,
-				(first, second) -> {
-					int res = Long.compare(this.id(first), this.id(second));
-					if (res == 0) {
-						throw new IllegalStateException(
-								"database contained two update entries with the same id!");
-					}
-					return res;
-				});
-		return access;
+		JPAUpdateSource updateSource = new JPAUpdateSource(
+				parser.parse(new HashSet<>(Arrays.asList(
+						PlaceSorcererUpdates.class, PlaceUpdates.class))), emf,
+				1, TimeUnit.SECONDS, 2, 2);
+		return updateSource.query(em);
 	}
 
-	private Long id(ObjectClassWrapper val) {
-		try {
-			Field idField = val.clazz.getDeclaredField("id");
-			idField.setAccessible(true);
-			return ((Number) idField.get(val.object)).longValue();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
 }

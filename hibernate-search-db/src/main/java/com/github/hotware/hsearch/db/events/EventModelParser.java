@@ -32,8 +32,7 @@ import com.github.hotware.hsearch.db.id.ToOriginalIdBridge;
 
 /**
  * This class has means to parse Classes annotated with {@Updates}
- * into their respective representation as a {@link EventModelInfo}.
- * <br>
+ * into their respective representation as a {@link EventModelInfo}. <br>
  * <br>
  * It also checks the classes for the right annotations and does basic integrity
  * checking of this information
@@ -42,7 +41,19 @@ import com.github.hotware.hsearch.db.id.ToOriginalIdBridge;
  */
 public class EventModelParser {
 
+	/**
+	 * @return EventModelInfos in "random" order
+	 */
 	public List<EventModelInfo> parse(Set<Class<?>> updateClasses) {
+		ArrayList<Class<?>> l = new ArrayList<>();
+		l.addAll(updateClasses);
+		return this.parse(l);
+	}
+
+	/**
+	 * @return EventModelInfos in the same order as in the list argument
+	 */
+	public List<EventModelInfo> parse(List<Class<?>> updateClasses) {
 		List<EventModelInfo> ret = new ArrayList<>();
 		for (Class<?> clazz : updateClasses) {
 			Updates updates = clazz.getAnnotation(Updates.class);

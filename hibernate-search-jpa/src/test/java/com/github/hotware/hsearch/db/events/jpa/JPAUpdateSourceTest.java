@@ -39,8 +39,7 @@ import com.github.hotware.hsearch.jpa.test.entities.PlaceUpdates;
 import com.github.hotware.hsearch.jpa.test.entities.Sorcerer;
 
 /**
- * @author Martin
- *
+ * @author Martin Braun
  */
 public class JPAUpdateSourceTest {
 

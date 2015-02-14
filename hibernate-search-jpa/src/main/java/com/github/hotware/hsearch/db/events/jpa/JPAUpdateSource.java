@@ -42,8 +42,11 @@ import com.github.hotware.hsearch.db.events.EventModelInfo.IdInfo;
 import com.github.hotware.hsearch.db.events.jpa.MultiQueryAccess.ObjectClassWrapper;
 
 /**
+ * a {@link UpdateSource} implementation that uses JPA to retrieve the updates
+ * from the database. For this to work the entities have to be setup with JPA
+ * annotations
+ * 
  * @author Martin Braun
- *
  */
 public class JPAUpdateSource implements UpdateSource {
 
@@ -163,6 +166,8 @@ public class JPAUpdateSource implements UpdateSource {
 							this.batchSizeForUpdates);
 					long processed = 0;
 					while (query.next()) {
+						// we have no order problems here since the query does
+						// the ordering for us
 						Object val = query.get();
 						toRemove.add(new Object[] { query.entityClass(), val });
 						EventModelInfo evi = this.updateClassToEventModelInfo
@@ -218,7 +223,7 @@ public class JPAUpdateSource implements UpdateSource {
 			}, 0, this.timeOut, this.timeUnit);
 	}
 
-	private MultiQueryAccess query(EntityManager em) {
+	MultiQueryAccess query(EntityManager em) {
 		Map<Class<?>, Long> countMap = new HashMap<>();
 		Map<Class<?>, Query> queryMap = new HashMap<>();
 		for (EventModelInfo evi : this.eventModelInfos) {
