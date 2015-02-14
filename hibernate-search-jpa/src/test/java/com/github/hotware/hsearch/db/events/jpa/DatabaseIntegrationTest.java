@@ -15,10 +15,13 @@
  */
 package com.github.hotware.hsearch.db.events.jpa;
 
+import java.sql.Driver;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,8 +44,7 @@ import com.github.hotware.hsearch.jpa.test.entities.Sorcerer;
 import com.github.hotware.hsearch.jpa.test.entities.SorcererUpdates;
 
 /**
- * @author Martin
- *
+ * @author Martin Braun
  */
 public abstract class DatabaseIntegrationTest {
 
@@ -65,7 +67,6 @@ public abstract class DatabaseIntegrationTest {
 				em.close();
 			}
 		}
-
 	}
 
 	protected void setupData(EntityManager em) {
@@ -266,6 +267,27 @@ public abstract class DatabaseIntegrationTest {
 	public void __shutDown() {
 		if (this.emf != null) {
 			this.emf.close();
+			this.emf = null;
+		}
+		//cleanup the MySQL driver?!
+		Enumeration<Driver> drivers = DriverManager.getDrivers();
+		Driver d = null;
+		while (drivers.hasMoreElements()) {
+			try {
+				d = drivers.nextElement();
+				DriverManager.deregisterDriver(d);
+			} catch (SQLException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		Set<Thread> threadSet = Thread.getAllStackTraces().keySet();
+		Thread[] threadArray = threadSet.toArray(new Thread[threadSet.size()]);
+		for (Thread t : threadArray) {
+			if (t.getName().contains("Abandoned connection cleanup thread")) {
+				synchronized (t) {
+					t.stop(); // don't complain, it works
+				}
+			}
 		}
 	}
 

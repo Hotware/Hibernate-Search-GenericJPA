@@ -37,6 +37,7 @@ import com.github.hotware.hsearch.jpa.test.entities.Place;
 import com.github.hotware.hsearch.jpa.test.entities.PlaceSorcererUpdates;
 import com.github.hotware.hsearch.jpa.test.entities.PlaceUpdates;
 import com.github.hotware.hsearch.jpa.test.entities.Sorcerer;
+import com.github.hotware.hsearch.jpa.util.MultiQueryAccess;
 
 /**
  * @author Martin Braun
@@ -50,7 +51,8 @@ public class JPAUpdateSourceTest {
 		try {
 			EventModelParser parser = new EventModelParser();
 			JPAUpdateSource updateSource = new JPAUpdateSource(
-					parser.parse(new HashSet<>(Arrays.asList(PlaceSorcererUpdates.class, PlaceUpdates.class))),
+					parser.parse(new HashSet<>(Arrays.asList(
+							PlaceSorcererUpdates.class, PlaceUpdates.class))),
 					emf, 1, TimeUnit.SECONDS, 2, 2);
 
 			{
@@ -122,4 +124,19 @@ public class JPAUpdateSourceTest {
 			emf.close();
 		}
 	}
+
+	/**
+	 * this is needed in other tests because the query method of JPAUpdateSource
+	 * has package access
+	 */
+	public static MultiQueryAccess query(EntityManagerFactory emf,
+			EntityManager em) throws NoSuchFieldException, SecurityException {
+		EventModelParser parser = new EventModelParser();
+		JPAUpdateSource updateSource = new JPAUpdateSource(
+				parser.parse(new HashSet<>(Arrays.asList(
+						PlaceSorcererUpdates.class, PlaceUpdates.class))), emf,
+				1, TimeUnit.SECONDS, 2, 2);
+		return updateSource.query(em);
+	}
+
 }

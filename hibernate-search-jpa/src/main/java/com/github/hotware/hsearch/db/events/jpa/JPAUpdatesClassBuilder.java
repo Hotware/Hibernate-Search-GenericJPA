@@ -41,8 +41,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 /**
- * @author Martin
- *
+ * @author Martin Braun
  */
 public class JPAUpdatesClassBuilder {
 

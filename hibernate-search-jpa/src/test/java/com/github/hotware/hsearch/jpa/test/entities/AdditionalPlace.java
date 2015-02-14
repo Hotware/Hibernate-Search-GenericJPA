@@ -20,7 +20,6 @@ import java.util.List;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EntityListeners;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -34,10 +33,8 @@ import org.hibernate.search.annotations.IndexedEmbedded;
 import org.hibernate.search.annotations.Store;
 
 import com.github.hotware.hsearch.annotations.InIndex;
-import com.github.hotware.hsearch.jpa.events.HSearchJPAEventListener;
 
 @Entity
-@EntityListeners(HSearchJPAEventListener.class)
 @InIndex
 public class AdditionalPlace {
 

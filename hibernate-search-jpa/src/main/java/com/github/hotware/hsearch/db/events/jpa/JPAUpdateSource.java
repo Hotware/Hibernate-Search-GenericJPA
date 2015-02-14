@@ -39,7 +39,8 @@ import com.github.hotware.hsearch.db.events.UpdateConsumer;
 import com.github.hotware.hsearch.db.events.UpdateConsumer.UpdateInfo;
 import com.github.hotware.hsearch.db.events.UpdateSource;
 import com.github.hotware.hsearch.db.events.EventModelInfo.IdInfo;
-import com.github.hotware.hsearch.db.events.jpa.MultiQueryAccess.ObjectClassWrapper;
+import com.github.hotware.hsearch.jpa.util.MultiQueryAccess;
+import com.github.hotware.hsearch.jpa.util.MultiQueryAccess.ObjectClassWrapper;
 
 /**
  * a {@link UpdateSource} implementation that uses JPA to retrieve the updates
