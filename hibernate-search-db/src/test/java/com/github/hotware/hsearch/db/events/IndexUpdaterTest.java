@@ -18,6 +18,7 @@ package com.github.hotware.hsearch.db.events;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -57,10 +58,12 @@ public class IndexUpdaterTest {
 	ReusableEntityProvider entityProvider;
 	List<UpdateInfo> updateInfos;
 	boolean changed;
+	boolean deletedSorcerer;
 
 	@Before
 	public void setup() {
 		this.changed = false;
+		this.deletedSorcerer = false;
 		this.idsForEntities = new HashMap<>();
 		this.idsForEntities.put(Place.class, Arrays.asList("id"));
 		this.idsForEntities.put(Sorcerer.class, Arrays.asList("sorcerers.id"));
@@ -84,7 +87,7 @@ public class IndexUpdaterTest {
 
 			@Override
 			public Object get(Class<?> entityClass, Object id) {
-				return IndexUpdaterTest.this.obj(entityClass);
+				return IndexUpdaterTest.this.obj(entityClass, false);
 			}
 
 			@Override
@@ -119,25 +122,31 @@ public class IndexUpdaterTest {
 			}
 
 			@Override
-			public void update(Class<?> entityClass, List<Class<?>> inIndexOf,
-					Object id, Transaction tx) {
-				Object obj = IndexUpdaterTest.this.obj(entityClass);
-				System.out.println(entityClass);
-				System.out.println(updateInfoSet);
-				System.out.println(obj);
-				assertTrue(updateInfoSet.remove(new UpdateInfo(entityClass,
-						(Integer) id, EventType.UPDATE)));
+			public void update(Object entity, Transaction tx) {
+				if(entity != null) {
+					try {
+						assertTrue(updateInfoSet.remove(new UpdateInfo(entity.getClass(),
+								(Integer) entity.getClass().getMethod("getId").invoke(entity), EventType.UPDATE)));
+					} catch (IllegalAccessException | IllegalArgumentException
+							| InvocationTargetException | NoSuchMethodException
+							| SecurityException e) {
+						throw new RuntimeException(e);
+					}
+				}
 			}
 
 			@Override
-			public void index(Class<?> entityClass, List<Class<?>> inIndexOf,
-					Object id, Transaction tx) {
-				Object obj = IndexUpdaterTest.this.obj(entityClass);
-				System.out.println(entityClass);
-				System.out.println(updateInfoSet);
-				System.out.println(obj);
-				assertTrue(updateInfoSet.remove(new UpdateInfo(entityClass,
-						(Integer) id, EventType.INSERT)));
+			public void index(Object entity, Transaction tx) {
+				if(entity != null) {
+					try {
+						assertTrue(updateInfoSet.remove(new UpdateInfo(entity.getClass(),
+								(Integer) entity.getClass().getMethod("getId").invoke(entity), EventType.INSERT)));
+					} catch (IllegalAccessException | IllegalArgumentException
+							| InvocationTargetException | NoSuchMethodException
+							| SecurityException e) {
+						throw new RuntimeException(e);
+					}
+				}
 			}
 
 		};
@@ -167,7 +176,11 @@ public class IndexUpdaterTest {
 		this.reset(updater, impl);
 
 		this.tryOutDelete(updater, impl, 0, 1, Place.class);
-		this.tryOutDelete(updater, impl, 0, 2, Sorcerer.class);
+		// this shouldn't delete the root though
+		this.tryOutDeleteNonRoot(updater, impl, 0, 2, Sorcerer.class,
+				"sorcerers.name", "Saruman");
+		this.tryOutDeleteNonRoot(updater, impl, 1, 2, Sorcerer.class,
+				"name", "Valinor");
 
 		this.tryOutUpdate(updater, impl, 0, 1, Place.class, "name", "Valinor");
 		this.tryOutUpdate(updater, impl, 0, 2, Sorcerer.class,
@@ -238,6 +251,26 @@ public class IndexUpdaterTest {
 		this.reset(updater, impl);
 	}
 
+	private void tryOutDeleteNonRoot(IndexUpdater updater,
+			ExtendedSearchIntegrator impl, int expectedCount, Object id,
+			Class<?> clazz, String fieldToCheckCount, String originalMatch) {
+		this.deletedSorcerer = true;
+		updater.updateEvent(Arrays.asList(new UpdateInfo(clazz, id,
+				EventType.DELETE)));
+		assertEquals(
+				expectedCount,
+				impl.createHSQuery()
+						.targetedEntities(Arrays.asList(Place.class))
+						.luceneQuery(
+								impl.buildQueryBuilder().forEntity(Place.class)
+										.get().keyword()
+										.onField(fieldToCheckCount)
+										.matching(originalMatch).createQuery())
+						.queryResultSize());
+		this.deletedSorcerer = false;
+		this.reset(updater, impl);
+	}
+
 	private void tryOutUpdate(IndexUpdater updater,
 			ExtendedSearchIntegrator impl, int expectedCount, Object id,
 			Class<?> clazz, String field, String originalMatch) {
@@ -256,10 +289,12 @@ public class IndexUpdaterTest {
 		this.changed = false;
 		this.reset(updater, impl);
 	}
-
+	
 	private Object obj(Class<?> entityClass) {
-		Sorcerer sorcerer = new Sorcerer();
-		sorcerer.setId(2);
+		return this.obj(entityClass, false);
+	}
+
+	private Object obj(Class<?> entityClass, boolean ignoreSorcererDelete) {
 		Place place = new Place();
 		place.setId(1);
 		if (!this.changed) {
@@ -267,20 +302,24 @@ public class IndexUpdaterTest {
 		} else {
 			place.setName("Alinor");
 		}
-		sorcerer.setPlace(place);
-		if (!this.changed) {
-			sorcerer.setName("Saruman");
-		} else {
-			sorcerer.setName("Aruman");
+		if (ignoreSorcererDelete || !this.deletedSorcerer) {
+			Sorcerer sorcerer = new Sorcerer();
+			sorcerer.setId(2);
+			sorcerer.setPlace(place);
+			if (!this.changed) {
+				sorcerer.setName("Saruman");
+			} else {
+				sorcerer.setName("Aruman");
+			}
+			place.setSorcerers(new HashSet<>(Arrays.asList(sorcerer)));
+			if (entityClass.equals(Sorcerer.class)) {
+				return sorcerer;
+			}
 		}
-		place.setSorcerers(new HashSet<>(Arrays.asList(sorcerer)));
 		if (entityClass.equals(Place.class)) {
 			return place;
-		} else if (entityClass.equals(Sorcerer.class)) {
-			return sorcerer;
-		} else {
-			throw new AssertionError("shouldn't happen!");
 		}
+		return null;
 	}
 
 	private List<UpdateInfo> createUpdateInfos() {

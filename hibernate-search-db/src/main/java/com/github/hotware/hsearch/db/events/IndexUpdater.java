@@ -15,20 +15,24 @@
  */
 package com.github.hotware.hsearch.db.events;
 
+import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.hibernate.search.backend.SingularTermQuery;
 import org.hibernate.search.backend.SingularTermQuery.Type;
-import org.hibernate.search.backend.spi.DeleteByQueryWork;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.bridge.FieldBridge;
 import org.hibernate.search.bridge.StringBridge;
+import org.hibernate.search.engine.ProjectionConstants;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.metadata.impl.DocumentFieldMetadata;
 import org.hibernate.search.engine.spi.DocumentBuilderContainedEntity;
+import org.hibernate.search.query.engine.spi.EntityInfo;
+import org.hibernate.search.query.engine.spi.HSQuery;
 import org.jboss.logging.Logger;
 
 import com.github.hotware.hsearch.entity.ReusableEntityProvider;
@@ -50,6 +54,8 @@ public class IndexUpdater implements UpdateConsumer {
 	// TODO: unit test this with several batches
 
 	private static final Logger LOGGER = Logger.getLogger(IndexUpdater.class);
+
+	private static final int HSQUERY_BATCH = 50;
 
 	private final Map<Class<?>, IndexInformation> indexInformations;
 	private final Map<Class<?>, List<Class<?>>> containedInIndexOf;
@@ -91,19 +97,28 @@ public class IndexUpdater implements UpdateConsumer {
 					int eventType = updateInfo.getEventType();
 					Object id = updateInfo.getId();
 					switch (eventType) {
-					case EventType.INSERT:
-						this.indexWrapper.index(entityClass, inIndexOf, id, tx);
+					case EventType.INSERT: {
+						Object obj = this.entityProvider.get(entityClass, id);
+						if (obj != null) {
+							this.indexWrapper.index(obj, tx);
+						}
 						break;
-					case EventType.UPDATE:
-						this.indexWrapper
-								.update(entityClass, inIndexOf, id, tx);
+					}
+					case EventType.UPDATE: {
+						Object obj = this.entityProvider.get(entityClass, id);
+						if (obj != null) {
+							this.indexWrapper.update(obj, tx);
+						}
 						break;
-					case EventType.DELETE:
+					}
+					case EventType.DELETE: {
 						this.indexWrapper
 								.delete(entityClass, inIndexOf, id, tx);
 						break;
-					default:
+					}
+					default: {
 						LOGGER.warn("unknown eventType-id found: " + eventType);
+					}
 					}
 				} else {
 					LOGGER.warn("class: " + entityClass
@@ -138,11 +153,9 @@ public class IndexUpdater implements UpdateConsumer {
 		public void delete(Class<?> entityClass, List<Class<?>> inIndexOf,
 				Object id, Transaction tx);
 
-		public void update(Class<?> entityClass, List<Class<?>> inIndexOf,
-				Object id, Transaction tx);
+		public void update(Object entity, Transaction tx);
 
-		public void index(Class<?> entityClass, List<Class<?>> inIndexOf,
-				Object id, Transaction tx);
+		public void index(Object entity, Transaction tx);
 
 	}
 
@@ -207,30 +220,64 @@ public class IndexUpdater implements UpdateConsumer {
 					} else {
 						idValueForDeletion = id;
 					}
-					this.searchIntegrator.getWorker().performWork(
-							new DeleteByQueryWork(indexClass,
-									new SingularTermQuery(field,
-											idValueForDeletion, idType)), tx);
+					HSQuery hsQuery = this.searchIntegrator
+							.createHSQuery()
+							.targetedEntities(Arrays.asList(indexClass))
+							.luceneQuery(
+									this.searchIntegrator.buildQueryBuilder()
+											.forEntity(indexClass).get()
+											.keyword().onField(field)
+											.matching(idValueForDeletion)
+											.createQuery());
+					int count = hsQuery.queryResultSize();
+					int processed = 0;
+					if (indexClass.equals(entityClass)) {
+						this.searchIntegrator.getWorker().performWork(
+								new Work(entityClass, (Serializable) id,
+										WorkType.DELETE), tx);
+					} else {
+						// this was just contained somewhere
+						// so we have to update the containing entity
+						while (processed < count) {
+							for (EntityInfo entityInfo : hsQuery
+									.firstResult(processed)
+									.projection(ProjectionConstants.ID)
+									.maxResults(HSQUERY_BATCH)
+									.queryEntityInfos()) {
+								Serializable originalId = (Serializable) entityInfo
+										.getProjection()[0];
+								Object original = IndexUpdater.this.entityProvider
+										.get(indexClass, originalId);
+								if (original != null) {
+									this.update(original, tx);
+								} else {
+									// original is not available in the
+									// database, but it will be deleted by its
+									// own delete event
+									// TODO: log this?
+								}
+							}
+							processed += HSQUERY_BATCH;
+						}
+					}
 				}
 			}
 		}
 
 		@Override
-		public void update(Class<?> entityClass, List<Class<?>> inIndexOf,
-				Object id, Transaction tx) {
-			Object entity = IndexUpdater.this.entityProvider.get(entityClass,
-					id);
-			this.searchIntegrator.getWorker().performWork(
-					new Work(entity, WorkType.UPDATE), tx);
+		public void update(Object entity, Transaction tx) {
+			if (entity != null) {
+				this.searchIntegrator.getWorker().performWork(
+						new Work(entity, WorkType.UPDATE), tx);
+			}
 		}
 
 		@Override
-		public void index(Class<?> entityClass, List<Class<?>> inIndexOf,
-				Object id, Transaction tx) {
-			Object entity = IndexUpdater.this.entityProvider.get(entityClass,
-					id);
-			this.searchIntegrator.getWorker().performWork(
-					new Work(entity, WorkType.INDEX), tx);
+		public void index(Object entity, Transaction tx) {
+			if (entity != null) {
+				this.searchIntegrator.getWorker().performWork(
+						new Work(entity, WorkType.INDEX), tx);
+			}
 		}
 
 	}
