@@ -49,8 +49,8 @@ import org.hibernate.search.annotations.IndexedEmbedded;
  * specific class. This could be used to propagate events up <br>
  * <br>
  * This could be used to propagate events up to the top entity, but
- * Hibernate-Search takes care of this via the @ContainedIn events, which
- * is neat :). Either way, we still need this class to check whether the classes
+ * Hibernate-Search takes care of this via the @ContainedIn events, which is
+ * neat :). Either way, we still need this class to check whether the classes
  * are annotated properly (every entity has to know its parent via
  * {@link org.hibernate.search.annotations.ContainedIn}
  * 
@@ -121,11 +121,11 @@ public class MetaModelParser {
 
 	private void parse(EntityType<?> curEntType, Class<?> cameFrom,
 			Set<EntityType<?>> visited) {
-		//just to make sure we don't handle an entity twice:
-		if(visited.contains(curEntType)) {
+		// just to make sure we don't handle an entity twice:
+		if (visited.contains(curEntType)) {
 			return;
 		}
-		
+
 		Map<Class<? extends Annotation>, Set<Attribute<?, ?>>> attributeForAnnotationType = buildAttributeForAnnotationType(curEntType);
 		Function<Object, Object> toRoot;
 		// first of all, lets build the parentAccessor for this entity
@@ -144,7 +144,8 @@ public class MetaModelParser {
 								+ curEntType.getJavaType()
 								+ " has not exactly 1 @ContainedIn for each Index-parent specified");
 			}
-			Attribute<?, ?> toParentAttribute = cameFromAttributes.iterator().next();
+			Attribute<?, ?> toParentAttribute = cameFromAttributes.iterator()
+					.next();
 			toRoot = (object) -> {
 				Object parentOfThis = member(toParentAttribute.getJavaMember(),
 						object);

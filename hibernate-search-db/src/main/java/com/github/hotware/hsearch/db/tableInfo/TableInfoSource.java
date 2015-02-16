@@ -13,14 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.hotware.hsearch.db.id;
+package com.github.hotware.hsearch.db.tableInfo;
 
-public final class DefaultToOriginalIdBridge implements
-		ToOriginalIdBridge {
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
-	@Override
-	public Object toOriginal(Object object) {
-		return object;
+/**
+ * @author Martin Braun
+ */
+public interface TableInfoSource {
+
+	public default List<TableInfo> getTableInfos(Set<Class<?>> classesInIndex) {
+		List<Class<?>> list = new ArrayList<>(classesInIndex.size());
+		list.addAll(classesInIndex);
+		return this.getTableInfos(list);
 	}
 
+	public List<TableInfo> getTableInfos(List<Class<?>> classesInIndex);
 }
