@@ -16,6 +16,7 @@
 package com.github.hotware.hsearch.db.tableInfo.jpa;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -26,7 +27,11 @@ import org.eclipse.persistence.internal.helper.DatabaseField;
 import org.eclipse.persistence.internal.jpa.EntityManagerImpl;
 import org.eclipse.persistence.mappings.CollectionMapping;
 import org.eclipse.persistence.mappings.DatabaseMapping;
+import org.eclipse.persistence.mappings.DirectToFieldMapping;
 import org.eclipse.persistence.mappings.ManyToManyMapping;
+import org.eclipse.persistence.mappings.ManyToOneMapping;
+import org.eclipse.persistence.mappings.OneToManyMapping;
+import org.eclipse.persistence.mappings.OneToOneMapping;
 
 import com.github.hotware.hsearch.db.tableInfo.TableInfo;
 import com.github.hotware.hsearch.db.tableInfo.TableInfoSource;
@@ -50,43 +55,100 @@ public class EclipseLinkTableInfoSource implements TableInfoSource {
 			ClassDescriptor classDescriptor = this.em.getSession()
 					.getDescriptor(clazz);
 
-			//handle all stuff for 
-			final List<String> primaryKeyFieldNames;
-			final Map<String, Class<?>> primaryKeyColumnTypes;
 			{
-				primaryKeyFieldNames = new ArrayList<>();
-				primaryKeyColumnTypes = new HashMap<>();
-				for (DatabaseField pkField : classDescriptor
-						.getPrimaryKeyFields()) {
-					String idColumn = String.format("%s.%s", pkField.getTable()
-							.getName(), pkField.getName());
-					primaryKeyFieldNames.add(idColumn);
-					primaryKeyColumnTypes.put(idColumn, pkField.getType());
-				}
-			}
-
-			final List<String> tableNames;
-			{
-				tableNames = new ArrayList<>();
-				tableNames.addAll(classDescriptor.getTableNames());
-			}
-			
-			for(DatabaseMapping mapping : classDescriptor.getMappings()) {
-				if(mapping instanceof CollectionMapping) {
-					if(mapping instanceof ManyToManyMapping) {
-						ManyToManyMapping map = (ManyToManyMapping) mapping;
-						map.getRelationshipPartner();
-						map.getRelationshipPartnerAttributeName();
+				// handle all stuff for
+				final List<String> primaryKeyFieldNames;
+				final Map<String, Class<?>> primaryKeyColumnTypes;
+				{
+					primaryKeyFieldNames = new ArrayList<>();
+					primaryKeyColumnTypes = new HashMap<>();
+					for (DatabaseField pkField : classDescriptor
+							.getPrimaryKeyFields()) {
+						String idColumn = pkField.getName();
+						primaryKeyFieldNames.add(idColumn);
+						primaryKeyColumnTypes.put(idColumn, pkField.getType());
 					}
 				}
+
+				final List<String> tableNames;
+				{
+					tableNames = new ArrayList<>();
+					tableNames.addAll(classDescriptor.getTableNames());
+				}
+
+				TableInfo.IdInfo idInfo = new TableInfo.IdInfo(clazz,
+						Collections.unmodifiableList(primaryKeyFieldNames),
+						Collections.unmodifiableMap(primaryKeyColumnTypes));
+				ret.add(new TableInfo(Collections.unmodifiableList(Arrays
+						.asList(idInfo)), Collections
+						.unmodifiableList(tableNames)));
 			}
 
-//			TableInfo tableInfo = new TableInfo(clazz,
-//					Collections.unmodifiableList(tableNames),
-//					Collections.unmodifiableList(primaryKeyFieldNames),
-//					Collections.unmodifiableMap(primaryKeyColumnTypes));
-//			ret.add(tableInfo);
-			// FIXME: mappng tables are not fine here!
+			// and now for relationship tables
+			for (DatabaseMapping mapping : classDescriptor.getMappings()) {
+				if (mapping instanceof CollectionMapping) {
+					if (mapping instanceof ManyToManyMapping) {
+						ManyToManyMapping mtm = (ManyToManyMapping) mapping;
+						final TableInfo.IdInfo toThis;
+						{
+							List<String> ownForeignKeyColumns = new ArrayList<>();
+							Map<String, Class<?>> ownForeignKeyColumnTypes = new HashMap<>();
+							for (int i = 0; i < mtm
+									.getSourceRelationKeyFields().size(); ++i) {
+								DatabaseField ownFkField = mtm
+										.getSourceRelationKeyFields().get(i);
+								String idColumn = ownFkField.getName();
+								ownForeignKeyColumns.add(idColumn);
+								ownForeignKeyColumnTypes.put(idColumn, mtm
+										.getSourceKeyFields().get(i).getType());
+							}
+							toThis = new TableInfo.IdInfo(
+									clazz,
+									Collections
+											.unmodifiableList(ownForeignKeyColumns),
+									Collections
+											.unmodifiableMap(ownForeignKeyColumnTypes));
+						}
+						final TableInfo.IdInfo toOtherEnd;
+						{
+							List<String> otherForeignKeyColumns = new ArrayList<>();
+							Map<String, Class<?>> otherForeignKeyColumnTypes = new HashMap<>();
+							for (int i = 0; i < mtm
+									.getTargetRelationKeyFields().size(); ++i) {
+								DatabaseField otherFkField = mtm
+										.getTargetRelationKeyFields().get(i);
+								String idColumn = otherFkField.getName();
+								otherForeignKeyColumns.add(idColumn);
+								otherForeignKeyColumnTypes.put(idColumn, mtm
+										.getTargetKeyFields().get(i).getType());
+							}
+							toOtherEnd = new TableInfo.IdInfo(
+									mtm.getReferenceClass(),
+									Collections
+											.unmodifiableList(otherForeignKeyColumns),
+									Collections
+											.unmodifiableMap(otherForeignKeyColumnTypes));
+						}
+						ret.add(new TableInfo(Collections
+								.unmodifiableList(Arrays.asList(toThis,
+										toOtherEnd)), Collections
+								.unmodifiableList(Arrays.asList(mtm
+										.getRelationTableName()))));
+					}
+				} else if (mapping instanceof OneToManyMapping) {
+					OneToManyMapping otm = (OneToManyMapping) mapping;
+				} else if (mapping instanceof ManyToOneMapping) {
+					ManyToOneMapping mto = (ManyToOneMapping) mapping;
+				} else if (mapping instanceof OneToOneMapping || mapping instanceof DirectToFieldMapping) {
+
+				} else {
+					throw new IllegalArgumentException(
+							mapping.getClass()
+									+ "found. only OneToOne, ManyToOne, OneToMany or ManyToMany allowed, yet!");
+				}
+			}
+
+			// FIXME: mapping tables are not fine here!
 			// -> what happens if we add/insert something in the mapping table
 		}
 		return ret;
