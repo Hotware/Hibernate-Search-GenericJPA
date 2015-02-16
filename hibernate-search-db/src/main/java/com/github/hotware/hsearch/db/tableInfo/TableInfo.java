@@ -23,26 +23,20 @@ import java.util.Map;
  */
 public class TableInfo {
 
-	private final Class<?> entityClass;
+	private final List<IdInfo> updateEventRelevantIdInfos;
 	private final List<String> tableNames;
-	private final List<String> idColumns;
-	private final Map<String, Class<?>> idColumnTypes;
 
-	// FIXME: idType!!
-
-	public TableInfo(Class<?> entityClass, List<String> tableNames,
-			List<String> idColumns, Map<String, Class<?>> idColumnTypes) {
-		this.entityClass = entityClass;
+	public TableInfo(List<IdInfo> updateEventRelevantIdInfos,
+			List<String> tableNames) {
+		this.updateEventRelevantIdInfos = updateEventRelevantIdInfos;
 		this.tableNames = tableNames;
-		this.idColumns = idColumns;
-		this.idColumnTypes = idColumnTypes;
 	}
 
 	/**
-	 * @return the entityClass
+	 * @return the updatedEntityTypes
 	 */
-	public Class<?> getEntityClass() {
-		return this.entityClass;
+	public List<IdInfo> getUpdateEventRelevantIdInfos() {
+		return this.updateEventRelevantIdInfos;
 	}
 
 	/**
@@ -52,27 +46,60 @@ public class TableInfo {
 		return this.tableNames;
 	}
 
-	/**
-	 * @return the idColumns
-	 */
-	public List<String> getIdColumns() {
-		return this.idColumns;
-	}
-
-	/**
-	 * @return the idColumnTypes
-	 */
-	public Map<String, Class<?>> getIdColumnTypes() {
-		return idColumnTypes;
-	}
-
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("TableInfo [entityClass=").append(this.entityClass)
-				.append(", tableName=").append(this.tableNames)
-				.append(", idColumns=").append(this.idColumns).append("]");
+		builder.append("TableInfo [updateEventRelevantIdInfos=")
+				.append(updateEventRelevantIdInfos).append(", tableNames=")
+				.append(tableNames).append("]");
 		return builder.toString();
+	}
+
+	public static class IdInfo {
+
+		// FIXME: idType!!
+		private final Class<?> entityClass;
+		private final List<String> idColumns;
+		private final Map<String, Class<?>> idColumnTypes;
+
+		public IdInfo(Class<?> entityClass, List<String> idColumns,
+				Map<String, Class<?>> idColumnTypes) {
+			this.entityClass = entityClass;
+			this.idColumns = idColumns;
+			this.idColumnTypes = idColumnTypes;
+		}
+
+		/**
+		 * @return the entityClass
+		 */
+		public Class<?> getEntityClass() {
+			return this.entityClass;
+		}
+
+		/**
+		 * @return the idColumns
+		 */
+		public List<String> getIdColumns() {
+			return this.idColumns;
+		}
+
+		/**
+		 * @return the idColumnTypes
+		 */
+		public Map<String, Class<?>> getIdColumnTypes() {
+			return idColumnTypes;
+		}
+
+		@Override
+		public String toString() {
+			StringBuilder builder = new StringBuilder();
+			builder.append("IdInfo [entityClass=").append(entityClass)
+					.append(", idColumns=").append(idColumns)
+					.append(", idColumnTypes=").append(idColumnTypes)
+					.append("]");
+			return builder.toString();
+		}
+
 	}
 
 }

@@ -24,6 +24,9 @@ import java.util.Map;
 import org.eclipse.persistence.descriptors.ClassDescriptor;
 import org.eclipse.persistence.internal.helper.DatabaseField;
 import org.eclipse.persistence.internal.jpa.EntityManagerImpl;
+import org.eclipse.persistence.mappings.CollectionMapping;
+import org.eclipse.persistence.mappings.DatabaseMapping;
+import org.eclipse.persistence.mappings.ManyToManyMapping;
 
 import com.github.hotware.hsearch.db.tableInfo.TableInfo;
 import com.github.hotware.hsearch.db.tableInfo.TableInfoSource;
@@ -47,6 +50,7 @@ public class EclipseLinkTableInfoSource implements TableInfoSource {
 			ClassDescriptor classDescriptor = this.em.getSession()
 					.getDescriptor(clazz);
 
+			//handle all stuff for 
 			final List<String> primaryKeyFieldNames;
 			final Map<String, Class<?>> primaryKeyColumnTypes;
 			{
@@ -66,12 +70,22 @@ public class EclipseLinkTableInfoSource implements TableInfoSource {
 				tableNames = new ArrayList<>();
 				tableNames.addAll(classDescriptor.getTableNames());
 			}
+			
+			for(DatabaseMapping mapping : classDescriptor.getMappings()) {
+				if(mapping instanceof CollectionMapping) {
+					if(mapping instanceof ManyToManyMapping) {
+						ManyToManyMapping map = (ManyToManyMapping) mapping;
+						map.getRelationshipPartner();
+						map.getRelationshipPartnerAttributeName();
+					}
+				}
+			}
 
-			TableInfo tableInfo = new TableInfo(clazz,
-					Collections.unmodifiableList(tableNames),
-					Collections.unmodifiableList(primaryKeyFieldNames),
-					Collections.unmodifiableMap(primaryKeyColumnTypes));
-			ret.add(tableInfo);
+//			TableInfo tableInfo = new TableInfo(clazz,
+//					Collections.unmodifiableList(tableNames),
+//					Collections.unmodifiableList(primaryKeyFieldNames),
+//					Collections.unmodifiableMap(primaryKeyColumnTypes));
+//			ret.add(tableInfo);
 			// FIXME: mappng tables are not fine here!
 			// -> what happens if we add/insert something in the mapping table
 		}

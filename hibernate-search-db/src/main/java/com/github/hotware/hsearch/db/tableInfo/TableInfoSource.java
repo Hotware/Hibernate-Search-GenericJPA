@@ -31,4 +31,5 @@ public interface TableInfoSource {
 	}
 
 	public List<TableInfo> getTableInfos(List<Class<?>> classesInIndex);
+	
 }
