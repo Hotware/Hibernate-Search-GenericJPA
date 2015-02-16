@@ -44,8 +44,8 @@ public class EclipseLinkTableInfoSource implements TableInfoSource {
 	public List<TableInfo> getTableInfos(List<Class<?>> classesInIndex) {
 		List<TableInfo> ret = new ArrayList<>();
 		for (Class<?> clazz : classesInIndex) {
-			ClassDescriptor classDescriptor = this.em.getSession().getDescriptor(
-					clazz);
+			ClassDescriptor classDescriptor = this.em.getSession()
+					.getDescriptor(clazz);
 
 			final List<String> primaryKeyFieldNames;
 			final Map<String, Class<?>> primaryKeyColumnTypes;
@@ -72,8 +72,8 @@ public class EclipseLinkTableInfoSource implements TableInfoSource {
 					Collections.unmodifiableList(primaryKeyFieldNames),
 					Collections.unmodifiableMap(primaryKeyColumnTypes));
 			ret.add(tableInfo);
-			// TODO: are mapping tables fine in the first version of this?
-			// @ContainedIn should be able to handle most of the beef here
+			// FIXME: mappng tables are not fine here!
+			// -> what happens if we add/insert something in the mapping table
 		}
 		return ret;
 	}

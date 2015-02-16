@@ -70,6 +70,8 @@ public class EclipseLinkTableInfoSourceTest {
 					"wrong id column names found in the tableInfos for Sorcerer",
 					"Sorcerer.ID".equalsIgnoreCase(tableInfos.get(1)
 							.getIdColumns().get(0)));
+			
+			//FIXME: mapping tables have to be tested here as well!
 		} finally {
 			if (em != null) {
 				em.close();
