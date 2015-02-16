@@ -50,7 +50,7 @@ import com.github.hotware.hsearch.db.events.UpdateConsumer.UpdateInfo;
  */
 public class IndexUpdaterTest {
 
-	Map<Class<?>, String> idsForEntities;
+	Map<Class<?>, List<String>> idsForEntities;
 	Map<Class<?>, IndexInformation> indexInformations;
 	Map<Class<?>, List<Class<?>>> containedInIndexOf;
 	Map<Class<?>, SingularTermQuery.Type> idTypesForEntities;
@@ -62,8 +62,8 @@ public class IndexUpdaterTest {
 	public void setup() {
 		this.changed = false;
 		this.idsForEntities = new HashMap<>();
-		this.idsForEntities.put(Place.class, "id");
-		this.idsForEntities.put(Sorcerer.class, "sorcerers.id");
+		this.idsForEntities.put(Place.class, Arrays.asList("id"));
+		this.idsForEntities.put(Sorcerer.class, Arrays.asList("sorcerers.id"));
 		this.indexInformations = new HashMap<>();
 		this.indexInformations.put(Place.class, new IndexInformation(
 				Place.class, this.idsForEntities));

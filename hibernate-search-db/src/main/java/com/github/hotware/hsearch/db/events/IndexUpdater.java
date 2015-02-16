@@ -123,10 +123,10 @@ public class IndexUpdater implements UpdateConsumer {
 	public static class IndexInformation {
 
 		final Class<?> mainEntity;
-		final Map<Class<?>, String> idsForEntities;
+		final Map<Class<?>, List<String>> idsForEntities;
 
 		public IndexInformation(Class<?> mainEntity,
-				Map<Class<?>, String> idsForEntities) {
+				Map<Class<?>, List<String>> idsForEntities) {
 			this.mainEntity = mainEntity;
 			this.idsForEntities = idsForEntities;
 		}
@@ -163,50 +163,55 @@ public class IndexUpdater implements UpdateConsumer {
 				Class<?> indexClass = inIndexOf.get(i);
 				IndexInformation info = IndexUpdater.this.indexInformations
 						.get(indexClass);
-				final String field = info.idsForEntities.get(entityClass);
-				DocumentFieldMetadata metaDataForIdField = this.metaDataForIdFields
-						.computeIfAbsent(
-								indexClass,
-								(Class<?> indexClazz) -> {
-									if (this.searchIntegrator.getIndexedTypes()
-											.contains(indexClazz)) {
-										return this.searchIntegrator
-												.getIndexBinding(indexClazz)
-												.getDocumentBuilder()
-												.getMetadata()
-												.getDocumentFieldMetadataFor(
-														field);
-									} else {
-										DocumentBuilderContainedEntity builder = this.searchIntegrator
-												.getDocumentBuilderContainedEntity(indexClazz);
-										if (builder == null) {
-											throw new IllegalArgumentException(
-													"no DocumentBuilder found for: "
-															+ indexClazz);
+				List<String> fields = info.idsForEntities.get(entityClass);
+				for (String field : fields) {
+					DocumentFieldMetadata metaDataForIdField = this.metaDataForIdFields
+							.computeIfAbsent(
+									indexClass,
+									(Class<?> indexClazz) -> {
+										if (this.searchIntegrator
+												.getIndexedTypes().contains(
+														indexClazz)) {
+											return this.searchIntegrator
+													.getIndexBinding(indexClazz)
+													.getDocumentBuilder()
+													.getMetadata()
+													.getDocumentFieldMetadataFor(
+															field);
+										} else {
+											DocumentBuilderContainedEntity builder = this.searchIntegrator
+													.getDocumentBuilderContainedEntity(indexClazz);
+											if (builder == null) {
+												throw new IllegalArgumentException(
+														"no DocumentBuilder found for: "
+																+ indexClazz);
+											}
+											return builder
+													.getMetadata()
+													.getDocumentFieldMetadataFor(
+															field);
 										}
-										return builder.getMetadata()
-												.getDocumentFieldMetadataFor(
-														field);
-									}
-								});
-				SingularTermQuery.Type idType = IndexUpdater.this.idTypesForEntities
-						.get(entityClass);
-				Object idValueForDeletion;
-				if (idType == SingularTermQuery.Type.STRING) {
-					FieldBridge fb = metaDataForIdField.getFieldBridge();
-					if (!(fb instanceof StringBridge)) {
-						throw new IllegalArgumentException(
-								"no TwoWayStringBridge found for field: "
-										+ field);
+									});
+					SingularTermQuery.Type idType = IndexUpdater.this.idTypesForEntities
+							.get(entityClass);
+					Object idValueForDeletion;
+					if (idType == SingularTermQuery.Type.STRING) {
+						FieldBridge fb = metaDataForIdField.getFieldBridge();
+						if (!(fb instanceof StringBridge)) {
+							throw new IllegalArgumentException(
+									"no TwoWayStringBridge found for field: "
+											+ field);
+						}
+						idValueForDeletion = ((StringBridge) fb)
+								.objectToString(id);
+					} else {
+						idValueForDeletion = id;
 					}
-					idValueForDeletion = ((StringBridge) fb).objectToString(id);
-				} else {
-					idValueForDeletion = id;
+					this.searchIntegrator.getWorker().performWork(
+							new DeleteByQueryWork(indexClass,
+									new SingularTermQuery(field,
+											idValueForDeletion, idType)), tx);
 				}
-				this.searchIntegrator.getWorker().performWork(
-						new DeleteByQueryWork(indexClass,
-								new SingularTermQuery(field,
-										idValueForDeletion, idType)), tx);
 			}
 		}
 

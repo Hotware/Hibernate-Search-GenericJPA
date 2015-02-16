@@ -57,7 +57,7 @@ import com.github.hotware.hsearch.jpa.test.entities.SorcererUpdates;
  */
 public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 
-	Map<Class<?>, String> idsForEntities;
+	Map<Class<?>, List<String>> idsForEntities;
 	Map<Class<?>, IndexInformation> indexInformations;
 	Map<Class<?>, List<Class<?>>> containedInIndexOf;
 	Map<Class<?>, SingularTermQuery.Type> idTypesForEntities;
@@ -67,8 +67,8 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 	@Before
 	public void setup() throws SQLException {
 		this.idsForEntities = new HashMap<>();
-		this.idsForEntities.put(Place.class, "id");
-		this.idsForEntities.put(Sorcerer.class, "sorcerers.id");
+		this.idsForEntities.put(Place.class, Arrays.asList("id"));
+		this.idsForEntities.put(Sorcerer.class, Arrays.asList("sorcerers.id"));
 		this.indexInformations = new HashMap<>();
 		this.indexInformations.put(Place.class, new IndexInformation(
 				Place.class, this.idsForEntities));
