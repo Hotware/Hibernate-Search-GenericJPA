@@ -53,7 +53,6 @@ import com.github.hotware.hsearch.jpa.test.entities.SorcererUpdates;
 
 /**
  * @author Martin Braun
- *
  */
 public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 
@@ -165,16 +164,20 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 							Sorcerer someSorcerer = valinor.getSorcerers()
 									.iterator().next();
 							oldName = someSorcerer.getName();
-							assertEquals("should have found \"" + oldName
-									+ "\" in the index!", 1, this
-									.queryPlaceIds(impl, "sorcerers.name", oldName).size());
+							assertEquals(
+									"should have found \"" + oldName
+											+ "\" in the index!",
+									1,
+									this.queryPlaceIds(impl, "sorcerers.name",
+											oldName).size());
 							someSorcerer.setName("Odalbert");
 							tx.commit();
 						}
 						Thread.sleep(3000);
 						assertEquals("shouldn't have found \"" + oldName
 								+ "\" in the index anymore!", 0, this
-								.queryPlaceIds(impl, "sorcerers.name", oldName).size());
+								.queryPlaceIds(impl, "sorcerers.name", oldName)
+								.size());
 						this.assertCount(impl, 2);
 					}
 				}
