@@ -25,7 +25,10 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 
@@ -50,6 +53,8 @@ public class Place {
 	private List<AdditionalPlace> additionalPlace;
 	private List<EmbeddableInfo> info;
 	private boolean cool = true;
+	private List<OneToManyWithoutTable> oneToManyWithoutTable;
+	private JoinTableOneToOne jtoto;
 
 	@Id
 	@DocumentId
@@ -61,12 +66,12 @@ public class Place {
 	public void setId(Integer id) {
 		this.id = id;
 	}
-	
+
 	@Column
 	public boolean isCool() {
 		return this.cool;
 	}
-	
+
 	public void setCool(boolean cool) {
 		this.cool = cool;
 	}
@@ -93,8 +98,8 @@ public class Place {
 
 	@Override
 	public String toString() {
-		return "Place [id=" + this.getId() + ", name=" + this.getName() + ", sorcerers="
-				+ sorcerers + "]";
+		return "Place [id=" + this.getId() + ", name=" + this.getName()
+				+ ", sorcerers=" + sorcerers + "]";
 	}
 
 	@ManyToMany(cascade = CascadeType.ALL)
@@ -118,6 +123,27 @@ public class Place {
 
 	public void setInfo(List<EmbeddableInfo> info) {
 		this.info = info;
+	}
+
+	@OneToMany(mappedBy = "place")
+	@JoinColumn(name = "place_id", referencedColumnName = "place_id")
+	public List<OneToManyWithoutTable> getOneToManyWithoutTable() {
+		return oneToManyWithoutTable;
+	}
+
+	public void setOneToManyWithoutTable(
+			List<OneToManyWithoutTable> oneToManyWithoutTable) {
+		this.oneToManyWithoutTable = oneToManyWithoutTable;
+	}
+
+	@OneToOne
+	@JoinTable(name = "PLACE_JTOTO", joinColumns = @JoinColumn(name = "JTOTO_ID", referencedColumnName = "ID"), inverseJoinColumns = @JoinColumn(name = "PlACE_ID", referencedColumnName = "ID"))
+	public JoinTableOneToOne getJtoto() {
+		return jtoto;
+	}
+
+	public void setJtoto(JoinTableOneToOne jtoto) {
+		this.jtoto = jtoto;
 	}
 
 }

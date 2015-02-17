@@ -31,6 +31,7 @@ import org.junit.Test;
 import com.github.hotware.hsearch.db.tableInfo.TableInfo;
 import com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace;
 import com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace2;
+import com.github.hotware.hsearch.jpa.test.entities.OneToManyWithoutTable;
 import com.github.hotware.hsearch.jpa.test.entities.Place;
 import com.github.hotware.hsearch.jpa.test.entities.Sorcerer;
 
@@ -44,7 +45,7 @@ public class EclipseLinkTableInfoSourceTest {
 	@Before
 	public void setup() {
 		this.emf = (EntityManagerFactoryImpl) Persistence
-				.createEntityManagerFactory("EclipseLink");
+				.createEntityManagerFactory("EclipseLink_MySQL");
 	}
 
 	@Test
@@ -54,10 +55,11 @@ public class EclipseLinkTableInfoSourceTest {
 		try {
 			EclipseLinkTableInfoSource tblInfoSrc = new EclipseLinkTableInfoSource(
 					em);
-			List<TableInfo> tableInfos = tblInfoSrc.getTableInfos(Arrays
-					.asList(Place.class, Sorcerer.class, AdditionalPlace.class, AdditionalPlace2.class));
-			
-			//FIXME: mapping tables have to be tested here as well!
+			List<TableInfo> tableInfos = tblInfoSrc
+					.getTableInfos(Arrays.asList(Place.class, Sorcerer.class,
+							AdditionalPlace.class, AdditionalPlace2.class,
+							OneToManyWithoutTable.class));
+			// FIXME: reimplement the tests here
 		} finally {
 			if (em != null) {
 				em.close();
