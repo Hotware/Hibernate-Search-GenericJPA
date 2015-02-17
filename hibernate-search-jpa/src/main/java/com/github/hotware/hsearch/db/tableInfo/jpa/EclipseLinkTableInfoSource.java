@@ -64,7 +64,8 @@ public class EclipseLinkTableInfoSource implements TableInfoSource {
 					primaryKeyColumnTypes = new HashMap<>();
 					for (DatabaseField pkField : classDescriptor
 							.getPrimaryKeyFields()) {
-						String idColumn = pkField.getName();
+						String idColumn = String.format("%s.%s",
+								pkField.getTableName(), pkField.getName());
 						primaryKeyFieldNames.add(idColumn);
 						primaryKeyColumnTypes.put(idColumn, pkField.getType());
 					}
@@ -87,20 +88,37 @@ public class EclipseLinkTableInfoSource implements TableInfoSource {
 			// and now for relationship tables
 			for (DatabaseMapping mapping : classDescriptor.getMappings()) {
 				if (mapping instanceof CollectionMapping) {
+					CollectionMapping collectionMapping = (CollectionMapping) mapping;
 					if (mapping instanceof ManyToManyMapping) {
-						ManyToManyMapping mtm = (ManyToManyMapping) mapping;
+						final List<DatabaseField> sourceRelationKeyFields;
+						final List<DatabaseField> sourceKeyFields;
+						final List<DatabaseField> targetRelationKeyFields;
+						final List<DatabaseField> targetKeyFields;
+						final String relationTableName;
+						{
+							ManyToManyMapping mtm = (ManyToManyMapping) mapping;
+							sourceRelationKeyFields = mtm
+									.getSourceRelationKeyFields();
+							sourceKeyFields = mtm.getSourceKeyFields();
+							targetRelationKeyFields = mtm
+									.getTargetRelationKeyFields();
+							targetKeyFields = mtm.getTargetKeyFields();
+							relationTableName = mtm.getRelationTableName();
+						}
+						final Class<?> referenceClass = collectionMapping
+								.getReferenceClass();
+						// ManyToManyMapping mtm = (ManyToManyMapping) mapping;
 						final TableInfo.IdInfo toThis;
 						{
 							List<String> ownForeignKeyColumns = new ArrayList<>();
 							Map<String, Class<?>> ownForeignKeyColumnTypes = new HashMap<>();
-							for (int i = 0; i < mtm
-									.getSourceRelationKeyFields().size(); ++i) {
-								DatabaseField ownFkField = mtm
-										.getSourceRelationKeyFields().get(i);
+							for (int i = 0; i < sourceRelationKeyFields.size(); ++i) {
+								DatabaseField ownFkField = sourceRelationKeyFields
+										.get(i);
 								String idColumn = ownFkField.getName();
 								ownForeignKeyColumns.add(idColumn);
-								ownForeignKeyColumnTypes.put(idColumn, mtm
-										.getSourceKeyFields().get(i).getType());
+								ownForeignKeyColumnTypes.put(idColumn,
+										sourceKeyFields.get(i).getType());
 							}
 							toThis = new TableInfo.IdInfo(
 									clazz,
@@ -113,17 +131,16 @@ public class EclipseLinkTableInfoSource implements TableInfoSource {
 						{
 							List<String> otherForeignKeyColumns = new ArrayList<>();
 							Map<String, Class<?>> otherForeignKeyColumnTypes = new HashMap<>();
-							for (int i = 0; i < mtm
-									.getTargetRelationKeyFields().size(); ++i) {
-								DatabaseField otherFkField = mtm
-										.getTargetRelationKeyFields().get(i);
+							for (int i = 0; i < targetRelationKeyFields.size(); ++i) {
+								DatabaseField otherFkField = targetRelationKeyFields
+										.get(i);
 								String idColumn = otherFkField.getName();
 								otherForeignKeyColumns.add(idColumn);
-								otherForeignKeyColumnTypes.put(idColumn, mtm
-										.getTargetKeyFields().get(i).getType());
+								otherForeignKeyColumnTypes.put(idColumn,
+										targetKeyFields.get(i).getType());
 							}
 							toOtherEnd = new TableInfo.IdInfo(
-									mtm.getReferenceClass(),
+									referenceClass,
 									Collections
 											.unmodifiableList(otherForeignKeyColumns),
 									Collections
@@ -132,14 +149,17 @@ public class EclipseLinkTableInfoSource implements TableInfoSource {
 						ret.add(new TableInfo(Collections
 								.unmodifiableList(Arrays.asList(toThis,
 										toOtherEnd)), Collections
-								.unmodifiableList(Arrays.asList(mtm
-										.getRelationTableName()))));
+								.unmodifiableList(Arrays
+										.asList(relationTableName))));
 					}
-				} else if (mapping instanceof OneToManyMapping) {
-					OneToManyMapping otm = (OneToManyMapping) mapping;
 				} else if (mapping instanceof ManyToOneMapping) {
 					ManyToOneMapping mto = (ManyToOneMapping) mapping;
-				} else if (mapping instanceof OneToOneMapping || mapping instanceof DirectToFieldMapping) {
+				} else if (mapping instanceof OneToManyMapping) {
+					OneToManyMapping otm = (OneToManyMapping) mapping;
+					throw new UnsupportedOperationException(
+							"OneToManyMapping has to be fixed!");
+				} else if (mapping instanceof OneToOneMapping
+						|| mapping instanceof DirectToFieldMapping) {
 
 				} else {
 					throw new IllegalArgumentException(

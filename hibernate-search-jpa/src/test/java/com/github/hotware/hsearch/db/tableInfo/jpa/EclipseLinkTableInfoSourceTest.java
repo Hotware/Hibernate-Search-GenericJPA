@@ -29,6 +29,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.github.hotware.hsearch.db.tableInfo.TableInfo;
+import com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace;
+import com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace2;
 import com.github.hotware.hsearch.jpa.test.entities.Place;
 import com.github.hotware.hsearch.jpa.test.entities.Sorcerer;
 
@@ -53,7 +55,7 @@ public class EclipseLinkTableInfoSourceTest {
 			EclipseLinkTableInfoSource tblInfoSrc = new EclipseLinkTableInfoSource(
 					em);
 			List<TableInfo> tableInfos = tblInfoSrc.getTableInfos(Arrays
-					.asList(Place.class, Sorcerer.class));
+					.asList(Place.class, Sorcerer.class, AdditionalPlace.class, AdditionalPlace2.class));
 			
 			//FIXME: mapping tables have to be tested here as well!
 		} finally {
