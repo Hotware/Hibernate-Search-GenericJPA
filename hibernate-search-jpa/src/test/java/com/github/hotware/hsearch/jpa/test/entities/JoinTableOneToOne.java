@@ -29,9 +29,9 @@ public class JoinTableOneToOne {
 
 	@Id
 	private Integer id;
-	@OneToOne
+	@OneToOne(mappedBy = "jtoto")
 	@JoinTable(name = "PLACE_JTOTO", 
-		joinColumns = @JoinColumn(name = "PlACE_ID", referencedColumnName = "ID"),
+		joinColumns = @JoinColumn(name = "PLACE_ID", referencedColumnName = "ID"),
 		inverseJoinColumns = @JoinColumn(name = "JTOTO_ID", referencedColumnName = "ID"))
 	private Place place;
 

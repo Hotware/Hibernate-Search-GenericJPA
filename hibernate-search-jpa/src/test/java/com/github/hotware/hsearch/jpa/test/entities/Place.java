@@ -137,7 +137,7 @@ public class Place {
 	}
 
 	@OneToOne
-	@JoinTable(name = "PLACE_JTOTO", joinColumns = @JoinColumn(name = "JTOTO_ID", referencedColumnName = "ID"), inverseJoinColumns = @JoinColumn(name = "PlACE_ID", referencedColumnName = "ID"))
+	@JoinTable(name = "PLACE_JTOTO", joinColumns = @JoinColumn(name = "PLACE_ID", referencedColumnName = "ID"), inverseJoinColumns = @JoinColumn(name = "JTOTO_ID", referencedColumnName = "ID"))
 	public JoinTableOneToOne getJtoto() {
 		return jtoto;
 	}

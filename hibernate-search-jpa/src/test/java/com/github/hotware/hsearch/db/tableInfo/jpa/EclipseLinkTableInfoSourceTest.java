@@ -15,7 +15,9 @@
  */
 package com.github.hotware.hsearch.db.tableInfo.jpa;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.List;
@@ -31,6 +33,7 @@ import org.junit.Test;
 import com.github.hotware.hsearch.db.tableInfo.TableInfo;
 import com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace;
 import com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace2;
+import com.github.hotware.hsearch.jpa.test.entities.JoinTableOneToOne;
 import com.github.hotware.hsearch.jpa.test.entities.OneToManyWithoutTable;
 import com.github.hotware.hsearch.jpa.test.entities.Place;
 import com.github.hotware.hsearch.jpa.test.entities.Sorcerer;
@@ -55,14 +58,83 @@ public class EclipseLinkTableInfoSourceTest {
 		try {
 			EclipseLinkTableInfoSource tblInfoSrc = new EclipseLinkTableInfoSource(
 					em);
-			List<TableInfo> tableInfos = tblInfoSrc
-					.getTableInfos(Arrays.asList(Place.class, Sorcerer.class,
-							AdditionalPlace.class, AdditionalPlace2.class,
-							OneToManyWithoutTable.class));
-			// FIXME: reimplement the tests here
+			List<TableInfo> tableInfos = tblInfoSrc.getTableInfos(Arrays
+					.asList(Place.class, Sorcerer.class, AdditionalPlace.class,
+							AdditionalPlace2.class,
+							OneToManyWithoutTable.class,
+							JoinTableOneToOne.class));
+
+			for (TableInfo tableInfo : tableInfos) {
+				switch (tableInfo.getTableNames().get(0)) {
+				case "PLACE": {
+					assertEquals(1, tableInfo.getUpdateEventRelevantIdInfos()
+							.size());
+					assertEquals(Place.class, tableInfo
+							.getUpdateEventRelevantIdInfos().get(0)
+							.getEntityClass());
+					assertEquals(1, tableInfo.getUpdateEventRelevantIdInfos()
+							.get(0).getIdColumns().size());
+					// this is no mapping table so we have to have a explicit
+					// name here
+					assertEquals("PLACE.ID", tableInfo
+							.getUpdateEventRelevantIdInfos().get(0)
+							.getIdColumns().get(0));
+					assertEquals(1, tableInfo.getUpdateEventRelevantIdInfos()
+							.get(0).getIdColumnTypes().size());
+					assertEquals(Integer.class, tableInfo
+							.getUpdateEventRelevantIdInfos().get(0)
+							.getIdColumnTypes().get("PLACE.ID"));
+					break;
+				}
+				case "PLACE_JTOTO": {
+					assertEquals(2, tableInfo.getUpdateEventRelevantIdInfos()
+							.size());
+					boolean[] found = new boolean[2];
+					for (TableInfo.IdInfo idInfo : tableInfo
+							.getUpdateEventRelevantIdInfos()) {
+						if (idInfo.getEntityClass().equals(Place.class)) {
+							assertEquals(1, idInfo.getIdColumns().size());
+							assertEquals("PLACE_ID",
+									idInfo.getIdColumns().get(0));
+							assertEquals(Integer.class, idInfo
+									.getIdColumnTypes().get("PLACE_ID"));
+							found[0] = true;
+						} else if (idInfo.getEntityClass().equals(
+								JoinTableOneToOne.class)) {
+							assertEquals(1, idInfo.getIdColumns().size());
+							assertEquals("JTOTO_ID",
+									idInfo.getIdColumns().get(0));
+							assertEquals(Integer.class, idInfo
+									.getIdColumnTypes().get("JTOTO_ID"));
+							found[1] = true;
+						} else {
+							fail("either Place or JoinTableOneToOne were expected!");
+						}
+					}
+					assertTrue_(found);
+					break;
+				}
+				}
+			}
+
+			System.out.println(tableInfos);
 		} finally {
 			if (em != null) {
 				em.close();
+			}
+		}
+	}
+
+	private static void assertTrue_(boolean[] values) {
+		assertTrue_(null, values);
+	}
+
+	private static void assertTrue_(String message, boolean[] values) {
+		for (boolean value : values) {
+			if (message != null) {
+				assertTrue(message, value);
+			} else {
+				assertTrue(value);
 			}
 		}
 	}

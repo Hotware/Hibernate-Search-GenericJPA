@@ -30,7 +30,6 @@ import org.eclipse.persistence.mappings.DirectToFieldMapping;
 import org.eclipse.persistence.mappings.ManyToManyMapping;
 import org.eclipse.persistence.mappings.OneToManyMapping;
 import org.eclipse.persistence.mappings.OneToOneMapping;
-import org.eclipse.persistence.mappings.UnidirectionalOneToManyMapping;
 
 import com.github.hotware.hsearch.db.tableInfo.TableInfo;
 import com.github.hotware.hsearch.db.tableInfo.TableInfoSource;
@@ -84,7 +83,8 @@ public class EclipseLinkTableInfoSource implements TableInfoSource {
 						.unmodifiableList(tableNames)));
 			}
 
-			// TODO: test this for ElementCollections, ...
+			// TODO: test this for ElementCollections, EmbeddedIds, Ids with
+			// multiple columns etc....
 			// maybe we will have to change some things then
 
 			// and now for relationship tables
