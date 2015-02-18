@@ -179,6 +179,8 @@ public class JPAUpdateSource implements UpdateSource {
 									.apply(val), evi.getEventTypeAccessor()
 									.apply(val)));
 						}
+						//TODO: maybe move this to a method as
+						//it is getting reused
 						if (++processed % this.batchSizeForUpdates == 0) {
 							this.updateConsumer.updateEvent(updateInfos);
 							for (Object[] rem : toRemove) {
