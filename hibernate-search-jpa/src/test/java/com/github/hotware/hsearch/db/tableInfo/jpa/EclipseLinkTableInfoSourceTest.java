@@ -63,7 +63,6 @@ public class EclipseLinkTableInfoSourceTest {
 							AdditionalPlace2.class,
 							OneToManyWithoutTable.class,
 							JoinTableOneToOne.class));
-
 			for (TableInfo tableInfo : tableInfos) {
 				switch (tableInfo.getTableNames().get(0)) {
 				case "PLACE": {
@@ -113,6 +112,31 @@ public class EclipseLinkTableInfoSourceTest {
 					}
 					assertTrue_(found);
 					break;
+				}
+				case "PLACE_ADDITIONALPLACE": {
+					assertEquals(2, tableInfo.getUpdateEventRelevantIdInfos().size());
+					boolean found[] = new boolean[2];
+					for(TableInfo.IdInfo idInfo : tableInfo.getUpdateEventRelevantIdInfos()) {
+						if (idInfo.getEntityClass().equals(Place.class)) {
+							assertEquals(1, idInfo.getIdColumns().size());
+							assertEquals("place_ID",
+									idInfo.getIdColumns().get(0));
+							assertEquals(Integer.class, idInfo
+									.getIdColumnTypes().get("place_ID"));
+							found[0] = true;
+						} else if (idInfo.getEntityClass().equals(
+								AdditionalPlace.class)) {
+							assertEquals(1, idInfo.getIdColumns().size());
+							assertEquals("additionalPlace_ID",
+									idInfo.getIdColumns().get(0));
+							assertEquals(Integer.class, idInfo
+									.getIdColumnTypes().get("additionalPlace_ID"));
+							found[1] = true;
+						} else {
+							fail("either Place or AdditionalPlace were expected!");
+						}
+					}
+					assertTrue_(found);
 				}
 				}
 			}
