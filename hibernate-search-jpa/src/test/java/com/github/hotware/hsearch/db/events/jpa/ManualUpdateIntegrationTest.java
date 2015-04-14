@@ -112,7 +112,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 							SorcererUpdates.class, PlaceSorcererUpdates.class)));
 			JPAUpdateSource updateSource = new JPAUpdateSource(eventModelInfos,
 					this.emf, 500, TimeUnit.MILLISECONDS, 10);
-			updateSource.setUpdateConsumer(indexUpdater);
+			updateSource.setUpdateConsumers(Arrays.asList(indexUpdater));
 			updateSource.start();
 
 			// database already contains stuff, so clear everything out here

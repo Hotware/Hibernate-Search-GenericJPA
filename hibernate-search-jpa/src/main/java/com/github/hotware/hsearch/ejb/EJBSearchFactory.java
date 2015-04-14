@@ -46,6 +46,7 @@ import org.hibernate.search.stat.Statistics;
 import com.github.hotware.hsearch.db.events.EventModelInfo;
 import com.github.hotware.hsearch.db.events.EventModelParser;
 import com.github.hotware.hsearch.db.events.IndexUpdater;
+import com.github.hotware.hsearch.db.events.UpdateConsumer;
 import com.github.hotware.hsearch.db.events.IndexUpdater.IndexInformation;
 import com.github.hotware.hsearch.db.events.jpa.JPAUpdateSource;
 import com.github.hotware.hsearch.entity.EntityProvider;
@@ -67,7 +68,7 @@ import com.github.hotware.hsearch.transaction.TransactionContext;
  * 
  * @author Martin Braun
  */
-public abstract class EJBSearchFactory implements SearchFactory {
+public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer {
 
 	private final Logger LOGGER = Logger.getLogger(EntityManagerFactory.class
 			.getName());
@@ -84,10 +85,13 @@ public abstract class EJBSearchFactory implements SearchFactory {
 	protected abstract String getConfigFile();
 
 	protected abstract List<Class<?>> getAdditionalIndexedClasses();
+	
+	//THESE ARE NEEDED FOR THE UPDATES
+	//TODO: make this easier
 
 	protected abstract List<Class<?>> getUpdateClasses();
 
-	protected abstract Map<Class<?>, IndexInformation> getIndexes();
+	protected abstract Map<Class<?>, IndexInformation> getIndexInformations();
 
 	protected abstract Map<Class<?>, List<Class<?>>> getContainedInIndexOf();
 
@@ -98,6 +102,8 @@ public abstract class EJBSearchFactory implements SearchFactory {
 	protected abstract long getDelay();
 
 	protected abstract int getBatchSizeForUpdates();
+	
+	
 
 	@PostConstruct
 	protected void init() {
@@ -135,7 +141,7 @@ public abstract class EJBSearchFactory implements SearchFactory {
 
 		JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider(
 				this.getEmf(), this.parser.getIdProperties());
-		IndexUpdater indexUpdater = new IndexUpdater(this.getIndexes(),
+		IndexUpdater indexUpdater = new IndexUpdater(this.getIndexInformations(),
 				this.getContainedInIndexOf(), this.getIdTypesForEntities(),
 				entityProvider, impl.unwrap(ExtendedSearchIntegrator.class));
 		EventModelParser eventModelParser = new EventModelParser();
@@ -146,7 +152,7 @@ public abstract class EJBSearchFactory implements SearchFactory {
 				this.getEmf(), this.getDelay(), this.getDelayUnit(),
 				this.getBatchSizeForUpdates());
 
-		updateSource.setUpdateConsumer(indexUpdater);
+		updateSource.setUpdateConsumers(Arrays.asList(indexUpdater, this));
 		updateSource.start();
 	}
 

@@ -112,14 +112,14 @@ public class MySQLTriggerIntegrationTest extends DatabaseIntegrationTest {
 					parser.parse(new HashSet<>(Arrays.asList(PlaceSorcererUpdates.class,
 							PlaceUpdates.class))), emf, 1, TimeUnit.SECONDS, 1,
 					1);
-			updateSource.setUpdateConsumer(new UpdateConsumer() {
+			updateSource.setUpdateConsumers(Arrays.asList(new UpdateConsumer() {
 
 				@Override
 				public void updateEvent(List<UpdateInfo> arg0) {
 
 				}
 
-			});
+			}));
 
 			updateSource.start();
 			Thread.sleep(1000);

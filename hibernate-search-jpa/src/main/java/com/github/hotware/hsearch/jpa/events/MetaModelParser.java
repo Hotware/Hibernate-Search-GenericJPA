@@ -66,6 +66,8 @@ public class MetaModelParser {
 	private final Map<Class<?>, Boolean> isRootType = new HashMap<>();
 	private final Set<Class<?>> totalVisitedEntities = new HashSet<>();
 	private final Map<Class<?>, String> idProperties = new HashMap<>();
+	
+	//TODO: inIndexOf can be computed here
 
 	public Map<Class<?>, Function<Object, Object>> getRootParentAccessorsForClass(
 			Class<?> clazz) {

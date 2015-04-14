@@ -77,7 +77,7 @@ public class JPAUpdateSourceTest {
 			}
 
 			final boolean[] gotEvent = new boolean[2];
-			updateSource.setUpdateConsumer(new UpdateConsumer() {
+			updateSource.setUpdateConsumers(Arrays.asList(new UpdateConsumer() {
 
 				@Override
 				public void updateEvent(List<UpdateInfo> updateInfos) {
@@ -97,7 +97,7 @@ public class JPAUpdateSourceTest {
 						}
 					}
 				}
-			});
+			}));
 			updateSource.start();
 			Thread.sleep(1000 * 3);
 			updateSource.stop();

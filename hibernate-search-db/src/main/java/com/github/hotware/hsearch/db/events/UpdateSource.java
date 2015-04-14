@@ -15,6 +15,8 @@
  */
 package com.github.hotware.hsearch.db.events;
 
+import java.util.List;
+
 /**
  * Source for updates on entities. This does no hierarchy checks yet it just
  * delivers information about which entry in which table has changed
@@ -23,7 +25,7 @@ package com.github.hotware.hsearch.db.events;
  */
 public interface UpdateSource {
 
-	public void setUpdateConsumer(UpdateConsumer updateConsumer);
+	public void setUpdateConsumers(List<UpdateConsumer> updateConsumers);
 
 	public void start();
 

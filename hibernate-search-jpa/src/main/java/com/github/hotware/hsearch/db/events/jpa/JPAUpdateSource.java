@@ -62,7 +62,7 @@ public class JPAUpdateSource implements UpdateSource {
 	private final Map<Class<?>, EventModelInfo> updateClassToEventModelInfo;
 	private final Map<Class<?>, Function<Object, Object>> idAccessorMap;
 
-	private UpdateConsumer updateConsumer;
+	private List<UpdateConsumer> updateConsumers;
 	private ScheduledExecutorService exec;
 
 	/**
@@ -128,8 +128,8 @@ public class JPAUpdateSource implements UpdateSource {
 	 * .github.hotware.hsearch.db.events.UpdateConsumer)
 	 */
 	@Override
-	public void setUpdateConsumer(UpdateConsumer updateConsumer) {
-		this.updateConsumer = updateConsumer;
+	public void setUpdateConsumers(List<UpdateConsumer> updateConsumers) {
+		this.updateConsumers = updateConsumers;
 	}
 
 	/*
@@ -139,8 +139,8 @@ public class JPAUpdateSource implements UpdateSource {
 	 */
 	@Override
 	public void start() {
-		if (this.updateConsumer == null) {
-			throw new IllegalStateException("updateConsumer was null!");
+		if (this.updateConsumers == null) {
+			throw new IllegalStateException("updateConsumers was null!");
 		}
 		this.exec = Executors.newScheduledThreadPool(1);
 		this.exec
@@ -179,10 +179,12 @@ public class JPAUpdateSource implements UpdateSource {
 									.apply(val), evi.getEventTypeAccessor()
 									.apply(val)));
 						}
-						//TODO: maybe move this to a method as
-						//it is getting reused
+						// TODO: maybe move this to a method as
+						// it is getting reused
 						if (++processed % this.batchSizeForUpdates == 0) {
-							this.updateConsumer.updateEvent(updateInfos);
+							for (UpdateConsumer consumer : this.updateConsumers) {
+								consumer.updateEvent(updateInfos);
+							}
 							for (Object[] rem : toRemove) {
 								// the class is in rem[0], the entity is in
 								// rem[1]
@@ -198,7 +200,9 @@ public class JPAUpdateSource implements UpdateSource {
 						}
 					}
 					if (updateInfos.size() > 0) {
-						this.updateConsumer.updateEvent(updateInfos);
+						for (UpdateConsumer consumer : this.updateConsumers) {
+							consumer.updateEvent(updateInfos);
+						}
 						for (Object[] rem : toRemove) {
 							// the class is in rem[0], the entity is in rem[1]
 							query.addToNextValuePosition((Class<?>) rem[0], -1L);
