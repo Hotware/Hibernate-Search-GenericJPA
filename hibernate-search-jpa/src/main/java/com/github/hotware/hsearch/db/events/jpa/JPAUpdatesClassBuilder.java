@@ -199,7 +199,7 @@ public class JPAUpdatesClassBuilder {
 		}
 		JavaFile javaFile = JavaFile.builder(packageName, builder.build())
 				.build();
-		javaFile.emit(out);
+		javaFile.writeTo(out);
 	}
 
 	private static String arrayStringAnnotationFormat(int size) {

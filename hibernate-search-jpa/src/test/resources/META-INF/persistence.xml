@@ -2,6 +2,29 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"
 	version="2.0">
+	
+		<persistence-unit name="EclipseLink_MySQL"
+		transaction-type="RESOURCE_LOCAL">
+			<provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+		<class>com.github.hotware.hsearch.jpa.test.entities.Sorcerer</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.Place</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace2</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.PlaceSorcererUpdates</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.SorcererUpdates</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.PlaceUpdates</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.OneToManyWithoutTable</class>
+		<class>com.github.hotware.hsearch.jpa.test.entities.JoinTableOneToOne</class>
+		<properties>
+			<property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/hsearch-test" />
+			<property name="javax.persistence.jdbc.user" value="hsearch-test" />
+			<property name="javax.persistence.jdbc.password" value="" />
+			<property name="eclipselink.ddl-generation" value="drop-and-create-tables" />
+			<property name="eclipselink.ddl-generation.output-mode"
+				value="both" />
+		</properties>
+	</persistence-unit>>
 
 	<persistence-unit name="EclipseLink" transaction-type="RESOURCE_LOCAL">
 		<provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
@@ -24,28 +47,7 @@
 		</properties>
 	</persistence-unit>
 
-	<persistence-unit name="EclipseLink_MySQL"
-		transaction-type="RESOURCE_LOCAL">
-		<provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
-		<class>com.github.hotware.hsearch.jpa.test.entities.Sorcerer</class>
-		<class>com.github.hotware.hsearch.jpa.test.entities.Place</class>
-		<class>com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace</class>
-		<class>com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace2</class>
-		<class>com.github.hotware.hsearch.jpa.test.entities.PlaceSorcererUpdates</class>
-		<class>com.github.hotware.hsearch.jpa.test.entities.SorcererUpdates</class>
-		<class>com.github.hotware.hsearch.jpa.test.entities.PlaceUpdates</class>
-		<class>com.github.hotware.hsearch.jpa.test.entities.OneToManyWithoutTable</class>
-		<class>com.github.hotware.hsearch.jpa.test.entities.JoinTableOneToOne</class>
-		<properties>
-			<property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver" />
-			<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/hsearch-test" />
-			<property name="javax.persistence.jdbc.user" value="hsearch-test" />
-			<property name="javax.persistence.jdbc.password" value="" />
-			<property name="eclipselink.ddl-generation" value="drop-and-create-tables" />
-			<property name="eclipselink.ddl-generation.output-mode"
-				value="both" />
-		</properties>
-	</persistence-unit>
+
 
 
 </persistence>
