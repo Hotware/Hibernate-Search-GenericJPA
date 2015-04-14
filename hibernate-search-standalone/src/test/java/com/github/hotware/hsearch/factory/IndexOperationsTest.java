@@ -37,7 +37,6 @@ import org.junit.Test;
 
 import com.github.hotware.hsearch.dto.annotations.DtoField;
 import com.github.hotware.hsearch.dto.annotations.DtoOverEntity;
-import com.github.hotware.hsearch.event.NoEventEventSource;
 
 public class IndexOperationsTest {
 
@@ -121,8 +120,7 @@ public class IndexOperationsTest {
 	@Before
 	public void setup() {
 		LOGGER.info("setting up IndexOperationsTest");
-		this.factory = SearchFactoryFactory.createSearchFactory(
-				new NoEventEventSource(), new SearchConfigurationImpl(),
+		this.factory = SearchFactoryFactory.createSearchFactory(new SearchConfigurationImpl(),
 				Arrays.asList(Book.class));
 	}
 

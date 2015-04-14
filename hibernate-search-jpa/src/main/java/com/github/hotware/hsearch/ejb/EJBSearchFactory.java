@@ -41,7 +41,6 @@ import com.github.hotware.hsearch.entity.jpa.EntityManagerEntityProvider;
 import com.github.hotware.hsearch.factory.SearchConfigurationImpl;
 import com.github.hotware.hsearch.factory.SearchFactory;
 import com.github.hotware.hsearch.factory.SearchFactoryFactory;
-import com.github.hotware.hsearch.jpa.events.JPAEventSource;
 import com.github.hotware.hsearch.jpa.events.MetaModelParser;
 import com.github.hotware.hsearch.query.HSearchQuery;
 import com.github.hotware.hsearch.transaction.TransactionContext;
@@ -70,16 +69,15 @@ public abstract class EJBSearchFactory implements SearchFactory {
 
 	protected abstract List<Class<?>> getAdditionalIndexedClasses();
 
-	protected abstract List<Class<?>> excludeFromAutomaticIndexing();
+	protected abstract List<Class<?>> getUpdateClasses();
 
 	@PostConstruct
 	void init() {
 		this.parser = new MetaModelParser();
 		this.parser.parse(this.getEmf().getMetamodel());
-		Set<Class<?>> listenTo = new HashSet<>(
-				this.parser.getIndexRelevantEntites());
-		listenTo.removeAll(this.excludeFromAutomaticIndexing());
-		JPAEventSource eventSource = JPAEventSource.register(listenTo, true);
+		Set<Class<?>> listenTo = new HashSet<>(this.getUpdateClasses());
+		//
+		//JPAEventSource eventSource = JPAEventSource.register(listenTo, true);
 		SearchConfigurationImpl config;
 		if (this.getConfigFile() != null && !this.getConfigFile().equals("")) {
 			LOGGER.info("using config @" + this.getConfigFile());
@@ -98,8 +96,8 @@ public abstract class EJBSearchFactory implements SearchFactory {
 		this.getAdditionalIndexedClasses().forEach((clazz) -> {
 			config.addClass(clazz);
 		});
-		this.searchFactory = SearchFactoryFactory.createSearchFactory(
-				eventSource, config, this.parser.getIndexRelevantEntites());
+		this.searchFactory = SearchFactoryFactory.createSearchFactory(config, this.parser.getIndexRelevantEntites());
+		
 	}
 
 	@PreDestroy

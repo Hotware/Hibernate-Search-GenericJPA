@@ -37,7 +37,6 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
 import org.junit.Test;
 
-import com.github.hotware.hsearch.event.NoEventEventSource;
 import com.github.hotware.hsearch.factory.SearchConfigurationImpl;
 import com.github.hotware.hsearch.factory.SearchFactory;
 import com.github.hotware.hsearch.factory.SearchFactoryFactory;
@@ -169,8 +168,7 @@ public class SearchFactoryTest {
 
 	@Test
 	public void test() throws IOException {
-		try (SearchFactory factory = SearchFactoryFactory.createSearchFactory(
-				new NoEventEventSource(), new SearchConfigurationImpl(),
+		try (SearchFactory factory = SearchFactoryFactory.createSearchFactory(new SearchConfigurationImpl(),
 				Arrays.asList(TopLevel.class, Embedded.class, Embedded2.class))) {
 
 			TopLevel tl = new TopLevel();

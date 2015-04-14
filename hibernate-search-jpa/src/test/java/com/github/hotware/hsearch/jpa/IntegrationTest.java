@@ -42,7 +42,6 @@ import com.github.hotware.hsearch.entity.jpa.EntityManagerEntityProvider;
 import com.github.hotware.hsearch.factory.SearchConfigurationImpl;
 import com.github.hotware.hsearch.factory.SearchFactory;
 import com.github.hotware.hsearch.factory.SearchFactoryFactory;
-import com.github.hotware.hsearch.jpa.events.JPAEventSource;
 import com.github.hotware.hsearch.jpa.events.MetaModelParser;
 import com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace;
 import com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace2;
@@ -137,7 +136,7 @@ public class IntegrationTest {
 		this.setup("EclipseLink");
 		try {
 			this.metaModelParser();
-//			this.integration();
+			// this.integration();
 		} finally {
 			this.shutdown();
 		}
@@ -200,11 +199,8 @@ public class IntegrationTest {
 				EntityTransaction tx = em.getTransaction();
 				tx.begin();
 
-				JPAEventSource eventSource = JPAEventSource.register(
-						parser.getIndexRelevantEntites(), true);
-
 				searchFactory = SearchFactoryFactory.createSearchFactory(
-						eventSource, new SearchConfigurationImpl(),
+						new SearchConfigurationImpl(),
 						parser.getIndexRelevantEntites());
 
 				// at first: index all places we can find

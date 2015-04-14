@@ -27,11 +27,10 @@ import org.hibernate.search.indexes.IndexReaderAccessor;
 import org.hibernate.search.query.dsl.QueryContextBuilder;
 import org.hibernate.search.stat.Statistics;
 
-import com.github.hotware.hsearch.event.EventConsumer;
 import com.github.hotware.hsearch.query.HSearchQuery;
 import com.github.hotware.hsearch.transaction.TransactionContext;
 
-public interface SearchFactory extends Closeable, EventConsumer {
+public interface SearchFactory extends Closeable {
 
 	/**
 	 * provides means for getting vanilla Lucene IndexReaders. use this if you
@@ -115,5 +114,55 @@ public interface SearchFactory extends Closeable, EventConsumer {
 	 */
 	@Deprecated
 	public void purge(Class<?> entityClass, Query query, TransactionContext tc);
+	
+	//same names
+	
+	public void index(Iterable<?> entities, TransactionContext tc);
+	
+	public default void index( Object entity, TransactionContext tc) {
+		this.index(Arrays.asList(entity), tc);
+	}
+
+	public default void index( Iterable<?> entities) {
+		Transaction tc = new Transaction();
+		this.index(entities, tc);
+		tc.end();
+	}
+
+	public default void index( Object entity) {
+		this.index(Arrays.asList(entity));
+	}
+
+	public void update( Iterable<?> entities, TransactionContext tc);
+	
+	public default void update( Object entity, TransactionContext tc) {
+		this.update(Arrays.asList(entity), tc);
+	}
+
+	public default void update( Iterable<?> entities) {
+		Transaction tc = new Transaction();
+		this.update(entities, tc);
+		tc.end();
+	}
+
+	public default void update( Object entity) {
+		this.update(Arrays.asList(entity));
+	}
+
+	public void delete( Iterable<?> entities, TransactionContext tc);
+
+	public default void delete( Object entity, TransactionContext tc) {
+		this.delete(Arrays.asList(entity), tc);
+	}
+	
+	public default void delete( Iterable<?> entities) {
+		Transaction tc = new Transaction();
+		this.delete(entities, tc);
+		tc.end();
+	}
+
+	public default void delete( Object entity) {
+		this.delete(Arrays.asList(entity));
+	}
 
 }
