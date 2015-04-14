@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.hibernate.search.backend.SingularTermQuery;
+import org.hibernate.search.backend.SingularTermDeletionQuery;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
@@ -54,7 +54,7 @@ public class IndexUpdaterTest {
 	Map<Class<?>, List<String>> idsForEntities;
 	Map<Class<?>, IndexInformation> indexInformations;
 	Map<Class<?>, List<Class<?>>> containedInIndexOf;
-	Map<Class<?>, SingularTermQuery.Type> idTypesForEntities;
+	Map<Class<?>, SingularTermDeletionQuery.Type> idTypesForEntities;
 	ReusableEntityProvider entityProvider;
 	List<UpdateInfo> updateInfos;
 	boolean changed;
@@ -74,9 +74,9 @@ public class IndexUpdaterTest {
 		this.containedInIndexOf.put(Sorcerer.class, Arrays.asList(Place.class));
 		this.containedInIndexOf.put(Place.class, Arrays.asList(Place.class));
 		this.idTypesForEntities = new HashMap<>();
-		this.idTypesForEntities.put(Place.class, SingularTermQuery.Type.STRING);
+		this.idTypesForEntities.put(Place.class, SingularTermDeletionQuery.Type.STRING);
 		this.idTypesForEntities.put(Sorcerer.class,
-				SingularTermQuery.Type.STRING);
+				SingularTermDeletionQuery.Type.STRING);
 		this.entityProvider = new ReusableEntityProvider() {
 
 			@SuppressWarnings("rawtypes")

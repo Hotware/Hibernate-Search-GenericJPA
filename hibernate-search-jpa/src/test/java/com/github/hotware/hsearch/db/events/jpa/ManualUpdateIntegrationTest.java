@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
 
-import org.hibernate.search.backend.SingularTermQuery;
+import org.hibernate.search.backend.SingularTermDeletionQuery;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
@@ -59,7 +59,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 	Map<Class<?>, List<String>> idsForEntities;
 	Map<Class<?>, IndexInformation> indexInformations;
 	Map<Class<?>, List<Class<?>>> containedInIndexOf;
-	Map<Class<?>, SingularTermQuery.Type> idTypesForEntities;
+	Map<Class<?>, SingularTermDeletionQuery.Type> idTypesForEntities;
 	ReusableEntityProvider entityProvider;
 	MetaModelParser metaModelParser;
 
@@ -75,9 +75,9 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 		this.containedInIndexOf.put(Sorcerer.class, Arrays.asList(Place.class));
 		this.containedInIndexOf.put(Place.class, Arrays.asList(Place.class));
 		this.idTypesForEntities = new HashMap<>();
-		this.idTypesForEntities.put(Place.class, SingularTermQuery.Type.STRING);
+		this.idTypesForEntities.put(Place.class, SingularTermDeletionQuery.Type.STRING);
 		this.idTypesForEntities.put(Sorcerer.class,
-				SingularTermQuery.Type.STRING);
+				SingularTermDeletionQuery.Type.STRING);
 		this.setup("EclipseLink_MySQL");
 		this.metaModelParser = new MetaModelParser();
 		this.metaModelParser.parse(this.emf.getMetamodel());

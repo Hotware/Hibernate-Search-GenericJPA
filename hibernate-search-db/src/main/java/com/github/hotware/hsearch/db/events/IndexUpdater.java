@@ -21,8 +21,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.hibernate.search.backend.SingularTermQuery;
-import org.hibernate.search.backend.SingularTermQuery.Type;
+import org.hibernate.search.backend.SingularTermDeletionQuery;
+import org.hibernate.search.backend.SingularTermDeletionQuery.Type;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.bridge.FieldBridge;
@@ -59,7 +59,7 @@ public class IndexUpdater implements UpdateConsumer {
 
 	private final Map<Class<?>, IndexInformation> indexInformations;
 	private final Map<Class<?>, List<Class<?>>> containedInIndexOf;
-	private final Map<Class<?>, SingularTermQuery.Type> idTypesForEntities;
+	private final Map<Class<?>, SingularTermDeletionQuery.Type> idTypesForEntities;
 	private final ReusableEntityProvider entityProvider;
 	private IndexWrapper indexWrapper;
 
@@ -205,10 +205,10 @@ public class IndexUpdater implements UpdateConsumer {
 															field);
 										}
 									});
-					SingularTermQuery.Type idType = IndexUpdater.this.idTypesForEntities
+					SingularTermDeletionQuery.Type idType = IndexUpdater.this.idTypesForEntities
 							.get(entityClass);
 					Object idValueForDeletion;
-					if (idType == SingularTermQuery.Type.STRING) {
+					if (idType == SingularTermDeletionQuery.Type.STRING) {
 						FieldBridge fb = metaDataForIdField.getFieldBridge();
 						if (!(fb instanceof StringBridge)) {
 							throw new IllegalArgumentException(
