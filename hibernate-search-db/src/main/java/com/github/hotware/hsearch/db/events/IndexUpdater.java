@@ -59,17 +59,17 @@ public class IndexUpdater implements UpdateConsumer {
 
 	private final Map<Class<?>, IndexInformation> indexInformations;
 	private final Map<Class<?>, List<Class<?>>> containedInIndexOf;
-	private final Map<Class<?>, SingularTermDeletionQuery.Type> idTypesForEntities;
+	private final Map<Class<?>, SingularTermDeletionQuery.Type> indexIdTypesForEntities;
 	private final ReusableEntityProvider entityProvider;
 	private IndexWrapper indexWrapper;
 
 	public IndexUpdater(Map<Class<?>, IndexInformation> indexInformations,
 			Map<Class<?>, List<Class<?>>> containedInIndexOf,
-			Map<Class<?>, Type> idTypesForEntities,
+			Map<Class<?>, Type> indexIdTypesForEntities,
 			ReusableEntityProvider entityProvider, IndexWrapper indexWrapper) {
 		this.indexInformations = indexInformations;
 		this.containedInIndexOf = containedInIndexOf;
-		this.idTypesForEntities = idTypesForEntities;
+		this.indexIdTypesForEntities = indexIdTypesForEntities;
 		this.entityProvider = entityProvider;
 		this.indexWrapper = indexWrapper;
 	}
@@ -205,7 +205,7 @@ public class IndexUpdater implements UpdateConsumer {
 															field);
 										}
 									});
-					SingularTermDeletionQuery.Type idType = IndexUpdater.this.idTypesForEntities
+					SingularTermDeletionQuery.Type idType = IndexUpdater.this.indexIdTypesForEntities
 							.get(entityClass);
 					Object idValueForDeletion;
 					if (idType == SingularTermDeletionQuery.Type.STRING) {
