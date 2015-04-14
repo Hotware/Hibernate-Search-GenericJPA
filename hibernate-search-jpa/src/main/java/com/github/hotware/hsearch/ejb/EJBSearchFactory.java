@@ -104,8 +104,6 @@ public abstract class EJBSearchFactory implements SearchFactory {
 		this.parser = new MetaModelParser();
 		this.parser.parse(this.getEmf().getMetamodel());
 
-		//
-		// JPAEventSource eventSource = JPAEventSource.register(listenTo, true);
 		SearchConfigurationImpl config;
 		if (this.getConfigFile() != null && !this.getConfigFile().equals("")) {
 			LOGGER.info("using config @" + this.getConfigFile());
