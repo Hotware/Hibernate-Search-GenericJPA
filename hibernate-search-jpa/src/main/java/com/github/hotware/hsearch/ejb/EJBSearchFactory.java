@@ -18,10 +18,13 @@ package com.github.hotware.hsearch.ejb;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
@@ -31,17 +34,30 @@ import javax.persistence.EntityManagerFactory;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
+import org.hibernate.search.backend.SingularTermDeletionQuery;
+import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.filter.FilterCachingStrategy;
 import org.hibernate.search.indexes.IndexReaderAccessor;
 import org.hibernate.search.query.dsl.QueryContextBuilder;
+import org.hibernate.search.spi.SearchIntegrator;
+import org.hibernate.search.spi.SearchIntegratorBuilder;
 import org.hibernate.search.stat.Statistics;
 
+import com.github.hotware.hsearch.db.events.EventModelInfo;
+import com.github.hotware.hsearch.db.events.EventModelParser;
+import com.github.hotware.hsearch.db.events.IndexUpdater;
+import com.github.hotware.hsearch.db.events.IndexUpdater.IndexInformation;
+import com.github.hotware.hsearch.db.events.jpa.JPAUpdateSource;
 import com.github.hotware.hsearch.entity.EntityProvider;
 import com.github.hotware.hsearch.entity.jpa.EntityManagerEntityProvider;
+import com.github.hotware.hsearch.entity.jpa.JPAReusableEntityProvider;
 import com.github.hotware.hsearch.factory.SearchConfigurationImpl;
 import com.github.hotware.hsearch.factory.SearchFactory;
-import com.github.hotware.hsearch.factory.SearchFactoryFactory;
+import com.github.hotware.hsearch.factory.SearchFactoryImpl;
 import com.github.hotware.hsearch.jpa.events.MetaModelParser;
+import com.github.hotware.hsearch.jpa.test.entities.PlaceSorcererUpdates;
+import com.github.hotware.hsearch.jpa.test.entities.PlaceUpdates;
+import com.github.hotware.hsearch.jpa.test.entities.SorcererUpdates;
 import com.github.hotware.hsearch.query.HSearchQuery;
 import com.github.hotware.hsearch.transaction.TransactionContext;
 
@@ -71,13 +87,25 @@ public abstract class EJBSearchFactory implements SearchFactory {
 
 	protected abstract List<Class<?>> getUpdateClasses();
 
+	protected abstract Map<Class<?>, IndexInformation> getIndexes();
+
+	protected abstract Map<Class<?>, List<Class<?>>> getContainedInIndexOf();
+
+	protected abstract Map<Class<?>, SingularTermDeletionQuery.Type> getIdTypesForEntities();
+
+	protected abstract TimeUnit getDelayUnit();
+
+	protected abstract long getDelay();
+
+	protected abstract int getBatchSizeForUpdates();
+
 	@PostConstruct
-	void init() {
+	protected void init() {
 		this.parser = new MetaModelParser();
 		this.parser.parse(this.getEmf().getMetamodel());
-		Set<Class<?>> listenTo = new HashSet<>(this.getUpdateClasses());
+
 		//
-		//JPAEventSource eventSource = JPAEventSource.register(listenTo, true);
+		// JPAEventSource eventSource = JPAEventSource.register(listenTo, true);
 		SearchConfigurationImpl config;
 		if (this.getConfigFile() != null && !this.getConfigFile().equals("")) {
 			LOGGER.info("using config @" + this.getConfigFile());
@@ -96,12 +124,36 @@ public abstract class EJBSearchFactory implements SearchFactory {
 		this.getAdditionalIndexedClasses().forEach((clazz) -> {
 			config.addClass(clazz);
 		});
-		this.searchFactory = SearchFactoryFactory.createSearchFactory(config, this.parser.getIndexRelevantEntites());
-		
+
+		SearchIntegratorBuilder builder = new SearchIntegratorBuilder();
+		// we have to build an integrator here (but we don't need it afterwards)
+		builder.configuration(config).buildSearchIntegrator();
+		this.parser.getIndexRelevantEntites().forEach((clazz) -> {
+			builder.addClass(clazz);
+		});
+		SearchIntegrator impl = builder.buildSearchIntegrator();
+		this.searchFactory = new SearchFactoryImpl(
+				impl.unwrap(ExtendedSearchIntegrator.class));
+
+		JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider(
+				this.getEmf(), this.parser.getIdProperties());
+		IndexUpdater indexUpdater = new IndexUpdater(this.getIndexes(),
+				this.getContainedInIndexOf(), this.getIdTypesForEntities(),
+				entityProvider, impl.unwrap(ExtendedSearchIntegrator.class));
+		EventModelParser eventModelParser = new EventModelParser();
+		List<EventModelInfo> eventModelInfos = eventModelParser
+				.parse(new HashSet<>(Arrays.asList(PlaceUpdates.class,
+						SorcererUpdates.class, PlaceSorcererUpdates.class)));
+		JPAUpdateSource updateSource = new JPAUpdateSource(eventModelInfos,
+				this.getEmf(), this.getDelay(), this.getDelayUnit(),
+				this.getBatchSizeForUpdates());
+
+		updateSource.setUpdateConsumer(indexUpdater);
+		updateSource.start();
 	}
 
 	@PreDestroy
-	void atShutdown() {
+	protected void atShutdown() {
 		try {
 			this.close();
 		} catch (IOException e) {
@@ -193,31 +245,20 @@ public abstract class EJBSearchFactory implements SearchFactory {
 		return this.searchFactory.createQuery(query, targetedEntities);
 	}
 
-	/* (non-Javadoc)
-	 * @see com.github.hotware.hsearch.factory.SearchFactory#purge(java.lang.Class, java.io.Serializable, com.github.hotware.hsearch.transaction.TransactionContext)
-	 */
 	@Override
 	public void purge(Class<?> entityClass, Serializable id,
 			TransactionContext tc) {
 		this.searchFactory.purge(entityClass, id, tc);
 	}
 
-	/* (non-Javadoc)
-	 * @see com.github.hotware.hsearch.factory.SearchFactory#purge(java.lang.Iterable, com.github.hotware.hsearch.transaction.TransactionContext)
-	 */
 	@Override
 	public void purge(Iterable<?> entities, TransactionContext tc) {
 		this.searchFactory.purge(entities, tc);
 	}
 
-	/* (non-Javadoc)
-	 * @see com.github.hotware.hsearch.factory.SearchFactory#purge(java.lang.Class, org.apache.lucene.search.Query, com.github.hotware.hsearch.transaction.TransactionContext)
-	 */
 	@Override
 	public void purge(Class<?> entityClass, Query query, TransactionContext tc) {
 		this.searchFactory.purge(entityClass, query, tc);
 	}
-	
-	
 
 }
