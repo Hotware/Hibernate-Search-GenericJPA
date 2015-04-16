@@ -20,7 +20,6 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -144,7 +143,7 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 				entityProvider, impl.unwrap(ExtendedSearchIntegrator.class));
 		EventModelParser eventModelParser = new EventModelParser();
 		List<EventModelInfo> eventModelInfos = eventModelParser
-				.parse(new ArrayList<>(this.parser.getIndexRelevantEntites()));
+				.parse(new ArrayList<>(this.getUpdateClasses()));
 		JPAUpdateSource updateSource = new JPAUpdateSource(eventModelInfos,
 				this.getEmf(), this.getDelay(), this.getDelayUnit(),
 				this.getBatchSizeForUpdates());
