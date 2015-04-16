@@ -18,6 +18,9 @@ package com.github.hotware.hsearch.ejb;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -45,7 +48,9 @@ import org.hibernate.search.stat.Statistics;
 
 import com.github.hotware.hsearch.db.events.EventModelInfo;
 import com.github.hotware.hsearch.db.events.EventModelParser;
+import com.github.hotware.hsearch.db.events.EventType;
 import com.github.hotware.hsearch.db.events.IndexUpdater;
+import com.github.hotware.hsearch.db.events.TriggerSQLStringSource;
 import com.github.hotware.hsearch.db.events.UpdateConsumer;
 import com.github.hotware.hsearch.db.events.IndexUpdater.IndexInformation;
 import com.github.hotware.hsearch.db.events.jpa.JPAUpdateSource;
@@ -82,9 +87,9 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 	protected abstract String getConfigFile();
 
 	protected abstract List<Class<?>> getAdditionalIndexedClasses();
-	
-	//THESE ARE NEEDED FOR THE UPDATES
-	//TODO: make this easier
+
+	// THESE ARE NEEDED FOR THE UPDATES
+	// TODO: make this easier
 
 	protected abstract List<Class<?>> getUpdateClasses();
 
@@ -99,8 +104,8 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 	protected abstract long getDelay();
 
 	protected abstract int getBatchSizeForUpdates();
-	
-	
+
+	protected abstract TriggerSQLStringSource getTriggerSQLStringSource();
 
 	@PostConstruct
 	protected void init() {
@@ -138,12 +143,67 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 
 		JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider(
 				this.getEmf(), this.parser.getIdProperties());
-		IndexUpdater indexUpdater = new IndexUpdater(this.getIndexInformations(),
-				this.getContainedInIndexOf(), this.getIdTypesForEntities(),
-				entityProvider, impl.unwrap(ExtendedSearchIntegrator.class));
+		IndexUpdater indexUpdater = new IndexUpdater(
+				this.getIndexInformations(), this.getContainedInIndexOf(),
+				this.getIdTypesForEntities(), entityProvider,
+				impl.unwrap(ExtendedSearchIntegrator.class));
 		EventModelParser eventModelParser = new EventModelParser();
 		List<EventModelInfo> eventModelInfos = eventModelParser
 				.parse(new ArrayList<>(this.getUpdateClasses()));
+
+		Connection connection = this.getEmf().unwrap(Connection.class);
+
+		TriggerSQLStringSource triggerSource = this.getTriggerSQLStringSource();
+		try {
+			for (String str : triggerSource.getSetupCode()) {
+				Statement statement = connection.createStatement();
+				LOGGER.info(str);
+				statement.addBatch(connection.nativeSQL(str));
+				statement.executeBatch();
+				connection.commit();
+			}
+			for (EventModelInfo info : eventModelInfos) {
+				for (String unSetupCode : triggerSource
+						.getSpecificUnSetupCode(info)) {
+					Statement statement = connection.createStatement();
+					LOGGER.info(unSetupCode);
+					statement.addBatch(connection.nativeSQL(unSetupCode));
+					statement.executeBatch();
+					connection.commit();
+				}
+				for (String setupCode : triggerSource
+						.getSpecificSetupCode(info)) {
+					Statement statement = connection.createStatement();
+					LOGGER.info(setupCode);
+					statement.addBatch(connection.nativeSQL(setupCode));
+					statement.executeBatch();
+					connection.commit();
+				}
+				for (int eventType : EventType.values()) {
+					String[] triggerCreationStrings = triggerSource
+							.getTriggerCreationCode(info, eventType);
+					for (String triggerCreationString : triggerCreationStrings) {
+						Statement statement = connection.createStatement();
+						LOGGER.info(triggerCreationString);
+						statement.addBatch(connection
+								.nativeSQL(triggerCreationString));
+						statement.executeBatch();
+						connection.commit();
+					}
+				}
+
+			}
+		} catch (SQLException e) {
+			try {
+				connection.rollback();
+			} catch (SQLException e1) {
+				//TODO: better Exception:
+				throw new RuntimeException(e1);
+			}
+			//TODO: better Exception:
+			throw new RuntimeException(e);
+		}
+
 		JPAUpdateSource updateSource = new JPAUpdateSource(eventModelInfos,
 				this.getEmf(), this.getDelay(), this.getDelayUnit(),
 				this.getBatchSizeForUpdates());

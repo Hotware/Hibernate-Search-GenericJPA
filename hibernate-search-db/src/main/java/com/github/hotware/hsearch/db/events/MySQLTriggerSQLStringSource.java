@@ -97,26 +97,12 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 				.replaceAll("#UNIQUE_ID_TABLE_NAME#", this.uniqueIdTableName);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * com.github.hotware.hsearch.db.events.TriggerSQLStringSource#getSetupCode
-	 * ()
-	 */
 	@Override
 	public String[] getSetupCode() {
-		return new String[] { createUniqueIdTable, dropUniqueIdProcedure,
-				createUniqueIdProcedure };
+		return new String[] { this.createUniqueIdTable, this.dropUniqueIdProcedure,
+				this.createUniqueIdProcedure };
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * com.github.hotware.hsearch.db.events.TriggerSQLStringSource#getTriggerString
-	 * (com.github.hotware.hsearch.db.events.EventModelInfo, int)
-	 */
 	@Override
 	public String[] getTriggerCreationCode(EventModelInfo eventModelInfo,
 			int eventType) {
@@ -159,13 +145,6 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 		return new String[] { createTriggerOriginalTableSQL };
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.github.hotware.hsearch.db.events.TriggerSQLStringSource#
-	 * getTriggerDeletionString
-	 * (com.github.hotware.hsearch.db.events.EventModelInfo, int)
-	 */
 	@Override
 	public String[] getTriggerDropCode(EventModelInfo eventModelInfo,
 			int eventType) {
@@ -186,12 +165,6 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 				.append("_cleanup_hsearch").toString();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.github.hotware.hsearch.db.events.TriggerSQLStringSource#
-	 * getSpecificSetupCode(com.github.hotware.hsearch.db.events.EventModelInfo)
-	 */
 	@Override
 	public String[] getSpecificSetupCode(EventModelInfo eventModelInfo) {
 		String createTriggerCleanUpSQL = String.format(
@@ -201,27 +174,15 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 		return new String[] { createTriggerCleanUpSQL };
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.github.hotware.hsearch.db.events.TriggerSQLStringSource#
-	 * getSpecificUnSetupCode
-	 * (com.github.hotware.hsearch.db.events.EventModelInfo)
-	 */
 	@Override
 	public String[] getSpecificUnSetupCode(EventModelInfo eventModelInfo) {
 		return new String[] { String.format(DROP_TRIGGER_SQL_FORMAT,
 				this.getCleanUpTriggerName(eventModelInfo.getTableName())) };
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.github.hotware.hsearch.db.events.TriggerSQLStringSource#
-	 * getRecreateUniqueIdTableCode()
-	 */
 	@Override
 	public String[] getRecreateUniqueIdTableCode() {
 		return new String[] { this.dropUniqueIdTable, this.createUniqueIdTable };
 	}
+	
 }
