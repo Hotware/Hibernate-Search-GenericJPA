@@ -40,7 +40,7 @@ import com.github.hotware.hsearch.factory.Transaction;
 
 /**
  * This class is the "glue" between a
- * {@link com.github.hotware.hsearch.db.UpdateSource} and the actual
+ * {@link com.github.hotware.hsearch.db.events.UpdateSource} and the actual
  * Hibernate-Search index. It consumes Events coming from the UpdateSource and
  * updates the Hibernate-Search index accordingly
  * 

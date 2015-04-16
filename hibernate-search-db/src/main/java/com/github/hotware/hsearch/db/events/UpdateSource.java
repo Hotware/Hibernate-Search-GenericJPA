@@ -18,7 +18,7 @@ package com.github.hotware.hsearch.db.events;
 import java.util.List;
 
 /**
- * Source for updates on entities. This does no hierarchy checks yet it just
+ * Source for updates on entities. This does no hierarchy checks, it just
  * delivers information about which entry in which table has changed
  * 
  * @author Martin Braun

@@ -18,6 +18,7 @@ package com.github.hotware.hsearch.ejb;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -56,9 +57,6 @@ import com.github.hotware.hsearch.factory.SearchConfigurationImpl;
 import com.github.hotware.hsearch.factory.SearchFactory;
 import com.github.hotware.hsearch.factory.SearchFactoryImpl;
 import com.github.hotware.hsearch.jpa.events.MetaModelParser;
-import com.github.hotware.hsearch.jpa.test.entities.PlaceSorcererUpdates;
-import com.github.hotware.hsearch.jpa.test.entities.PlaceUpdates;
-import com.github.hotware.hsearch.jpa.test.entities.SorcererUpdates;
 import com.github.hotware.hsearch.query.HSearchQuery;
 import com.github.hotware.hsearch.transaction.TransactionContext;
 
@@ -146,8 +144,7 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 				entityProvider, impl.unwrap(ExtendedSearchIntegrator.class));
 		EventModelParser eventModelParser = new EventModelParser();
 		List<EventModelInfo> eventModelInfos = eventModelParser
-				.parse(new HashSet<>(Arrays.asList(PlaceUpdates.class,
-						SorcererUpdates.class, PlaceSorcererUpdates.class)));
+				.parse(new ArrayList<>(this.parser.getIndexRelevantEntites()));
 		JPAUpdateSource updateSource = new JPAUpdateSource(eventModelInfos,
 				this.getEmf(), this.getDelay(), this.getDelayUnit(),
 				this.getBatchSizeForUpdates());
