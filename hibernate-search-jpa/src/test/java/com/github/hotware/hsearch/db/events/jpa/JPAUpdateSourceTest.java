@@ -53,7 +53,7 @@ public class JPAUpdateSourceTest {
 			JPAUpdateSource updateSource = new JPAUpdateSource(
 					parser.parse(new HashSet<>(Arrays.asList(
 							PlaceSorcererUpdates.class, PlaceUpdates.class))),
-					emf, 1, TimeUnit.SECONDS, 2, 2);
+					emf, false, 1, TimeUnit.SECONDS, 2, 2);
 
 			{
 				EntityManager em = null;
@@ -137,7 +137,7 @@ public class JPAUpdateSourceTest {
 		JPAUpdateSource updateSource = new JPAUpdateSource(
 				parser.parse(new HashSet<>(Arrays.asList(
 						PlaceSorcererUpdates.class, PlaceUpdates.class))), emf,
-				1, TimeUnit.SECONDS, 2, 2);
+				false, 1, TimeUnit.SECONDS, 2, 2);
 		return updateSource.query(em);
 	}
 

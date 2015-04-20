@@ -32,6 +32,7 @@ import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.enterprise.concurrent.ManagedScheduledExecutorService;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 
@@ -53,8 +54,10 @@ import com.github.hotware.hsearch.db.events.IndexUpdater;
 import com.github.hotware.hsearch.db.events.TriggerSQLStringSource;
 import com.github.hotware.hsearch.db.events.UpdateConsumer;
 import com.github.hotware.hsearch.db.events.IndexUpdater.IndexInformation;
+import com.github.hotware.hsearch.db.events.UpdateSource;
 import com.github.hotware.hsearch.db.events.jpa.JPAUpdateSource;
 import com.github.hotware.hsearch.entity.EntityProvider;
+import com.github.hotware.hsearch.entity.jpa.EntityManagerCloseable;
 import com.github.hotware.hsearch.entity.jpa.EntityManagerEntityProvider;
 import com.github.hotware.hsearch.entity.jpa.JPAReusableEntityProvider;
 import com.github.hotware.hsearch.factory.SearchConfigurationImpl;
@@ -76,9 +79,10 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 			.getName());
 	SearchFactory searchFactory;
 	MetaModelParser parser;
+	UpdateSource updateSource;
 
 	public EntityProvider entityProvider(EntityManager em) {
-		return new EntityManagerEntityProvider(em,
+		return new EntityManagerEntityProvider(new EntityManagerCloseable(em),
 				this.parser.getIdProperties());
 	}
 
@@ -106,6 +110,10 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 	protected abstract int getBatchSizeForUpdates();
 
 	protected abstract TriggerSQLStringSource getTriggerSQLStringSource();
+
+	protected abstract ManagedScheduledExecutorService getManagedScheduledExecutorServiceForUpdater();
+
+	protected abstract boolean isUseJTATransaction();
 
 	@PostConstruct
 	protected void init() {
@@ -142,7 +150,8 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 				impl.unwrap(ExtendedSearchIntegrator.class));
 
 		JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider(
-				this.getEmf(), this.parser.getIdProperties());
+				this.getEmf(), this.parser.getIdProperties(),
+				this.isUseJTATransaction());
 		IndexUpdater indexUpdater = new IndexUpdater(
 				this.getIndexInformations(), this.getContainedInIndexOf(),
 				this.getIdTypesForEntities(), entityProvider,
@@ -151,70 +160,98 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 		List<EventModelInfo> eventModelInfos = eventModelParser
 				.parse(new ArrayList<>(this.getUpdateClasses()));
 
-		Connection connection = this.getEmf().unwrap(Connection.class);
-
-		TriggerSQLStringSource triggerSource = this.getTriggerSQLStringSource();
+		EntityManager em = null;
 		try {
-			for (String str : triggerSource.getSetupCode()) {
-				Statement statement = connection.createStatement();
-				LOGGER.info(str);
-				statement.addBatch(connection.nativeSQL(str));
-				statement.executeBatch();
-				connection.commit();
-			}
-			for (EventModelInfo info : eventModelInfos) {
-				for (String unSetupCode : triggerSource
-						.getSpecificUnSetupCode(info)) {
+			em = this.getEmf().createEntityManager();
+			Connection connection = em.unwrap(Connection.class);
+
+			TriggerSQLStringSource triggerSource = this
+					.getTriggerSQLStringSource();
+			try {
+				for (String str : triggerSource.getSetupCode()) {
 					Statement statement = connection.createStatement();
-					LOGGER.info(unSetupCode);
-					statement.addBatch(connection.nativeSQL(unSetupCode));
+					LOGGER.info(str);
+					statement.addBatch(connection.nativeSQL(str));
 					statement.executeBatch();
 					connection.commit();
 				}
-				for (String setupCode : triggerSource
-						.getSpecificSetupCode(info)) {
-					Statement statement = connection.createStatement();
-					LOGGER.info(setupCode);
-					statement.addBatch(connection.nativeSQL(setupCode));
-					statement.executeBatch();
-					connection.commit();
-				}
-				for (int eventType : EventType.values()) {
-					String[] triggerCreationStrings = triggerSource
-							.getTriggerCreationCode(info, eventType);
-					for (String triggerCreationString : triggerCreationStrings) {
+				for (EventModelInfo info : eventModelInfos) {
+					for (String unSetupCode : triggerSource
+							.getSpecificUnSetupCode(info)) {
 						Statement statement = connection.createStatement();
-						LOGGER.info(triggerCreationString);
-						statement.addBatch(connection
-								.nativeSQL(triggerCreationString));
+						LOGGER.info(unSetupCode);
+						statement.addBatch(connection.nativeSQL(unSetupCode));
 						statement.executeBatch();
 						connection.commit();
 					}
-				}
+					for (String setupCode : triggerSource
+							.getSpecificSetupCode(info)) {
+						Statement statement = connection.createStatement();
+						LOGGER.info(setupCode);
+						statement.addBatch(connection.nativeSQL(setupCode));
+						statement.executeBatch();
+						connection.commit();
+					}
+					for (int eventType : EventType.values()) {
+						String[] triggerDropStrings = triggerSource
+								.getTriggerDropCode(info, eventType);
+						for (String triggerCreationString : triggerDropStrings) {
+							Statement statement = connection.createStatement();
+							LOGGER.info(triggerCreationString);
+							statement.addBatch(connection
+									.nativeSQL(triggerCreationString));
+							statement.executeBatch();
+							connection.commit();
+						}
+					}
+					for (int eventType : EventType.values()) {
+						String[] triggerCreationStrings = triggerSource
+								.getTriggerCreationCode(info, eventType);
+						for (String triggerCreationString : triggerCreationStrings) {
+							Statement statement = connection.createStatement();
+							LOGGER.info(triggerCreationString);
+							statement.addBatch(connection
+									.nativeSQL(triggerCreationString));
+							statement.executeBatch();
+							connection.commit();
+						}
+					}
 
+				}
+			} catch (SQLException e) {
+				try {
+					connection.rollback();
+				} catch (SQLException e1) {
+					// TODO: better Exception:
+					throw new RuntimeException(e1);
+				}
+				// TODO: better Exception:
+				throw new RuntimeException(e);
 			}
-		} catch (SQLException e) {
-			try {
-				connection.rollback();
-			} catch (SQLException e1) {
-				//TODO: better Exception:
-				throw new RuntimeException(e1);
+		} finally {
+			if (em != null) {
+				try {
+					em.close();
+				} catch (IllegalStateException e) {
+					// yay, JPA...
+				}
 			}
-			//TODO: better Exception:
-			throw new RuntimeException(e);
 		}
 
-		JPAUpdateSource updateSource = new JPAUpdateSource(eventModelInfos,
-				this.getEmf(), this.getDelay(), this.getDelayUnit(),
-				this.getBatchSizeForUpdates());
+		this.updateSource = new JPAUpdateSource(eventModelInfos, this.getEmf(),
+				this.isUseJTATransaction(), this.getDelay(),
+				this.getDelayUnit(),
+				this.getBatchSizeForUpdates(),
+				this.getManagedScheduledExecutorServiceForUpdater());
 
-		updateSource.setUpdateConsumers(Arrays.asList(indexUpdater, this));
-		updateSource.start();
+		this.updateSource.setUpdateConsumers(Arrays.asList(indexUpdater, this));
+		this.updateSource.start();
 	}
 
 	@PreDestroy
 	protected void atShutdown() {
 		try {
+			this.updateSource.stop();
 			this.close();
 		} catch (IOException e) {
 			throw new RuntimeException(e);

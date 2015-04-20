@@ -102,7 +102,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 			ExtendedSearchIntegrator impl = (ExtendedSearchIntegrator) builder
 					.buildSearchIntegrator();
 			JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider(
-					this.emf, this.metaModelParser.getIdProperties());
+					this.emf, this.metaModelParser.getIdProperties(), false);
 			IndexUpdater indexUpdater = new IndexUpdater(
 					this.indexInformations, this.containedInIndexOf,
 					this.idTypesForEntities, entityProvider, impl);
@@ -111,7 +111,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 					.parse(new HashSet<>(Arrays.asList(PlaceUpdates.class,
 							SorcererUpdates.class, PlaceSorcererUpdates.class)));
 			JPAUpdateSource updateSource = new JPAUpdateSource(eventModelInfos,
-					this.emf, 500, TimeUnit.MILLISECONDS, 10);
+					this.emf, false, 500, TimeUnit.MILLISECONDS, 10);
 			updateSource.setUpdateConsumers(Arrays.asList(indexUpdater));
 			updateSource.start();
 

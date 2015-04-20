@@ -109,9 +109,9 @@ public class MySQLTriggerIntegrationTest extends DatabaseIntegrationTest {
 			tx.commit();
 
 			JPAUpdateSource updateSource = new JPAUpdateSource(
-					parser.parse(new HashSet<>(Arrays.asList(PlaceSorcererUpdates.class,
-							PlaceUpdates.class))), emf, 1, TimeUnit.SECONDS, 1,
-					1);
+					parser.parse(new HashSet<>(Arrays.asList(
+							PlaceSorcererUpdates.class, PlaceUpdates.class))),
+					emf, false, 1, TimeUnit.SECONDS, 1, 1);
 			updateSource.setUpdateConsumers(Arrays.asList(new UpdateConsumer() {
 
 				@Override
@@ -127,7 +127,7 @@ public class MySQLTriggerIntegrationTest extends DatabaseIntegrationTest {
 			assertEquals(0,
 					em.createQuery("SELECT a FROM PlaceSorcererUpdates a")
 							.getResultList().size());
-			tx.commit();			
+			tx.commit();
 
 			if (exceptionString != null) {
 				fail(exceptionString);

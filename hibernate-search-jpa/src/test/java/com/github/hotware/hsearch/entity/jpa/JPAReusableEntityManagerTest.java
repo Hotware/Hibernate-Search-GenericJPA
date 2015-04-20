@@ -44,7 +44,7 @@ public class JPAReusableEntityManagerTest extends DatabaseIntegrationTest {
 		MetaModelParser metaModelParser = new MetaModelParser();
 		metaModelParser.parse(this.emf.getMetamodel());
 		ReusableEntityProvider provider = new JPAReusableEntityProvider(
-				this.emf, metaModelParser.getIdProperties());
+				this.emf, metaModelParser.getIdProperties(), false);
 		for(int i = 0; i < 3; ++i) {
 			this.testOnce(provider);
 		}
