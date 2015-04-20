@@ -181,6 +181,9 @@ public class JPAUpdateSource implements UpdateSource {
 				.scheduleWithFixedDelay(
 						() -> {
 							try {
+								if(!this.emf.isOpen()) {
+									return;
+								}
 								EntityManager em = null;
 								try {
 									em = new EntityManagerCloseable(this.emf
