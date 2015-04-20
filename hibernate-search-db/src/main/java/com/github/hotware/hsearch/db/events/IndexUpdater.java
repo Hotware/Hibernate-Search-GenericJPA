@@ -21,8 +21,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.hibernate.search.backend.SingularTermDeletionQuery;
-import org.hibernate.search.backend.SingularTermDeletionQuery.Type;
+import org.hibernate.search.backend.spi.SingularTermDeletionQuery;
+import org.hibernate.search.backend.spi.SingularTermDeletionQuery.Type;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.bridge.FieldBridge;

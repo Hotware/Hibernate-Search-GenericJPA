@@ -37,7 +37,7 @@ import javax.persistence.EntityManagerFactory;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
-import org.hibernate.search.backend.SingularTermDeletionQuery;
+import org.hibernate.search.backend.spi.SingularTermDeletionQuery;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.filter.FilterCachingStrategy;
 import org.hibernate.search.indexes.IndexReaderAccessor;
