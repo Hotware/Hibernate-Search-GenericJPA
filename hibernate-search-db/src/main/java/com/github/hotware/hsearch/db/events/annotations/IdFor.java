@@ -36,7 +36,8 @@ public @interface IdFor {
 	 * this is used to determine which type has to be updated. This is needed so
 	 * the EventSource can supply a valid Class to an EntityProvider and pass
 	 * this into the corresponding methods in the SearchFactory
-	 * 
+	 * <br>
+	 * <br>
 	 * the class returned has to be annotated with @InIndex
 	 */
 	public Class<?> entityClass();
