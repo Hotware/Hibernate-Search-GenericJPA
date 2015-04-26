@@ -1,3 +1,6 @@
+/*
+ * originally from Hibernate Search (which is licensed under LGPL 2.1)
+ */
 package com.github.hotware.hsearch.testutil;
 
 import org.hibernate.search.cfg.Environment;
@@ -14,7 +17,7 @@ import org.hibernate.search.spi.IndexingMode;
 /**
  * A {@code BuildContext} implementation for running tests.
  *
- * @author Hardy Ferentschik
+ * @author Hardy Ferentschik (Hibernate Search)
  */
 public class BuildContextForTest implements BuildContext {
 	private final SearchConfiguration searchConfiguration;
