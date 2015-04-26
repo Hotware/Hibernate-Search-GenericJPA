@@ -53,7 +53,7 @@ public @interface IdFor {
 	 *         <b>has to be in the same order as columns</b>
 	 */
 	public String[] columnsInOriginal();
-	
+
 	public Class<? extends ToOriginalIdBridge> bridge() default DefaultToOriginalIdBridge.class;
 
 }

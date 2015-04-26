@@ -60,27 +60,11 @@ public class MetaModelParser {
 
 	private static final Logger LOGGER = Logger.getLogger(MetaModelParser.class
 			.getName());
-	private final Map<Class<?>, Map<Class<?>, Function<Object, Object>>> rootParentAccessors = new HashMap<>();
 	// only contains EntityTypes
 	private final Map<Class<?>, ManagedType<?>> managedTypes = new HashMap<>();
 	private final Map<Class<?>, Boolean> isRootType = new HashMap<>();
 	private final Set<Class<?>> totalVisitedEntities = new HashSet<>();
 	private final Map<Class<?>, String> idProperties = new HashMap<>();
-	
-	//TODO: inIndexOf can be computed here
-
-	public Map<Class<?>, Function<Object, Object>> getRootParentAccessorsForClass(
-			Class<?> clazz) {
-		return Collections.unmodifiableMap(this.rootParentAccessors.get(clazz));
-	}
-
-	public Map<Class<?>, ManagedType<?>> getManagedTypes() {
-		return Collections.unmodifiableMap(this.managedTypes);
-	}
-
-	public Map<Class<?>, Boolean> getIsRootType() {
-		return Collections.unmodifiableMap(this.isRootType);
-	}
 
 	public Set<Class<?>> getIndexRelevantEntites() {
 		return Collections.unmodifiableSet(this.totalVisitedEntities);
@@ -93,7 +77,6 @@ public class MetaModelParser {
 	public void parse(Metamodel metaModel) {
 		// clear the (old) state
 		this.isRootType.clear();
-		this.rootParentAccessors.clear();
 		this.managedTypes.clear();
 		this.idProperties.clear();
 		this.managedTypes.clear();
@@ -153,8 +136,6 @@ public class MetaModelParser {
 						object);
 				return parentOfThis;
 			};
-			this.getParentFunctionList(curEntType.getJavaType()).put(cameFrom,
-					toRoot);
 		}
 
 		// and do the recursion
@@ -285,13 +266,6 @@ public class MetaModelParser {
 									.get(entityTypeClass), entType
 									.getJavaType(), newVisited);
 						});
-	}
-
-	private Map<Class<?>, Function<Object, Object>> getParentFunctionList(
-			Class<?> clazz) {
-		return this.rootParentAccessors.computeIfAbsent(clazz, (key) -> {
-			return new HashMap<>();
-		});
 	}
 
 	private static Class<?> getEntityTypeClass(Attribute<?, ?> attribute) {

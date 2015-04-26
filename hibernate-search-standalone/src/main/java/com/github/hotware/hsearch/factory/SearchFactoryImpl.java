@@ -165,14 +165,6 @@ public class SearchFactoryImpl implements SearchFactory {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * com.github.hotware.hsearch.factory.SearchFactory#purge(java.lang.Class,
-	 * java.io.Serializable,
-	 * com.github.hotware.hsearch.transaction.TransactionContext)
-	 */
 	@Override
 	public void purge(Class<?> entityClass, Serializable id,
 			TransactionContext tc) {
