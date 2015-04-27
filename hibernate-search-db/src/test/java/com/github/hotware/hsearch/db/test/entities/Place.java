@@ -74,7 +74,7 @@ public class Place {
 	/**
 	 * @return the sorcerers
 	 */
-	@IndexedEmbedded
+	@IndexedEmbedded(includeEmbeddedObjectId = true)
 	public Set<Sorcerer> getSorcerers() {
 		return sorcerers;
 	}

@@ -30,7 +30,7 @@ import javax.persistence.EntityManager;
 import org.junit.Test;
 
 import com.github.hotware.hsearch.db.events.jpa.DatabaseIntegrationTest;
-import com.github.hotware.hsearch.jpa.events.MetaModelParser;
+import com.github.hotware.hsearch.db.events.jpa.MetaModelParser;
 import com.github.hotware.hsearch.jpa.test.entities.Place;
 
 /**

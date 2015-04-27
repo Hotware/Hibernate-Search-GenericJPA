@@ -32,16 +32,19 @@ import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
+import org.hibernate.search.engine.metadata.impl.MetadataProvider;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.github.hotware.hsearch.db.events.IndexUpdater;
-import com.github.hotware.hsearch.db.events.IndexUpdater.IndexInformation;
 import com.github.hotware.hsearch.db.events.IndexUpdater.IndexWrapper;
 import com.github.hotware.hsearch.entity.ReusableEntityProvider;
 import com.github.hotware.hsearch.factory.SearchConfigurationImpl;
 import com.github.hotware.hsearch.factory.Transaction;
+import com.github.hotware.hsearch.metadata.MetadataRehasher;
+import com.github.hotware.hsearch.metadata.MetadataUtil;
+import com.github.hotware.hsearch.metadata.RehashedTypeMetadata;
 import com.github.hotware.hsearch.db.test.entities.Place;
 import com.github.hotware.hsearch.db.test.entities.Sorcerer;
 import com.github.hotware.hsearch.db.events.UpdateConsumer.UpdateInfo;
@@ -51,10 +54,8 @@ import com.github.hotware.hsearch.db.events.UpdateConsumer.UpdateInfo;
  */
 public class IndexUpdaterTest {
 
-	Map<Class<?>, List<String>> idsForEntities;
-	Map<Class<?>, IndexInformation> indexInformations;
 	Map<Class<?>, List<Class<?>>> containedInIndexOf;
-	Map<Class<?>, SingularTermDeletionQuery.Type> idTypesForEntities;
+	Map<Class<?>, RehashedTypeMetadata> rehashedTypeMetadataPerIndexRoot;
 	ReusableEntityProvider entityProvider;
 	List<UpdateInfo> updateInfos;
 	boolean changed;
@@ -64,19 +65,19 @@ public class IndexUpdaterTest {
 	public void setup() {
 		this.changed = false;
 		this.deletedSorcerer = false;
-		this.idsForEntities = new HashMap<>();
-		this.idsForEntities.put(Place.class, Arrays.asList("id"));
-		this.idsForEntities.put(Sorcerer.class, Arrays.asList("sorcerers.id"));
-		this.indexInformations = new HashMap<>();
-		this.indexInformations.put(Place.class, new IndexInformation(
-				Place.class, this.idsForEntities));
-		this.containedInIndexOf = new HashMap<>();
-		this.containedInIndexOf.put(Sorcerer.class, Arrays.asList(Place.class));
-		this.containedInIndexOf.put(Place.class, Arrays.asList(Place.class));
-		this.idTypesForEntities = new HashMap<>();
-		this.idTypesForEntities.put(Place.class, SingularTermDeletionQuery.Type.STRING);
-		this.idTypesForEntities.put(Sorcerer.class,
-				SingularTermDeletionQuery.Type.STRING);
+		MetadataProvider metadataProvider = MetadataUtil
+				.getMetadataProvider(new SearchConfigurationImpl());
+		MetadataRehasher rehasher = new MetadataRehasher();
+		List<RehashedTypeMetadata> rehashedTypeMetadatas = new ArrayList<>();
+		rehashedTypeMetadataPerIndexRoot = new HashMap<>();
+		for (Class<?> indexRootType : Arrays.asList(Place.class)) {
+			RehashedTypeMetadata rehashed = rehasher.rehash(metadataProvider
+					.getTypeMetadataFor(indexRootType));
+			rehashedTypeMetadatas.add(rehashed);
+			rehashedTypeMetadataPerIndexRoot.put(indexRootType, rehashed);
+		}
+		this.containedInIndexOf = MetadataUtil
+				.calculateInIndexOf(rehashedTypeMetadatas);
 		this.entityProvider = new ReusableEntityProvider() {
 
 			@SuppressWarnings("rawtypes")
@@ -123,10 +124,12 @@ public class IndexUpdaterTest {
 
 			@Override
 			public void update(Object entity, Transaction tx) {
-				if(entity != null) {
+				if (entity != null) {
 					try {
-						assertTrue(updateInfoSet.remove(new UpdateInfo(entity.getClass(),
-								(Integer) entity.getClass().getMethod("getId").invoke(entity), EventType.UPDATE)));
+						assertTrue(updateInfoSet.remove(new UpdateInfo(entity
+								.getClass(), (Integer) entity.getClass()
+								.getMethod("getId").invoke(entity),
+								EventType.UPDATE)));
 					} catch (IllegalAccessException | IllegalArgumentException
 							| InvocationTargetException | NoSuchMethodException
 							| SecurityException e) {
@@ -137,10 +140,12 @@ public class IndexUpdaterTest {
 
 			@Override
 			public void index(Object entity, Transaction tx) {
-				if(entity != null) {
+				if (entity != null) {
 					try {
-						assertTrue(updateInfoSet.remove(new UpdateInfo(entity.getClass(),
-								(Integer) entity.getClass().getMethod("getId").invoke(entity), EventType.INSERT)));
+						assertTrue(updateInfoSet.remove(new UpdateInfo(entity
+								.getClass(), (Integer) entity.getClass()
+								.getMethod("getId").invoke(entity),
+								EventType.INSERT)));
 					} catch (IllegalAccessException | IllegalArgumentException
 							| InvocationTargetException | NoSuchMethodException
 							| SecurityException e) {
@@ -150,8 +155,8 @@ public class IndexUpdaterTest {
 			}
 
 		};
-		IndexUpdater updater = new IndexUpdater(this.indexInformations,
-				this.containedInIndexOf, this.idTypesForEntities,
+		IndexUpdater updater = new IndexUpdater(
+				this.rehashedTypeMetadataPerIndexRoot, this.containedInIndexOf,
 				this.entityProvider, indexWrapper);
 		updater.updateEvent(updateInfos);
 	}
@@ -170,8 +175,8 @@ public class IndexUpdaterTest {
 		ExtendedSearchIntegrator impl = (ExtendedSearchIntegrator) builder
 				.buildSearchIntegrator();
 
-		IndexUpdater updater = new IndexUpdater(this.indexInformations,
-				this.containedInIndexOf, this.idTypesForEntities,
+		IndexUpdater updater = new IndexUpdater(
+				this.rehashedTypeMetadataPerIndexRoot, this.containedInIndexOf,
 				this.entityProvider, impl);
 		this.reset(updater, impl);
 
@@ -179,8 +184,8 @@ public class IndexUpdaterTest {
 		// this shouldn't delete the root though
 		this.tryOutDeleteNonRoot(updater, impl, 0, 2, Sorcerer.class,
 				"sorcerers.name", "Saruman");
-		this.tryOutDeleteNonRoot(updater, impl, 1, 2, Sorcerer.class,
-				"name", "Valinor");
+		this.tryOutDeleteNonRoot(updater, impl, 1, 2, Sorcerer.class, "name",
+				"Valinor");
 
 		this.tryOutUpdate(updater, impl, 0, 1, Place.class, "name", "Valinor");
 		this.tryOutUpdate(updater, impl, 0, 2, Sorcerer.class,
@@ -289,7 +294,7 @@ public class IndexUpdaterTest {
 		this.changed = false;
 		this.reset(updater, impl);
 	}
-	
+
 	private Object obj(Class<?> entityClass) {
 		return this.obj(entityClass, false);
 	}

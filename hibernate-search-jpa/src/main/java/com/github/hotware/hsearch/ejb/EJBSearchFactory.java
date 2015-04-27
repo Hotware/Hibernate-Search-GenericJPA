@@ -23,6 +23,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -38,8 +40,8 @@ import javax.persistence.EntityManagerFactory;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
-import org.hibernate.search.backend.spi.SingularTermDeletionQuery;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
+import org.hibernate.search.engine.metadata.impl.MetadataProvider;
 import org.hibernate.search.filter.FilterCachingStrategy;
 import org.hibernate.search.indexes.IndexReaderAccessor;
 import org.hibernate.search.query.dsl.QueryContextBuilder;
@@ -53,7 +55,6 @@ import com.github.hotware.hsearch.db.events.EventType;
 import com.github.hotware.hsearch.db.events.IndexUpdater;
 import com.github.hotware.hsearch.db.events.TriggerSQLStringSource;
 import com.github.hotware.hsearch.db.events.UpdateConsumer;
-import com.github.hotware.hsearch.db.events.IndexUpdater.IndexInformation;
 import com.github.hotware.hsearch.db.events.UpdateSource;
 import com.github.hotware.hsearch.db.events.jpa.JPAUpdateSource;
 import com.github.hotware.hsearch.entity.EntityProvider;
@@ -63,7 +64,9 @@ import com.github.hotware.hsearch.entity.jpa.JPAReusableEntityProvider;
 import com.github.hotware.hsearch.factory.SearchConfigurationImpl;
 import com.github.hotware.hsearch.factory.SearchFactory;
 import com.github.hotware.hsearch.factory.SearchFactoryImpl;
-import com.github.hotware.hsearch.jpa.events.MetaModelParser;
+import com.github.hotware.hsearch.metadata.MetadataRehasher;
+import com.github.hotware.hsearch.metadata.MetadataUtil;
+import com.github.hotware.hsearch.metadata.RehashedTypeMetadata;
 import com.github.hotware.hsearch.query.HSearchQuery;
 import com.github.hotware.hsearch.transaction.TransactionContext;
 
@@ -78,30 +81,26 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 	private final Logger LOGGER = Logger.getLogger(EntityManagerFactory.class
 			.getName());
 	SearchFactory searchFactory;
-	MetaModelParser parser;
 	UpdateSource updateSource;
+	Set<Class<?>> indexRelevantEntities;
+	Map<Class<?>, String> idProperties;
+	Map<Class<?>, List<Class<?>>> containedInIndexOf;
 
 	public EntityProvider entityProvider(EntityManager em) {
 		return new EntityManagerEntityProvider(new EntityManagerCloseable(em),
-				this.parser.getIdProperties());
+				this.idProperties);
 	}
 
 	protected abstract EntityManagerFactory getEmf();
 
 	protected abstract String getConfigFile();
 
-	protected abstract List<Class<?>> getAdditionalIndexedClasses();
+	protected abstract List<Class<?>> getIndexRootTypes();
 
 	// THESE ARE NEEDED FOR THE UPDATES
 	// TODO: make this easier
 
 	protected abstract List<Class<?>> getUpdateClasses();
-
-	protected abstract Map<Class<?>, IndexInformation> getIndexInformations();
-
-	protected abstract Map<Class<?>, List<Class<?>>> getContainedInIndexOf();
-
-	protected abstract Map<Class<?>, SingularTermDeletionQuery.Type> getIdTypesForEntities();
 
 	protected abstract TimeUnit getDelayUnit();
 
@@ -117,9 +116,6 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 
 	@PostConstruct
 	protected void init() {
-		this.parser = new MetaModelParser();
-		this.parser.parse(this.getEmf().getMetamodel());
-
 		SearchConfigurationImpl config;
 		if (this.getConfigFile() != null && !this.getConfigFile().equals("")) {
 			LOGGER.info("using config @" + this.getConfigFile());
@@ -135,14 +131,30 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 		} else {
 			config = new SearchConfigurationImpl();
 		}
-		this.getAdditionalIndexedClasses().forEach((clazz) -> {
-			config.addClass(clazz);
-		});
+
+		MetadataProvider metadataProvider = MetadataUtil
+				.getMetadataProvider(config);
+		MetadataRehasher rehasher = new MetadataRehasher();
+
+		List<RehashedTypeMetadata> rehashedTypeMetadatas = new ArrayList<>();
+		Map<Class<?>, RehashedTypeMetadata> rehashedTypeMetadataPerIndexRoot = new HashMap<>();
+		for (Class<?> indexRootType : this.getIndexRootTypes()) {
+			RehashedTypeMetadata rehashed = rehasher.rehash(metadataProvider
+					.getTypeMetadataFor(indexRootType));
+			rehashedTypeMetadatas.add(rehashed);
+			rehashedTypeMetadataPerIndexRoot.put(indexRootType, rehashed);
+		}
+
+		this.indexRelevantEntities = Collections.unmodifiableSet(MetadataUtil
+				.calculateIndexRelevantEntities(rehashedTypeMetadatas));
+		this.idProperties = MetadataUtil
+				.calculateIdProperties(rehashedTypeMetadatas);
+		this.containedInIndexOf = MetadataUtil.calculateInIndexOf(rehashedTypeMetadatas);
 
 		SearchIntegratorBuilder builder = new SearchIntegratorBuilder();
 		// we have to build an integrator here (but we don't need it afterwards)
 		builder.configuration(config).buildSearchIntegrator();
-		this.parser.getIndexRelevantEntites().forEach((clazz) -> {
+		this.indexRelevantEntities.forEach((clazz) -> {
 			builder.addClass(clazz);
 		});
 		SearchIntegrator impl = builder.buildSearchIntegrator();
@@ -150,16 +162,25 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 				impl.unwrap(ExtendedSearchIntegrator.class));
 
 		JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider(
-				this.getEmf(), this.parser.getIdProperties(),
-				this.isUseJTATransaction());
+				this.getEmf(), this.idProperties, this.isUseJTATransaction());
 		IndexUpdater indexUpdater = new IndexUpdater(
-				this.getIndexInformations(), this.getContainedInIndexOf(),
-				this.getIdTypesForEntities(), entityProvider,
-				impl.unwrap(ExtendedSearchIntegrator.class));
+				rehashedTypeMetadataPerIndexRoot, this.containedInIndexOf,
+				entityProvider, impl.unwrap(ExtendedSearchIntegrator.class));
 		EventModelParser eventModelParser = new EventModelParser();
 		List<EventModelInfo> eventModelInfos = eventModelParser
 				.parse(new ArrayList<>(this.getUpdateClasses()));
 
+		this.setupTriggers(eventModelInfos);
+
+		this.updateSource = new JPAUpdateSource(eventModelInfos, this.getEmf(),
+				this.isUseJTATransaction(), this.getDelay(),
+				this.getDelayUnit(), this.getBatchSizeForUpdates(),
+				this.getManagedScheduledExecutorServiceForUpdater());
+		this.updateSource.setUpdateConsumers(Arrays.asList(indexUpdater, this));
+		this.updateSource.start();
+	}
+
+	private void setupTriggers(List<EventModelInfo> eventModelInfos) {
 		EntityManager em = null;
 		try {
 			em = this.getEmf().createEntityManager();
@@ -237,15 +258,6 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 				}
 			}
 		}
-
-		this.updateSource = new JPAUpdateSource(eventModelInfos, this.getEmf(),
-				this.isUseJTATransaction(), this.getDelay(),
-				this.getDelayUnit(),
-				this.getBatchSizeForUpdates(),
-				this.getManagedScheduledExecutorServiceForUpdater());
-
-		this.updateSource.setUpdateConsumers(Arrays.asList(indexUpdater, this));
-		this.updateSource.start();
 	}
 
 	@PreDestroy
@@ -258,8 +270,8 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 		}
 	}
 
-	public Set<Class<?>> getIndexRelevantEntitiesFromJPA() {
-		return this.parser.getIndexRelevantEntites();
+	public Set<Class<?>> getIndexRelevantEntities() {
+		return this.indexRelevantEntities;
 	}
 
 	@Override

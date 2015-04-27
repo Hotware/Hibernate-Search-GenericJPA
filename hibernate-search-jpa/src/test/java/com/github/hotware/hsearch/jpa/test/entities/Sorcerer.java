@@ -64,7 +64,7 @@ public class Sorcerer {
 
 	@ContainedIn
 	@ManyToOne
-	@IndexedEmbedded
+	@IndexedEmbedded(includeEmbeddedObjectId = true)
 	public Place getPlace() {
 		return place;
 	}

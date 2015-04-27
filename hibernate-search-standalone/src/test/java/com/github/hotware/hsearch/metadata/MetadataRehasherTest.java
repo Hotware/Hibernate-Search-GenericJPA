@@ -23,17 +23,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.hibernate.annotations.common.reflection.java.JavaReflectionManager;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
-import org.hibernate.search.engine.impl.ConfigContext;
-import org.hibernate.search.engine.metadata.impl.AnnotationMetadataProvider;
 import org.hibernate.search.engine.metadata.impl.MetadataProvider;
 import org.hibernate.search.engine.metadata.impl.TypeMetadata;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.github.hotware.hsearch.factory.SearchConfigurationImpl;
-import com.github.hotware.hsearch.testutil.BuildContextForTest;
 
 /**
  * @author Martin Braun
@@ -46,10 +42,7 @@ public class MetadataRehasherTest {
 	@Before
 	public void setup() {
 		SearchConfiguration searchConfiguration = new SearchConfigurationImpl();
-		ConfigContext configContext = new ConfigContext(searchConfiguration,
-				new BuildContextForTest(searchConfiguration));
-		metadataProvider = new AnnotationMetadataProvider(
-				new JavaReflectionManager(), configContext);
+		metadataProvider = MetadataUtil.getMetadataProvider(searchConfiguration);
 		this.metadataRehasher = new MetadataRehasher();
 	}
 
@@ -127,5 +120,8 @@ public class MetadataRehasherTest {
 		assertEquals(2, inIndexOf.get(SubEntity.class).size());
 		assertTrue(inIndexOf.get(SubEntity.class).contains(RootEntity.class));
 		assertTrue(inIndexOf.get(SubEntity.class).contains(AnotherRootEntity.class));
+		
+		//FIXME: unit-test the TermDeletion stuff
 	}
+
 }

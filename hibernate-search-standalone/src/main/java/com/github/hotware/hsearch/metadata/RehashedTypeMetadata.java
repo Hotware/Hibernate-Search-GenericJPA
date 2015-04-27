@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.hibernate.search.backend.spi.SingularTermDeletionQuery;
 import org.hibernate.search.engine.metadata.impl.DocumentFieldMetadata;
 import org.hibernate.search.engine.metadata.impl.TypeMetadata;
 
@@ -51,6 +52,8 @@ public final class RehashedTypeMetadata {
 	 * provides info about how each id is stored in the index
 	 */
 	Map<String, DocumentFieldMetadata> documentFieldMetadataForIdFieldName = new HashMap<>();
+
+	Map<String, SingularTermDeletionQuery.Type> singularTermDeletionQueryTypeForIdFieldName = new HashMap<>();
 
 	/**
 	 * @return the originalTypeMetadata
@@ -113,6 +116,22 @@ public final class RehashedTypeMetadata {
 	public void setDocumentFieldMetadataForIdFieldName(
 			Map<String, DocumentFieldMetadata> documentFieldMetadataForIdFieldName) {
 		this.documentFieldMetadataForIdFieldName = documentFieldMetadataForIdFieldName;
+	}
+
+	/**
+	 * @return the singularTermDeletionQueryTypeForIdFieldName
+	 */
+	public Map<String, SingularTermDeletionQuery.Type> getSingularTermDeletionQueryTypeForIdFieldName() {
+		return singularTermDeletionQueryTypeForIdFieldName;
+	}
+
+	/**
+	 * @param singularTermDeletionQueryTypeForIdFieldName
+	 *            the singularTermDeletionQueryTypeForIdFieldName to set
+	 */
+	public void setSingularTermDeletionQueryTypeForIdFieldName(
+			Map<String, SingularTermDeletionQuery.Type> singularTermDeletionQueryTypeForIdFieldName) {
+		this.singularTermDeletionQueryTypeForIdFieldName = singularTermDeletionQueryTypeForIdFieldName;
 	}
 
 }

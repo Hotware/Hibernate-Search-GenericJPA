@@ -28,8 +28,8 @@ import java.util.stream.Collectors;
 import org.junit.Test;
 
 import com.github.hotware.hsearch.db.events.jpa.DatabaseIntegrationTest;
+import com.github.hotware.hsearch.db.events.jpa.MetaModelParser;
 import com.github.hotware.hsearch.entity.ReusableEntityProvider;
-import com.github.hotware.hsearch.jpa.events.MetaModelParser;
 import com.github.hotware.hsearch.jpa.test.entities.Place;
 
 /**

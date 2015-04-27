@@ -15,8 +15,8 @@
  */
 package com.github.hotware.hsearch.db.test.entities;
 
-import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.ContainedIn;
+import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.FieldBridge;
 import org.hibernate.search.annotations.Index;
@@ -38,7 +38,7 @@ public class Sorcerer {
 	/**
 	 * @return the id
 	 */
-	@Field(name = "id", store = Store.YES, index = Index.YES, analyze = Analyze.NO)
+	@DocumentId
 	@FieldBridge(impl = IntegerBridge.class)
 	public Integer getId() {
 		return id;

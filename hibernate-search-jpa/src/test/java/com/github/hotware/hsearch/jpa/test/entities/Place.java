@@ -103,7 +103,7 @@ public class Place {
 	}
 
 	@ManyToMany(cascade = CascadeType.ALL)
-	@IndexedEmbedded
+	@IndexedEmbedded(includeEmbeddedObjectId = true)
 	public List<AdditionalPlace> getAdditionalPlace() {
 		return additionalPlace;
 	}

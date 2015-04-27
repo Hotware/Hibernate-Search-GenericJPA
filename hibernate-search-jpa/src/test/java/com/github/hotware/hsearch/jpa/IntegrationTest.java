@@ -37,12 +37,12 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
+import com.github.hotware.hsearch.db.events.jpa.MetaModelParser;
 import com.github.hotware.hsearch.entity.EntityProvider;
 import com.github.hotware.hsearch.entity.jpa.EntityManagerEntityProvider;
 import com.github.hotware.hsearch.factory.SearchConfigurationImpl;
 import com.github.hotware.hsearch.factory.SearchFactory;
 import com.github.hotware.hsearch.factory.SearchFactoryFactory;
-import com.github.hotware.hsearch.jpa.events.MetaModelParser;
 import com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace;
 import com.github.hotware.hsearch.jpa.test.entities.AdditionalPlace2;
 import com.github.hotware.hsearch.jpa.test.entities.EmbeddableInfo;
@@ -164,15 +164,6 @@ public class IntegrationTest {
 			MetaModelParser parser = new MetaModelParser();
 			parser.parse(this.emf.getMetamodel());
 			{
-				// this test is not sufficient enough
-				// see: https://github.com/Hotware/Hibernate-Search-JPA/issues/3
-				Sorcerer sorc = this.valinor.getSorcerers().iterator().next();
-				Function<Object, Object> func = parser
-						.getRootParentAccessorsForClass(Sorcerer.class).get(
-								Place.class);
-				Place place = (Place) func.apply(sorc);
-				assertEquals(this.valinor, place);
-
 				assertEquals(4, parser.getIndexRelevantEntites().size());
 			}
 		} finally {

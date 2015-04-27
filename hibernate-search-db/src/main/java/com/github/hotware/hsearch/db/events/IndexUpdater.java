@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.hibernate.search.backend.spi.SingularTermDeletionQuery;
-import org.hibernate.search.backend.spi.SingularTermDeletionQuery.Type;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.bridge.FieldBridge;
@@ -37,6 +36,7 @@ import org.jboss.logging.Logger;
 
 import com.github.hotware.hsearch.entity.ReusableEntityProvider;
 import com.github.hotware.hsearch.factory.Transaction;
+import com.github.hotware.hsearch.metadata.RehashedTypeMetadata;
 
 /**
  * This class is the "glue" between a
@@ -57,30 +57,28 @@ public class IndexUpdater implements UpdateConsumer {
 
 	private static final int HSQUERY_BATCH = 50;
 
-	private final Map<Class<?>, IndexInformation> indexInformations;
+	private final Map<Class<?>, RehashedTypeMetadata> metadataPerForIndexRoot;
 	private final Map<Class<?>, List<Class<?>>> containedInIndexOf;
-	private final Map<Class<?>, SingularTermDeletionQuery.Type> indexIdTypesForEntities;
 	private final ReusableEntityProvider entityProvider;
 	private IndexWrapper indexWrapper;
 
-	public IndexUpdater(Map<Class<?>, IndexInformation> indexInformations,
+	public IndexUpdater(
+			Map<Class<?>, RehashedTypeMetadata> metadataPerForIndexRoot,
 			Map<Class<?>, List<Class<?>>> containedInIndexOf,
-			Map<Class<?>, Type> indexIdTypesForEntities,
 			ReusableEntityProvider entityProvider, IndexWrapper indexWrapper) {
-		this.indexInformations = indexInformations;
+		this.metadataPerForIndexRoot = metadataPerForIndexRoot;
 		this.containedInIndexOf = containedInIndexOf;
-		this.indexIdTypesForEntities = indexIdTypesForEntities;
 		this.entityProvider = entityProvider;
 		this.indexWrapper = indexWrapper;
 	}
 
-	public IndexUpdater(Map<Class<?>, IndexInformation> indexInformations,
+	public IndexUpdater(
+			Map<Class<?>, RehashedTypeMetadata> metadataPerForIndexRoot,
 			Map<Class<?>, List<Class<?>>> containedInIndexOf,
-			Map<Class<?>, Type> idsTypesForEntities,
 			ReusableEntityProvider entityProvider,
 			ExtendedSearchIntegrator searchIntegrator) {
-		this(indexInformations, containedInIndexOf, idsTypesForEntities,
-				entityProvider, (IndexWrapper) null);
+		this(metadataPerForIndexRoot, containedInIndexOf, entityProvider,
+				(IndexWrapper) null);
 		this.indexWrapper = new DefaultIndexWrapper(searchIntegrator);
 	}
 
@@ -135,19 +133,6 @@ public class IndexUpdater implements UpdateConsumer {
 		}
 	}
 
-	public static class IndexInformation {
-
-		final Class<?> mainEntity;
-		final Map<Class<?>, List<String>> idsForEntities;
-
-		public IndexInformation(Class<?> mainEntity,
-				Map<Class<?>, List<String>> idsForEntities) {
-			this.mainEntity = mainEntity;
-			this.idsForEntities = idsForEntities;
-		}
-
-	}
-
 	public static interface IndexWrapper {
 
 		public void delete(Class<?> entityClass, List<Class<?>> inIndexOf,
@@ -174,9 +159,10 @@ public class IndexUpdater implements UpdateConsumer {
 				Object id, Transaction tx) {
 			for (int i = 0; i < inIndexOf.size(); ++i) {
 				Class<?> indexClass = inIndexOf.get(i);
-				IndexInformation info = IndexUpdater.this.indexInformations
+				RehashedTypeMetadata metadata = IndexUpdater.this.metadataPerForIndexRoot
 						.get(indexClass);
-				List<String> fields = info.idsForEntities.get(entityClass);
+				List<String> fields = metadata.getIdFieldNamesForType().get(
+						entityClass);
 				for (String field : fields) {
 					DocumentFieldMetadata metaDataForIdField = this.metaDataForIdFields
 							.computeIfAbsent(
@@ -205,7 +191,9 @@ public class IndexUpdater implements UpdateConsumer {
 															field);
 										}
 									});
-					SingularTermDeletionQuery.Type idType = IndexUpdater.this.indexIdTypesForEntities
+					SingularTermDeletionQuery.Type idType = IndexUpdater.this.metadataPerForIndexRoot
+							.get(indexClass)
+							.getSingularTermDeletionQueryTypeForIdFieldName()
 							.get(entityClass);
 					Object idValueForDeletion;
 					if (idType == SingularTermDeletionQuery.Type.STRING) {

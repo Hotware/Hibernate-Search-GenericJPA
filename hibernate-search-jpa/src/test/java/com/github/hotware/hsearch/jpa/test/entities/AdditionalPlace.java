@@ -53,7 +53,7 @@ public class AdditionalPlace {
 		return id;
 	}
 
-	@IndexedEmbedded
+	@IndexedEmbedded(includeEmbeddedObjectId = true)
 	@OneToOne(cascade = CascadeType.ALL, optional = true)
 	public AdditionalPlace2 getAdditionalPlace2() {
 		return additionalPlace2;

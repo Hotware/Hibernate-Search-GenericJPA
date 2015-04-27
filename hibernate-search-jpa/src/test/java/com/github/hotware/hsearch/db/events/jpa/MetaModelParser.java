@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.hotware.hsearch.jpa.events;
+package com.github.hotware.hsearch.db.events.jpa;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -42,6 +42,8 @@ import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
 
 /**
+ * ONLY USED FOR OLD UNIT TESTS!!!
+ * 
  * class used to parse the JPA annotations in respect to the Hibernate-Search
  * Index annotations. <br>
  * <br>
@@ -56,6 +58,7 @@ import org.hibernate.search.annotations.IndexedEmbedded;
  * 
  * @author Martin Braun
  */
+@Deprecated
 public class MetaModelParser {
 
 	private static final Logger LOGGER = Logger.getLogger(MetaModelParser.class

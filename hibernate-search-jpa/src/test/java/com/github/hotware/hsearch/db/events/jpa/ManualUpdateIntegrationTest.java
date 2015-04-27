@@ -19,6 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,9 +31,9 @@ import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
 
-import org.hibernate.search.backend.spi.SingularTermDeletionQuery;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
+import org.hibernate.search.engine.metadata.impl.MetadataProvider;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,44 +41,43 @@ import org.junit.Test;
 import com.github.hotware.hsearch.db.events.EventModelInfo;
 import com.github.hotware.hsearch.db.events.EventModelParser;
 import com.github.hotware.hsearch.db.events.IndexUpdater;
-import com.github.hotware.hsearch.db.events.IndexUpdater.IndexInformation;
 import com.github.hotware.hsearch.entity.ReusableEntityProvider;
 import com.github.hotware.hsearch.entity.jpa.JPAReusableEntityProvider;
 import com.github.hotware.hsearch.factory.SearchConfigurationImpl;
-import com.github.hotware.hsearch.jpa.events.MetaModelParser;
 import com.github.hotware.hsearch.jpa.test.entities.Place;
 import com.github.hotware.hsearch.jpa.test.entities.PlaceSorcererUpdates;
 import com.github.hotware.hsearch.jpa.test.entities.PlaceUpdates;
 import com.github.hotware.hsearch.jpa.test.entities.Sorcerer;
 import com.github.hotware.hsearch.jpa.test.entities.SorcererUpdates;
+import com.github.hotware.hsearch.metadata.MetadataRehasher;
+import com.github.hotware.hsearch.metadata.MetadataUtil;
+import com.github.hotware.hsearch.metadata.RehashedTypeMetadata;
 
 /**
  * @author Martin Braun
  */
 public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 
-	Map<Class<?>, List<String>> idsForEntities;
-	Map<Class<?>, IndexInformation> indexInformations;
 	Map<Class<?>, List<Class<?>>> containedInIndexOf;
-	Map<Class<?>, SingularTermDeletionQuery.Type> idTypesForEntities;
+	Map<Class<?>, RehashedTypeMetadata> rehashedTypeMetadataPerIndexRoot;
 	ReusableEntityProvider entityProvider;
 	MetaModelParser metaModelParser;
 
 	@Before
 	public void setup() throws SQLException {
-		this.idsForEntities = new HashMap<>();
-		this.idsForEntities.put(Place.class, Arrays.asList("id"));
-		this.idsForEntities.put(Sorcerer.class, Arrays.asList("sorcerers.id"));
-		this.indexInformations = new HashMap<>();
-		this.indexInformations.put(Place.class, new IndexInformation(
-				Place.class, this.idsForEntities));
-		this.containedInIndexOf = new HashMap<>();
-		this.containedInIndexOf.put(Sorcerer.class, Arrays.asList(Place.class));
-		this.containedInIndexOf.put(Place.class, Arrays.asList(Place.class));
-		this.idTypesForEntities = new HashMap<>();
-		this.idTypesForEntities.put(Place.class, SingularTermDeletionQuery.Type.STRING);
-		this.idTypesForEntities.put(Sorcerer.class,
-				SingularTermDeletionQuery.Type.STRING);
+		MetadataProvider metadataProvider = MetadataUtil
+				.getMetadataProvider(new SearchConfigurationImpl());
+		MetadataRehasher rehasher = new MetadataRehasher();
+		List<RehashedTypeMetadata> rehashedTypeMetadatas = new ArrayList<>();
+		rehashedTypeMetadataPerIndexRoot = new HashMap<>();
+		for (Class<?> indexRootType : Arrays.asList(Place.class)) {
+			RehashedTypeMetadata rehashed = rehasher.rehash(metadataProvider
+					.getTypeMetadataFor(indexRootType));
+			rehashedTypeMetadatas.add(rehashed);
+			rehashedTypeMetadataPerIndexRoot.put(indexRootType, rehashed);
+		}
+		this.containedInIndexOf = MetadataUtil
+				.calculateInIndexOf(rehashedTypeMetadatas);
 		this.setup("EclipseLink_MySQL");
 		this.metaModelParser = new MetaModelParser();
 		this.metaModelParser.parse(this.emf.getMetamodel());
@@ -104,8 +104,8 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 			JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider(
 					this.emf, this.metaModelParser.getIdProperties(), false);
 			IndexUpdater indexUpdater = new IndexUpdater(
-					this.indexInformations, this.containedInIndexOf,
-					this.idTypesForEntities, entityProvider, impl);
+					this.rehashedTypeMetadataPerIndexRoot,
+					this.containedInIndexOf, entityProvider, impl);
 			EventModelParser eventModelParser = new EventModelParser();
 			List<EventModelInfo> eventModelInfos = eventModelParser
 					.parse(new HashSet<>(Arrays.asList(PlaceUpdates.class,

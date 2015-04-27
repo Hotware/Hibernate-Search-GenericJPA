@@ -22,6 +22,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.hibernate.annotations.common.reflection.java.JavaReflectionManager;
+import org.hibernate.search.cfg.Environment;
+import org.hibernate.search.cfg.spi.SearchConfiguration;
+import org.hibernate.search.engine.impl.ConfigContext;
+import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
+import org.hibernate.search.engine.metadata.impl.AnnotationMetadataProvider;
+import org.hibernate.search.engine.metadata.impl.MetadataProvider;
+import org.hibernate.search.engine.service.impl.StandardServiceManager;
+import org.hibernate.search.engine.service.spi.ServiceManager;
+import org.hibernate.search.exception.ErrorHandler;
+import org.hibernate.search.exception.impl.LogErrorHandler;
+import org.hibernate.search.indexes.impl.IndexManagerHolder;
+import org.hibernate.search.spi.BuildContext;
+import org.hibernate.search.spi.IndexingMode;
+
 /**
  * @author Martin Braun
  */
@@ -29,6 +44,57 @@ public class MetadataUtil {
 
 	private MetadataUtil() {
 		throw new AssertionError("can't touch this!");
+	}
+
+	public static MetadataProvider getMetadataProvider(
+			SearchConfiguration searchConfiguration) {
+		ConfigContext configContext = new ConfigContext(searchConfiguration,
+				new BuildContext() {
+
+					@Override
+					public ExtendedSearchIntegrator getUninitializedSearchIntegrator() {
+						return null;
+					}
+
+					@Override
+					public String getIndexingStrategy() {
+						return IndexingMode.EVENT.toExternalRepresentation();
+					}
+
+					@Override
+					public IndexingMode getIndexingMode() {
+						return IndexingMode.EVENT;
+					}
+
+					@Override
+					public ServiceManager getServiceManager() {
+						return new StandardServiceManager(searchConfiguration,
+								this, Environment.DEFAULT_SERVICES_MAP);
+					}
+
+					@Override
+					public IndexManagerHolder getAllIndexesManager() {
+						return new IndexManagerHolder();
+					}
+
+					@Override
+					public ErrorHandler getErrorHandler() {
+						return new LogErrorHandler();
+					}
+
+				});
+		MetadataProvider metadataProvider = new AnnotationMetadataProvider(
+				new JavaReflectionManager(), configContext);
+		return metadataProvider;
+	}
+
+	public static Map<Class<?>, String> calculateIdProperties(
+			List<RehashedTypeMetadata> rehashedTypeMetadatas) {
+		Map<Class<?>, String> idProperties = new HashMap<>();
+		for (RehashedTypeMetadata rehashed : rehashedTypeMetadatas) {
+			idProperties.putAll(rehashed.getIdPropertyNameForType());
+		}
+		return idProperties;
 	}
 
 	/**
