@@ -46,88 +46,40 @@ public class HSearchQueryImpl implements HSearchQuery {
 		this.searchIntegrator = searchIntegrator;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#sort(org
-	 * .apache.lucene.search.Sort)
-	 */
 	@Override
 	public HSearchQuery sort(Sort sort) {
 		this.hsquery.sort(sort);
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#filter
-	 * (org.apache.lucene.search.Filter)
-	 */
 	@Override
 	public HSearchQuery filter(Filter filter) {
 		this.hsquery.filter(filter);
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#firstResult
-	 * (int)
-	 */
 	@Override
 	public HSearchQuery firstResult(int firstResult) {
 		this.hsquery.firstResult(firstResult);
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#maxResults
-	 * (int)
-	 */
 	@Override
 	public HSearchQuery maxResults(int maxResults) {
 		this.hsquery.maxResults(maxResults);
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#getLuceneQuery
-	 * ()
-	 */
 	@Override
 	public Query getLuceneQuery() {
 		return this.hsquery.getLuceneQuery();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#queryDto
-	 * (java.lang.Class)
-	 */
 	@Override
 	public <R> List<R> queryDto(Class<R> returnedType) {
 		return this.queryExec.executeHSQuery(this.hsquery, returnedType);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#
-	 * queryProjection(java.lang.String)
-	 */
 	@Override
 	public List<Object[]> queryProjection(String... projection) {
 		String[] projectedFieldsBefore = this.hsquery.getProjectedFields();
@@ -147,12 +99,6 @@ public class HSearchQueryImpl implements HSearchQuery {
 		return ret;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#
-	 * queryResultSize()
-	 */
 	@Override
 	public int queryResultSize() {
 		this.hsquery.getTimeoutManager().start();
@@ -161,23 +107,11 @@ public class HSearchQueryImpl implements HSearchQuery {
 		return resultSize;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#
-	 * enableFullTextFilter(java.lang.String)
-	 */
 	@Override
 	public FullTextFilter enableFullTextFilter(String name) {
 		return hsquery.enableFullTextFilter(name);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.github.hotware.lucene.extension.hsearch.query.HSearchQuery#
-	 * disableFullTextFilter(java.lang.String)
-	 */
 	@Override
 	public void disableFullTextFilter(String name) {
 		this.hsquery.disableFullTextFilter(name);
