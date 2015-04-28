@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.factory;
 
@@ -134,77 +125,71 @@ public class SearchFactoryTest {
 	@Test
 	public void testWithoutNewClasses() {
 		SearchConfiguration searchConfiguration = new SearchConfigurationImpl();
-		List<Class<?>> classes = Arrays.asList(TopLevel.class);
+		List<Class<?>> classes = Arrays.asList( TopLevel.class );
 
 		SearchIntegratorBuilder builder = new SearchIntegratorBuilder();
 		// we have to build an integrator here (but we don't need it afterwards)
-		builder.configuration(searchConfiguration).buildSearchIntegrator();
-		classes.forEach((clazz) -> {
-			builder.addClass(clazz);
-		});
+		builder.configuration( searchConfiguration ).buildSearchIntegrator();
+		classes.forEach( (clazz) -> {
+			builder.addClass( clazz );
+		} );
 		SearchIntegrator impl = builder.buildSearchIntegrator();
 
 		TopLevel tl = new TopLevel();
-		tl.setId(123);
+		tl.setId( 123 );
 		Embedded eb = new Embedded();
 
 		List<Embedded2> embedded2 = new ArrayList<>();
 		{
 			Embedded2 e1 = new Embedded2();
-			e1.setEmbedded(eb);
-			embedded2.add(e1);
+			e1.setEmbedded( eb );
+			embedded2.add( e1 );
 
 			Embedded2 e2 = new Embedded2();
-			e2.setEmbedded(eb);
-			embedded2.add(e1);
+			e2.setEmbedded( eb );
+			embedded2.add( e1 );
 		}
-		eb.setEmbedded2(embedded2);
+		eb.setEmbedded2( embedded2 );
 
-		tl.setEmbedded(eb);
+		tl.setEmbedded( eb );
 		Transaction tc = new Transaction();
 
-		impl.getWorker().performWork(new Work(tl, WorkType.ADD), tc);
+		impl.getWorker().performWork( new Work( tl, WorkType.ADD ), tc );
 	}
 
 	@Test
 	public void test() throws IOException {
-		try (SearchFactory factory = SearchFactoryFactory.createSearchFactory(new SearchConfigurationImpl(),
-				Arrays.asList(TopLevel.class, Embedded.class, Embedded2.class))) {
+		try (SearchFactory factory = SearchFactoryFactory.createSearchFactory( new SearchConfigurationImpl(),
+				Arrays.asList( TopLevel.class, Embedded.class, Embedded2.class ) )) {
 
 			TopLevel tl = new TopLevel();
-			tl.setId(123);
+			tl.setId( 123 );
 			Embedded eb = new Embedded();
 
 			List<Embedded2> embedded2 = new ArrayList<>();
 			{
 				Embedded2 e1 = new Embedded2();
-				e1.setEmbedded(eb);
-				embedded2.add(e1);
+				e1.setEmbedded( eb );
+				embedded2.add( e1 );
 
 				Embedded2 e2 = new Embedded2();
-				e2.setEmbedded(eb);
-				embedded2.add(e1);
+				e2.setEmbedded( eb );
+				embedded2.add( e1 );
 			}
-			eb.setEmbedded2(embedded2);
+			eb.setEmbedded2( embedded2 );
 
-			tl.setEmbedded(eb);
-			eb.setTopLevel(tl);
+			tl.setEmbedded( eb );
+			eb.setTopLevel( tl );
 
 			// indexing starting from the contained entity should work as well
 			// :)
-			factory.index(embedded2.get(0));
+			factory.index( embedded2.get( 0 ) );
 
-			assertEquals(
-					1,
-					factory.getStatistics().getNumberOfIndexedEntities(
-							TopLevel.class.getName()));
+			assertEquals( 1, factory.getStatistics().getNumberOfIndexedEntities( TopLevel.class.getName() ) );
 
-			factory.purge(TopLevel.class, new TermQuery(new Term("id",
-					"123")));
-			HSearchQuery query = factory.createQuery(factory
-					.buildQueryBuilder().forEntity(TopLevel.class).get().all()
-					.createQuery(), TopLevel.class);
-			assertEquals(0, query.queryResultSize());
+			factory.purge( TopLevel.class, new TermQuery( new Term( "id", "123" ) ) );
+			HSearchQuery query = factory.createQuery( factory.buildQueryBuilder().forEntity( TopLevel.class ).get().all().createQuery(), TopLevel.class );
+			assertEquals( 0, query.queryResultSize() );
 		}
 	}
 }

@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
-
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.metadata;
 
@@ -34,22 +25,21 @@ public final class RehashedTypeMetadata {
 	TypeMetadata originalTypeMetadata;
 
 	/**
-	 * this contains all the possible fields in the lucene index for every given
-	 * class contained in the index this metadata object corresponds to
+	 * this contains all the possible fields in the lucene index for every given class contained in the index this
+	 * metadata object corresponds to
 	 */
 	Map<Class<?>, List<String>> idFieldNamesForType = new HashMap<>();
 
 	/**
-	 * this contains the Java Bean property name of the id field for every given
-	 * class contained in the index. every propertyname is relative to it's
-	 * hosting entity instead of the index-root. This is needed to be able to
-	 * retrieve the entity from the database
+	 * this contains the Java Bean property name of the id field for every given class contained in the index. every
+	 * propertyname is relative to it's hosting entity instead of the index-root. This is needed to be able to retrieve
+	 * the entity from the database
 	 */
 	Map<Class<?>, String> idPropertyNameForType = new HashMap<>();
 
 	/**
-	 * this contains the DocumentFieldMetadata for each id-fieldname. This
-	 * provides info about how each id is stored in the index
+	 * this contains the DocumentFieldMetadata for each id-fieldname. This provides info about how each id is stored in
+	 * the index
 	 */
 	Map<String, DocumentFieldMetadata> documentFieldMetadataForIdFieldName = new HashMap<>();
 
@@ -63,8 +53,7 @@ public final class RehashedTypeMetadata {
 	}
 
 	/**
-	 * @param originalTypeMetadata
-	 *            the originalTypeMetadata to set
+	 * @param originalTypeMetadata the originalTypeMetadata to set
 	 */
 	public void setOriginalTypeMetadata(TypeMetadata originalTypeMetadata) {
 		this.originalTypeMetadata = originalTypeMetadata;
@@ -78,11 +67,9 @@ public final class RehashedTypeMetadata {
 	}
 
 	/**
-	 * @param idFieldNamesForType
-	 *            the idFieldNamesForType to set
+	 * @param idFieldNamesForType the idFieldNamesForType to set
 	 */
-	public void setIdFieldNamesForType(
-			Map<Class<?>, List<String>> idFieldNamesForType) {
+	public void setIdFieldNamesForType(Map<Class<?>, List<String>> idFieldNamesForType) {
 		this.idFieldNamesForType = idFieldNamesForType;
 	}
 
@@ -94,11 +81,9 @@ public final class RehashedTypeMetadata {
 	}
 
 	/**
-	 * @param idPropertyNameForType
-	 *            the idPropertyNameForType to set
+	 * @param idPropertyNameForType the idPropertyNameForType to set
 	 */
-	public void setIdPropertyNameForType(
-			Map<Class<?>, String> idPropertyNameForType) {
+	public void setIdPropertyNameForType(Map<Class<?>, String> idPropertyNameForType) {
 		this.idPropertyNameForType = idPropertyNameForType;
 	}
 
@@ -110,11 +95,9 @@ public final class RehashedTypeMetadata {
 	}
 
 	/**
-	 * @param documentFieldMetadataForIdFieldName
-	 *            the documentFieldMetadataForIdFieldName to set
+	 * @param documentFieldMetadataForIdFieldName the documentFieldMetadataForIdFieldName to set
 	 */
-	public void setDocumentFieldMetadataForIdFieldName(
-			Map<String, DocumentFieldMetadata> documentFieldMetadataForIdFieldName) {
+	public void setDocumentFieldMetadataForIdFieldName(Map<String, DocumentFieldMetadata> documentFieldMetadataForIdFieldName) {
 		this.documentFieldMetadataForIdFieldName = documentFieldMetadataForIdFieldName;
 	}
 
@@ -126,11 +109,9 @@ public final class RehashedTypeMetadata {
 	}
 
 	/**
-	 * @param singularTermDeletionQueryTypeForIdFieldName
-	 *            the singularTermDeletionQueryTypeForIdFieldName to set
+	 * @param singularTermDeletionQueryTypeForIdFieldName the singularTermDeletionQueryTypeForIdFieldName to set
 	 */
-	public void setSingularTermDeletionQueryTypeForIdFieldName(
-			Map<String, SingularTermDeletionQuery.Type> singularTermDeletionQueryTypeForIdFieldName) {
+	public void setSingularTermDeletionQueryTypeForIdFieldName(Map<String, SingularTermDeletionQuery.Type> singularTermDeletionQueryTypeForIdFieldName) {
 		this.singularTermDeletionQueryTypeForIdFieldName = singularTermDeletionQueryTypeForIdFieldName;
 	}
 

@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
-
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.util;
 
@@ -35,8 +26,7 @@ import javax.tools.ToolProvider;
 
 /**
  * most (or all code) is from <a href=
- * "http://normalengineering.com.au/normality/c-and-java-code-snippets/java-runtime-compilation-in-memory/"
- * >here</a>
+ * "http://normalengineering.com.au/normality/c-and-java-code-snippets/java-runtime-compilation-in-memory/" >here</a>
  * 
  * @author Martin Braun
  */
@@ -49,39 +39,36 @@ public class InMemoryCompiler {
 		Class clazz = null; // default
 
 		/* Create a list of compilation units (ie Java sources) to compile. */
-		List compilationUnits = Arrays.asList(new CompilationUnit(className,
-				source));
+		List compilationUnits = Arrays.asList( new CompilationUnit( className, source ) );
 
 		/*
-		 * The diagnostic listener gives you a way of examining the source when
-		 * the compile fails. You don't need it, but it makes debugging easier.
+		 * The diagnostic listener gives you a way of examining the source when the compile fails. You don't need it,
+		 * but it makes debugging easier.
 		 */
 		DiagnosticCollector diagnosticListener = new DiagnosticCollector();
 
 		/*
-		 * Get a Java compiler to use. (If this returns null there is a good
-		 * chance you're using a JRE instead of a JDK.)
+		 * Get a Java compiler to use. (If this returns null there is a good chance you're using a JRE instead of a
+		 * JDK.)
 		 */
 		JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 
 		/* Set up the target file manager and call the compiler. */
-		SingleFileManager singleFileManager = new SingleFileManager(compiler,
-				new ByteCode(className));
-		JavaCompiler.CompilationTask compile = compiler.getTask(null,
-				singleFileManager, diagnosticListener, null, null,
-				compilationUnits);
+		SingleFileManager singleFileManager = new SingleFileManager( compiler, new ByteCode( className ) );
+		JavaCompiler.CompilationTask compile = compiler.getTask( null, singleFileManager, diagnosticListener, null, null, compilationUnits );
 
-		if (!compile.call()) {
+		if ( !compile.call() ) {
 			/* Compilation failed: Output the compiler errors to stderr. */
-			for (Diagnostic diagnostic : (List<Diagnostic>) diagnosticListener
-					.getDiagnostics()) {
-				System.err.println(diagnostic);
+			for ( Diagnostic diagnostic : (List<Diagnostic>) diagnosticListener.getDiagnostics() ) {
+				System.err.println( diagnostic );
 			}
-		} else {
+		}
+		else {
 			/* Compilation succeeded: Get the Class object. */
 			try {
-				clazz = singleFileManager.getClassLoader().findClass(className);
-			} catch (ClassNotFoundException e) {
+				clazz = singleFileManager.getClassLoader().findClass( className );
+			}
+			catch (ClassNotFoundException e) {
 				e.printStackTrace();
 			}
 		}
@@ -93,7 +80,7 @@ public class InMemoryCompiler {
 	private static class CompilationUnit extends SimpleJavaFileObject {
 
 		public CompilationUnit(String className, String source) {
-			super(URI.create("file:///" + className + ".java"), Kind.SOURCE);
+			super( URI.create( "file:///" + className + ".java" ), Kind.SOURCE );
 			source_ = source;
 		}
 
@@ -109,7 +96,7 @@ public class InMemoryCompiler {
 
 		@Override
 		public InputStream openInputStream() {
-			return new ByteArrayInputStream(source_.getBytes());
+			return new ByteArrayInputStream( source_.getBytes() );
 		}
 
 		private final String source_;
@@ -119,7 +106,7 @@ public class InMemoryCompiler {
 	private static class ByteCode extends SimpleJavaFileObject {
 
 		public ByteCode(String className) {
-			super(URI.create("byte:///" + className + ".class"), Kind.CLASS);
+			super( URI.create( "byte:///" + className + ".class" ), Kind.CLASS );
 		}
 
 		@Override
@@ -149,14 +136,12 @@ public class InMemoryCompiler {
 	private static class SingleFileManager extends ForwardingJavaFileManager {
 
 		public SingleFileManager(JavaCompiler compiler, ByteCode byteCode) {
-			super(compiler.getStandardFileManager(null, null, null));
-			singleClassLoader_ = new SingleClassLoader(byteCode);
+			super( compiler.getStandardFileManager( null, null, null ) );
+			singleClassLoader_ = new SingleClassLoader( byteCode );
 		}
 
 		@Override
-		public JavaFileObject getJavaFileForOutput(Location notUsed,
-				String className, JavaFileObject.Kind kind, FileObject sibling)
-				throws IOException {
+		public JavaFileObject getJavaFileForOutput(Location notUsed, String className, JavaFileObject.Kind kind, FileObject sibling) throws IOException {
 			return singleClassLoader_.getFileObject();
 		}
 
@@ -180,10 +165,8 @@ public class InMemoryCompiler {
 		}
 
 		@Override
-		protected Class findClass(String className)
-				throws ClassNotFoundException {
-			return defineClass(className, byteCode_.getByteCode(), 0,
-					byteCode_.getByteCode().length);
+		protected Class findClass(String className) throws ClassNotFoundException {
+			return defineClass( className, byteCode_.getByteCode(), 0, byteCode_.getByteCode().length );
 		}
 
 		ByteCode getFileObject() {

@@ -24,26 +24,20 @@ import com.github.hotware.hsearch.db.test.entities.PlaceSorcererUpdates;
 
 /**
  * @author Martin
- *
  */
 public class MySQLTriggerSQLStringSourceTest {
 
 	@Test
 	public void test() {
 		EventModelParser parser = new EventModelParser();
-		EventModelInfo info = parser.parse(
-				new HashSet<>(Arrays.asList(PlaceSorcererUpdates.class)))
-				.get(0);
+		EventModelInfo info = parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class ) ) ).get( 0 );
 		MySQLTriggerSQLStringSource triggerSource = new MySQLTriggerSQLStringSource();
-		System.out.println(Arrays.asList(triggerSource.getSetupCode()));
-		for (int eventType : EventType.values()) {
-			String[] triggerCreationString = triggerSource
-					.getTriggerCreationCode(info, eventType);
-			String[] triggerDropString = triggerSource.getTriggerDropCode(info,
-					eventType);
-			System.out.println("CREATE: "
-					+ Arrays.asList(triggerCreationString));
-			System.out.println("DROP: " + Arrays.asList(triggerDropString));
+		System.out.println( Arrays.asList( triggerSource.getSetupCode() ) );
+		for ( int eventType : EventType.values() ) {
+			String[] triggerCreationString = triggerSource.getTriggerCreationCode( info, eventType );
+			String[] triggerDropString = triggerSource.getTriggerDropCode( info, eventType );
+			System.out.println( "CREATE: " + Arrays.asList( triggerCreationString ) );
+			System.out.println( "DROP: " + Arrays.asList( triggerDropString ) );
 		}
 	}
 

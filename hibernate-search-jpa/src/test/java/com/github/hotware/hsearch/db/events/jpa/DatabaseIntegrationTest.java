@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
-
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.db.events.jpa;
 
@@ -57,13 +48,14 @@ public abstract class DatabaseIntegrationTest {
 	protected List<String> dropStrings;
 
 	public void setup(String persistence) throws SQLException {
-		this.emf = Persistence.createEntityManagerFactory(persistence);
+		this.emf = Persistence.createEntityManagerFactory( persistence );
 		EntityManager em = emf.createEntityManager();
 		try {
-			this.deleteAllData(em);
-			this.setupData(em);
-		} finally {
-			if (em != null) {
+			this.deleteAllData( em );
+			this.setupData( em );
+		}
+		finally {
+			if ( em != null ) {
 				em.close();
 			}
 		}
@@ -73,41 +65,41 @@ public abstract class DatabaseIntegrationTest {
 		EntityTransaction tx = em.getTransaction();
 		tx.begin();
 		Sorcerer gandalf = new Sorcerer();
-		gandalf.setName("Gandalf");
-		em.persist(gandalf);
+		gandalf.setName( "Gandalf" );
+		em.persist( gandalf );
 
 		Sorcerer saruman = new Sorcerer();
-		saruman.setName("Saruman");
-		em.persist(saruman);
+		saruman.setName( "Saruman" );
+		em.persist( saruman );
 
 		Sorcerer radagast = new Sorcerer();
-		radagast.setName("Radagast");
-		em.persist(radagast);
+		radagast.setName( "Radagast" );
+		em.persist( radagast );
 
 		Sorcerer alatar = new Sorcerer();
-		alatar.setName("Alatar");
-		em.persist(alatar);
+		alatar.setName( "Alatar" );
+		em.persist( alatar );
 
 		Sorcerer pallando = new Sorcerer();
-		pallando.setName("Pallando");
-		em.persist(pallando);
+		pallando.setName( "Pallando" );
+		em.persist( pallando );
 
 		// populate this database with some stuff
 		Place helmsDeep = new Place();
-		helmsDeep.setName("Helm's Deep");
+		helmsDeep.setName( "Helm's Deep" );
 		Set<Sorcerer> sorcerersAtHelmsDeep = new HashSet<>();
-		sorcerersAtHelmsDeep.add(gandalf);
-		gandalf.setPlace(helmsDeep);
-		helmsDeep.setSorcerers(sorcerersAtHelmsDeep);
-		em.persist(helmsDeep);
+		sorcerersAtHelmsDeep.add( gandalf );
+		gandalf.setPlace( helmsDeep );
+		helmsDeep.setSorcerers( sorcerersAtHelmsDeep );
+		em.persist( helmsDeep );
 
 		Place valinor = new Place();
-		valinor.setName("Valinor");
+		valinor.setName( "Valinor" );
 		Set<Sorcerer> sorcerersAtValinor = new HashSet<>();
-		sorcerersAtValinor.add(saruman);
-		saruman.setPlace(valinor);
-		valinor.setSorcerers(sorcerersAtValinor);
-		em.persist(valinor);
+		sorcerersAtValinor.add( saruman );
+		saruman.setPlace( valinor );
+		valinor.setSorcerers( sorcerersAtValinor );
+		em.persist( valinor );
 
 		this.valinorId = valinor.getId();
 		this.helmsDeepId = helmsDeep.getId();
@@ -124,31 +116,27 @@ public abstract class DatabaseIntegrationTest {
 
 		{
 			@SuppressWarnings("unchecked")
-			List<Place> toDelete = new ArrayList<>(em.createQuery(
-					"SELECT a FROM Place a").getResultList());
-			for (Place place : toDelete) {
-				em.remove(place);
+			List<Place> toDelete = new ArrayList<>( em.createQuery( "SELECT a FROM Place a" ).getResultList() );
+			for ( Place place : toDelete ) {
+				em.remove( place );
 			}
 			em.flush();
 		}
 
 		{
 			@SuppressWarnings("unchecked")
-			List<Sorcerer> toDelete = new ArrayList<>(em.createQuery(
-					"SELECT a FROM Sorcerer a").getResultList());
-			for (Sorcerer place : toDelete) {
-				em.remove(place);
+			List<Sorcerer> toDelete = new ArrayList<>( em.createQuery( "SELECT a FROM Sorcerer a" ).getResultList() );
+			for ( Sorcerer place : toDelete ) {
+				em.remove( place );
 			}
 			em.flush();
 		}
 
 		{
 			@SuppressWarnings("unchecked")
-			List<PlaceSorcererUpdates> toDelete2 = new ArrayList<>(em
-					.createQuery("SELECT a FROM PlaceSorcererUpdates a")
-					.getResultList());
-			for (PlaceSorcererUpdates val : toDelete2) {
-				em.remove(val);
+			List<PlaceSorcererUpdates> toDelete2 = new ArrayList<>( em.createQuery( "SELECT a FROM PlaceSorcererUpdates a" ).getResultList() );
+			for ( PlaceSorcererUpdates val : toDelete2 ) {
+				em.remove( val );
 			}
 			em.flush();
 		}
@@ -160,13 +148,10 @@ public abstract class DatabaseIntegrationTest {
 		try {
 			EntityTransaction tx = em.getTransaction();
 			tx.begin();
-			List<EventModelInfo> infos = parser.parse(new HashSet<>(Arrays
-					.asList(PlaceSorcererUpdates.class, PlaceUpdates.class,
-							SorcererUpdates.class)));
+			List<EventModelInfo> infos = parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class, PlaceUpdates.class, SorcererUpdates.class ) ) );
 
-			java.sql.Connection connection = em
-					.unwrap(java.sql.Connection.class);
-			connection.setAutoCommit(false);
+			java.sql.Connection connection = em.unwrap( java.sql.Connection.class );
+			connection.setAutoCommit( false );
 
 			dropStrings = new ArrayList<>();
 			// this is just for the unit tests to work properly.
@@ -174,51 +159,41 @@ public abstract class DatabaseIntegrationTest {
 			// into trouble
 			{
 				Statement statement = connection.createStatement();
-				statement
-						.addBatch(connection
-								.nativeSQL("DROP TABLE IF EXISTS "
-										+ MySQLTriggerSQLStringSource.DEFAULT_UNIQUE_ID_TABLE_NAME));
+				statement.addBatch( connection.nativeSQL( "DROP TABLE IF EXISTS " + MySQLTriggerSQLStringSource.DEFAULT_UNIQUE_ID_TABLE_NAME ) );
 				statement.executeBatch();
 				connection.commit();
 			}
 
 			MySQLTriggerSQLStringSource triggerSource = new MySQLTriggerSQLStringSource();
-			for (String str : triggerSource.getSetupCode()) {
+			for ( String str : triggerSource.getSetupCode() ) {
 				Statement statement = connection.createStatement();
-				statement.addBatch(connection.nativeSQL(str));
+				statement.addBatch( connection.nativeSQL( str ) );
 				statement.executeBatch();
 				connection.commit();
 			}
-			for (EventModelInfo info : infos) {
+			for ( EventModelInfo info : infos ) {
 				try {
-					for (String setupCode : triggerSource
-							.getSpecificSetupCode(info)) {
+					for ( String setupCode : triggerSource.getSpecificSetupCode( info ) ) {
 						Statement statement = connection.createStatement();
-						statement.addBatch(connection.nativeSQL(setupCode));
+						statement.addBatch( connection.nativeSQL( setupCode ) );
 						statement.executeBatch();
 						connection.commit();
 					}
-					dropStrings.addAll(Arrays.asList(triggerSource
-							.getSpecificUnSetupCode(info)));
-					for (int eventType : EventType.values()) {
-						String[] triggerCreationStrings = triggerSource
-								.getTriggerCreationCode(info, eventType);
-						String[] triggerDropStrings = triggerSource
-								.getTriggerDropCode(info, eventType);
-						for (String triggerCreationString : triggerCreationStrings) {
-							System.out.println("CREATE: "
-									+ connection
-											.nativeSQL(triggerCreationString));
-							dropStrings.addAll(Arrays
-									.asList(triggerDropStrings));
+					dropStrings.addAll( Arrays.asList( triggerSource.getSpecificUnSetupCode( info ) ) );
+					for ( int eventType : EventType.values() ) {
+						String[] triggerCreationStrings = triggerSource.getTriggerCreationCode( info, eventType );
+						String[] triggerDropStrings = triggerSource.getTriggerDropCode( info, eventType );
+						for ( String triggerCreationString : triggerCreationStrings ) {
+							System.out.println( "CREATE: " + connection.nativeSQL( triggerCreationString ) );
+							dropStrings.addAll( Arrays.asList( triggerDropStrings ) );
 							Statement statement = connection.createStatement();
-							statement.addBatch(connection
-									.nativeSQL(triggerCreationString));
+							statement.addBatch( connection.nativeSQL( triggerCreationString ) );
 							statement.executeBatch();
 							connection.commit();
 						}
 					}
-				} catch (Exception e) {
+				}
+				catch (Exception e) {
 					connection.rollback();
 					exceptionString = e.getMessage();
 					// for some reason we don't throw the exception here.
@@ -226,8 +201,9 @@ public abstract class DatabaseIntegrationTest {
 				}
 			}
 			tx.commit();
-		} finally {
-			if (em != null) {
+		}
+		finally {
+			if ( em != null ) {
 				em.close();
 			}
 		}
@@ -244,20 +220,20 @@ public abstract class DatabaseIntegrationTest {
 
 			tx.begin();
 
-			java.sql.Connection connection = em
-					.unwrap(java.sql.Connection.class);
-			connection.setAutoCommit(false);
+			java.sql.Connection connection = em.unwrap( java.sql.Connection.class );
+			connection.setAutoCommit( false );
 
-			for (String dropString : dropStrings) {
+			for ( String dropString : dropStrings ) {
 				Statement statement = connection.createStatement();
-				System.out.println("DROP: " + connection.nativeSQL(dropString));
-				statement.addBatch(connection.nativeSQL(dropString));
+				System.out.println( "DROP: " + connection.nativeSQL( dropString ) );
+				statement.addBatch( connection.nativeSQL( dropString ) );
 				statement.executeBatch();
 			}
 
 			tx.commit();
-		} finally {
-			if (em != null) {
+		}
+		finally {
+			if ( em != null ) {
 				em.close();
 			}
 		}
@@ -265,26 +241,27 @@ public abstract class DatabaseIntegrationTest {
 
 	@After
 	public void __shutDown() {
-		if (this.emf != null) {
+		if ( this.emf != null ) {
 			this.emf.close();
 			this.emf = null;
 		}
-		//cleanup the MySQL driver?!
+		// cleanup the MySQL driver?!
 		Enumeration<Driver> drivers = DriverManager.getDrivers();
 		Driver d = null;
-		while (drivers.hasMoreElements()) {
+		while ( drivers.hasMoreElements() ) {
 			try {
 				d = drivers.nextElement();
-				DriverManager.deregisterDriver(d);
-			} catch (SQLException e) {
-				throw new RuntimeException(e);
+				DriverManager.deregisterDriver( d );
+			}
+			catch (SQLException e) {
+				throw new RuntimeException( e );
 			}
 		}
 		Set<Thread> threadSet = Thread.getAllStackTraces().keySet();
-		Thread[] threadArray = threadSet.toArray(new Thread[threadSet.size()]);
-		for (Thread t : threadArray) {
-			if (t.getName().contains("Abandoned connection cleanup thread")) {
-				synchronized (t) {
+		Thread[] threadArray = threadSet.toArray( new Thread[threadSet.size()] );
+		for ( Thread t : threadArray ) {
+			if ( t.getName().contains( "Abandoned connection cleanup thread" ) ) {
+				synchronized ( t ) {
 					t.stop(); // don't complain, it works
 				}
 			}

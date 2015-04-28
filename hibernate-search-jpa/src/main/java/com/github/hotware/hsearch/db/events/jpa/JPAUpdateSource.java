@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
-
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.db.events.jpa;
 
@@ -48,16 +39,14 @@ import com.github.hotware.hsearch.jpa.util.MultiQueryAccess;
 import com.github.hotware.hsearch.jpa.util.MultiQueryAccess.ObjectClassWrapper;
 
 /**
- * a {@link UpdateSource} implementation that uses JPA to retrieve the updates
- * from the database. For this to work the entities have to be setup with JPA
- * annotations
+ * a {@link UpdateSource} implementation that uses JPA to retrieve the updates from the database. For this to work the
+ * entities have to be setup with JPA annotations
  * 
  * @author Martin Braun
  */
 public class JPAUpdateSource implements UpdateSource {
 
-	private static final Logger LOGGER = Logger.getLogger(JPAUpdateSource.class
-			.getName());
+	private static final Logger LOGGER = Logger.getLogger( JPAUpdateSource.class.getName() );
 
 	private final List<EventModelInfo> eventModelInfos;
 	private final EntityManagerFactory emf;
@@ -77,78 +66,67 @@ public class JPAUpdateSource implements UpdateSource {
 	/**
 	 * this doesn't do real batching for the databasequeries
 	 */
-	public JPAUpdateSource(List<EventModelInfo> eventModelInfos,
-			EntityManagerFactory emf, boolean useJTATransaction, long timeOut,
-			TimeUnit timeUnit, int batchSizeForUpdates) {
-		this(eventModelInfos, emf, useJTATransaction, timeOut, timeUnit,
-				batchSizeForUpdates, Executors.newScheduledThreadPool(1));
+	public JPAUpdateSource(List<EventModelInfo> eventModelInfos, EntityManagerFactory emf, boolean useJTATransaction, long timeOut, TimeUnit timeUnit,
+			int batchSizeForUpdates) {
+		this( eventModelInfos, emf, useJTATransaction, timeOut, timeUnit, batchSizeForUpdates, Executors.newScheduledThreadPool( 1 ) );
 	}
 
 	/**
 	 * this doesn't do real batching for the databasequeries
 	 */
-	public JPAUpdateSource(List<EventModelInfo> eventModelInfos,
-			EntityManagerFactory emf, boolean useJTATransaction, long timeOut,
-			TimeUnit timeUnit, int batchSizeForUpdates,
-			ScheduledExecutorService exec) {
-		this(eventModelInfos, emf, useJTATransaction, timeOut, timeUnit, batchSizeForUpdates, 1,
-				exec);
+	public JPAUpdateSource(List<EventModelInfo> eventModelInfos, EntityManagerFactory emf, boolean useJTATransaction, long timeOut, TimeUnit timeUnit,
+			int batchSizeForUpdates, ScheduledExecutorService exec) {
+		this( eventModelInfos, emf, useJTATransaction, timeOut, timeUnit, batchSizeForUpdates, 1, exec );
 	}
 
 	/**
 	 * this does batching for databaseQueries according to what you set
 	 */
-	public JPAUpdateSource(List<EventModelInfo> eventModelInfos,
-			EntityManagerFactory emf, boolean useJTATransaction, long timeOut,
-			TimeUnit timeUnit, int batchSizeForUpdates, int batchSizeForDatabaseQueries) {
-		this(eventModelInfos, emf, useJTATransaction, timeOut, timeUnit, batchSizeForUpdates,
-				batchSizeForDatabaseQueries, Executors
-						.newScheduledThreadPool(1));
+	public JPAUpdateSource(List<EventModelInfo> eventModelInfos, EntityManagerFactory emf, boolean useJTATransaction, long timeOut, TimeUnit timeUnit,
+			int batchSizeForUpdates, int batchSizeForDatabaseQueries) {
+		this( eventModelInfos, emf, useJTATransaction, timeOut, timeUnit, batchSizeForUpdates, batchSizeForDatabaseQueries, Executors
+				.newScheduledThreadPool( 1 ) );
 	}
 
 	/**
 	 * this does batching for databaseQueries according to what you set
 	 */
-	public JPAUpdateSource(List<EventModelInfo> eventModelInfos,
-			EntityManagerFactory emf, boolean useJTATransaction, long timeOut,
-			TimeUnit timeUnit,  int batchSizeForUpdates, int batchSizeForDatabaseQueries,
-			ScheduledExecutorService exec) {
+	public JPAUpdateSource(List<EventModelInfo> eventModelInfos, EntityManagerFactory emf, boolean useJTATransaction, long timeOut, TimeUnit timeUnit,
+			int batchSizeForUpdates, int batchSizeForDatabaseQueries, ScheduledExecutorService exec) {
 		this.eventModelInfos = eventModelInfos;
 		this.emf = emf;
-		if (timeOut <= 0) {
-			throw new IllegalArgumentException("timeout must be greater than 0");
+		if ( timeOut <= 0 ) {
+			throw new IllegalArgumentException( "timeout must be greater than 0" );
 		}
 		this.timeOut = timeOut;
 		this.timeUnit = timeUnit;
-		if (batchSizeForUpdates <= 0) {
-			throw new IllegalArgumentException(
-					"batchSize must be greater than 0");
+		if ( batchSizeForUpdates <= 0 ) {
+			throw new IllegalArgumentException( "batchSize must be greater than 0" );
 		}
 		this.batchSizeForUpdates = batchSizeForUpdates;
 		this.batchSizeForDatabaseQueries = batchSizeForDatabaseQueries;
 		this.updateClasses = new ArrayList<>();
 		this.updateClassToEventModelInfo = new HashMap<>();
-		for (EventModelInfo info : eventModelInfos) {
-			this.updateClasses.add(info.getUpdateClass());
-			this.updateClassToEventModelInfo.put(info.getUpdateClass(), info);
+		for ( EventModelInfo info : eventModelInfos ) {
+			this.updateClasses.add( info.getUpdateClass() );
+			this.updateClassToEventModelInfo.put( info.getUpdateClass(), info );
 		}
 		this.idAccessorMap = new HashMap<>();
-		for (EventModelInfo evi : eventModelInfos) {
+		for ( EventModelInfo evi : eventModelInfos ) {
 			try {
-				Method idMethod = evi.getUpdateClass().getDeclaredMethod(
-						"getId");
-				idMethod.setAccessible(true);
-				idAccessorMap.put(evi.getUpdateClass(), (obj) -> {
+				Method idMethod = evi.getUpdateClass().getDeclaredMethod( "getId" );
+				idMethod.setAccessible( true );
+				idAccessorMap.put( evi.getUpdateClass(), (obj) -> {
 					try {
-						return idMethod.invoke(obj);
-					} catch (Exception e) {
-						throw new RuntimeException(e);
+						return idMethod.invoke( obj );
 					}
-				});
-			} catch (SecurityException | NoSuchMethodException e) {
-				throw new RuntimeException(
-						"could not access the \"getId()\" method of class: "
-								+ evi.getUpdateClass());
+					catch (Exception e) {
+						throw new RuntimeException( e );
+					}
+				} );
+			}
+			catch (SecurityException | NoSuchMethodException e) {
+				throw new RuntimeException( "could not access the \"getId()\" method of class: " + evi.getUpdateClass() );
 			}
 		}
 		this.exec = exec;
@@ -157,9 +135,7 @@ public class JPAUpdateSource implements UpdateSource {
 
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * com.github.hotware.hsearch.db.events.UpdateSource#setUpdateConsumer(com
+	 * @see com.github.hotware.hsearch.db.events.UpdateSource#setUpdateConsumer(com
 	 * .github.hotware.hsearch.db.events.UpdateConsumer)
 	 */
 	@Override
@@ -169,170 +145,149 @@ public class JPAUpdateSource implements UpdateSource {
 
 	/*
 	 * (non-Javadoc)
-	 * 
 	 * @see com.github.hotware.hsearch.db.events.UpdateSource#start()
 	 */
 	@Override
 	public void start() {
-		if (this.updateConsumers == null) {
-			throw new IllegalStateException("updateConsumers was null!");
+		if ( this.updateConsumers == null ) {
+			throw new IllegalStateException( "updateConsumers was null!" );
 		}
-		this.exec
-				.scheduleWithFixedDelay(
-						() -> {
-							try {
-								if(!this.emf.isOpen()) {
-									return;
-								}
-								EntityManager em = null;
-								try {
-									em = new EntityManagerCloseable(this.emf
-											.createEntityManager());
-									EntityTransaction tx;
-									UserTransaction utx;
-									if (!this.useJTATransaction) {
-										tx = em.getTransaction();
-										tx.begin();
-										utx = null;
-									} else {
-										utx = (UserTransaction) InitialContext
-											.doLookup("java:comp/UserTransaction");
-										utx.begin();
-										em.joinTransaction();
-										tx = null;
-									}
-									MultiQueryAccess query = this.query(em);
-									List<Object[]> toRemove = new ArrayList<>(
-											this.batchSizeForUpdates);
-									List<UpdateInfo> updateInfos = new ArrayList<>(
-											this.batchSizeForUpdates);
-									long processed = 0;
-									while (query.next()) {
-										// we have no order problems here since
-										// the query does
-										// the ordering for us
-										Object val = query.get();
-										toRemove.add(new Object[] {
-												query.entityClass(), val });
-										EventModelInfo evi = this.updateClassToEventModelInfo
-												.get(query.entityClass());
-										for (IdInfo info : evi.getIdInfos()) {
-											updateInfos.add(new UpdateInfo(info
-													.getEntityClass(),
-													info.getIdAccessor().apply(
-															val),
-													evi.getEventTypeAccessor()
-															.apply(val)));
-										}
-										// TODO: maybe move this to a method as
-										// it is getting reused
-										if (++processed
-												% this.batchSizeForUpdates == 0) {
-											for (UpdateConsumer consumer : this.updateConsumers) {
-												consumer.updateEvent(updateInfos);
-											}
-											for (Object[] rem : toRemove) {
-												// the class is in rem[0], the
-												// entity is in
-												// rem[1]
-												query.addToNextValuePosition(
-														(Class<?>) rem[0], -1L);
-												em.remove(rem[1]);
-											}
-											toRemove.clear();
-											updateInfos.clear();
-											em.flush();
-											// clear memory :)
-											em.clear();
-										}
-									}
-									if (updateInfos.size() > 0) {
-										for (UpdateConsumer consumer : this.updateConsumers) {
-											consumer.updateEvent(updateInfos);
-										}
-										for (Object[] rem : toRemove) {
-											// the class is in rem[0], the
-											// entity is in rem[1]
-											query.addToNextValuePosition(
-													(Class<?>) rem[0], -1L);
-											em.remove(rem[1]);
-										}
-										toRemove.clear();
-										updateInfos.clear();
-										em.flush();
-										// clear memory :)
-										em.clear();
-									}
+		this.exec.scheduleWithFixedDelay( () -> {
+			try {
+				if ( !this.emf.isOpen() ) {
+					return;
+				}
+				EntityManager em = null;
+				try {
+					em = new EntityManagerCloseable( this.emf.createEntityManager() );
+					EntityTransaction tx;
+					UserTransaction utx;
+					if ( !this.useJTATransaction ) {
+						tx = em.getTransaction();
+						tx.begin();
+						utx = null;
+					}
+					else {
+						utx = (UserTransaction) InitialContext.doLookup( "java:comp/UserTransaction" );
+						utx.begin();
+						em.joinTransaction();
+						tx = null;
+					}
+					MultiQueryAccess query = this.query( em );
+					List<Object[]> toRemove = new ArrayList<>( this.batchSizeForUpdates );
+					List<UpdateInfo> updateInfos = new ArrayList<>( this.batchSizeForUpdates );
+					long processed = 0;
+					while ( query.next() ) {
+						// we have no order problems here since
+						// the query does
+						// the ordering for us
+				Object val = query.get();
+				toRemove.add( new Object[] { query.entityClass(), val } );
+				EventModelInfo evi = this.updateClassToEventModelInfo.get( query.entityClass() );
+				for ( IdInfo info : evi.getIdInfos() ) {
+					updateInfos.add( new UpdateInfo( info.getEntityClass(), info.getIdAccessor().apply( val ), evi.getEventTypeAccessor().apply( val ) ) );
+				}
+				// TODO: maybe move this to a method as
+				// it is getting reused
+				if ( ++processed % this.batchSizeForUpdates == 0 ) {
+					for ( UpdateConsumer consumer : this.updateConsumers ) {
+						consumer.updateEvent( updateInfos );
+					}
+					for ( Object[] rem : toRemove ) {
+						// the class is in rem[0], the
+						// entity is in
+						// rem[1]
+						query.addToNextValuePosition( (Class<?>) rem[0], -1L );
+						em.remove( rem[1] );
+					}
+					toRemove.clear();
+					updateInfos.clear();
+					em.flush();
+					// clear memory :)
+					em.clear();
+				}
+			}
+			if ( updateInfos.size() > 0 ) {
+				for ( UpdateConsumer consumer : this.updateConsumers ) {
+					consumer.updateEvent( updateInfos );
+				}
+				for ( Object[] rem : toRemove ) {
+					// the class is in rem[0], the
+					// entity is in rem[1]
+					query.addToNextValuePosition( (Class<?>) rem[0], -1L );
+					em.remove( rem[1] );
+				}
+				toRemove.clear();
+				updateInfos.clear();
+				em.flush();
+				// clear memory :)
+				em.clear();
+			}
 
-									if (!this.useJTATransaction) {
-										tx.commit();
-									} else {
-										utx.commit();
-									}
-								} catch (Exception e) {
-									throw new RuntimeException(
-											"Error occured during Update processing!",
-											e);
-								} finally {
-									if (em != null) {
-										em.close();
-									}
-								}
-							} catch (Exception e) {
-								LOGGER.log(Level.SEVERE, e.getMessage(), e);
-							}
-						}, 0, this.timeOut, this.timeUnit);
+			if ( !this.useJTATransaction ) {
+				tx.commit();
+			}
+			else {
+				utx.commit();
+			}
+		}
+		catch (Exception e) {
+			throw new RuntimeException( "Error occured during Update processing!", e );
+		}
+		finally {
+			if ( em != null ) {
+				em.close();
+			}
+		}
+	}
+	catch (Exception e) {
+		LOGGER.log( Level.SEVERE, e.getMessage(), e );
+	}
+}, 0, this.timeOut, this.timeUnit );
 	}
 
 	MultiQueryAccess query(EntityManager em) {
 		Map<Class<?>, Long> countMap = new HashMap<>();
 		Map<Class<?>, Query> queryMap = new HashMap<>();
-		for (EventModelInfo evi : this.eventModelInfos) {
+		for ( EventModelInfo evi : this.eventModelInfos ) {
 			CriteriaBuilder cb = em.getCriteriaBuilder();
 			long count;
 			{
-				CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
-				countQuery
-						.select(cb.count(countQuery.from(evi.getUpdateClass())));
-				count = em.createQuery(countQuery).getSingleResult();
+				CriteriaQuery<Long> countQuery = cb.createQuery( Long.class );
+				countQuery.select( cb.count( countQuery.from( evi.getUpdateClass() ) ) );
+				count = em.createQuery( countQuery ).getSingleResult();
 			}
-			countMap.put(evi.getUpdateClass(), count);
+			countMap.put( evi.getUpdateClass(), count );
 
 			{
-				CriteriaQuery<?> q = cb.createQuery(evi.getUpdateClass());
-				Root<?> ent = q.from(evi.getUpdateClass());
-				q = q.orderBy(cb.asc(ent.get("id")));
-				TypedQuery<?> query = em.createQuery(q.multiselect(ent));
-				queryMap.put(evi.getUpdateClass(), query);
+				CriteriaQuery<?> q = cb.createQuery( evi.getUpdateClass() );
+				Root<?> ent = q.from( evi.getUpdateClass() );
+				q = q.orderBy( cb.asc( ent.get( "id" ) ) );
+				TypedQuery<?> query = em.createQuery( q.multiselect( ent ) );
+				queryMap.put( evi.getUpdateClass(), query );
 			}
 		}
-		MultiQueryAccess access = new MultiQueryAccess(
-				countMap,
-				queryMap,
-				(first, second) -> {
-					int res = Long.compare(this.id(first), this.id(second));
-					if (res == 0) {
-						throw new IllegalStateException(
-								"database contained two update entries with the same id!");
-					}
-					return res;
-				}, this.batchSizeForDatabaseQueries);
+		MultiQueryAccess access = new MultiQueryAccess( countMap, queryMap, (first, second) -> {
+			int res = Long.compare( this.id( first ), this.id( second ) );
+			if ( res == 0 ) {
+				throw new IllegalStateException( "database contained two update entries with the same id!" );
+			}
+			return res;
+		}, this.batchSizeForDatabaseQueries );
 		return access;
 	}
 
 	private Long id(ObjectClassWrapper val) {
-		return ((Number) this.idAccessorMap.get(val.clazz).apply(val.object))
-				.longValue();
+		return ( (Number) this.idAccessorMap.get( val.clazz ).apply( val.object ) ).longValue();
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
 	 * @see com.github.hotware.hsearch.db.events.UpdateSource#stop()
 	 */
 	@Override
 	public void stop() {
-		if (this.exec != null) {
+		if ( this.exec != null ) {
 			this.exec.shutdown();
 		}
 	}

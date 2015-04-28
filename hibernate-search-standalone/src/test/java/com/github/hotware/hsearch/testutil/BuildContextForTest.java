@@ -1,5 +1,8 @@
 /*
- * originally from Hibernate Search (which is licensed under LGPL 2.1)
+ * Hibernate Search, full-text search for your domain model
+ *
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.testutil;
 
@@ -20,6 +23,7 @@ import org.hibernate.search.spi.IndexingMode;
  * @author Hardy Ferentschik (Hibernate Search)
  */
 public class BuildContextForTest implements BuildContext {
+
 	private final SearchConfiguration searchConfiguration;
 
 	public BuildContextForTest(SearchConfiguration searchConfiguration) {
@@ -43,8 +47,7 @@ public class BuildContextForTest implements BuildContext {
 
 	@Override
 	public ServiceManager getServiceManager() {
-		return new StandardServiceManager(searchConfiguration, this,
-				Environment.DEFAULT_SERVICES_MAP);
+		return new StandardServiceManager( searchConfiguration, this, Environment.DEFAULT_SERVICES_MAP );
 	}
 
 	@Override

@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
-
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.db.events;
 
@@ -37,7 +28,6 @@ import com.github.hotware.hsearch.db.test.entities.Sorcerer;
 
 /**
  * @author Martin
- *
  */
 public class EventModelParserTest {
 
@@ -46,92 +36,87 @@ public class EventModelParserTest {
 
 		{
 			EventModelParser parser = new EventModelParser();
-			List<EventModelInfo> infos = parser.parse(new HashSet<>(Arrays
-					.asList(PlaceSorcererUpdates.class)));
-			System.out.println(infos);
+			List<EventModelInfo> infos = parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class ) ) );
+			System.out.println( infos );
 			PlaceSorcererUpdates placeUpdate = new PlaceSorcererUpdates();
-			placeUpdate.setId(123123);
-			placeUpdate.setPlaceId(1);
-			placeUpdate.setSorcererId(2);
-			placeUpdate.setEventType(EventType.INSERT);
+			placeUpdate.setId( 123123 );
+			placeUpdate.setPlaceId( 1 );
+			placeUpdate.setSorcererId( 2 );
+			placeUpdate.setEventType( EventType.INSERT );
 
-			List<EventModelInfo.IdInfo> idInfos = infos.get(0).getIdInfos();
-			idInfos.sort(new Comparator<EventModelInfo.IdInfo>() {
+			List<EventModelInfo.IdInfo> idInfos = infos.get( 0 ).getIdInfos();
+			idInfos.sort( new Comparator<EventModelInfo.IdInfo>() {
 
 				@Override
 				public int compare(IdInfo o1, IdInfo o2) {
-					return o1.getColumns()[0].compareTo(o2.getColumns()[0]);
+					return o1.getColumns()[0].compareTo( o2.getColumns()[0] );
 				}
 
-			});
+			} );
 
-			assertEquals(PlaceSorcererUpdates.class, infos.get(0)
-					.getUpdateClass());
-			assertEquals("PlaceSorcererUpdates", infos.get(0).getTableName());
-			assertEquals("Place_Sorcerer", infos.get(0).getOriginalTableName());
+			assertEquals( PlaceSorcererUpdates.class, infos.get( 0 ).getUpdateClass() );
+			assertEquals( "PlaceSorcererUpdates", infos.get( 0 ).getTableName() );
+			assertEquals( "Place_Sorcerer", infos.get( 0 ).getOriginalTableName() );
 
-			assertEquals(Place.class, idInfos.get(0).getEntityClass());
-			assertEquals("placeId", idInfos.get(0).getColumns()[0]);
-			assertEquals("id", idInfos.get(0).getColumnsInOriginal()[0]);
+			assertEquals( Place.class, idInfos.get( 0 ).getEntityClass() );
+			assertEquals( "placeId", idInfos.get( 0 ).getColumns()[0] );
+			assertEquals( "id", idInfos.get( 0 ).getColumnsInOriginal()[0] );
 
-			assertEquals(Sorcerer.class, idInfos.get(1).getEntityClass());
-			assertEquals("sorcererId", idInfos.get(1).getColumns()[0]);
-			assertEquals("sorc_id", idInfos.get(1).getColumnsInOriginal()[0]);
+			assertEquals( Sorcerer.class, idInfos.get( 1 ).getEntityClass() );
+			assertEquals( "sorcererId", idInfos.get( 1 ).getColumns()[0] );
+			assertEquals( "sorc_id", idInfos.get( 1 ).getColumnsInOriginal()[0] );
 
-			assertEquals(1, idInfos.get(0).getIdAccessor().apply(placeUpdate));
-			assertEquals(2, idInfos.get(1).getIdAccessor().apply(placeUpdate));
+			assertEquals( 1, idInfos.get( 0 ).getIdAccessor().apply( placeUpdate ) );
+			assertEquals( 2, idInfos.get( 1 ).getIdAccessor().apply( placeUpdate ) );
 
-			assertEquals((Integer) EventType.INSERT, infos.get(0)
-					.getEventTypeAccessor().apply(placeUpdate));
+			assertEquals( (Integer) EventType.INSERT, infos.get( 0 ).getEventTypeAccessor().apply( placeUpdate ) );
 		}
 
 		{
 			EventModelParser parser = new EventModelParser();
-			List<EventModelInfo> infos = parser.parse(new HashSet<>(Arrays
-					.asList(PlaceSorcererUpdatesMethod.class)));
-			System.out.println(infos);
+			List<EventModelInfo> infos = parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdatesMethod.class ) ) );
+			System.out.println( infos );
 			PlaceSorcererUpdatesMethod placeUpdate = new PlaceSorcererUpdatesMethod();
-			placeUpdate.setId(123123);
-			placeUpdate.setPlaceId(1);
-			placeUpdate.setSorcererId(2);
-			placeUpdate.setEventType(EventType.INSERT);
+			placeUpdate.setId( 123123 );
+			placeUpdate.setPlaceId( 1 );
+			placeUpdate.setSorcererId( 2 );
+			placeUpdate.setEventType( EventType.INSERT );
 
-			List<EventModelInfo.IdInfo> idInfos = infos.get(0).getIdInfos();
-			idInfos.sort(new Comparator<EventModelInfo.IdInfo>() {
+			List<EventModelInfo.IdInfo> idInfos = infos.get( 0 ).getIdInfos();
+			idInfos.sort( new Comparator<EventModelInfo.IdInfo>() {
 
 				@Override
 				public int compare(IdInfo o1, IdInfo o2) {
-					return o1.getColumns()[0].compareTo(o2.getColumns()[0]);
+					return o1.getColumns()[0].compareTo( o2.getColumns()[0] );
 				}
 
-			});
+			} );
 
-			assertEquals(PlaceSorcererUpdatesMethod.class, infos.get(0)
-					.getUpdateClass());
-			assertEquals("PlaceSorcererUpdates", infos.get(0).getTableName());
-			assertEquals("Place_Sorcerer", infos.get(0).getOriginalTableName());
+			assertEquals( PlaceSorcererUpdatesMethod.class, infos.get( 0 ).getUpdateClass() );
+			assertEquals( "PlaceSorcererUpdates", infos.get( 0 ).getTableName() );
+			assertEquals( "Place_Sorcerer", infos.get( 0 ).getOriginalTableName() );
 
-			assertEquals(Place.class, idInfos.get(0).getEntityClass());
-			assertEquals("placeId", idInfos.get(0).getColumns()[0]);
-			assertEquals("id", idInfos.get(0).getColumnsInOriginal()[0]);
+			assertEquals( Place.class, idInfos.get( 0 ).getEntityClass() );
+			assertEquals( "placeId", idInfos.get( 0 ).getColumns()[0] );
+			assertEquals( "id", idInfos.get( 0 ).getColumnsInOriginal()[0] );
 
-			assertEquals(Sorcerer.class, idInfos.get(1).getEntityClass());
-			assertEquals("sorcererId", idInfos.get(1).getColumns()[0]);
-			assertEquals("sorc_id", idInfos.get(1).getColumnsInOriginal()[0]);
+			assertEquals( Sorcerer.class, idInfos.get( 1 ).getEntityClass() );
+			assertEquals( "sorcererId", idInfos.get( 1 ).getColumns()[0] );
+			assertEquals( "sorc_id", idInfos.get( 1 ).getColumnsInOriginal()[0] );
 
-			assertEquals(1, idInfos.get(0).getIdAccessor().apply(placeUpdate));
-			assertEquals(2, idInfos.get(1).getIdAccessor().apply(placeUpdate));
+			assertEquals( 1, idInfos.get( 0 ).getIdAccessor().apply( placeUpdate ) );
+			assertEquals( 2, idInfos.get( 1 ).getIdAccessor().apply( placeUpdate ) );
 
-			assertEquals((Integer) EventType.INSERT, infos.get(0)
-					.getEventTypeAccessor().apply(placeUpdate));
+			assertEquals( (Integer) EventType.INSERT, infos.get( 0 ).getEventTypeAccessor().apply( placeUpdate ) );
 		}
 
 		{
 			EventModelParser parser = new EventModelParser();
 			try {
-				parser.parse(new HashSet<>(Arrays.asList(Mixed.class)));
-				fail("Exception expected");
-			} catch (IllegalArgumentException e) {
+				parser.parse( new HashSet<>( Arrays.asList( Mixed.class ) ) );
+				fail( "Exception expected" );
+			}
+			catch (IllegalArgumentException e) {
 
 			}
 		}
@@ -139,9 +124,10 @@ public class EventModelParserTest {
 		{
 			EventModelParser parser = new EventModelParser();
 			try {
-				parser.parse(new HashSet<>(Arrays.asList(Mixed2.class)));
-				fail("Exception expected");
-			} catch (IllegalArgumentException e) {
+				parser.parse( new HashSet<>( Arrays.asList( Mixed2.class ) ) );
+				fail( "Exception expected" );
+			}
+			catch (IllegalArgumentException e) {
 
 			}
 		}
@@ -149,9 +135,10 @@ public class EventModelParserTest {
 		{
 			EventModelParser parser = new EventModelParser();
 			try {
-				parser.parse(new HashSet<>(Arrays.asList(ForgotUpdates.class)));
-				fail("Exception expected");
-			} catch (IllegalArgumentException e) {
+				parser.parse( new HashSet<>( Arrays.asList( ForgotUpdates.class ) ) );
+				fail( "Exception expected" );
+			}
+			catch (IllegalArgumentException e) {
 
 			}
 		}
@@ -159,9 +146,10 @@ public class EventModelParserTest {
 		{
 			EventModelParser parser = new EventModelParser();
 			try {
-				parser.parse(new HashSet<>(Arrays.asList(ForgotEvent.class)));
-				fail("Exception expected");
-			} catch (IllegalArgumentException e) {
+				parser.parse( new HashSet<>( Arrays.asList( ForgotEvent.class ) ) );
+				fail( "Exception expected" );
+			}
+			catch (IllegalArgumentException e) {
 
 			}
 		}
@@ -169,9 +157,10 @@ public class EventModelParserTest {
 		{
 			EventModelParser parser = new EventModelParser();
 			try {
-				parser.parse(new HashSet<>(Arrays.asList(ForgotIds.class)));
-				fail("Exception expected");
-			} catch (IllegalArgumentException e) {
+				parser.parse( new HashSet<>( Arrays.asList( ForgotIds.class ) ) );
+				fail( "Exception expected" );
+			}
+			catch (IllegalArgumentException e) {
 
 			}
 		}

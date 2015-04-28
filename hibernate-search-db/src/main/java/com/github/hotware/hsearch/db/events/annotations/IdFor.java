@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
-
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.db.events.annotations;
 
@@ -33,10 +24,8 @@ import com.github.hotware.hsearch.db.id.ToOriginalIdBridge;
 public @interface IdFor {
 
 	/**
-	 * this is used to determine which type has to be updated. This is needed so
-	 * the EventSource can supply a valid Class to an EntityProvider and pass
-	 * this into the corresponding methods in the SearchFactory
-	 * <br>
+	 * this is used to determine which type has to be updated. This is needed so the EventSource can supply a valid
+	 * Class to an EntityProvider and pass this into the corresponding methods in the SearchFactory <br>
 	 * <br>
 	 * the class returned has to be annotated with @InIndex
 	 */
@@ -44,13 +33,13 @@ public @interface IdFor {
 
 	/**
 	 * @return the column names of the id in the Updates table.<br>
-	 *         <b>has to be in the same order as columnsInOriginal</b>
+	 * <b>has to be in the same order as columnsInOriginal</b>
 	 */
 	public String[] columns();
 
 	/**
 	 * @return the column names of the id in the original table.<br>
-	 *         <b>has to be in the same order as columns</b>
+	 * <b>has to be in the same order as columns</b>
 	 */
 	public String[] columnsInOriginal();
 

@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
-
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.db.tableInfo;
 
@@ -26,8 +17,7 @@ public class TableInfo {
 	private final List<IdInfo> updateEventRelevantIdInfos;
 	private final List<String> tableNames;
 
-	public TableInfo(List<IdInfo> updateEventRelevantIdInfos,
-			List<String> tableNames) {
+	public TableInfo(List<IdInfo> updateEventRelevantIdInfos, List<String> tableNames) {
 		this.updateEventRelevantIdInfos = updateEventRelevantIdInfos;
 		this.tableNames = tableNames;
 	}
@@ -49,9 +39,8 @@ public class TableInfo {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("TableInfo [updateEventRelevantIdInfos=")
-				.append(updateEventRelevantIdInfos).append(", tableNames=")
-				.append(tableNames).append("]");
+		builder.append( "TableInfo [updateEventRelevantIdInfos=" ).append( updateEventRelevantIdInfos ).append( ", tableNames=" ).append( tableNames )
+				.append( "]" );
 		return builder.toString();
 	}
 
@@ -62,8 +51,7 @@ public class TableInfo {
 		private final List<String> idColumns;
 		private final Map<String, Class<?>> idColumnTypes;
 
-		public IdInfo(Class<?> entityClass, List<String> idColumns,
-				Map<String, Class<?>> idColumnTypes) {
+		public IdInfo(Class<?> entityClass, List<String> idColumns, Map<String, Class<?>> idColumnTypes) {
 			this.entityClass = entityClass;
 			this.idColumns = idColumns;
 			this.idColumnTypes = idColumnTypes;
@@ -93,10 +81,8 @@ public class TableInfo {
 		@Override
 		public String toString() {
 			StringBuilder builder = new StringBuilder();
-			builder.append("IdInfo [entityClass=").append(entityClass)
-					.append(", idColumns=").append(idColumns)
-					.append(", idColumnTypes=").append(idColumnTypes)
-					.append("]");
+			builder.append( "IdInfo [entityClass=" ).append( entityClass ).append( ", idColumns=" ).append( idColumns ).append( ", idColumnTypes=" )
+					.append( idColumnTypes ).append( "]" );
 			return builder.toString();
 		}
 

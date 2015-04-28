@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.dto;
 
@@ -57,38 +48,31 @@ public class DtoDescriptorTest extends TestCase {
 
 	public void testDescriptor() {
 		DtoDescriptor descriptor = new DtoDescriptorImpl();
-		DtoDescription description = descriptor.getDtoDescription(A.class);
-		assertEquals(A.class, description.getDtoClass());
-		assertEquals(B.class, description.getEntityClass());
-		assertEquals(1, description.getFieldDescriptionsForProfile("toast")
-				.size());
-		assertEquals("toastFieldName", description
-				.getFieldDescriptionsForProfile("toast").iterator().next()
-				.getFieldName());
-		assertEquals(
-				2,
-				description.getFieldDescriptionsForProfile(
-						DtoDescription.DEFAULT_PROFILE).size());
+		DtoDescription description = descriptor.getDtoDescription( A.class );
+		assertEquals( A.class, description.getDtoClass() );
+		assertEquals( B.class, description.getEntityClass() );
+		assertEquals( 1, description.getFieldDescriptionsForProfile( "toast" ).size() );
+		assertEquals( "toastFieldName", description.getFieldDescriptionsForProfile( "toast" ).iterator().next().getFieldName() );
+		assertEquals( 2, description.getFieldDescriptionsForProfile( DtoDescription.DEFAULT_PROFILE ).size() );
 
 		int found = 0;
-		for (DtoDescription.FieldDescription fDesc : description
-				.getFieldDescriptionsForProfile(DtoDescription.DEFAULT_PROFILE)) {
-			if ("fieldOne".equals(fDesc.getFieldName())) {
+		for ( DtoDescription.FieldDescription fDesc : description.getFieldDescriptionsForProfile( DtoDescription.DEFAULT_PROFILE ) ) {
+			if ( "fieldOne".equals( fDesc.getFieldName() ) ) {
 				++found;
-			} else if ("fieldTwo".equals(fDesc.getFieldName())) {
+			}
+			else if ( "fieldTwo".equals( fDesc.getFieldName() ) ) {
 				++found;
 			}
 		}
-		if (found != 2) {
-			fail("the default profile for " + A.class
-					+ " should have 2 different FieldDescriptions");
+		if ( found != 2 ) {
+			fail( "the default profile for " + A.class + " should have 2 different FieldDescriptions" );
 		}
 
 		try {
-			descriptor.getDtoDescription(C.class);
-			fail("invalid description with two fieldnames annotated to one field in the same profile"
-					+ " should yield an exception");
-		} catch (IllegalArgumentException e) {
+			descriptor.getDtoDescription( C.class );
+			fail( "invalid description with two fieldnames annotated to one field in the same profile" + " should yield an exception" );
+		}
+		catch (IllegalArgumentException e) {
 
 		}
 	}

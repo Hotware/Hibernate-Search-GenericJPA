@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.ejb;
 
@@ -71,15 +62,13 @@ import com.github.hotware.hsearch.query.HSearchQuery;
 import com.github.hotware.hsearch.transaction.TransactionContext;
 
 /**
- * Base class to create SearchFactories in a EJB environment. Uses a
- * JPAEventSource.
+ * Base class to create SearchFactories in a EJB environment. Uses a JPAEventSource.
  * 
  * @author Martin Braun
  */
 public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer {
 
-	private final Logger LOGGER = Logger.getLogger(EntityManagerFactory.class
-			.getName());
+	private final Logger LOGGER = Logger.getLogger( EntityManagerFactory.class.getName() );
 	SearchFactory searchFactory;
 	UpdateSource updateSource;
 	Set<Class<?>> indexRelevantEntities;
@@ -87,8 +76,7 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 	Map<Class<?>, List<Class<?>>> containedInIndexOf;
 
 	public EntityProvider entityProvider(EntityManager em) {
-		return new EntityManagerEntityProvider(new EntityManagerCloseable(em),
-				this.idProperties);
+		return new EntityManagerEntityProvider( new EntityManagerCloseable( em ), this.idProperties );
 	}
 
 	protected abstract EntityManagerFactory getEmf();
@@ -117,66 +105,56 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 	@PostConstruct
 	protected void init() {
 		SearchConfigurationImpl config;
-		if (this.getConfigFile() != null && !this.getConfigFile().equals("")) {
-			LOGGER.info("using config @" + this.getConfigFile());
-			try (InputStream is = this.getClass().getResourceAsStream(
-					this.getConfigFile())) {
+		if ( this.getConfigFile() != null && !this.getConfigFile().equals( "" ) ) {
+			LOGGER.info( "using config @" + this.getConfigFile() );
+			try (InputStream is = this.getClass().getResourceAsStream( this.getConfigFile() )) {
 				Properties props = new Properties();
-				props.load(is);
-				config = new SearchConfigurationImpl(props);
-			} catch (IOException e) {
-				throw new RuntimeException(
-						"IOException while loading property file.", e);
+				props.load( is );
+				config = new SearchConfigurationImpl( props );
 			}
-		} else {
+			catch (IOException e) {
+				throw new RuntimeException( "IOException while loading property file.", e );
+			}
+		}
+		else {
 			config = new SearchConfigurationImpl();
 		}
 
-		MetadataProvider metadataProvider = MetadataUtil
-				.getMetadataProvider(config);
+		MetadataProvider metadataProvider = MetadataUtil.getMetadataProvider( config );
 		MetadataRehasher rehasher = new MetadataRehasher();
 
 		List<RehashedTypeMetadata> rehashedTypeMetadatas = new ArrayList<>();
 		Map<Class<?>, RehashedTypeMetadata> rehashedTypeMetadataPerIndexRoot = new HashMap<>();
-		for (Class<?> indexRootType : this.getIndexRootTypes()) {
-			RehashedTypeMetadata rehashed = rehasher.rehash(metadataProvider
-					.getTypeMetadataFor(indexRootType));
-			rehashedTypeMetadatas.add(rehashed);
-			rehashedTypeMetadataPerIndexRoot.put(indexRootType, rehashed);
+		for ( Class<?> indexRootType : this.getIndexRootTypes() ) {
+			RehashedTypeMetadata rehashed = rehasher.rehash( metadataProvider.getTypeMetadataFor( indexRootType ) );
+			rehashedTypeMetadatas.add( rehashed );
+			rehashedTypeMetadataPerIndexRoot.put( indexRootType, rehashed );
 		}
 
-		this.indexRelevantEntities = Collections.unmodifiableSet(MetadataUtil
-				.calculateIndexRelevantEntities(rehashedTypeMetadatas));
-		this.idProperties = MetadataUtil
-				.calculateIdProperties(rehashedTypeMetadatas);
-		this.containedInIndexOf = MetadataUtil.calculateInIndexOf(rehashedTypeMetadatas);
+		this.indexRelevantEntities = Collections.unmodifiableSet( MetadataUtil.calculateIndexRelevantEntities( rehashedTypeMetadatas ) );
+		this.idProperties = MetadataUtil.calculateIdProperties( rehashedTypeMetadatas );
+		this.containedInIndexOf = MetadataUtil.calculateInIndexOf( rehashedTypeMetadatas );
 
 		SearchIntegratorBuilder builder = new SearchIntegratorBuilder();
 		// we have to build an integrator here (but we don't need it afterwards)
-		builder.configuration(config).buildSearchIntegrator();
-		this.indexRelevantEntities.forEach((clazz) -> {
-			builder.addClass(clazz);
-		});
+		builder.configuration( config ).buildSearchIntegrator();
+		this.indexRelevantEntities.forEach( (clazz) -> {
+			builder.addClass( clazz );
+		} );
 		SearchIntegrator impl = builder.buildSearchIntegrator();
-		this.searchFactory = new SearchFactoryImpl(
-				impl.unwrap(ExtendedSearchIntegrator.class));
+		this.searchFactory = new SearchFactoryImpl( impl.unwrap( ExtendedSearchIntegrator.class ) );
 
-		JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider(
-				this.getEmf(), this.idProperties, this.isUseJTATransaction());
-		IndexUpdater indexUpdater = new IndexUpdater(
-				rehashedTypeMetadataPerIndexRoot, this.containedInIndexOf,
-				entityProvider, impl.unwrap(ExtendedSearchIntegrator.class));
+		JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider( this.getEmf(), this.idProperties, this.isUseJTATransaction() );
+		IndexUpdater indexUpdater = new IndexUpdater( rehashedTypeMetadataPerIndexRoot, this.containedInIndexOf, entityProvider,
+				impl.unwrap( ExtendedSearchIntegrator.class ) );
 		EventModelParser eventModelParser = new EventModelParser();
-		List<EventModelInfo> eventModelInfos = eventModelParser
-				.parse(new ArrayList<>(this.getUpdateClasses()));
+		List<EventModelInfo> eventModelInfos = eventModelParser.parse( new ArrayList<>( this.getUpdateClasses() ) );
 
-		this.setupTriggers(eventModelInfos);
+		this.setupTriggers( eventModelInfos );
 
-		this.updateSource = new JPAUpdateSource(eventModelInfos, this.getEmf(),
-				this.isUseJTATransaction(), this.getDelay(),
-				this.getDelayUnit(), this.getBatchSizeForUpdates(),
-				this.getManagedScheduledExecutorServiceForUpdater());
-		this.updateSource.setUpdateConsumers(Arrays.asList(indexUpdater, this));
+		this.updateSource = new JPAUpdateSource( eventModelInfos, this.getEmf(), this.isUseJTATransaction(), this.getDelay(), this.getDelayUnit(),
+				this.getBatchSizeForUpdates(), this.getManagedScheduledExecutorServiceForUpdater() );
+		this.updateSource.setUpdateConsumers( Arrays.asList( indexUpdater, this ) );
 		this.updateSource.start();
 	}
 
@@ -184,76 +162,73 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 		EntityManager em = null;
 		try {
 			em = this.getEmf().createEntityManager();
-			Connection connection = em.unwrap(Connection.class);
+			Connection connection = em.unwrap( Connection.class );
 
-			TriggerSQLStringSource triggerSource = this
-					.getTriggerSQLStringSource();
+			TriggerSQLStringSource triggerSource = this.getTriggerSQLStringSource();
 			try {
-				for (String str : triggerSource.getSetupCode()) {
+				for ( String str : triggerSource.getSetupCode() ) {
 					Statement statement = connection.createStatement();
-					LOGGER.info(str);
-					statement.addBatch(connection.nativeSQL(str));
+					LOGGER.info( str );
+					statement.addBatch( connection.nativeSQL( str ) );
 					statement.executeBatch();
 					connection.commit();
 				}
-				for (EventModelInfo info : eventModelInfos) {
-					for (String unSetupCode : triggerSource
-							.getSpecificUnSetupCode(info)) {
+				for ( EventModelInfo info : eventModelInfos ) {
+					for ( String unSetupCode : triggerSource.getSpecificUnSetupCode( info ) ) {
 						Statement statement = connection.createStatement();
-						LOGGER.info(unSetupCode);
-						statement.addBatch(connection.nativeSQL(unSetupCode));
+						LOGGER.info( unSetupCode );
+						statement.addBatch( connection.nativeSQL( unSetupCode ) );
 						statement.executeBatch();
 						connection.commit();
 					}
-					for (String setupCode : triggerSource
-							.getSpecificSetupCode(info)) {
+					for ( String setupCode : triggerSource.getSpecificSetupCode( info ) ) {
 						Statement statement = connection.createStatement();
-						LOGGER.info(setupCode);
-						statement.addBatch(connection.nativeSQL(setupCode));
+						LOGGER.info( setupCode );
+						statement.addBatch( connection.nativeSQL( setupCode ) );
 						statement.executeBatch();
 						connection.commit();
 					}
-					for (int eventType : EventType.values()) {
-						String[] triggerDropStrings = triggerSource
-								.getTriggerDropCode(info, eventType);
-						for (String triggerCreationString : triggerDropStrings) {
+					for ( int eventType : EventType.values() ) {
+						String[] triggerDropStrings = triggerSource.getTriggerDropCode( info, eventType );
+						for ( String triggerCreationString : triggerDropStrings ) {
 							Statement statement = connection.createStatement();
-							LOGGER.info(triggerCreationString);
-							statement.addBatch(connection
-									.nativeSQL(triggerCreationString));
+							LOGGER.info( triggerCreationString );
+							statement.addBatch( connection.nativeSQL( triggerCreationString ) );
 							statement.executeBatch();
 							connection.commit();
 						}
 					}
-					for (int eventType : EventType.values()) {
-						String[] triggerCreationStrings = triggerSource
-								.getTriggerCreationCode(info, eventType);
-						for (String triggerCreationString : triggerCreationStrings) {
+					for ( int eventType : EventType.values() ) {
+						String[] triggerCreationStrings = triggerSource.getTriggerCreationCode( info, eventType );
+						for ( String triggerCreationString : triggerCreationStrings ) {
 							Statement statement = connection.createStatement();
-							LOGGER.info(triggerCreationString);
-							statement.addBatch(connection
-									.nativeSQL(triggerCreationString));
+							LOGGER.info( triggerCreationString );
+							statement.addBatch( connection.nativeSQL( triggerCreationString ) );
 							statement.executeBatch();
 							connection.commit();
 						}
 					}
 
 				}
-			} catch (SQLException e) {
+			}
+			catch (SQLException e) {
 				try {
 					connection.rollback();
-				} catch (SQLException e1) {
+				}
+				catch (SQLException e1) {
 					// TODO: better Exception:
-					throw new RuntimeException(e1);
+					throw new RuntimeException( e1 );
 				}
 				// TODO: better Exception:
-				throw new RuntimeException(e);
+				throw new RuntimeException( e );
 			}
-		} finally {
-			if (em != null) {
+		}
+		finally {
+			if ( em != null ) {
 				try {
 					em.close();
-				} catch (IllegalStateException e) {
+				}
+				catch (IllegalStateException e) {
 					// yay, JPA...
 				}
 			}
@@ -265,8 +240,9 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 		try {
 			this.updateSource.stop();
 			this.close();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+		}
+		catch (IOException e) {
+			throw new RuntimeException( e );
 		}
 	}
 
@@ -281,7 +257,7 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 
 	@Override
 	public void index(Iterable<?> entities, TransactionContext tc) {
-		this.searchFactory.index(entities, tc);
+		this.searchFactory.index( entities, tc );
 	}
 
 	@Override
@@ -291,7 +267,7 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 
 	@Override
 	public void update(Iterable<?> entities, TransactionContext tc) {
-		this.searchFactory.update(entities, tc);
+		this.searchFactory.update( entities, tc );
 	}
 
 	@Override
@@ -311,7 +287,7 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 
 	@Override
 	public void optimize(Class<?> entity) {
-		this.searchFactory.optimize(entity);
+		this.searchFactory.optimize( entity );
 	}
 
 	@Override
@@ -321,12 +297,12 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 
 	@Override
 	public void delete(Iterable<?> entities, TransactionContext tc) {
-		this.searchFactory.delete(entities, tc);
+		this.searchFactory.delete( entities, tc );
 	}
 
 	@Override
 	public void purgeAll(Class<?> entityClass) {
-		this.searchFactory.purgeAll(entityClass);
+		this.searchFactory.purgeAll( entityClass );
 	}
 
 	@Override
@@ -336,38 +312,37 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 
 	@Override
 	public Analyzer getAnalyzer(String name) {
-		return this.searchFactory.getAnalyzer(name);
+		return this.searchFactory.getAnalyzer( name );
 	}
 
 	@Override
 	public Analyzer getAnalyzer(Class<?> clazz) {
-		return this.searchFactory.getAnalyzer(clazz);
+		return this.searchFactory.getAnalyzer( clazz );
 	}
 
 	@Override
 	public void purgeAll(Class<?> entityClass, TransactionContext tc) {
-		this.searchFactory.purgeAll(entityClass, tc);
+		this.searchFactory.purgeAll( entityClass, tc );
 	}
 
 	@Override
 	public HSearchQuery createQuery(Query query, Class<?>... targetedEntities) {
-		return this.searchFactory.createQuery(query, targetedEntities);
+		return this.searchFactory.createQuery( query, targetedEntities );
 	}
 
 	@Override
-	public void purge(Class<?> entityClass, Serializable id,
-			TransactionContext tc) {
-		this.searchFactory.purge(entityClass, id, tc);
+	public void purge(Class<?> entityClass, Serializable id, TransactionContext tc) {
+		this.searchFactory.purge( entityClass, id, tc );
 	}
 
 	@Override
 	public void purge(Iterable<?> entities, TransactionContext tc) {
-		this.searchFactory.purge(entities, tc);
+		this.searchFactory.purge( entities, tc );
 	}
 
 	@Override
 	public void purge(Class<?> entityClass, Query query, TransactionContext tc) {
-		this.searchFactory.purge(entityClass, query, tc);
+		this.searchFactory.purge( entityClass, query, tc );
 	}
 
 }

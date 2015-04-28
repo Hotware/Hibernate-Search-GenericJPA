@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
-
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.db.events.jpa;
 
@@ -46,14 +37,11 @@ public class JPAUpdateSourceTest {
 
 	@Test
 	public void test() throws InterruptedException {
-		EntityManagerFactory emf = Persistence
-				.createEntityManagerFactory("EclipseLink");
+		EntityManagerFactory emf = Persistence.createEntityManagerFactory( "EclipseLink" );
 		try {
 			EventModelParser parser = new EventModelParser();
 			JPAUpdateSource updateSource = new JPAUpdateSource(
-					parser.parse(new HashSet<>(Arrays.asList(
-							PlaceSorcererUpdates.class, PlaceUpdates.class))),
-					emf, false, 1, TimeUnit.SECONDS, 2, 2);
+					parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class, PlaceUpdates.class ) ) ), emf, false, 1, TimeUnit.SECONDS, 2, 2 );
 
 			{
 				EntityManager em = null;
@@ -62,48 +50,44 @@ public class JPAUpdateSourceTest {
 					EntityTransaction tx = em.getTransaction();
 					tx.begin();
 					PlaceSorcererUpdates update = new PlaceSorcererUpdates();
-					update.setEventType(EventType.INSERT);
-					update.setId(1L);
-					update.setPlaceId(2);
-					update.setSorcererId(3);
-					em.persist(update);
+					update.setEventType( EventType.INSERT );
+					update.setId( 1L );
+					update.setPlaceId( 2 );
+					update.setSorcererId( 3 );
+					em.persist( update );
 					tx.commit();
 
-				} finally {
-					if (em != null) {
+				}
+				finally {
+					if ( em != null ) {
 						em.close();
 					}
 				}
 			}
 
 			final boolean[] gotEvent = new boolean[2];
-			updateSource.setUpdateConsumers(Arrays.asList(new UpdateConsumer() {
+			updateSource.setUpdateConsumers( Arrays.asList( new UpdateConsumer() {
 
 				@Override
 				public void updateEvent(List<UpdateInfo> updateInfos) {
-					for (UpdateInfo updateInfo : updateInfos) {
+					for ( UpdateInfo updateInfo : updateInfos ) {
 						Object id = updateInfo.getId();
 						int eventType = updateInfo.getEventType();
-						if (id.equals(2)
-								&& updateInfo.getEntityClass().equals(
-										Place.class)
-								&& eventType == EventType.INSERT) {
+						if ( id.equals( 2 ) && updateInfo.getEntityClass().equals( Place.class ) && eventType == EventType.INSERT ) {
 							gotEvent[0] = true;
-						} else if (id.equals(3)
-								&& updateInfo.getEntityClass().equals(
-										Sorcerer.class)
-								&& eventType == EventType.INSERT) {
+						}
+						else if ( id.equals( 3 ) && updateInfo.getEntityClass().equals( Sorcerer.class ) && eventType == EventType.INSERT ) {
 							gotEvent[1] = true;
 						}
 					}
 				}
-			}));
+			} ) );
 			updateSource.start();
-			Thread.sleep(1000 * 3);
+			Thread.sleep( 1000 * 3 );
 			updateSource.stop();
-			for (boolean ev : gotEvent) {
-				if (!ev) {
-					fail("didn't get all events that were expected");
+			for ( boolean ev : gotEvent ) {
+				if ( !ev ) {
+					fail( "didn't get all events that were expected" );
 				}
 			}
 
@@ -112,33 +96,30 @@ public class JPAUpdateSourceTest {
 				em = emf.createEntityManager();
 				EntityTransaction tx = em.getTransaction();
 				tx.begin();
-				assertEquals(
-						"UpdateSource should delete all things after it has processed the updates but didn't do so",
-						null, em.find(PlaceSorcererUpdates.class, 1L));
+				assertEquals( "UpdateSource should delete all things after it has processed the updates but didn't do so", null,
+						em.find( PlaceSorcererUpdates.class, 1L ) );
 				tx.commit();
-			} finally {
-				if (em != null) {
+			}
+			finally {
+				if ( em != null ) {
 					em.close();
 				}
 			}
 
-		} finally {
+		}
+		finally {
 			emf.close();
 		}
 	}
 
 	/**
-	 * this is needed in other tests because the query method of JPAUpdateSource
-	 * has package access
+	 * this is needed in other tests because the query method of JPAUpdateSource has package access
 	 */
-	public static MultiQueryAccess query(EntityManagerFactory emf,
-			EntityManager em) throws NoSuchFieldException, SecurityException {
+	public static MultiQueryAccess query(EntityManagerFactory emf, EntityManager em) throws NoSuchFieldException, SecurityException {
 		EventModelParser parser = new EventModelParser();
-		JPAUpdateSource updateSource = new JPAUpdateSource(
-				parser.parse(new HashSet<>(Arrays.asList(
-						PlaceSorcererUpdates.class, PlaceUpdates.class))), emf,
-				false, 1, TimeUnit.SECONDS, 2, 2);
-		return updateSource.query(em);
+		JPAUpdateSource updateSource = new JPAUpdateSource( parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class, PlaceUpdates.class ) ) ),
+				emf, false, 1, TimeUnit.SECONDS, 2, 2 );
+		return updateSource.query( em );
 	}
 
 }

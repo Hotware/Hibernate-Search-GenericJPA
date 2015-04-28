@@ -21,6 +21,8 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		
+		<hibernate-search.version>5.2.0.Beta1</hibernate-search.version>
 	</properties>
 
 	<licenses>
@@ -69,7 +71,7 @@
 			<dependency>
 				<groupId>org.hibernate</groupId>
 				<artifactId>hibernate-search-engine</artifactId>
-				<version>5.2.0.Beta1</version>
+				<version>${hibernate-search.version}</version>
 				<scope>provided</scope>
 			</dependency>
 
@@ -128,29 +130,34 @@
 	<build>
 		<plugins>
 			<plugin>
-				<!-- Deploy the web site -->
-				<groupId>com.github.github</groupId>
-				<artifactId>site-maven-plugin</artifactId>
-				<version>0.10</version>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>2.12.1</version>
+				<dependencies>
+					<dependency>
+						<groupId>org.hibernate</groupId>
+						<artifactId>hibernate-search-build-config</artifactId>
+						<version>${hibernate-search.version}</version>
+					</dependency>
+				</dependencies>
+				<configuration>
+					<!-- Location is relative to the classpath -->
+					<configLocation>checkstyle.xml</configLocation>
+					<consoleOutput>true</consoleOutput>
+					<failsOnError>false</failsOnError>
+					<violationSeverity>error</violationSeverity>
+					<includeTestSourceDirectory>true</includeTestSourceDirectory>
+					<resourceIncludes>**/*.xml,**/*.properties</resourceIncludes>
+					<!-- generated respectively copied code -->
+					<excludes>**/Generated.java,**/TypeHelper*.java,**/MatchSuppressor.java,**/CommentSuppressor.java,**/NeverSuppress.java</excludes>
+				</configuration>
 				<executions>
 					<execution>
+						<id>check-style</id>
+						<phase>verify</phase>
 						<goals>
-							<goal>site</goal>
+							<goal>checkstyle</goal>
 						</goals>
-						<!-- select the Maven phase in which the plugin will be executed -->
-						<phase>site</phase>
-						<configuration>
-							<!-- Plugin configuration goes here -->
-							<server>github</server>
-
-							<!-- The commit message -->
-							<message>site for ${project.version}</message>
-							<!-- The location where the site is uploaded -->
-							<path>${project.version}</path>
-							<!-- Use merge or override the content -->
-							<merge>true</merge>
-							<force>true</force>
-						</configuration>
 					</execution>
 				</executions>
 			</plugin>

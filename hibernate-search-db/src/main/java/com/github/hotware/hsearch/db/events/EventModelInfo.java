@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
-
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.db.events;
 
@@ -22,8 +13,7 @@ import java.util.function.Function;
 import com.github.hotware.hsearch.db.id.ToOriginalIdBridge;
 
 /**
- * contains information about the EventModel. Instances of this class can be
- * obtained by a {@link EventModelParser}.
+ * contains information about the EventModel. Instances of this class can be obtained by a {@link EventModelParser}.
  * 
  * @author Martin
  */
@@ -36,9 +26,7 @@ public class EventModelInfo {
 	private final String eventTypeColumn;
 	private final List<IdInfo> idInfos;
 
-	public EventModelInfo(Class<?> updateClass, String tableName,
-			String originalTableName,
-			Function<Object, Integer> eventTypeAccessor,
+	public EventModelInfo(Class<?> updateClass, String tableName, String originalTableName, Function<Object, Integer> eventTypeAccessor,
 			String eventTypeColumn, List<IdInfo> idInfos) {
 		super();
 		this.updateClass = updateClass;
@@ -93,16 +81,12 @@ public class EventModelInfo {
 
 	/*
 	 * (non-Javadoc)
-	 * 
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
 	public String toString() {
-		return "EventModelInfo [updateClass=" + updateClass + ", tableName="
-				+ tableName + ", originalTableName=" + originalTableName
-				+ ", eventTypeAccessor=" + eventTypeAccessor
-				+ ", eventTypeColumn=" + eventTypeColumn + ", idInfos="
-				+ idInfos + "]";
+		return "EventModelInfo [updateClass=" + updateClass + ", tableName=" + tableName + ", originalTableName=" + originalTableName + ", eventTypeAccessor="
+				+ eventTypeAccessor + ", eventTypeColumn=" + eventTypeColumn + ", idInfos=" + idInfos + "]";
 	}
 
 	public static class IdInfo {
@@ -113,9 +97,8 @@ public class EventModelInfo {
 		private final String[] columnsInOriginal;
 		private final ToOriginalIdBridge toOriginalBridge;
 
-		public IdInfo(Function<Object, Object> idAccessor,
-				Class<?> entityClass, String[] columns,
-				String[] columnsInOriginal, ToOriginalIdBridge toOriginalBridge) {
+		public IdInfo(Function<Object, Object> idAccessor, Class<?> entityClass, String[] columns, String[] columnsInOriginal,
+				ToOriginalIdBridge toOriginalBridge) {
 			super();
 			this.idAccessor = idAccessor;
 			this.entityClass = entityClass;
@@ -161,15 +144,12 @@ public class EventModelInfo {
 
 		/*
 		 * (non-Javadoc)
-		 * 
 		 * @see java.lang.Object#toString()
 		 */
 		@Override
 		public String toString() {
-			return "IdInfo [idAccessor=" + idAccessor + ", entityClass="
-					+ entityClass + ", columns=" + Arrays.toString(columns)
-					+ ", columnsInOriginal="
-					+ Arrays.toString(columnsInOriginal) + "]";
+			return "IdInfo [idAccessor=" + idAccessor + ", entityClass=" + entityClass + ", columns=" + Arrays.toString( columns ) + ", columnsInOriginal="
+					+ Arrays.toString( columnsInOriginal ) + "]";
 		}
 
 	}

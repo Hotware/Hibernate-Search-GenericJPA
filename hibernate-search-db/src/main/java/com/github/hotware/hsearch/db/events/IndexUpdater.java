@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
-
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.db.events;
 
@@ -37,10 +28,9 @@ import com.github.hotware.hsearch.factory.Transaction;
 import com.github.hotware.hsearch.metadata.RehashedTypeMetadata;
 
 /**
- * This class is the "glue" between a
- * {@link com.github.hotware.hsearch.db.events.UpdateSource} and the actual
- * Hibernate-Search index. It consumes Events coming from the UpdateSource and
- * updates the Hibernate-Search index accordingly
+ * This class is the "glue" between a {@link com.github.hotware.hsearch.db.events.UpdateSource} and the actual
+ * Hibernate-Search index. It consumes Events coming from the UpdateSource and updates the Hibernate-Search index
+ * accordingly
  * 
  * @author Martin Braun
  */
@@ -51,7 +41,7 @@ public class IndexUpdater implements UpdateConsumer {
 
 	// TODO: unit test this with several batches
 
-	private static final Logger LOGGER = Logger.getLogger(IndexUpdater.class);
+	private static final Logger LOGGER = Logger.getLogger( IndexUpdater.class );
 
 	private static final int HSQUERY_BATCH = 50;
 
@@ -60,9 +50,7 @@ public class IndexUpdater implements UpdateConsumer {
 	private final ReusableEntityProvider entityProvider;
 	private IndexWrapper indexWrapper;
 
-	public IndexUpdater(
-			Map<Class<?>, RehashedTypeMetadata> metadataPerForIndexRoot,
-			Map<Class<?>, List<Class<?>>> containedInIndexOf,
+	public IndexUpdater(Map<Class<?>, RehashedTypeMetadata> metadataPerForIndexRoot, Map<Class<?>, List<Class<?>>> containedInIndexOf,
 			ReusableEntityProvider entityProvider, IndexWrapper indexWrapper) {
 		this.metadataPerForIndexRoot = metadataPerForIndexRoot;
 		this.containedInIndexOf = containedInIndexOf;
@@ -70,14 +58,10 @@ public class IndexUpdater implements UpdateConsumer {
 		this.indexWrapper = indexWrapper;
 	}
 
-	public IndexUpdater(
-			Map<Class<?>, RehashedTypeMetadata> metadataPerForIndexRoot,
-			Map<Class<?>, List<Class<?>>> containedInIndexOf,
-			ReusableEntityProvider entityProvider,
-			ExtendedSearchIntegrator searchIntegrator) {
-		this(metadataPerForIndexRoot, containedInIndexOf, entityProvider,
-				(IndexWrapper) null);
-		this.indexWrapper = new DefaultIndexWrapper(searchIntegrator);
+	public IndexUpdater(Map<Class<?>, RehashedTypeMetadata> metadataPerForIndexRoot, Map<Class<?>, List<Class<?>>> containedInIndexOf,
+			ReusableEntityProvider entityProvider, ExtendedSearchIntegrator searchIntegrator) {
+		this( metadataPerForIndexRoot, containedInIndexOf, entityProvider, (IndexWrapper) null );
+		this.indexWrapper = new DefaultIndexWrapper( searchIntegrator );
 	}
 
 	@Override
@@ -85,56 +69,54 @@ public class IndexUpdater implements UpdateConsumer {
 		this.entityProvider.open();
 		try {
 			Transaction tx = new Transaction();
-			for (UpdateInfo updateInfo : updateInfos) {
+			for ( UpdateInfo updateInfo : updateInfos ) {
 				Class<?> entityClass = updateInfo.getEntityClass();
-				List<Class<?>> inIndexOf = this.containedInIndexOf
-						.get(entityClass);
-				if (inIndexOf != null && inIndexOf.size() != 0) {
+				List<Class<?>> inIndexOf = this.containedInIndexOf.get( entityClass );
+				if ( inIndexOf != null && inIndexOf.size() != 0 ) {
 					int eventType = updateInfo.getEventType();
 					Object id = updateInfo.getId();
-					switch (eventType) {
-					case EventType.INSERT: {
-						Object obj = this.entityProvider.get(entityClass, id);
-						if (obj != null) {
-							this.indexWrapper.index(obj, tx);
+					switch ( eventType ) {
+						case EventType.INSERT: {
+							Object obj = this.entityProvider.get( entityClass, id );
+							if ( obj != null ) {
+								this.indexWrapper.index( obj, tx );
+							}
+							break;
 						}
-						break;
-					}
-					case EventType.UPDATE: {
-						Object obj = this.entityProvider.get(entityClass, id);
-						if (obj != null) {
-							this.indexWrapper.update(obj, tx);
+						case EventType.UPDATE: {
+							Object obj = this.entityProvider.get( entityClass, id );
+							if ( obj != null ) {
+								this.indexWrapper.update( obj, tx );
+							}
+							break;
 						}
-						break;
+						case EventType.DELETE: {
+							this.indexWrapper.delete( entityClass, inIndexOf, id, tx );
+							break;
+						}
+						default: {
+							LOGGER.warn( "unknown eventType-id found: " + eventType );
+						}
 					}
-					case EventType.DELETE: {
-						this.indexWrapper
-								.delete(entityClass, inIndexOf, id, tx);
-						break;
-					}
-					default: {
-						LOGGER.warn("unknown eventType-id found: " + eventType);
-					}
-					}
-				} else {
-					LOGGER.warn("class: " + entityClass
-							+ " not found in any index!");
+				}
+				else {
+					LOGGER.warn( "class: " + entityClass + " not found in any index!" );
 				}
 			}
 			tx.end();
-		} catch (Exception e) {
-			LOGGER.warn("Error while updating the index! Your index might be corrupt!");
-			throw new RuntimeException(
-					"Error while updating the index! Your index might be corrupt!");
-		} finally {
+		}
+		catch (Exception e) {
+			LOGGER.warn( "Error while updating the index! Your index might be corrupt!" );
+			throw new RuntimeException( "Error while updating the index! Your index might be corrupt!" );
+		}
+		finally {
 			this.entityProvider.close();
 		}
 	}
 
 	public static interface IndexWrapper {
 
-		public void delete(Class<?> entityClass, List<Class<?>> inIndexOf,
-				Object id, Transaction tx);
+		public void delete(Class<?> entityClass, List<Class<?>> inIndexOf, Object id, Transaction tx);
 
 		public void update(Object entity, Transaction tx);
 
@@ -151,65 +133,48 @@ public class IndexUpdater implements UpdateConsumer {
 		}
 
 		@Override
-		public void delete(Class<?> entityClass, List<Class<?>> inIndexOf,
-				Object id, Transaction tx) {
-			for (int i = 0; i < inIndexOf.size(); ++i) {
-				Class<?> indexClass = inIndexOf.get(i);
-				RehashedTypeMetadata metadata = IndexUpdater.this.metadataPerForIndexRoot
-						.get(indexClass);
-				List<String> fields = metadata.getIdFieldNamesForType().get(
-						entityClass);
-				for (String field : fields) {
-					DocumentFieldMetadata metaDataForIdField = metadata
-							.getDocumentFieldMetadataForIdFieldName()
-							.get(field);
-					SingularTermDeletionQuery.Type idType = metadata
-							.getSingularTermDeletionQueryTypeForIdFieldName()
-							.get(entityClass);
+		public void delete(Class<?> entityClass, List<Class<?>> inIndexOf, Object id, Transaction tx) {
+			for ( int i = 0; i < inIndexOf.size(); ++i ) {
+				Class<?> indexClass = inIndexOf.get( i );
+				RehashedTypeMetadata metadata = IndexUpdater.this.metadataPerForIndexRoot.get( indexClass );
+				List<String> fields = metadata.getIdFieldNamesForType().get( entityClass );
+				for ( String field : fields ) {
+					DocumentFieldMetadata metaDataForIdField = metadata.getDocumentFieldMetadataForIdFieldName().get( field );
+					SingularTermDeletionQuery.Type idType = metadata.getSingularTermDeletionQueryTypeForIdFieldName().get( entityClass );
 					Object idValueForDeletion;
-					if (idType == SingularTermDeletionQuery.Type.STRING) {
+					if ( idType == SingularTermDeletionQuery.Type.STRING ) {
 						FieldBridge fb = metaDataForIdField.getFieldBridge();
-						if (!(fb instanceof StringBridge)) {
-							throw new IllegalArgumentException(
-									"no TwoWayStringBridge found for field: "
-											+ field);
+						if ( !( fb instanceof StringBridge ) ) {
+							throw new IllegalArgumentException( "no TwoWayStringBridge found for field: " + field );
 						}
-						idValueForDeletion = ((StringBridge) fb)
-								.objectToString(id);
-					} else {
+						idValueForDeletion = ( (StringBridge) fb ).objectToString( id );
+					}
+					else {
 						idValueForDeletion = id;
 					}
 					HSQuery hsQuery = this.searchIntegrator
 							.createHSQuery()
-							.targetedEntities(Arrays.asList(indexClass))
+							.targetedEntities( Arrays.asList( indexClass ) )
 							.luceneQuery(
-									this.searchIntegrator.buildQueryBuilder()
-											.forEntity(indexClass).get()
-											.keyword().onField(field)
-											.matching(idValueForDeletion)
-											.createQuery());
+									this.searchIntegrator.buildQueryBuilder().forEntity( indexClass ).get().keyword().onField( field )
+											.matching( idValueForDeletion ).createQuery() );
 					int count = hsQuery.queryResultSize();
 					int processed = 0;
-					if (indexClass.equals(entityClass)) {
-						this.searchIntegrator.getWorker().performWork(
-								new Work(entityClass, (Serializable) id,
-										WorkType.DELETE), tx);
-					} else {
+					if ( indexClass.equals( entityClass ) ) {
+						this.searchIntegrator.getWorker().performWork( new Work( entityClass, (Serializable) id, WorkType.DELETE ), tx );
+					}
+					else {
 						// this was just contained somewhere
 						// so we have to update the containing entity
-						while (processed < count) {
-							for (EntityInfo entityInfo : hsQuery
-									.firstResult(processed)
-									.projection(ProjectionConstants.ID)
-									.maxResults(HSQUERY_BATCH)
-									.queryEntityInfos()) {
-								Serializable originalId = (Serializable) entityInfo
-										.getProjection()[0];
-								Object original = IndexUpdater.this.entityProvider
-										.get(indexClass, originalId);
-								if (original != null) {
-									this.update(original, tx);
-								} else {
+						while ( processed < count ) {
+							for ( EntityInfo entityInfo : hsQuery.firstResult( processed ).projection( ProjectionConstants.ID ).maxResults( HSQUERY_BATCH )
+									.queryEntityInfos() ) {
+								Serializable originalId = (Serializable) entityInfo.getProjection()[0];
+								Object original = IndexUpdater.this.entityProvider.get( indexClass, originalId );
+								if ( original != null ) {
+									this.update( original, tx );
+								}
+								else {
 									// original is not available in the
 									// database, but it will be deleted by its
 									// own delete event
@@ -225,17 +190,15 @@ public class IndexUpdater implements UpdateConsumer {
 
 		@Override
 		public void update(Object entity, Transaction tx) {
-			if (entity != null) {
-				this.searchIntegrator.getWorker().performWork(
-						new Work(entity, WorkType.UPDATE), tx);
+			if ( entity != null ) {
+				this.searchIntegrator.getWorker().performWork( new Work( entity, WorkType.UPDATE ), tx );
 			}
 		}
 
 		@Override
 		public void index(Object entity, Transaction tx) {
-			if (entity != null) {
-				this.searchIntegrator.getWorker().performWork(
-						new Work(entity, WorkType.INDEX), tx);
+			if ( entity != null ) {
+				this.searchIntegrator.getWorker().performWork( new Work( entity, WorkType.INDEX ), tx );
 			}
 		}
 

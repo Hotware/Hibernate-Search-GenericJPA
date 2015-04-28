@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.query;
 
@@ -38,9 +29,7 @@ public class HSearchQueryImpl implements HSearchQuery {
 	private final HibernateSearchQueryExecutor queryExec;
 	private final SearchIntegrator searchIntegrator;
 
-	public HSearchQueryImpl(HSQuery hsquery,
-			HibernateSearchQueryExecutor queryExec,
-			SearchIntegrator searchIntegrator) {
+	public HSearchQueryImpl(HSQuery hsquery, HibernateSearchQueryExecutor queryExec, SearchIntegrator searchIntegrator) {
 		this.hsquery = hsquery;
 		this.queryExec = queryExec;
 		this.searchIntegrator = searchIntegrator;
@@ -48,25 +37,25 @@ public class HSearchQueryImpl implements HSearchQuery {
 
 	@Override
 	public HSearchQuery sort(Sort sort) {
-		this.hsquery.sort(sort);
+		this.hsquery.sort( sort );
 		return this;
 	}
 
 	@Override
 	public HSearchQuery filter(Filter filter) {
-		this.hsquery.filter(filter);
+		this.hsquery.filter( filter );
 		return this;
 	}
 
 	@Override
 	public HSearchQuery firstResult(int firstResult) {
-		this.hsquery.firstResult(firstResult);
+		this.hsquery.firstResult( firstResult );
 		return this;
 	}
 
 	@Override
 	public HSearchQuery maxResults(int maxResults) {
-		this.hsquery.maxResults(maxResults);
+		this.hsquery.maxResults( maxResults );
 		return this;
 	}
 
@@ -77,7 +66,7 @@ public class HSearchQueryImpl implements HSearchQuery {
 
 	@Override
 	public <R> List<R> queryDto(Class<R> returnedType) {
-		return this.queryExec.executeHSQuery(this.hsquery, returnedType);
+		return this.queryExec.executeHSQuery( this.hsquery, returnedType );
 	}
 
 	@Override
@@ -87,15 +76,14 @@ public class HSearchQueryImpl implements HSearchQuery {
 		{
 			this.hsquery.getTimeoutManager().start();
 
-			this.hsquery.projection(projection);
-			ret = this.hsquery.queryEntityInfos().stream()
-					.map((entityInfo) -> {
-						return entityInfo.getProjection();
-					}).collect(Collectors.toList());
+			this.hsquery.projection( projection );
+			ret = this.hsquery.queryEntityInfos().stream().map( (entityInfo) -> {
+				return entityInfo.getProjection();
+			} ).collect( Collectors.toList() );
 
 			this.hsquery.getTimeoutManager().stop();
 		}
-		this.hsquery.projection(projectedFieldsBefore);
+		this.hsquery.projection( projectedFieldsBefore );
 		return ret;
 	}
 
@@ -109,62 +97,52 @@ public class HSearchQueryImpl implements HSearchQuery {
 
 	@Override
 	public FullTextFilter enableFullTextFilter(String name) {
-		return hsquery.enableFullTextFilter(name);
+		return hsquery.enableFullTextFilter( name );
 	}
 
 	@Override
 	public void disableFullTextFilter(String name) {
-		this.hsquery.disableFullTextFilter(name);
+		this.hsquery.disableFullTextFilter( name );
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public List query(EntityProvider entityProvider, Fetch fetchType) {
 		List<Object> ret;
-		List<Object[]> projected = this.queryProjection(
-				ProjectionConstants.OBJECT_CLASS, ProjectionConstants.ID);
-		if (fetchType == Fetch.FIND_BY_ID) {
-			ret = projected.stream().map((arr) -> {
-				return entityProvider.get((Class<?>) arr[0], arr[1]);
-			}).collect(Collectors.toList());
-		} else {
-			ret = new ArrayList<>(projected.size());
+		List<Object[]> projected = this.queryProjection( ProjectionConstants.OBJECT_CLASS, ProjectionConstants.ID );
+		if ( fetchType == Fetch.FIND_BY_ID ) {
+			ret = projected.stream().map( (arr) -> {
+				return entityProvider.get( (Class<?>) arr[0], arr[1] );
+			} ).collect( Collectors.toList() );
+		}
+		else {
+			ret = new ArrayList<>( projected.size() );
 			Map<Class<?>, List<Object>> idsForClass = new HashMap<>();
 			List<Object> originalOrder = new ArrayList<>();
 			Map<Object, Object> idToObject = new HashMap<>();
 			// split the ids for each class (and also make sure the original
 			// order is saved. this is needed even for only one class)
-			projected.stream().forEach((arr) -> {
-				originalOrder.add(arr[1]);
-				idsForClass.computeIfAbsent((Class<?>) arr[0], (clazz) -> {
+			projected.stream().forEach( (arr) -> {
+				originalOrder.add( arr[1] );
+				idsForClass.computeIfAbsent( (Class<?>) arr[0], (clazz) -> {
 					return new ArrayList<>();
-				}).add(arr[1]);
-			});
+				} ).add( arr[1] );
+			} );
 			// get all entities of the same type in one batch
-			idsForClass.entrySet().forEach(
-					(Map.Entry<Class<?>, List<Object>> entry) -> {
-						entityProvider
-								.getBatch(entry.getKey(), entry.getValue())
-								.stream()
-								.forEach(
-										(object) -> {
-											Object id = this.searchIntegrator
-													.getIndexBinding(
-															entry.getKey())
-													.getDocumentBuilder()
-													.getId(object);
-											Object value = object;
-											idToObject.put(id, value);
-										});
-					});
+			idsForClass.entrySet().forEach( (Map.Entry<Class<?>, List<Object>> entry) -> {
+				entityProvider.getBatch( entry.getKey(), entry.getValue() ).stream().forEach( (object) -> {
+					Object id = this.searchIntegrator.getIndexBinding( entry.getKey() ).getDocumentBuilder().getId( object );
+					Object value = object;
+					idToObject.put( id, value );
+				} );
+			} );
 			// and put everything back into order
-			originalOrder.stream().forEach((id) -> {
-				ret.add(idToObject.get(id));
-			});
+			originalOrder.stream().forEach( (id) -> {
+				ret.add( idToObject.get( id ) );
+			} );
 		}
-		if (ret.size() != projected.size()) {
-			throw new AssertionError(
-					"returned size was not equal to projected size");
+		if ( ret.size() != projected.size() ) {
+			throw new AssertionError( "returned size was not equal to projected size" );
 		}
 		return ret;
 	}

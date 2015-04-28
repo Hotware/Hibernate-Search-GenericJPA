@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
-
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.entity.jpa;
 
@@ -45,8 +36,7 @@ public class JPAReusableEntityProvider implements ReusableEntityProvider {
 	private EntityManagerEntityProvider provider;
 	private UserTransaction utx;
 
-	public JPAReusableEntityProvider(EntityManagerFactory emf,
-			Map<Class<?>, String> idProperties, boolean useJTATransaction) {
+	public JPAReusableEntityProvider(EntityManagerFactory emf, Map<Class<?>, String> idProperties, boolean useJTATransaction) {
 		this.emf = emf;
 		this.idProperties = idProperties;
 		this.useJTATransaction = useJTATransaction;
@@ -54,30 +44,31 @@ public class JPAReusableEntityProvider implements ReusableEntityProvider {
 
 	@Override
 	public Object get(Class<?> entityClass, Object id) {
-		if (this.provider == null) {
-			throw new IllegalStateException("not open!");
+		if ( this.provider == null ) {
+			throw new IllegalStateException( "not open!" );
 		}
-		return this.provider.get(entityClass, id);
+		return this.provider.get( entityClass, id );
 	}
 
 	@Override
 	@SuppressWarnings("rawtypes")
 	public List getBatch(Class<?> entityClass, List<Object> ids) {
-		if (this.provider == null) {
-			throw new IllegalStateException("not open!");
+		if ( this.provider == null ) {
+			throw new IllegalStateException( "not open!" );
 		}
-		return this.provider.getBatch(entityClass, ids);
+		return this.provider.getBatch( entityClass, ids );
 	}
 
 	@Override
 	public void close() {
 		try {
-			if (this.provider == null) {
-				throw new IllegalStateException("already closed!");
+			if ( this.provider == null ) {
+				throw new IllegalStateException( "already closed!" );
 			}
 			this.commitTransaction();
 			this.em.close();
-		} finally {
+		}
+		finally {
 			this.utx = null;
 			this.em = null;
 			this.provider = null;
@@ -87,15 +78,15 @@ public class JPAReusableEntityProvider implements ReusableEntityProvider {
 	@Override
 	public void open() {
 		try {
-			if (this.provider != null) {
-				throw new IllegalStateException("already open!");
+			if ( this.provider != null ) {
+				throw new IllegalStateException( "already open!" );
 			}
-			this.em = new EntityManagerCloseable(this.emf.createEntityManager());
-			this.provider = new EntityManagerEntityProvider(this.em,
-					this.idProperties);
+			this.em = new EntityManagerCloseable( this.emf.createEntityManager() );
+			this.provider = new EntityManagerEntityProvider( this.em, this.idProperties );
 			this.beginTransaction();
-		} catch (Throwable e) {
-			if (this.em != null) {
+		}
+		catch (Throwable e) {
+			if ( this.em != null ) {
 				this.em.close();
 			}
 			this.utx = null;
@@ -108,39 +99,41 @@ public class JPAReusableEntityProvider implements ReusableEntityProvider {
 	// TODO: fix the hacky stuff here
 
 	private void beginTransaction() {
-		if(!this.useJTATransaction) {
+		if ( !this.useJTATransaction ) {
 			this.em.getTransaction().begin();
-		} else {
+		}
+		else {
 			try {
-				TransactionSynchronizationRegistry registry = InitialContext
-						.doLookup("java:comp/TransactionSynchronizationRegistry");
-				if(registry.getTransactionStatus() == Status.STATUS_NO_TRANSACTION) {
-					this.utx = InitialContext.doLookup("java:comp/UserTransaction");
+				TransactionSynchronizationRegistry registry = InitialContext.doLookup( "java:comp/TransactionSynchronizationRegistry" );
+				if ( registry.getTransactionStatus() == Status.STATUS_NO_TRANSACTION ) {
+					this.utx = InitialContext.doLookup( "java:comp/UserTransaction" );
 					this.utx.begin();
 					this.em.joinTransaction();
-				} else {
-					//we didn't start the currently active transaction, so we don't have to handle it here
+				}
+				else {
+					// we didn't start the currently active transaction, so we don't have to handle it here
 					this.utx = null;
 				}
-			} catch (NamingException | NotSupportedException | SystemException e1) {
-				throw new RuntimeException("couldn't start a JTA UserTransaction", e1);
+			}
+			catch (NamingException | NotSupportedException | SystemException e1) {
+				throw new RuntimeException( "couldn't start a JTA UserTransaction", e1 );
 			}
 		}
 	}
 
 	private void commitTransaction() {
-		if(!this.useJTATransaction) {
+		if ( !this.useJTATransaction ) {
 			this.em.getTransaction().commit();
-		} else {
+		}
+		else {
 			try {
-				if(this.utx != null) {
-					//only commit this transaction if it was
+				if ( this.utx != null ) {
+					// only commit this transaction if it was
 					this.utx.commit();
 				}
-			} catch (SecurityException | IllegalStateException
-					| RollbackException | HeuristicMixedException
-					| HeuristicRollbackException | SystemException e1) {
-				throw new RuntimeException("couldn't commit a JTA UserTransaction", e1);
+			}
+			catch (SecurityException | IllegalStateException | RollbackException | HeuristicMixedException | HeuristicRollbackException | SystemException e1) {
+				throw new RuntimeException( "couldn't commit a JTA UserTransaction", e1 );
 			}
 		}
 	}

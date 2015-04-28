@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
-
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.metadata;
 
@@ -43,89 +34,79 @@ import org.hibernate.search.spi.IndexingMode;
 public class MetadataUtil {
 
 	private MetadataUtil() {
-		throw new AssertionError("can't touch this!");
+		throw new AssertionError( "can't touch this!" );
 	}
 
-	public static MetadataProvider getMetadataProvider(
-			SearchConfiguration searchConfiguration) {
-		ConfigContext configContext = new ConfigContext(searchConfiguration,
-				new BuildContext() {
+	public static MetadataProvider getMetadataProvider(SearchConfiguration searchConfiguration) {
+		ConfigContext configContext = new ConfigContext( searchConfiguration, new BuildContext() {
 
-					@Override
-					public ExtendedSearchIntegrator getUninitializedSearchIntegrator() {
-						return null;
-					}
+			@Override
+			public ExtendedSearchIntegrator getUninitializedSearchIntegrator() {
+				return null;
+			}
 
-					@Override
-					public String getIndexingStrategy() {
-						return IndexingMode.EVENT.toExternalRepresentation();
-					}
+			@Override
+			public String getIndexingStrategy() {
+				return IndexingMode.EVENT.toExternalRepresentation();
+			}
 
-					@Override
-					public IndexingMode getIndexingMode() {
-						return IndexingMode.EVENT;
-					}
+			@Override
+			public IndexingMode getIndexingMode() {
+				return IndexingMode.EVENT;
+			}
 
-					@Override
-					public ServiceManager getServiceManager() {
-						return new StandardServiceManager(searchConfiguration,
-								this, Environment.DEFAULT_SERVICES_MAP);
-					}
+			@Override
+			public ServiceManager getServiceManager() {
+				return new StandardServiceManager( searchConfiguration, this, Environment.DEFAULT_SERVICES_MAP );
+			}
 
-					@Override
-					public IndexManagerHolder getAllIndexesManager() {
-						return new IndexManagerHolder();
-					}
+			@Override
+			public IndexManagerHolder getAllIndexesManager() {
+				return new IndexManagerHolder();
+			}
 
-					@Override
-					public ErrorHandler getErrorHandler() {
-						return new LogErrorHandler();
-					}
+			@Override
+			public ErrorHandler getErrorHandler() {
+				return new LogErrorHandler();
+			}
 
-				});
-		MetadataProvider metadataProvider = new AnnotationMetadataProvider(
-				new JavaReflectionManager(), configContext);
+		} );
+		MetadataProvider metadataProvider = new AnnotationMetadataProvider( new JavaReflectionManager(), configContext );
 		return metadataProvider;
 	}
 
-	public static Map<Class<?>, String> calculateIdProperties(
-			List<RehashedTypeMetadata> rehashedTypeMetadatas) {
+	public static Map<Class<?>, String> calculateIdProperties(List<RehashedTypeMetadata> rehashedTypeMetadatas) {
 		Map<Class<?>, String> idProperties = new HashMap<>();
-		for (RehashedTypeMetadata rehashed : rehashedTypeMetadatas) {
-			idProperties.putAll(rehashed.getIdPropertyNameForType());
+		for ( RehashedTypeMetadata rehashed : rehashedTypeMetadatas ) {
+			idProperties.putAll( rehashed.getIdPropertyNameForType() );
 		}
 		return idProperties;
 	}
 
 	/**
-	 * calculates the Entity-Classes that are relevant for the indexes
-	 * represented by the rehashedTypeMetadatas
+	 * calculates the Entity-Classes that are relevant for the indexes represented by the rehashedTypeMetadatas
 	 * 
 	 * @return all Entity-Classes found in the rehashedTypeMetadatas
 	 */
-	public static Set<Class<?>> calculateIndexRelevantEntities(
-			List<RehashedTypeMetadata> rehashedTypeMetadatas) {
+	public static Set<Class<?>> calculateIndexRelevantEntities(List<RehashedTypeMetadata> rehashedTypeMetadatas) {
 		Set<Class<?>> indexRelevantEntities = new HashSet<>();
-		for (RehashedTypeMetadata rehashed : rehashedTypeMetadatas) {
-			indexRelevantEntities.addAll(rehashed.getIdPropertyNameForType()
-					.keySet());
+		for ( RehashedTypeMetadata rehashed : rehashedTypeMetadatas ) {
+			indexRelevantEntities.addAll( rehashed.getIdPropertyNameForType().keySet() );
 		}
 		return indexRelevantEntities;
 	}
 
 	/**
-	 * calculates a map that contains a list of all Entity-Classes in which the
-	 * keyed Entity-Class is contained in
+	 * calculates a map that contains a list of all Entity-Classes in which the keyed Entity-Class is contained in
 	 */
-	public static Map<Class<?>, List<Class<?>>> calculateInIndexOf(
-			List<RehashedTypeMetadata> rehashedTypeMetadatas) {
+	public static Map<Class<?>, List<Class<?>>> calculateInIndexOf(List<RehashedTypeMetadata> rehashedTypeMetadatas) {
 		Map<Class<?>, List<Class<?>>> inIndexOf = new HashMap<>();
-		for (RehashedTypeMetadata rehashed : rehashedTypeMetadatas) {
+		for ( RehashedTypeMetadata rehashed : rehashedTypeMetadatas ) {
 			Class<?> rootType = rehashed.getOriginalTypeMetadata().getType();
-			for (Class<?> type : rehashed.getIdPropertyNameForType().keySet()) {
-				inIndexOf.computeIfAbsent(type, (key) -> {
+			for ( Class<?> type : rehashed.getIdPropertyNameForType().keySet() ) {
+				inIndexOf.computeIfAbsent( type, (key) -> {
 					return new ArrayList<>();
-				}).add(rootType);
+				} ).add( rootType );
 			}
 		}
 		return inIndexOf;

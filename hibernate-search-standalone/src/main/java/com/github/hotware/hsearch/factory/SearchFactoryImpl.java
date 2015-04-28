@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.factory;
 
@@ -53,22 +44,22 @@ public class SearchFactoryImpl implements SearchFactory {
 
 	@Override
 	public void index(Iterable<?> entities, TransactionContext tc) {
-		this.doIndexWork(entities, WorkType.ADD, tc);
+		this.doIndexWork( entities, WorkType.ADD, tc );
 	}
 
 	@Override
 	public void update(Iterable<?> entities, TransactionContext tc) {
-		this.doIndexWork(entities, WorkType.UPDATE, tc);
+		this.doIndexWork( entities, WorkType.UPDATE, tc );
 	}
 
 	@Override
 	public void delete(Iterable<?> entities, TransactionContext tc) {
-		this.purge(entities, tc);
+		this.purge( entities, tc );
 	}
 
 	@Override
 	public void purge(Iterable<?> entities, TransactionContext tc) {
-		this.doIndexWork(entities, WorkType.PURGE, tc);
+		this.doIndexWork( entities, WorkType.PURGE, tc );
 	}
 
 	@Override
@@ -93,7 +84,7 @@ public class SearchFactoryImpl implements SearchFactory {
 
 	@Override
 	public void optimize(Class<?> entity) {
-		this.searchIntegrator.optimize(entity);
+		this.searchIntegrator.optimize( entity );
 	}
 
 	@Override
@@ -106,33 +97,30 @@ public class SearchFactoryImpl implements SearchFactory {
 		return this.searchIntegrator.getStatistics();
 	}
 
-	private void doIndexWork(Iterable<?> entities, WorkType workType,
-			TransactionContext tc) {
+	private void doIndexWork(Iterable<?> entities, WorkType workType, TransactionContext tc) {
 		Worker worker = this.searchIntegrator.getWorker();
-		for (Object object : entities) {
-			worker.performWork(new Work(object, workType), tc);
+		for ( Object object : entities ) {
+			worker.performWork( new Work( object, workType ), tc );
 		}
 	}
 
 	@Override
 	public void purgeAll(Class<?> entityClass, TransactionContext tc) {
 		Worker worker = this.searchIntegrator.getWorker();
-		worker.performWork(new Work(entityClass, null, WorkType.PURGE_ALL), tc);
+		worker.performWork( new Work( entityClass, null, WorkType.PURGE_ALL ), tc );
 	}
 
 	public void doIndexWork(Object entities, WorkType workType) {
-		this.doIndexWork(Arrays.asList(entities), workType);
+		this.doIndexWork( Arrays.asList( entities ), workType );
 	}
 
 	@Override
 	public HSearchQuery createQuery(Query query, Class<?>... targetedEntities) {
 		HSQuery hsQuery = this.searchIntegrator.createHSQuery();
-		hsQuery.luceneQuery(query);
+		hsQuery.luceneQuery( query );
 		// to make sure no entity is used twice
-		hsQuery.targetedEntities(new ArrayList<>(new HashSet<>(Arrays
-				.asList(targetedEntities))));
-		return new HSearchQueryImpl(hsQuery, this.queryExec,
-				this.searchIntegrator);
+		hsQuery.targetedEntities( new ArrayList<>( new HashSet<>( Arrays.asList( targetedEntities ) ) ) );
+		return new HSearchQueryImpl( hsQuery, this.queryExec, this.searchIntegrator );
 	}
 
 	@Override
@@ -142,34 +130,32 @@ public class SearchFactoryImpl implements SearchFactory {
 
 	@Override
 	public Analyzer getAnalyzer(String name) {
-		return this.searchIntegrator.getAnalyzer(name);
+		return this.searchIntegrator.getAnalyzer( name );
 	}
 
 	@Override
 	public Analyzer getAnalyzer(Class<?> entityClass) {
-		return this.searchIntegrator.getAnalyzer(entityClass);
+		return this.searchIntegrator.getAnalyzer( entityClass );
 	}
 
 	@Override
 	public void purge(Class<?> entityClass, Query query, TransactionContext tc) {
-		HSearchQuery hsQuery = this.createQuery(query, entityClass);
+		HSearchQuery hsQuery = this.createQuery( query, entityClass );
 		int count = hsQuery.queryResultSize();
 		int processed = 0;
-		while (processed < count) {
-			hsQuery.firstResult(processed).maxResults(10);
+		while ( processed < count ) {
+			hsQuery.firstResult( processed ).maxResults( 10 );
 			processed += 10;
-			for (Object[] vals : hsQuery.queryProjection(
-					ProjectionConstants.OBJECT_CLASS, ProjectionConstants.ID)) {
-				this.purge(entityClass, (Serializable) vals[1], tc);
+			for ( Object[] vals : hsQuery.queryProjection( ProjectionConstants.OBJECT_CLASS, ProjectionConstants.ID ) ) {
+				this.purge( entityClass, (Serializable) vals[1], tc );
 			}
 		}
 	}
 
 	@Override
-	public void purge(Class<?> entityClass, Serializable id,
-			TransactionContext tc) {
+	public void purge(Class<?> entityClass, Serializable id, TransactionContext tc) {
 		Worker worker = this.searchIntegrator.getWorker();
-		worker.performWork(new Work(entityClass, id, WorkType.PURGE), tc);
+		worker.performWork( new Work( entityClass, id, WorkType.PURGE ), tc );
 	}
 
 }

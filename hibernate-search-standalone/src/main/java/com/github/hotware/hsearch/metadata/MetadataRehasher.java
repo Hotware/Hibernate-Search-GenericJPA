@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
-
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.metadata;
 
@@ -33,8 +24,8 @@ public final class MetadataRehasher {
 
 	public List<RehashedTypeMetadata> rehash(List<TypeMetadata> originals) {
 		List<RehashedTypeMetadata> rehashed = new ArrayList<>();
-		for (TypeMetadata original : originals) {
-			rehashed.add(this.rehash(original));
+		for ( TypeMetadata original : originals ) {
+			rehashed.add( this.rehash( original ) );
 		}
 		return rehashed;
 	}
@@ -43,92 +34,74 @@ public final class MetadataRehasher {
 		RehashedTypeMetadata rehashed = new RehashedTypeMetadata();
 		rehashed.originalTypeMetadata = original;
 
-		if (!this.handlePropertyMetadata(original, rehashed,
-				original.getIdPropertyMetadata())) {
-			throw new IllegalArgumentException(
-					"couldn't find any id field for: "
-							+ original.getType()
-							+ "! This is required in order to use Hibernate Search with JPA!");
+		if ( !this.handlePropertyMetadata( original, rehashed, original.getIdPropertyMetadata() ) ) {
+			throw new IllegalArgumentException( "couldn't find any id field for: " + original.getType()
+					+ "! This is required in order to use Hibernate Search with JPA!" );
 		}
 
-		for (EmbeddedTypeMetadata embedded : original.getEmbeddedTypeMetadata()) {
-			this.rehashRec(embedded, rehashed);
+		for ( EmbeddedTypeMetadata embedded : original.getEmbeddedTypeMetadata() ) {
+			this.rehashRec( embedded, rehashed );
 		}
 		return rehashed;
 	}
 
-	private void rehashRec(EmbeddedTypeMetadata original,
-			RehashedTypeMetadata rehashed) {
+	private void rehashRec(EmbeddedTypeMetadata original, RehashedTypeMetadata rehashed) {
 		// handle the current TypeMetadata
-		this.handleTypeMetadata(original, rehashed);
+		this.handleTypeMetadata( original, rehashed );
 		// recursion
-		for (EmbeddedTypeMetadata embedded : original.getEmbeddedTypeMetadata()) {
-			this.rehashRec(embedded, rehashed);
+		for ( EmbeddedTypeMetadata embedded : original.getEmbeddedTypeMetadata() ) {
+			this.rehashRec( embedded, rehashed );
 		}
 	}
 
-	private void handleTypeMetadata(EmbeddedTypeMetadata original,
-			RehashedTypeMetadata rehashed) {
-		for (PropertyMetadata propertyMetadata : original
-				.getAllPropertyMetadata()) {
-			if (this.handlePropertyMetadata(original, rehashed,
-					propertyMetadata)) {
+	private void handleTypeMetadata(EmbeddedTypeMetadata original, RehashedTypeMetadata rehashed) {
+		for ( PropertyMetadata propertyMetadata : original.getAllPropertyMetadata() ) {
+			if ( this.handlePropertyMetadata( original, rehashed, propertyMetadata ) ) {
 				return;
 			}
 		}
-		throw new IllegalArgumentException(
-				"couldn't find any id field for: "
-						+ original.getType()
-						+ "! This is required in order to use Hibernate Search with JPA!");
+		throw new IllegalArgumentException( "couldn't find any id field for: " + original.getType()
+				+ "! This is required in order to use Hibernate Search with JPA!" );
 	}
 
-	private boolean handlePropertyMetadata(TypeMetadata original,
-			RehashedTypeMetadata rehashed, PropertyMetadata propertyMetadata) {
-		for (DocumentFieldMetadata documentFieldMetadata : propertyMetadata
-				.getFieldMetadata()) {
+	private boolean handlePropertyMetadata(TypeMetadata original, RehashedTypeMetadata rehashed, PropertyMetadata propertyMetadata) {
+		for ( DocumentFieldMetadata documentFieldMetadata : propertyMetadata.getFieldMetadata() ) {
 			// this must either be id or id of an embedded object
-			if (documentFieldMetadata.isIdInEmbedded()
-					|| documentFieldMetadata.isId()) {
+			if ( documentFieldMetadata.isIdInEmbedded() || documentFieldMetadata.isId() ) {
 				Class<?> type = original.getType();
-				rehashed.idFieldNamesForType.computeIfAbsent(type, (key) -> {
+				rehashed.idFieldNamesForType.computeIfAbsent( type, (key) -> {
 					return new ArrayList<>();
-				}).add(documentFieldMetadata.getName());
-				rehashed.idPropertyNameForType.put(type,
-						propertyMetadata.getPropertyAccessorName());
-				if (rehashed.documentFieldMetadataForIdFieldName
-						.containsKey(documentFieldMetadata.getName())) {
-					throw new AssertionError("field handled twice!");
+				} ).add( documentFieldMetadata.getName() );
+				rehashed.idPropertyNameForType.put( type, propertyMetadata.getPropertyAccessorName() );
+				if ( rehashed.documentFieldMetadataForIdFieldName.containsKey( documentFieldMetadata.getName() ) ) {
+					throw new AssertionError( "field handled twice!" );
 				}
-				rehashed.documentFieldMetadataForIdFieldName.put(
-						documentFieldMetadata.getName(), documentFieldMetadata);
+				rehashed.documentFieldMetadataForIdFieldName.put( documentFieldMetadata.getName(), documentFieldMetadata );
 				SingularTermDeletionQuery.Type deletionQueryType;
-				if (documentFieldMetadata.isNumeric()) {
-					NumericEncodingType numEncType = documentFieldMetadata
-							.getNumericEncodingType();
-					switch (numEncType) {
-					case LONG:
-						deletionQueryType = Type.LONG;
-						break;
-					case INTEGER:
-						deletionQueryType = Type.INT;
-						break;
-					case DOUBLE:
-						deletionQueryType = Type.DOUBLE;
-						break;
-					case FLOAT:
-						deletionQueryType = Type.FLOAT;
-						break;
-					default:
-						throw new IllegalArgumentException(
-								"unexpected Numeric encoding type for id: "
-										+ numEncType
-										+ ". only the standard LONG, INTEGER, DOUBLE, FLOAT are allowed!");
+				if ( documentFieldMetadata.isNumeric() ) {
+					NumericEncodingType numEncType = documentFieldMetadata.getNumericEncodingType();
+					switch ( numEncType ) {
+						case LONG:
+							deletionQueryType = Type.LONG;
+							break;
+						case INTEGER:
+							deletionQueryType = Type.INT;
+							break;
+						case DOUBLE:
+							deletionQueryType = Type.DOUBLE;
+							break;
+						case FLOAT:
+							deletionQueryType = Type.FLOAT;
+							break;
+						default:
+							throw new IllegalArgumentException( "unexpected Numeric encoding type for id: " + numEncType
+									+ ". only the standard LONG, INTEGER, DOUBLE, FLOAT are allowed!" );
 					}
-				} else {
+				}
+				else {
 					deletionQueryType = SingularTermDeletionQuery.Type.STRING;
 				}
-				rehashed.singularTermDeletionQueryTypeForIdFieldName.put(
-						documentFieldMetadata.getName(), deletionQueryType);
+				rehashed.singularTermDeletionQueryTypeForIdFieldName.put( documentFieldMetadata.getName(), deletionQueryType );
 				return true;
 			}
 		}

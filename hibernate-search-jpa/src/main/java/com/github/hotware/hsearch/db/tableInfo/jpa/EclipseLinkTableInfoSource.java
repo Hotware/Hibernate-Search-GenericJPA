@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
-
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.db.tableInfo.jpa;
 
@@ -49,9 +40,8 @@ public class EclipseLinkTableInfoSource implements TableInfoSource {
 	@Override
 	public List<TableInfo> getTableInfos(List<Class<?>> classesInIndex) {
 		List<TableInfo> ret = new ArrayList<>();
-		for (Class<?> clazz : classesInIndex) {
-			ClassDescriptor classDescriptor = this.em.getSession()
-					.getDescriptor(clazz);
+		for ( Class<?> clazz : classesInIndex ) {
+			ClassDescriptor classDescriptor = this.em.getSession().getDescriptor( clazz );
 
 			{
 				// handle all stuff for ourself
@@ -60,27 +50,22 @@ public class EclipseLinkTableInfoSource implements TableInfoSource {
 				{
 					primaryKeyFieldNames = new ArrayList<>();
 					primaryKeyColumnTypes = new HashMap<>();
-					for (DatabaseField pkField : classDescriptor
-							.getPrimaryKeyFields()) {
-						String idColumn = String.format("%s.%s",
-								pkField.getTableName(), pkField.getName());
-						primaryKeyFieldNames.add(idColumn);
-						primaryKeyColumnTypes.put(idColumn, pkField.getType());
+					for ( DatabaseField pkField : classDescriptor.getPrimaryKeyFields() ) {
+						String idColumn = String.format( "%s.%s", pkField.getTableName(), pkField.getName() );
+						primaryKeyFieldNames.add( idColumn );
+						primaryKeyColumnTypes.put( idColumn, pkField.getType() );
 					}
 				}
 
 				final List<String> tableNames;
 				{
 					tableNames = new ArrayList<>();
-					tableNames.addAll(classDescriptor.getTableNames());
+					tableNames.addAll( classDescriptor.getTableNames() );
 				}
 
-				TableInfo.IdInfo idInfo = new TableInfo.IdInfo(clazz,
-						Collections.unmodifiableList(primaryKeyFieldNames),
-						Collections.unmodifiableMap(primaryKeyColumnTypes));
-				ret.add(new TableInfo(Collections.unmodifiableList(Arrays
-						.asList(idInfo)), Collections
-						.unmodifiableList(tableNames)));
+				TableInfo.IdInfo idInfo = new TableInfo.IdInfo( clazz, Collections.unmodifiableList( primaryKeyFieldNames ),
+						Collections.unmodifiableMap( primaryKeyColumnTypes ) );
+				ret.add( new TableInfo( Collections.unmodifiableList( Arrays.asList( idInfo ) ), Collections.unmodifiableList( tableNames ) ) );
 			}
 
 			// TODO: test this for ElementCollections, EmbeddedIds, Ids with
@@ -88,9 +73,8 @@ public class EclipseLinkTableInfoSource implements TableInfoSource {
 			// maybe we will have to change some things then
 
 			// and now for relationship tables
-			for (DatabaseMapping mapping : classDescriptor.getMappings()) {
-				if (mapping instanceof ManyToManyMapping
-						|| mapping instanceof OneToOneMapping) {
+			for ( DatabaseMapping mapping : classDescriptor.getMappings() ) {
+				if ( mapping instanceof ManyToManyMapping || mapping instanceof OneToOneMapping ) {
 					final List<DatabaseField> sourceRelationKeyFields;
 					final List<DatabaseField> sourceKeyFields;
 					final List<DatabaseField> targetRelationKeyFields;
@@ -98,7 +82,7 @@ public class EclipseLinkTableInfoSource implements TableInfoSource {
 					final String relationTableName;
 					final Class<?> referenceClass;
 					{
-						if (mapping instanceof OneToOneMapping) {
+						if ( mapping instanceof OneToOneMapping ) {
 							// this handles ManyToOneMapping as well
 							OneToOneMapping oto = (OneToOneMapping) mapping;
 							// only if this thing is mapped in a relation
@@ -106,36 +90,23 @@ public class EclipseLinkTableInfoSource implements TableInfoSource {
 							// information since otherwhise this is already
 							// done via
 							// mapping the original table(s)
-							if (oto.getRelationTableMechanism() == null) {
+							if ( oto.getRelationTableMechanism() == null ) {
 								continue;
 							}
-							sourceRelationKeyFields = oto
-									.getRelationTableMechanism()
-									.getSourceRelationKeyFields();
-							sourceKeyFields = oto.getRelationTableMechanism()
-									.getSourceKeyFields();
-							targetRelationKeyFields = oto
-									.getRelationTableMechanism()
-									.getTargetRelationKeyFields();
-							targetKeyFields = oto.getRelationTableMechanism()
-									.getTargetKeyFields();
-							relationTableName = oto.getRelationTableMechanism()
-									.getRelationTableName();
+							sourceRelationKeyFields = oto.getRelationTableMechanism().getSourceRelationKeyFields();
+							sourceKeyFields = oto.getRelationTableMechanism().getSourceKeyFields();
+							targetRelationKeyFields = oto.getRelationTableMechanism().getTargetRelationKeyFields();
+							targetKeyFields = oto.getRelationTableMechanism().getTargetKeyFields();
+							relationTableName = oto.getRelationTableMechanism().getRelationTableName();
 							referenceClass = oto.getReferenceClass();
-						} else {
+						}
+						else {
 							ManyToManyMapping mtm = (ManyToManyMapping) mapping;
-							sourceRelationKeyFields = mtm
-									.getRelationTableMechanism()
-									.getSourceRelationKeyFields();
-							sourceKeyFields = mtm.getRelationTableMechanism()
-									.getSourceKeyFields();
-							targetRelationKeyFields = mtm
-									.getRelationTableMechanism()
-									.getTargetRelationKeyFields();
-							targetKeyFields = mtm.getRelationTableMechanism()
-									.getTargetKeyFields();
-							relationTableName = mtm.getRelationTableMechanism()
-									.getRelationTableName();
+							sourceRelationKeyFields = mtm.getRelationTableMechanism().getSourceRelationKeyFields();
+							sourceKeyFields = mtm.getRelationTableMechanism().getSourceKeyFields();
+							targetRelationKeyFields = mtm.getRelationTableMechanism().getTargetRelationKeyFields();
+							targetKeyFields = mtm.getRelationTableMechanism().getTargetKeyFields();
+							relationTableName = mtm.getRelationTableMechanism().getRelationTableName();
 							referenceClass = mtm.getReferenceClass();
 						}
 					}
@@ -144,55 +115,43 @@ public class EclipseLinkTableInfoSource implements TableInfoSource {
 					{
 						List<String> ownForeignKeyColumns = new ArrayList<>();
 						Map<String, Class<?>> ownForeignKeyColumnTypes = new HashMap<>();
-						for (int i = 0; i < sourceRelationKeyFields.size(); ++i) {
-							DatabaseField ownFkField = sourceRelationKeyFields
-									.get(i);
+						for ( int i = 0; i < sourceRelationKeyFields.size(); ++i ) {
+							DatabaseField ownFkField = sourceRelationKeyFields.get( i );
 							String idColumn = ownFkField.getName();
-							ownForeignKeyColumns.add(idColumn);
-							ownForeignKeyColumnTypes.put(idColumn,
-									sourceKeyFields.get(i).getType());
+							ownForeignKeyColumns.add( idColumn );
+							ownForeignKeyColumnTypes.put( idColumn, sourceKeyFields.get( i ).getType() );
 						}
-						toThis = new TableInfo.IdInfo(
-								clazz,
-								Collections
-										.unmodifiableList(ownForeignKeyColumns),
-								Collections
-										.unmodifiableMap(ownForeignKeyColumnTypes));
+						toThis = new TableInfo.IdInfo( clazz, Collections.unmodifiableList( ownForeignKeyColumns ),
+								Collections.unmodifiableMap( ownForeignKeyColumnTypes ) );
 					}
 					final TableInfo.IdInfo toOtherEnd;
 					{
 						List<String> otherForeignKeyColumns = new ArrayList<>();
 						Map<String, Class<?>> otherForeignKeyColumnTypes = new HashMap<>();
-						for (int i = 0; i < targetRelationKeyFields.size(); ++i) {
-							DatabaseField otherFkField = targetRelationKeyFields
-									.get(i);
+						for ( int i = 0; i < targetRelationKeyFields.size(); ++i ) {
+							DatabaseField otherFkField = targetRelationKeyFields.get( i );
 							String idColumn = otherFkField.getName();
-							otherForeignKeyColumns.add(idColumn);
-							otherForeignKeyColumnTypes.put(idColumn,
-									targetKeyFields.get(i).getType());
+							otherForeignKeyColumns.add( idColumn );
+							otherForeignKeyColumnTypes.put( idColumn, targetKeyFields.get( i ).getType() );
 						}
-						toOtherEnd = new TableInfo.IdInfo(
-								referenceClass,
-								Collections
-										.unmodifiableList(otherForeignKeyColumns),
-								Collections
-										.unmodifiableMap(otherForeignKeyColumnTypes));
+						toOtherEnd = new TableInfo.IdInfo( referenceClass, Collections.unmodifiableList( otherForeignKeyColumns ),
+								Collections.unmodifiableMap( otherForeignKeyColumnTypes ) );
 					}
-					ret.add(new TableInfo(Collections.unmodifiableList(Arrays
-							.asList(toThis, toOtherEnd)), Collections
-							.unmodifiableList(Arrays.asList(relationTableName))));
+					ret.add( new TableInfo( Collections.unmodifiableList( Arrays.asList( toThis, toOtherEnd ) ), Collections.unmodifiableList( Arrays
+							.asList( relationTableName ) ) ) );
 
-				} else if (mapping instanceof OneToManyMapping) {
+				}
+				else if ( mapping instanceof OneToManyMapping ) {
 					// this should be fine. OneToManyMapping(s) are only used
 					// when the target already contain the foreign keys
 					// and we get the updateinformation needed for these
 					// by parsing these classes itself
-				} else if (mapping instanceof DirectToFieldMapping) {
+				}
+				else if ( mapping instanceof DirectToFieldMapping ) {
 					// obviously fine
-				} else {
-					throw new IllegalArgumentException(
-							mapping.getClass()
-									+ " found. only OneToOne, ManyToOne, OneToMany or ManyToMany allowed, yet!");
+				}
+				else {
+					throw new IllegalArgumentException( mapping.getClass() + " found. only OneToOne, ManyToOne, OneToMany or ManyToMany allowed, yet!" );
 				}
 			}
 		}

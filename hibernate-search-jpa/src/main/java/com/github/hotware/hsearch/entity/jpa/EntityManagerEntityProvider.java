@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.entity.jpa;
 
@@ -35,8 +26,7 @@ public class EntityManagerEntityProvider implements EntityProvider {
 
 	// TODO: add support for fetch profiles?
 
-	public EntityManagerEntityProvider(EntityManager em,
-			Map<Class<?>, String> idProperties) {
+	public EntityManagerEntityProvider(EntityManager em, Map<Class<?>, String> idProperties) {
 		this.em = em;
 		this.idProperties = idProperties;
 	}
@@ -48,24 +38,23 @@ public class EntityManagerEntityProvider implements EntityProvider {
 
 	@Override
 	public Object get(Class<?> entityClass, Object id) {
-		return this.em.find(entityClass, id);
+		return this.em.find( entityClass, id );
 	}
 
 	@SuppressWarnings("rawtypes")
 	@Override
 	public List getBatch(Class<?> entityClass, List<Object> ids) {
-		List<Object> ret = new ArrayList<>(ids.size());
-		if (ids.size() > 0) {
+		List<Object> ret = new ArrayList<>( ids.size() );
+		if ( ids.size() > 0 ) {
 			CriteriaBuilder cb = this.em.getCriteriaBuilder();
-			CriteriaQuery<?> q = cb.createQuery(entityClass);
-			Root<?> ent = q.from(entityClass);
-			String idProperty = this.idProperties.get(entityClass);
-			In<Object> in = cb.in(ent.get(idProperty));
-			for (Object id : ids) {
-				in.value(id);
+			CriteriaQuery<?> q = cb.createQuery( entityClass );
+			Root<?> ent = q.from( entityClass );
+			String idProperty = this.idProperties.get( entityClass );
+			In<Object> in = cb.in( ent.get( idProperty ) );
+			for ( Object id : ids ) {
+				in.value( id );
 			}
-			ret.addAll(this.em.createQuery(
-					q.multiselect(ent).where(in)).getResultList());
+			ret.addAll( this.em.createQuery( q.multiselect( ent ).where( in ) ).getResultList() );
 		}
 		return ret;
 	}

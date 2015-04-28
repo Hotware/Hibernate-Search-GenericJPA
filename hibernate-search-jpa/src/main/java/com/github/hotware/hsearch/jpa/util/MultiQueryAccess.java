@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
-
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.jpa.util;
 
@@ -25,12 +16,11 @@ import java.util.Map;
 import javax.persistence.Query;
 
 /**
- * Utility class that allows you to access multiple JPA queries at once. Data is
- * retrieved from the database in batches and ordered by a given comparator. No
- * need for messy Unions on the database level! <br>
+ * Utility class that allows you to access multiple JPA queries at once. Data is retrieved from the database in batches
+ * and ordered by a given comparator. No need for messy Unions on the database level! <br>
  * <br>
- * This is particularily useful if you scroll all the data from the database
- * incrementally and if you can compare in Code.
+ * This is particularily useful if you scroll all the data from the database incrementally and if you can compare in
+ * Code.
  * 
  * @author Martin
  */
@@ -63,21 +53,16 @@ public class MultiQueryAccess {
 	/**
 	 * this doesn't do real batching as it has a batchSize of 1
 	 */
-	public MultiQueryAccess(Map<Class<?>, Long> countMap,
-			Map<Class<?>, Query> queryMap,
-			Comparator<ObjectClassWrapper> comparator) {
-		this(countMap, queryMap, comparator, 1);
+	public MultiQueryAccess(Map<Class<?>, Long> countMap, Map<Class<?>, Query> queryMap, Comparator<ObjectClassWrapper> comparator) {
+		this( countMap, queryMap, comparator, 1 );
 	}
 
 	/**
 	 * this does batching
 	 */
-	public MultiQueryAccess(Map<Class<?>, Long> countMap,
-			Map<Class<?>, Query> queryMap,
-			Comparator<ObjectClassWrapper> comparator, int batchSize) {
-		if (countMap.size() != queryMap.size()) {
-			throw new IllegalArgumentException(
-					"countMap.size() must be equal to queryMap.size()");
+	public MultiQueryAccess(Map<Class<?>, Long> countMap, Map<Class<?>, Query> queryMap, Comparator<ObjectClassWrapper> comparator, int batchSize) {
+		if ( countMap.size() != queryMap.size() ) {
+			throw new IllegalArgumentException( "countMap.size() must be equal to queryMap.size()" );
 		}
 		this.currentCountMap = countMap;
 		this.queryMap = queryMap;
@@ -85,9 +70,9 @@ public class MultiQueryAccess {
 		this.batchSize = batchSize;
 		this.processed = new HashMap<>();
 		this.values = new HashMap<>();
-		for (Class<?> clazz : queryMap.keySet()) {
-			this.values.put(clazz, new LinkedList<>());
-			this.processed.put(clazz, 0L);
+		for ( Class<?> clazz : queryMap.keySet() ) {
+			this.values.put( clazz, new LinkedList<>() );
+			this.processed.put( clazz, 0L );
 		}
 	}
 
@@ -99,73 +84,64 @@ public class MultiQueryAccess {
 	public boolean next() {
 		this.scheduled = null;
 		this.entityClass = null;
-		List<ObjectClassWrapper> tmp = new ArrayList<>(this.queryMap.size());
-		for (Map.Entry<Class<?>, Query> entry : this.queryMap.entrySet()) {
+		List<ObjectClassWrapper> tmp = new ArrayList<>( this.queryMap.size() );
+		for ( Map.Entry<Class<?>, Query> entry : this.queryMap.entrySet() ) {
 			Class<?> entityClass = entry.getKey();
 			Query query = entry.getValue();
-			if (!this.currentCountMap.get(entityClass).equals(0L)) {
-				if (this.values.get(entityClass).size() == 0) {
+			if ( !this.currentCountMap.get( entityClass ).equals( 0L ) ) {
+				if ( this.values.get( entityClass ).size() == 0 ) {
 					// the last batch is empty. get a new one
-					Long processed = this.processed.get(entityClass);
+					Long processed = this.processed.get( entityClass );
 					// yay JPA...
-					query.setFirstResult(toInt(processed));
-					query.setMaxResults(this.batchSize);
+					query.setFirstResult( toInt( processed ) );
+					query.setMaxResults( this.batchSize );
 					@SuppressWarnings("unchecked")
 					List<Object> list = query.getResultList();
-					this.values.get(entityClass).addAll(list);
+					this.values.get( entityClass ).addAll( list );
 				}
-				Object val = this.values.get(entityClass).getFirst();
-				tmp.add(new ObjectClassWrapper(val, entityClass));
+				Object val = this.values.get( entityClass ).getFirst();
+				tmp.add( new ObjectClassWrapper( val, entityClass ) );
 			}
 		}
-		tmp.sort(this.comparator);
-		if (tmp.size() > 0) {
-			ObjectClassWrapper arr = tmp.get(0);
+		tmp.sort( this.comparator );
+		if ( tmp.size() > 0 ) {
+			ObjectClassWrapper arr = tmp.get( 0 );
 			this.scheduled = arr.object;
 			this.entityClass = arr.clazz;
-			this.values.get(entityClass).pop();
-			Long processed = this.processed.get(arr.clazz);
-			Long newProcessed = this.processed.computeIfPresent(arr.clazz, (
-					clazz, old) -> {
+			this.values.get( entityClass ).pop();
+			Long processed = this.processed.get( arr.clazz );
+			Long newProcessed = this.processed.computeIfPresent( arr.clazz, (clazz, old) -> {
 				return old + 1;
-			});
-			if (Math.abs(newProcessed - processed) != 1L) {
-				throw new AssertionError(
-						"the new processed count should be exactly 1 "
-								+ "greater than the old one");
+			} );
+			if ( Math.abs( newProcessed - processed ) != 1L ) {
+				throw new AssertionError( "the new processed count should be exactly 1 " + "greater than the old one" );
 			}
-			Long count = this.currentCountMap.get(arr.clazz);
-			Long newCount = this.currentCountMap.computeIfPresent(arr.clazz, (
-					clazz, old) -> {
+			Long count = this.currentCountMap.get( arr.clazz );
+			Long newCount = this.currentCountMap.computeIfPresent( arr.clazz, (clazz, old) -> {
 				return old - 1;
-			});
-			if (Math.abs(count - newCount) != 1L) {
-				throw new AssertionError(
-						"the new old remaining count should be exactly 1 "
-								+ "greater than the new one");
+			} );
+			if ( Math.abs( count - newCount ) != 1L ) {
+				throw new AssertionError( "the new old remaining count should be exactly 1 " + "greater than the new one" );
 			}
 		}
 		return this.scheduled != null;
 	}
 
 	public void addToNextValuePosition(Class<?> clazz, Long change) {
-		Long oldValue = this.processed.get(clazz);
+		Long oldValue = this.processed.get( clazz );
 		Long newValue = oldValue + change;
-		if (newValue < 0L) {
-			throw new IllegalArgumentException(
-					"change would set the next values"
-							+ " position to something less than 0");
+		if ( newValue < 0L ) {
+			throw new IllegalArgumentException( "change would set the next values" + " position to something less than 0" );
 		}
-		this.processed.put(clazz, newValue);
+		this.processed.put( clazz, newValue );
 	}
 
 	/**
 	 * @return the current value
 	 */
 	public Object get() {
-		if (this.scheduled == null) {
-			throw new IllegalStateException(
-					"either empty or next() has not been called");
+		if ( this.scheduled == null ) {
+			throw new IllegalStateException( "either empty or next() has not been called" );
 		}
 		return this.scheduled;
 	}
@@ -174,9 +150,8 @@ public class MultiQueryAccess {
 	 * @return the entityClass of the current value
 	 */
 	public Class<?> entityClass() {
-		if (this.entityClass == null) {
-			throw new IllegalStateException(
-					"either empty or next() has not been called");
+		if ( this.entityClass == null ) {
+			throw new IllegalStateException( "either empty or next() has not been called" );
 		}
 		return this.entityClass;
 	}

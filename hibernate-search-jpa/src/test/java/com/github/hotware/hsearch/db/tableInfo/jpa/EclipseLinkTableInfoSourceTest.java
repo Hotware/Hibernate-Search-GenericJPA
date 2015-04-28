@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
-
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.db.tableInfo.jpa;
 
@@ -45,159 +36,129 @@ public class EclipseLinkTableInfoSourceTest {
 
 	@Before
 	public void setup() {
-		this.emf = (EntityManagerFactoryImpl) Persistence
-				.createEntityManagerFactory("EclipseLink_MySQL");
+		this.emf = (EntityManagerFactoryImpl) Persistence.createEntityManagerFactory( "EclipseLink_MySQL" );
 	}
 
 	@Test
 	public void test() {
-		EntityManagerImpl em = (EntityManagerImpl) this.emf
-				.createEntityManager();
+		EntityManagerImpl em = (EntityManagerImpl) this.emf.createEntityManager();
 		try {
-			EclipseLinkTableInfoSource tblInfoSrc = new EclipseLinkTableInfoSource(
-					em);
+			EclipseLinkTableInfoSource tblInfoSrc = new EclipseLinkTableInfoSource( em );
 			int placeSorcererCount = 0;
-			List<TableInfo> tableInfos = tblInfoSrc.getTableInfos(Arrays
-					.asList(Place.class, Sorcerer.class));
-			for (TableInfo tableInfo : tableInfos) {
-				switch (tableInfo.getTableNames().get(0)) {
-				case "PLACE": {
-					assertEquals(1, tableInfo.getUpdateEventRelevantIdInfos()
-							.size());
-					assertEquals(Place.class, tableInfo
-							.getUpdateEventRelevantIdInfos().get(0)
-							.getEntityClass());
-					assertEquals(1, tableInfo.getUpdateEventRelevantIdInfos()
-							.get(0).getIdColumns().size());
-					// this is no mapping table so we have to have a explicit
-					// name here
-					assertEquals("PLACE.ID", tableInfo
-							.getUpdateEventRelevantIdInfos().get(0)
-							.getIdColumns().get(0));
-					assertEquals(1, tableInfo.getUpdateEventRelevantIdInfos()
-							.get(0).getIdColumnTypes().size());
-					assertEquals(Integer.class, tableInfo
-							.getUpdateEventRelevantIdInfos().get(0)
-							.getIdColumnTypes().get("PLACE.ID"));
-					break;
-				}
-				case "PLACE_JTOTO": {
-					assertEquals(2, tableInfo.getUpdateEventRelevantIdInfos()
-							.size());
-					boolean[] found = new boolean[2];
-					for (TableInfo.IdInfo idInfo : tableInfo
-							.getUpdateEventRelevantIdInfos()) {
-						if (idInfo.getEntityClass().equals(Place.class)) {
-							assertEquals(1, idInfo.getIdColumns().size());
-							assertEquals("PLACE_ID",
-									idInfo.getIdColumns().get(0));
-							assertEquals(Integer.class, idInfo
-									.getIdColumnTypes().get("PLACE_ID"));
-							found[0] = true;
-						} else if (idInfo.getEntityClass().equals(
-								JoinTableOneToOne.class)) {
-							assertEquals(1, idInfo.getIdColumns().size());
-							assertEquals("JTOTO_ID",
-									idInfo.getIdColumns().get(0));
-							assertEquals(Integer.class, idInfo
-									.getIdColumnTypes().get("JTOTO_ID"));
-							found[1] = true;
-						} else {
-							fail("either Place or JoinTableOneToOne were expected!");
-						}
+			List<TableInfo> tableInfos = tblInfoSrc.getTableInfos( Arrays.asList( Place.class, Sorcerer.class ) );
+			for ( TableInfo tableInfo : tableInfos ) {
+				switch ( tableInfo.getTableNames().get( 0 ) ) {
+					case "PLACE": {
+						assertEquals( 1, tableInfo.getUpdateEventRelevantIdInfos().size() );
+						assertEquals( Place.class, tableInfo.getUpdateEventRelevantIdInfos().get( 0 ).getEntityClass() );
+						assertEquals( 1, tableInfo.getUpdateEventRelevantIdInfos().get( 0 ).getIdColumns().size() );
+						// this is no mapping table so we have to have a explicit
+						// name here
+						assertEquals( "PLACE.ID", tableInfo.getUpdateEventRelevantIdInfos().get( 0 ).getIdColumns().get( 0 ) );
+						assertEquals( 1, tableInfo.getUpdateEventRelevantIdInfos().get( 0 ).getIdColumnTypes().size() );
+						assertEquals( Integer.class, tableInfo.getUpdateEventRelevantIdInfos().get( 0 ).getIdColumnTypes().get( "PLACE.ID" ) );
+						break;
 					}
-					assertTrue_(found);
-					break;
-				}
-				case "PLACE_ADDITIONALPLACE": {
-					assertEquals(2, tableInfo.getUpdateEventRelevantIdInfos()
-							.size());
-					boolean found[] = new boolean[2];
-					for (TableInfo.IdInfo idInfo : tableInfo
-							.getUpdateEventRelevantIdInfos()) {
-						if (idInfo.getEntityClass().equals(Place.class)) {
-							assertEquals(1, idInfo.getIdColumns().size());
-							assertEquals("place_ID",
-									idInfo.getIdColumns().get(0));
-							assertEquals(Integer.class, idInfo
-									.getIdColumnTypes().get("place_ID"));
-							found[0] = true;
-						} else if (idInfo.getEntityClass().equals(
-								AdditionalPlace.class)) {
-							assertEquals(1, idInfo.getIdColumns().size());
-							assertEquals("additionalPlace_ID", idInfo
-									.getIdColumns().get(0));
-							assertEquals(
-									Integer.class,
-									idInfo.getIdColumnTypes().get(
-											"additionalPlace_ID"));
-							found[1] = true;
-						} else {
-							fail("either Place or AdditionalPlace were expected!");
+					case "PLACE_JTOTO": {
+						assertEquals( 2, tableInfo.getUpdateEventRelevantIdInfos().size() );
+						boolean[] found = new boolean[2];
+						for ( TableInfo.IdInfo idInfo : tableInfo.getUpdateEventRelevantIdInfos() ) {
+							if ( idInfo.getEntityClass().equals( Place.class ) ) {
+								assertEquals( 1, idInfo.getIdColumns().size() );
+								assertEquals( "PLACE_ID", idInfo.getIdColumns().get( 0 ) );
+								assertEquals( Integer.class, idInfo.getIdColumnTypes().get( "PLACE_ID" ) );
+								found[0] = true;
+							}
+							else if ( idInfo.getEntityClass().equals( JoinTableOneToOne.class ) ) {
+								assertEquals( 1, idInfo.getIdColumns().size() );
+								assertEquals( "JTOTO_ID", idInfo.getIdColumns().get( 0 ) );
+								assertEquals( Integer.class, idInfo.getIdColumnTypes().get( "JTOTO_ID" ) );
+								found[1] = true;
+							}
+							else {
+								fail( "either Place or JoinTableOneToOne were expected!" );
+							}
 						}
+						assertTrue_( found );
+						break;
 					}
-					assertTrue_(found);
-					break;
-				}
-				case "PLACE_SORCERER": {
-					assertEquals(2, tableInfo.getUpdateEventRelevantIdInfos()
-							.size());
-					boolean found[] = new boolean[2];
-					for (TableInfo.IdInfo idInfo : tableInfo
-							.getUpdateEventRelevantIdInfos()) {
-						if (idInfo.getEntityClass().equals(Place.class)) {
-							assertEquals(1, idInfo.getIdColumns().size());
-							assertEquals("Place_ID",
-									idInfo.getIdColumns().get(0));
-							assertEquals(Integer.class, idInfo
-									.getIdColumnTypes().get("Place_ID"));
-							found[0] = true;
-						} else if (idInfo.getEntityClass().equals(
-								Sorcerer.class)) {
-							assertEquals(1, idInfo.getIdColumns().size());
-							assertEquals("sorcerers_ID", idInfo.getIdColumns()
-									.get(0));
-							assertEquals(Integer.class, idInfo
-									.getIdColumnTypes().get("sorcerers_ID"));
-							found[1] = true;
-						} else {
-							fail("either Place or Sorcerer were expected!");
+					case "PLACE_ADDITIONALPLACE": {
+						assertEquals( 2, tableInfo.getUpdateEventRelevantIdInfos().size() );
+						boolean found[] = new boolean[2];
+						for ( TableInfo.IdInfo idInfo : tableInfo.getUpdateEventRelevantIdInfos() ) {
+							if ( idInfo.getEntityClass().equals( Place.class ) ) {
+								assertEquals( 1, idInfo.getIdColumns().size() );
+								assertEquals( "place_ID", idInfo.getIdColumns().get( 0 ) );
+								assertEquals( Integer.class, idInfo.getIdColumnTypes().get( "place_ID" ) );
+								found[0] = true;
+							}
+							else if ( idInfo.getEntityClass().equals( AdditionalPlace.class ) ) {
+								assertEquals( 1, idInfo.getIdColumns().size() );
+								assertEquals( "additionalPlace_ID", idInfo.getIdColumns().get( 0 ) );
+								assertEquals( Integer.class, idInfo.getIdColumnTypes().get( "additionalPlace_ID" ) );
+								found[1] = true;
+							}
+							else {
+								fail( "either Place or AdditionalPlace were expected!" );
+							}
 						}
+						assertTrue_( found );
+						break;
 					}
-					++placeSorcererCount;
-					assertTrue_(found);
-					break;
-				}
-				case "SORCERER": {
-					// normal table mapping was tested with Place already
-					break;
-				}
-				default: {
-					fail("unexpected name " + tableInfo.getTableNames().get(0));
-				}
+					case "PLACE_SORCERER": {
+						assertEquals( 2, tableInfo.getUpdateEventRelevantIdInfos().size() );
+						boolean found[] = new boolean[2];
+						for ( TableInfo.IdInfo idInfo : tableInfo.getUpdateEventRelevantIdInfos() ) {
+							if ( idInfo.getEntityClass().equals( Place.class ) ) {
+								assertEquals( 1, idInfo.getIdColumns().size() );
+								assertEquals( "Place_ID", idInfo.getIdColumns().get( 0 ) );
+								assertEquals( Integer.class, idInfo.getIdColumnTypes().get( "Place_ID" ) );
+								found[0] = true;
+							}
+							else if ( idInfo.getEntityClass().equals( Sorcerer.class ) ) {
+								assertEquals( 1, idInfo.getIdColumns().size() );
+								assertEquals( "sorcerers_ID", idInfo.getIdColumns().get( 0 ) );
+								assertEquals( Integer.class, idInfo.getIdColumnTypes().get( "sorcerers_ID" ) );
+								found[1] = true;
+							}
+							else {
+								fail( "either Place or Sorcerer were expected!" );
+							}
+						}
+						++placeSorcererCount;
+						assertTrue_( found );
+						break;
+					}
+					case "SORCERER": {
+						// normal table mapping was tested with Place already
+						break;
+					}
+					default: {
+						fail( "unexpected name " + tableInfo.getTableNames().get( 0 ) );
+					}
 				}
 			}
-			System.out.println(tableInfos);
-			assertEquals(
-					"mapping tables should only appear once, which means that PLACE_SORCERER was expected once!",
-					1, placeSorcererCount);
-		} finally {
-			if (em != null) {
+			System.out.println( tableInfos );
+			assertEquals( "mapping tables should only appear once, which means that PLACE_SORCERER was expected once!", 1, placeSorcererCount );
+		}
+		finally {
+			if ( em != null ) {
 				em.close();
 			}
 		}
 	}
 
 	private static void assertTrue_(boolean[] values) {
-		assertTrue_(null, values);
+		assertTrue_( null, values );
 	}
 
 	private static void assertTrue_(String message, boolean[] values) {
-		for (boolean value : values) {
-			if (message != null) {
-				assertTrue(message, value);
-			} else {
-				assertTrue(value);
+		for ( boolean value : values ) {
+			if ( message != null ) {
+				assertTrue( message, value );
+			}
+			else {
+				assertTrue( value );
 			}
 		}
 	}

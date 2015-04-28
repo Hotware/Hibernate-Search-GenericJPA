@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
-
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.db.events;
 
@@ -25,13 +16,12 @@ public interface UpdateConsumer {
 	/**
 	 * called everytime an update is found in the database
 	 * 
-	 * @param updateInfo
-	 *            a list of objects describing the several updates in the order
-	 *            they occured in the database
+	 * @param updateInfo a list of objects describing the several updates in the order they occured in the database
 	 */
 	public void updateEvent(List<UpdateInfo> updateInfo);
 
 	public static class UpdateInfo {
+
 		private final Class<?> entityClass;
 		private final Object id;
 		private final int eventType;
@@ -66,52 +56,51 @@ public interface UpdateConsumer {
 
 		/*
 		 * (non-Javadoc)
-		 * 
 		 * @see java.lang.Object#hashCode()
 		 */
 		@Override
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result
-					+ ((entityClass == null) ? 0 : entityClass.hashCode());
+			result = prime * result + ( ( entityClass == null ) ? 0 : entityClass.hashCode() );
 			result = prime * result + eventType;
-			result = prime * result + ((id == null) ? 0 : id.hashCode());
+			result = prime * result + ( ( id == null ) ? 0 : id.hashCode() );
 			return result;
 		}
 
 		/*
 		 * (non-Javadoc)
-		 * 
 		 * @see java.lang.Object#equals(java.lang.Object)
 		 */
 		@Override
 		public boolean equals(Object obj) {
-			if (this == obj) {
+			if ( this == obj ) {
 				return true;
 			}
-			if (obj == null) {
+			if ( obj == null ) {
 				return false;
 			}
-			if (getClass() != obj.getClass()) {
+			if ( getClass() != obj.getClass() ) {
 				return false;
 			}
 			UpdateInfo other = (UpdateInfo) obj;
-			if (entityClass == null) {
-				if (other.entityClass != null) {
+			if ( entityClass == null ) {
+				if ( other.entityClass != null ) {
 					return false;
 				}
-			} else if (!entityClass.equals(other.entityClass)) {
+			}
+			else if ( !entityClass.equals( other.entityClass ) ) {
 				return false;
 			}
-			if (eventType != other.eventType) {
+			if ( eventType != other.eventType ) {
 				return false;
 			}
-			if (id == null) {
-				if (other.id != null) {
+			if ( id == null ) {
+				if ( other.id != null ) {
 					return false;
 				}
-			} else if (!id.equals(other.id)) {
+			}
+			else if ( !id.equals( other.id ) ) {
 				return false;
 			}
 			return true;
@@ -119,15 +108,13 @@ public interface UpdateConsumer {
 
 		/*
 		 * (non-Javadoc)
-		 * 
 		 * @see java.lang.Object#toString()
 		 */
 		@Override
 		public String toString() {
 			StringBuilder builder = new StringBuilder();
-			builder.append("UpdateInfo [entityClass=").append(entityClass)
-					.append(", id=").append(id).append(", eventType=")
-					.append(eventType).append("]");
+			builder.append( "UpdateInfo [entityClass=" ).append( entityClass ).append( ", id=" ).append( id ).append( ", eventType=" ).append( eventType )
+					.append( "]" );
 			return builder.toString();
 		}
 

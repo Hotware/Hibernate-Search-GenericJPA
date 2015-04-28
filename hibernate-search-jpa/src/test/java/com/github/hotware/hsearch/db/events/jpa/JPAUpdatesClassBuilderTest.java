@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
-
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.db.events.jpa;
 
@@ -36,54 +27,48 @@ import com.github.hotware.hsearch.util.InMemoryCompiler;
 
 /**
  * @author Martin
- *
  */
 public class JPAUpdatesClassBuilderTest {
 
 	@Test
 	public void testCompileAndAnnotations() throws Exception {
-		String asString = this.buildCode("");
-		Class<?> clazz = InMemoryCompiler.compile(asString, "MyUpdateClass");
+		String asString = this.buildCode( "" );
+		Class<?> clazz = InMemoryCompiler.compile( asString, "MyUpdateClass" );
 		EventModelParser parser = new EventModelParser();
-		List<EventModelInfo> infos = parser.parse(new HashSet<>(Arrays.asList(clazz)));
-		EventModelInfo info = infos.get(0);
-		assertTrue(info.getEventTypeAccessor() != null);
-		assertEquals("hsearchEventCase", info.getEventTypeColumn());
-		assertEquals("originalTableName", info.getOriginalTableName());
-		assertEquals("tableName", info.getTableName());
-		assertEquals(clazz, info.getUpdateClass());
+		List<EventModelInfo> infos = parser.parse( new HashSet<>( Arrays.asList( clazz ) ) );
+		EventModelInfo info = infos.get( 0 );
+		assertTrue( info.getEventTypeAccessor() != null );
+		assertEquals( "hsearchEventCase", info.getEventTypeColumn() );
+		assertEquals( "originalTableName", info.getOriginalTableName() );
+		assertEquals( "tableName", info.getTableName() );
+		assertEquals( clazz, info.getUpdateClass() );
 
-		EventModelInfo.IdInfo idInfo = info.getIdInfos().get(0);
-		assertEquals("placeId", idInfo.getColumns()[0]);
-		assertEquals("Place_ID", idInfo.getColumnsInOriginal()[0]);
-		assertEquals(Place.class, idInfo.getEntityClass());
-		assertEquals(DefaultToOriginalIdBridge.class, idInfo
-				.getToOriginalBridge().getClass());
+		EventModelInfo.IdInfo idInfo = info.getIdInfos().get( 0 );
+		assertEquals( "placeId", idInfo.getColumns()[0] );
+		assertEquals( "Place_ID", idInfo.getColumnsInOriginal()[0] );
+		assertEquals( Place.class, idInfo.getEntityClass() );
+		assertEquals( DefaultToOriginalIdBridge.class, idInfo.getToOriginalBridge().getClass() );
 		// we just pass what we want here as the DefaultBridge just returns the
 		// value it is passed
-		assertEquals(123123, idInfo.getToOriginalBridge().toOriginal(123123));
-		assertEquals(null, idInfo.getIdAccessor().apply(clazz.newInstance()));
+		assertEquals( 123123, idInfo.getToOriginalBridge().toOriginal( 123123 ) );
+		assertEquals( null, idInfo.getIdAccessor().apply( clazz.newInstance() ) );
 	}
 
 	@Test
 	public void checkPackage() throws IOException {
-		String code = this.buildCode("pack");
-		System.out.println(code);
-		assertTrue(code.startsWith("package pack;"));
+		String code = this.buildCode( "pack" );
+		System.out.println( code );
+		assertTrue( code.startsWith( "package pack;" ) );
 	}
 
 	private String buildCode(String pack) throws IOException {
 		JPAUpdatesClassBuilder builder = new JPAUpdatesClassBuilder();
-		ByteArrayOutputStream bas = new ByteArrayOutputStream(1000);
-		PrintStream ps = new PrintStream(bas);
-		builder.tableName("tableName")
-				.originalTableName("originalTableName")
-				.idColumn(
-						IdColumn.of(Long.class, true, Place.class,
-								new String[] { "placeId" },
-								new String[] { "Place_ID" }))
-				.build(ps, pack, "MyUpdateClass");
-		String asString = bas.toString("UTF-8");
+		ByteArrayOutputStream bas = new ByteArrayOutputStream( 1000 );
+		PrintStream ps = new PrintStream( bas );
+		builder.tableName( "tableName" ).originalTableName( "originalTableName" )
+				.idColumn( IdColumn.of( Long.class, true, Place.class, new String[] { "placeId" }, new String[] { "Place_ID" } ) )
+				.build( ps, pack, "MyUpdateClass" );
+		String asString = bas.toString( "UTF-8" );
 		return asString;
 	}
 

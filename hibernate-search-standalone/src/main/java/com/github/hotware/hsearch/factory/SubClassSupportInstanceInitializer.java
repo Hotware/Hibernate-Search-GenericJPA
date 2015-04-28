@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.factory;
 
@@ -25,24 +16,15 @@ import org.hibernate.search.spi.InstanceInitializer;
 import com.github.hotware.hsearch.annotations.InIndex;
 
 /**
- * this initializer is needed i.e. for JPA implementations that subclass the
- * entities, which would prevent Hibernate-Search from indexing these, as it
- * could otherwise not find any Annotations to process.
- * 
+ * this initializer is needed i.e. for JPA implementations that subclass the entities, which would prevent
+ * Hibernate-Search from indexing these, as it could otherwise not find any Annotations to process. <br>
  * <br>
+ * All original Subclasses have to be annotated with {@link com.github.hotware.hsearch.annotations.InIndex}. <br>
  * <br>
- * 
- * All original Subclasses have to be annotated with
- * {@link com.github.hotware.hsearch.annotations.InIndex}.
- * 
- * <br>
- * <br>
- * 
  * all methods not related to getting Classes out of this are delegated to
  * {@link org.hibernate.search.impl.SimpleInitializer}
  * 
  * @author Martin
- *
  */
 public class SubClassSupportInstanceInitializer implements InstanceInitializer {
 
@@ -55,39 +37,38 @@ public class SubClassSupportInstanceInitializer implements InstanceInitializer {
 	}
 
 	public Object unproxy(Object entity) {
-		return this.initializer.unproxy(entity);
+		return this.initializer.unproxy( entity );
 	}
 
 	public Class<?> getClassFromWork(Work work) {
-		return work.getEntityClass() != null ? work.getEntityClass()
-				: getClass(work.getEntity());
+		return work.getEntityClass() != null ? work.getEntityClass() : getClass( work.getEntity() );
 	}
 
 	@SuppressWarnings("unchecked")
 	public <T> Class<T> getClass(T entity) {
 		// get the first class in the hierarchy that is actually in the index
 		Class<T> clazz = (Class<T>) entity.getClass();
-		while ((clazz = (Class<T>) clazz.getSuperclass()) != null) {
-			if (clazz.isAnnotationPresent(InIndex.class)) {
+		while ( ( clazz = (Class<T>) clazz.getSuperclass() ) != null ) {
+			if ( clazz.isAnnotationPresent( InIndex.class ) ) {
 				break;
 			}
 		}
-		if (clazz != null) {
+		if ( clazz != null ) {
 			return clazz;
 		}
-		return this.initializer.getClass(entity);
+		return this.initializer.getClass( entity );
 	}
 
 	public <T> Collection<T> initializeCollection(Collection<T> value) {
-		return this.initializer.initializeCollection(value);
+		return this.initializer.initializeCollection( value );
 	}
 
 	public <K, V> Map<K, V> initializeMap(Map<K, V> value) {
-		return this.initializer.initializeMap(value);
+		return this.initializer.initializeMap( value );
 	}
 
 	public Object[] initializeArray(Object[] value) {
-		return this.initializer.initializeArray(value);
+		return this.initializer.initializeArray( value );
 	}
 
 }

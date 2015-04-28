@@ -1,17 +1,8 @@
 /*
- * Copyright 2015 Martin Braun
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Hibernate Search, full-text search for your domain model
  *
- * http://www.apache.org/licenses/LICENSE-2.0
-
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package com.github.hotware.hsearch.db.events;
 
@@ -27,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.hibernate.search.backend.spi.SingularTermDeletionQuery;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
@@ -65,30 +55,27 @@ public class IndexUpdaterTest {
 	public void setup() {
 		this.changed = false;
 		this.deletedSorcerer = false;
-		MetadataProvider metadataProvider = MetadataUtil
-				.getMetadataProvider(new SearchConfigurationImpl());
+		MetadataProvider metadataProvider = MetadataUtil.getMetadataProvider( new SearchConfigurationImpl() );
 		MetadataRehasher rehasher = new MetadataRehasher();
 		List<RehashedTypeMetadata> rehashedTypeMetadatas = new ArrayList<>();
 		rehashedTypeMetadataPerIndexRoot = new HashMap<>();
-		for (Class<?> indexRootType : Arrays.asList(Place.class)) {
-			RehashedTypeMetadata rehashed = rehasher.rehash(metadataProvider
-					.getTypeMetadataFor(indexRootType));
-			rehashedTypeMetadatas.add(rehashed);
-			rehashedTypeMetadataPerIndexRoot.put(indexRootType, rehashed);
+		for ( Class<?> indexRootType : Arrays.asList( Place.class ) ) {
+			RehashedTypeMetadata rehashed = rehasher.rehash( metadataProvider.getTypeMetadataFor( indexRootType ) );
+			rehashedTypeMetadatas.add( rehashed );
+			rehashedTypeMetadataPerIndexRoot.put( indexRootType, rehashed );
 		}
-		this.containedInIndexOf = MetadataUtil
-				.calculateInIndexOf(rehashedTypeMetadatas);
+		this.containedInIndexOf = MetadataUtil.calculateInIndexOf( rehashedTypeMetadatas );
 		this.entityProvider = new ReusableEntityProvider() {
 
 			@SuppressWarnings("rawtypes")
 			@Override
 			public List getBatch(Class<?> entityClass, List<Object> ids) {
-				throw new AssertionError("not to be used in this test!");
+				throw new AssertionError( "not to be used in this test!" );
 			}
 
 			@Override
 			public Object get(Class<?> entityClass, Object id) {
-				return IndexUpdaterTest.this.obj(entityClass, false);
+				return IndexUpdaterTest.this.obj( entityClass, false );
 			}
 
 			@Override
@@ -108,220 +95,181 @@ public class IndexUpdaterTest {
 	@Test
 	public void testWithoutIndex() {
 		List<UpdateInfo> updateInfos = this.createUpdateInfos();
-		Set<UpdateInfo> updateInfoSet = new HashSet<>(updateInfos);
+		Set<UpdateInfo> updateInfoSet = new HashSet<>( updateInfos );
 		IndexWrapper indexWrapper = new IndexWrapper() {
 
 			@Override
-			public void delete(Class<?> entityClass, List<Class<?>> inIndexOf,
-					Object id, Transaction tx) {
-				Object obj = IndexUpdaterTest.this.obj(entityClass);
-				System.out.println(entityClass);
-				System.out.println(updateInfoSet);
-				System.out.println(obj);
-				assertTrue(updateInfoSet.remove(new UpdateInfo(entityClass,
-						(Integer) id, EventType.DELETE)));
+			public void delete(Class<?> entityClass, List<Class<?>> inIndexOf, Object id, Transaction tx) {
+				Object obj = IndexUpdaterTest.this.obj( entityClass );
+				System.out.println( entityClass );
+				System.out.println( updateInfoSet );
+				System.out.println( obj );
+				assertTrue( updateInfoSet.remove( new UpdateInfo( entityClass, (Integer) id, EventType.DELETE ) ) );
 			}
 
 			@Override
 			public void update(Object entity, Transaction tx) {
-				if (entity != null) {
+				if ( entity != null ) {
 					try {
-						assertTrue(updateInfoSet.remove(new UpdateInfo(entity
-								.getClass(), (Integer) entity.getClass()
-								.getMethod("getId").invoke(entity),
-								EventType.UPDATE)));
-					} catch (IllegalAccessException | IllegalArgumentException
-							| InvocationTargetException | NoSuchMethodException
-							| SecurityException e) {
-						throw new RuntimeException(e);
+						assertTrue( updateInfoSet.remove( new UpdateInfo( entity.getClass(), (Integer) entity.getClass().getMethod( "getId" ).invoke( entity ),
+								EventType.UPDATE ) ) );
+					}
+					catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+						throw new RuntimeException( e );
 					}
 				}
 			}
 
 			@Override
 			public void index(Object entity, Transaction tx) {
-				if (entity != null) {
+				if ( entity != null ) {
 					try {
-						assertTrue(updateInfoSet.remove(new UpdateInfo(entity
-								.getClass(), (Integer) entity.getClass()
-								.getMethod("getId").invoke(entity),
-								EventType.INSERT)));
-					} catch (IllegalAccessException | IllegalArgumentException
-							| InvocationTargetException | NoSuchMethodException
-							| SecurityException e) {
-						throw new RuntimeException(e);
+						assertTrue( updateInfoSet.remove( new UpdateInfo( entity.getClass(), (Integer) entity.getClass().getMethod( "getId" ).invoke( entity ),
+								EventType.INSERT ) ) );
+					}
+					catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+						throw new RuntimeException( e );
 					}
 				}
 			}
 
 		};
-		IndexUpdater updater = new IndexUpdater(
-				this.rehashedTypeMetadataPerIndexRoot, this.containedInIndexOf,
-				this.entityProvider, indexWrapper);
-		updater.updateEvent(updateInfos);
+		IndexUpdater updater = new IndexUpdater( this.rehashedTypeMetadataPerIndexRoot, this.containedInIndexOf, this.entityProvider, indexWrapper );
+		updater.updateEvent( updateInfos );
 	}
 
 	@Test
 	public void testWithIndex() {
 		SearchConfiguration searchConfiguration = new SearchConfigurationImpl();
-		List<Class<?>> classes = Arrays.asList(Place.class, Sorcerer.class);
+		List<Class<?>> classes = Arrays.asList( Place.class, Sorcerer.class );
 
 		SearchIntegratorBuilder builder = new SearchIntegratorBuilder();
 		// we have to build an integrator here (but we don't need it afterwards)
-		builder.configuration(searchConfiguration).buildSearchIntegrator();
-		classes.forEach((clazz) -> {
-			builder.addClass(clazz);
-		});
-		ExtendedSearchIntegrator impl = (ExtendedSearchIntegrator) builder
-				.buildSearchIntegrator();
+		builder.configuration( searchConfiguration ).buildSearchIntegrator();
+		classes.forEach( (clazz) -> {
+			builder.addClass( clazz );
+		} );
+		ExtendedSearchIntegrator impl = (ExtendedSearchIntegrator) builder.buildSearchIntegrator();
 
-		IndexUpdater updater = new IndexUpdater(
-				this.rehashedTypeMetadataPerIndexRoot, this.containedInIndexOf,
-				this.entityProvider, impl);
-		this.reset(updater, impl);
+		IndexUpdater updater = new IndexUpdater( this.rehashedTypeMetadataPerIndexRoot, this.containedInIndexOf, this.entityProvider, impl );
+		this.reset( updater, impl );
 
-		this.tryOutDelete(updater, impl, 0, 1, Place.class);
+		this.tryOutDelete( updater, impl, 0, 1, Place.class );
 		// this shouldn't delete the root though
-		this.tryOutDeleteNonRoot(updater, impl, 0, 2, Sorcerer.class,
-				"sorcerers.name", "Saruman");
-		this.tryOutDeleteNonRoot(updater, impl, 1, 2, Sorcerer.class, "name",
-				"Valinor");
+		this.tryOutDeleteNonRoot( updater, impl, 0, 2, Sorcerer.class, "sorcerers.name", "Saruman" );
+		this.tryOutDeleteNonRoot( updater, impl, 1, 2, Sorcerer.class, "name", "Valinor" );
 
-		this.tryOutUpdate(updater, impl, 0, 1, Place.class, "name", "Valinor");
-		this.tryOutUpdate(updater, impl, 0, 2, Sorcerer.class,
-				"sorcerers.name", "Saruman");
+		this.tryOutUpdate( updater, impl, 0, 1, Place.class, "name", "Valinor" );
+		this.tryOutUpdate( updater, impl, 0, 2, Sorcerer.class, "sorcerers.name", "Saruman" );
 	}
 
 	private void reset(IndexUpdater updater, ExtendedSearchIntegrator impl) {
 		{
 			Transaction tx = new Transaction();
-			impl.getWorker().performWork(
-					new Work(Place.class, null, WorkType.PURGE_ALL), tx);
+			impl.getWorker().performWork( new Work( Place.class, null, WorkType.PURGE_ALL ), tx );
 			tx.end();
-			this.assertCount(impl, 0);
+			this.assertCount( impl, 0 );
 		}
 
-		updater.updateEvent(Arrays.asList(new UpdateInfo(Sorcerer.class, 2,
-				EventType.INSERT)));
-		this.assertCount(impl, 1);
+		updater.updateEvent( Arrays.asList( new UpdateInfo( Sorcerer.class, 2, EventType.INSERT ) ) );
+		this.assertCount( impl, 1 );
 
 		{
 			Transaction tx = new Transaction();
-			impl.getWorker().performWork(
-					new Work(Place.class, null, WorkType.PURGE_ALL), tx);
+			impl.getWorker().performWork( new Work( Place.class, null, WorkType.PURGE_ALL ), tx );
 			tx.end();
-			this.assertCount(impl, 0);
+			this.assertCount( impl, 0 );
 		}
 
-		updater.updateEvent(Arrays.asList(new UpdateInfo(Place.class, 1,
-				EventType.INSERT)));
-		this.assertCount(impl, 1);
+		updater.updateEvent( Arrays.asList( new UpdateInfo( Place.class, 1, EventType.INSERT ) ) );
+		this.assertCount( impl, 1 );
 
 		{
 			Transaction tx = new Transaction();
-			impl.getWorker().performWork(
-					new Work(Place.class, null, WorkType.PURGE_ALL), tx);
+			impl.getWorker().performWork( new Work( Place.class, null, WorkType.PURGE_ALL ), tx );
 			tx.end();
-			this.assertCount(impl, 0);
+			this.assertCount( impl, 0 );
 		}
 
-		updater.updateEvent(this.createUpdateInfoForInsert());
-		this.assertCount(impl, 1);
+		updater.updateEvent( this.createUpdateInfoForInsert() );
+		this.assertCount( impl, 1 );
 	}
 
 	private void assertCount(ExtendedSearchIntegrator impl, int count) {
 		assertEquals(
 				count,
-				impl.createHSQuery()
-						.targetedEntities(Arrays.asList(Place.class))
-						.luceneQuery(
-								impl.buildQueryBuilder().forEntity(Place.class)
-										.get().all().createQuery())
-						.queryResultSize());
+				impl.createHSQuery().targetedEntities( Arrays.asList( Place.class ) )
+						.luceneQuery( impl.buildQueryBuilder().forEntity( Place.class ).get().all().createQuery() ).queryResultSize() );
 	}
 
-	private void tryOutDelete(IndexUpdater updater,
-			ExtendedSearchIntegrator impl, int expectedCount, Object id,
-			Class<?> clazz) {
-		updater.updateEvent(Arrays.asList(new UpdateInfo(clazz, id,
-				EventType.DELETE)));
+	private void tryOutDelete(IndexUpdater updater, ExtendedSearchIntegrator impl, int expectedCount, Object id, Class<?> clazz) {
+		updater.updateEvent( Arrays.asList( new UpdateInfo( clazz, id, EventType.DELETE ) ) );
 		assertEquals(
 				expectedCount,
-				impl.createHSQuery()
-						.targetedEntities(Arrays.asList(Place.class))
-						.luceneQuery(
-								impl.buildQueryBuilder().forEntity(Place.class)
-										.get().all().createQuery())
-						.queryResultSize());
-		this.reset(updater, impl);
+				impl.createHSQuery().targetedEntities( Arrays.asList( Place.class ) )
+						.luceneQuery( impl.buildQueryBuilder().forEntity( Place.class ).get().all().createQuery() ).queryResultSize() );
+		this.reset( updater, impl );
 	}
 
-	private void tryOutDeleteNonRoot(IndexUpdater updater,
-			ExtendedSearchIntegrator impl, int expectedCount, Object id,
-			Class<?> clazz, String fieldToCheckCount, String originalMatch) {
+	private void tryOutDeleteNonRoot(IndexUpdater updater, ExtendedSearchIntegrator impl, int expectedCount, Object id, Class<?> clazz,
+			String fieldToCheckCount, String originalMatch) {
 		this.deletedSorcerer = true;
-		updater.updateEvent(Arrays.asList(new UpdateInfo(clazz, id,
-				EventType.DELETE)));
+		updater.updateEvent( Arrays.asList( new UpdateInfo( clazz, id, EventType.DELETE ) ) );
 		assertEquals(
 				expectedCount,
 				impl.createHSQuery()
-						.targetedEntities(Arrays.asList(Place.class))
+						.targetedEntities( Arrays.asList( Place.class ) )
 						.luceneQuery(
-								impl.buildQueryBuilder().forEntity(Place.class)
-										.get().keyword()
-										.onField(fieldToCheckCount)
-										.matching(originalMatch).createQuery())
-						.queryResultSize());
+								impl.buildQueryBuilder().forEntity( Place.class ).get().keyword().onField( fieldToCheckCount ).matching( originalMatch )
+										.createQuery() ).queryResultSize() );
 		this.deletedSorcerer = false;
-		this.reset(updater, impl);
+		this.reset( updater, impl );
 	}
 
-	private void tryOutUpdate(IndexUpdater updater,
-			ExtendedSearchIntegrator impl, int expectedCount, Object id,
-			Class<?> clazz, String field, String originalMatch) {
+	private void tryOutUpdate(IndexUpdater updater, ExtendedSearchIntegrator impl, int expectedCount, Object id, Class<?> clazz, String field,
+			String originalMatch) {
 		this.changed = true;
-		updater.updateEvent(Arrays.asList(new UpdateInfo(clazz, id,
-				EventType.UPDATE)));
+		updater.updateEvent( Arrays.asList( new UpdateInfo( clazz, id, EventType.UPDATE ) ) );
 		assertEquals(
 				expectedCount,
 				impl.createHSQuery()
-						.targetedEntities(Arrays.asList(Place.class))
+						.targetedEntities( Arrays.asList( Place.class ) )
 						.luceneQuery(
-								impl.buildQueryBuilder().forEntity(Place.class)
-										.get().keyword().onField(field)
-										.matching(originalMatch).createQuery())
-						.queryResultSize());
+								impl.buildQueryBuilder().forEntity( Place.class ).get().keyword().onField( field ).matching( originalMatch ).createQuery() )
+						.queryResultSize() );
 		this.changed = false;
-		this.reset(updater, impl);
+		this.reset( updater, impl );
 	}
 
 	private Object obj(Class<?> entityClass) {
-		return this.obj(entityClass, false);
+		return this.obj( entityClass, false );
 	}
 
 	private Object obj(Class<?> entityClass, boolean ignoreSorcererDelete) {
 		Place place = new Place();
-		place.setId(1);
-		if (!this.changed) {
-			place.setName("Valinor");
-		} else {
-			place.setName("Alinor");
+		place.setId( 1 );
+		if ( !this.changed ) {
+			place.setName( "Valinor" );
 		}
-		if (ignoreSorcererDelete || !this.deletedSorcerer) {
+		else {
+			place.setName( "Alinor" );
+		}
+		if ( ignoreSorcererDelete || !this.deletedSorcerer ) {
 			Sorcerer sorcerer = new Sorcerer();
-			sorcerer.setId(2);
-			sorcerer.setPlace(place);
-			if (!this.changed) {
-				sorcerer.setName("Saruman");
-			} else {
-				sorcerer.setName("Aruman");
+			sorcerer.setId( 2 );
+			sorcerer.setPlace( place );
+			if ( !this.changed ) {
+				sorcerer.setName( "Saruman" );
 			}
-			place.setSorcerers(new HashSet<>(Arrays.asList(sorcerer)));
-			if (entityClass.equals(Sorcerer.class)) {
+			else {
+				sorcerer.setName( "Aruman" );
+			}
+			place.setSorcerers( new HashSet<>( Arrays.asList( sorcerer ) ) );
+			if ( entityClass.equals( Sorcerer.class ) ) {
 				return sorcerer;
 			}
 		}
-		if (entityClass.equals(Place.class)) {
+		if ( entityClass.equals( Place.class ) ) {
 			return place;
 		}
 		return null;
@@ -330,21 +278,21 @@ public class IndexUpdaterTest {
 	private List<UpdateInfo> createUpdateInfos() {
 		List<UpdateInfo> ret = new ArrayList<>();
 
-		ret.addAll(this.createUpdateInfoForInsert());
+		ret.addAll( this.createUpdateInfoForInsert() );
 
-		ret.add(new UpdateInfo(Place.class, 1, EventType.UPDATE));
-		ret.add(new UpdateInfo(Place.class, 1, EventType.DELETE));
+		ret.add( new UpdateInfo( Place.class, 1, EventType.UPDATE ) );
+		ret.add( new UpdateInfo( Place.class, 1, EventType.DELETE ) );
 
-		ret.add(new UpdateInfo(Sorcerer.class, 2, EventType.UPDATE));
-		ret.add(new UpdateInfo(Sorcerer.class, 2, EventType.DELETE));
+		ret.add( new UpdateInfo( Sorcerer.class, 2, EventType.UPDATE ) );
+		ret.add( new UpdateInfo( Sorcerer.class, 2, EventType.DELETE ) );
 
 		return ret;
 	}
 
 	private List<UpdateInfo> createUpdateInfoForInsert() {
 		List<UpdateInfo> ret = new ArrayList<>();
-		ret.add(new UpdateInfo(Place.class, 1, EventType.INSERT));
-		ret.add(new UpdateInfo(Sorcerer.class, 2, EventType.INSERT));
+		ret.add( new UpdateInfo( Place.class, 1, EventType.INSERT ) );
+		ret.add( new UpdateInfo( Sorcerer.class, 2, EventType.INSERT ) );
 		return ret;
 	}
 
