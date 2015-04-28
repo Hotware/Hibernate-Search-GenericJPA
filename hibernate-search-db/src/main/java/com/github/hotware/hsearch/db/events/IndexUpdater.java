@@ -163,8 +163,7 @@ public class IndexUpdater implements UpdateConsumer {
 					DocumentFieldMetadata metaDataForIdField = metadata
 							.getDocumentFieldMetadataForIdFieldName()
 							.get(field);
-					SingularTermDeletionQuery.Type idType = IndexUpdater.this.metadataPerForIndexRoot
-							.get(indexClass)
+					SingularTermDeletionQuery.Type idType = metadata
 							.getSingularTermDeletionQueryTypeForIdFieldName()
 							.get(entityClass);
 					Object idValueForDeletion;
