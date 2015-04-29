@@ -24,14 +24,20 @@ import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
 import javax.tools.ToolProvider;
 
+import org.hibernate.search.exception.AssertionFailure;
+
 /**
  * most (or all code) is from <a href=
  * "http://normalengineering.com.au/normality/c-and-java-code-snippets/java-runtime-compilation-in-memory/" >here</a>
- * 
+ *
  * @author Martin Braun
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class InMemoryCompiler {
+
+	private InMemoryCompiler() {
+		throw new AssertionFailure("can't touch this!");
+	}
 
 	/* Compiles the provided source code and returns the resulting Class object. */
 	public static Class compile(String source, String className) {

@@ -63,7 +63,7 @@ import com.github.hotware.hsearch.transaction.TransactionContext;
 
 /**
  * Base class to create SearchFactories in a EJB environment. Uses a JPAEventSource.
- * 
+ *
  * @author Martin Braun
  */
 public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer {

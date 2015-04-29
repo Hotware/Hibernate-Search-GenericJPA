@@ -28,7 +28,6 @@ import com.github.hotware.hsearch.db.events.jpa.DatabaseIntegrationTest;
 import com.github.hotware.hsearch.db.events.jpa.JPAUpdateSourceTest;
 import com.github.hotware.hsearch.jpa.test.entities.PlaceSorcererUpdates;
 import com.github.hotware.hsearch.jpa.test.entities.PlaceUpdates;
-import com.github.hotware.hsearch.jpa.util.MultiQueryAccess;
 
 /**
  * @author Martin
@@ -36,7 +35,7 @@ import com.github.hotware.hsearch.jpa.util.MultiQueryAccess;
 public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 
 	@Before
-	public void setup() throws NoSuchFieldException, SecurityException, SQLException {
+	public void setup() throws NoSuchFieldException, SQLException {
 		this.setup( "EclipseLink" );
 
 		EntityManager em = null;
@@ -136,7 +135,7 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 	}
 
 	@Test
-	public void test() throws NoSuchFieldException, SecurityException, SQLException, IllegalAccessException, IllegalArgumentException,
+	public void test() throws NoSuchFieldException, SQLException, IllegalAccessException,
 			InvocationTargetException, NoSuchMethodException {
 		EntityManager em = null;
 		try {
@@ -180,7 +179,7 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 		}
 	}
 
-	private MultiQueryAccess query(EntityManager em) throws NoSuchFieldException, SecurityException {
+	private MultiQueryAccess query(EntityManager em) throws NoSuchFieldException {
 		return JPAUpdateSourceTest.query( this.emf, em );
 	}
 

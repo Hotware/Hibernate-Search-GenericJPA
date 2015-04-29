@@ -41,7 +41,7 @@ import com.github.hotware.hsearch.jpa.util.MultiQueryAccess.ObjectClassWrapper;
 /**
  * a {@link UpdateSource} implementation that uses JPA to retrieve the updates from the database. For this to work the
  * entities have to be setup with JPA annotations
- * 
+ *
  * @author Martin Braun
  */
 public class JPAUpdateSource implements UpdateSource {

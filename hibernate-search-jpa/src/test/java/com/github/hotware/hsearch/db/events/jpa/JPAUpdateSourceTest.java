@@ -73,7 +73,7 @@ public class JPAUpdateSourceTest {
 					for ( UpdateInfo updateInfo : updateInfos ) {
 						Object id = updateInfo.getId();
 						int eventType = updateInfo.getEventType();
-						if ( id.equals( 2 ) && updateInfo.getEntityClass().equals( Place.class ) && eventType == EventType.INSERT ) {
+						if ( id.equals( 2 ) && Place.class.equals( updateInfo.getEntityClass() ) && EventType.INSERT == eventType ) {
 							gotEvent[0] = true;
 						}
 						else if ( id.equals( 3 ) && updateInfo.getEntityClass().equals( Sorcerer.class ) && eventType == EventType.INSERT ) {
@@ -115,7 +115,7 @@ public class JPAUpdateSourceTest {
 	/**
 	 * this is needed in other tests because the query method of JPAUpdateSource has package access
 	 */
-	public static MultiQueryAccess query(EntityManagerFactory emf, EntityManager em) throws NoSuchFieldException, SecurityException {
+	public static MultiQueryAccess query(EntityManagerFactory emf, EntityManager em) throws NoSuchFieldException {
 		EventModelParser parser = new EventModelParser();
 		JPAUpdateSource updateSource = new JPAUpdateSource( parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class, PlaceUpdates.class ) ) ),
 				emf, false, 1, TimeUnit.SECONDS, 2, 2 );

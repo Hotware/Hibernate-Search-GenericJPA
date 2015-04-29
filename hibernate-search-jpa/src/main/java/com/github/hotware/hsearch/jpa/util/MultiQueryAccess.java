@@ -15,13 +15,15 @@ import java.util.Map;
 
 import javax.persistence.Query;
 
+import org.hibernate.search.exception.AssertionFailure;
+
 /**
  * Utility class that allows you to access multiple JPA queries at once. Data is retrieved from the database in batches
  * and ordered by a given comparator. No need for messy Unions on the database level! <br>
  * <br>
  * This is particularily useful if you scroll all the data from the database incrementally and if you can compare in
  * Code.
- * 
+ *
  * @author Martin
  */
 public class MultiQueryAccess {
@@ -78,7 +80,7 @@ public class MultiQueryAccess {
 
 	/**
 	 * increments the value to be returned by {@link #get()}
-	 * 
+	 *
 	 * @return true if there is a value left to be visited in the database
 	 */
 	public boolean next() {
@@ -114,14 +116,14 @@ public class MultiQueryAccess {
 				return old + 1;
 			} );
 			if ( Math.abs( newProcessed - processed ) != 1L ) {
-				throw new AssertionError( "the new processed count should be exactly 1 " + "greater than the old one" );
+				throw new AssertionFailure( "the new processed count should be exactly 1 " + "greater than the old one" );
 			}
 			Long count = this.currentCountMap.get( arr.clazz );
 			Long newCount = this.currentCountMap.computeIfPresent( arr.clazz, (clazz, old) -> {
 				return old - 1;
 			} );
 			if ( Math.abs( count - newCount ) != 1L ) {
-				throw new AssertionError( "the new old remaining count should be exactly 1 " + "greater than the new one" );
+				throw new AssertionFailure( "the new old remaining count should be exactly 1 " + "greater than the new one" );
 			}
 		}
 		return this.scheduled != null;

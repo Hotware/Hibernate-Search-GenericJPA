@@ -28,6 +28,7 @@ import javax.persistence.metamodel.Metamodel;
 import javax.persistence.metamodel.PluralAttribute;
 import javax.persistence.metamodel.SingularAttribute;
 
+import org.hibernate.search.exception.AssertionFailure;
 import org.hibernate.search.annotations.ContainedIn;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
@@ -42,7 +43,7 @@ import org.hibernate.search.annotations.IndexedEmbedded;
  * This could be used to propagate events up to the top entity, but Hibernate-Search takes care of this via the @ContainedIn
  * events, which is neat :). Either way, we still need this class to check whether the classes are annotated properly
  * (every entity has to know its parent via {@link org.hibernate.search.annotations.ContainedIn}
- * 
+ *
  * @author Martin Braun
  */
 @Deprecated
@@ -129,7 +130,7 @@ public class MetaModelParser {
 				field = entType.getJavaType().getDeclaredField( propertyName );
 			}
 			catch (NoSuchFieldException e) {
-				throw new AssertionError( "expected to find a Field but didn't: " + propertyName );
+				throw new AssertionFailure( "expected to find a Field but didn't: " + propertyName );
 			}
 			Method method = null;
 			try {
@@ -227,7 +228,7 @@ public class MetaModelParser {
 			entityTypeClass = ( ( (SingularAttribute<?, ?>) attribute ).getType().getJavaType() );
 		}
 		else {
-			throw new AssertionError( "attributes have to either be " + "instanceof PluralAttribute or SingularAttribute " + "at this point" );
+			throw new AssertionFailure( "attributes have to either be " + "instanceof PluralAttribute or SingularAttribute " + "at this point" );
 		}
 		return entityTypeClass;
 	}
@@ -259,7 +260,7 @@ public class MetaModelParser {
 			ret = field.isAnnotationPresent( annotationClass );
 		}
 		else {
-			throw new AssertionError( "member should either be Field or Member" );
+			throw new AssertionFailure( "member should either be Field or Member" );
 		}
 		return ret;
 	}
@@ -278,7 +279,7 @@ public class MetaModelParser {
 				ret = field.get( object );
 			}
 			else {
-				throw new AssertionError( "member should either be Field or Member" );
+				throw new AssertionFailure( "member should either be Field or Member" );
 			}
 			return ret;
 		}
