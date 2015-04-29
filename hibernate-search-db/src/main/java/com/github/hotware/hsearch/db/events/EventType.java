@@ -6,15 +6,17 @@
  */
 package com.github.hotware.hsearch.db.events;
 
+import org.hibernate.search.exception.AssertionFailure;
+
 /**
  * Contains constants that describe the different Database-Events that are relevant to the index
- * 
+ *
  * @author Martin Braun
  */
 public final class EventType {
 
 	private EventType() {
-		throw new AssertionError( "can't touch this!" );
+		throw new AssertionFailure( "can't touch this!" );
 	}
 
 	public static final int DELETE = -1;

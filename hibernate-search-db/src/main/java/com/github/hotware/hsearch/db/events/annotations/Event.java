@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
 
 /**
  * used to identify the field which contains the information about what operation happened on the database
- * 
+ *
  * @author Martin
  */
 @Target({ FIELD, METHOD })

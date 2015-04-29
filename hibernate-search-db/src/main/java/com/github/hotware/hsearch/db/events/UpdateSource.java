@@ -11,15 +11,15 @@ import java.util.List;
 /**
  * Source for updates on entities. This does no hierarchy checks, it just delivers information about which entry in
  * which table has changed
- * 
+ *
  * @author Martin Braun
  */
 public interface UpdateSource {
 
-	public void setUpdateConsumers(List<UpdateConsumer> updateConsumers);
+	void setUpdateConsumers(List<UpdateConsumer> updateConsumers);
 
-	public void start();
+	void start();
 
-	public void stop();
+	void stop();
 
 }

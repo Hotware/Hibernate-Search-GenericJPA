@@ -15,12 +15,12 @@ public interface UpdateConsumer {
 
 	/**
 	 * called everytime an update is found in the database
-	 * 
+	 *
 	 * @param updateInfo a list of objects describing the several updates in the order they occured in the database
 	 */
-	public void updateEvent(List<UpdateInfo> updateInfo);
+	void updateEvent(List<UpdateInfo> updateInfo);
 
-	public static class UpdateInfo {
+	public class UpdateInfo {
 
 		private final Class<?> entityClass;
 		private final Object id;

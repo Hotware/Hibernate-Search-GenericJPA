@@ -31,7 +31,7 @@ import com.github.hotware.hsearch.metadata.RehashedTypeMetadata;
  * This class is the "glue" between a {@link com.github.hotware.hsearch.db.events.UpdateSource} and the actual
  * Hibernate-Search index. It consumes Events coming from the UpdateSource and updates the Hibernate-Search index
  * accordingly
- * 
+ *
  * @author Martin Braun
  */
 public class IndexUpdater implements UpdateConsumer {
@@ -114,13 +114,13 @@ public class IndexUpdater implements UpdateConsumer {
 		}
 	}
 
-	public static interface IndexWrapper {
+	public interface IndexWrapper {
 
-		public void delete(Class<?> entityClass, List<Class<?>> inIndexOf, Object id, Transaction tx);
+		void delete(Class<?> entityClass, List<Class<?>> inIndexOf, Object id, Transaction tx);
 
-		public void update(Object entity, Transaction tx);
+		void update(Object entity, Transaction tx);
 
-		public void index(Object entity, Transaction tx);
+		void index(Object entity, Transaction tx);
 
 	}
 

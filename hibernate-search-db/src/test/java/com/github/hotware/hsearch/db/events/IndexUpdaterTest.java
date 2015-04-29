@@ -23,6 +23,7 @@ import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.metadata.impl.MetadataProvider;
+import org.hibernate.search.exception.AssertionFailure;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
 import org.junit.Before;
 import org.junit.Test;
@@ -70,7 +71,7 @@ public class IndexUpdaterTest {
 			@SuppressWarnings("rawtypes")
 			@Override
 			public List getBatch(Class<?> entityClass, List<Object> ids) {
-				throw new AssertionError( "not to be used in this test!" );
+				throw new AssertionFailure( "not to be used in this test!" );
 			}
 
 			@Override

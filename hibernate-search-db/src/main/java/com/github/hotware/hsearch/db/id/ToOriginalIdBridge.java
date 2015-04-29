@@ -9,6 +9,6 @@ package com.github.hotware.hsearch.db.id;
 // TODO: maybe move this?
 public interface ToOriginalIdBridge {
 
-	public Object toOriginal(Object object);
+	Object toOriginal(Object object);
 
 }

@@ -6,7 +6,8 @@
  */
 package com.github.hotware.hsearch.db.events;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -15,9 +16,7 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.github.hotware.hsearch.db.events.EventModelInfo;
 import com.github.hotware.hsearch.db.events.EventModelInfo.IdInfo;
-import com.github.hotware.hsearch.db.events.EventModelParser;
 import com.github.hotware.hsearch.db.events.annotations.Event;
 import com.github.hotware.hsearch.db.events.annotations.IdFor;
 import com.github.hotware.hsearch.db.events.annotations.Updates;
@@ -32,7 +31,7 @@ import com.github.hotware.hsearch.db.test.entities.Sorcerer;
 public class EventModelParserTest {
 
 	@Test
-	public void test() throws IllegalArgumentException, IllegalAccessException {
+	public void test() throws IllegalAccessException {
 
 		{
 			EventModelParser parser = new EventModelParser();

@@ -22,11 +22,11 @@ public @interface Updates {
 	/**
 	 * @return the name of the updates-table
 	 */
-	public String tableName();
+	String tableName();
 
 	/**
 	 * @return the name of the table the updates correspond to
 	 */
-	public String originalTableName();
+	String originalTableName();
 
 }

@@ -14,7 +14,7 @@ import com.github.hotware.hsearch.db.id.ToOriginalIdBridge;
 
 /**
  * contains information about the EventModel. Instances of this class can be obtained by a {@link EventModelParser}.
- * 
+ *
  * @author Martin
  */
 public class EventModelInfo {

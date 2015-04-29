@@ -15,12 +15,12 @@ import java.util.Set;
  */
 public interface TableInfoSource {
 
-	public default List<TableInfo> getTableInfos(Set<Class<?>> classesInIndex) {
+	default List<TableInfo> getTableInfos(Set<Class<?>> classesInIndex) {
 		List<Class<?>> list = new ArrayList<>( classesInIndex.size() );
 		list.addAll( classesInIndex );
 		return this.getTableInfos( list );
 	}
 
-	public List<TableInfo> getTableInfos(List<Class<?>> classesInIndex);
+	List<TableInfo> getTableInfos(List<Class<?>> classesInIndex);
 
 }

@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
+import org.hibernate.search.exception.AssertionFailure;
+
 import com.github.hotware.hsearch.db.events.annotations.Event;
 import com.github.hotware.hsearch.db.events.annotations.IdFor;
 import com.github.hotware.hsearch.db.events.annotations.Updates;
@@ -26,7 +28,7 @@ import com.github.hotware.hsearch.db.id.ToOriginalIdBridge;
  * {@link EventModelInfo}. <br>
  * <br>
  * It also checks the classes for the right annotations and does basic integrity checking of this information
- * 
+ *
  * @author Martin
  */
 public class EventModelParser {
@@ -114,7 +116,7 @@ public class EventModelParser {
 						return (Integer) ( (Field) eventTypeMemberFinal ).get( object );
 					}
 					else {
-						throw new AssertionError();
+						throw new AssertionFailure("");
 					}
 				}
 				catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
@@ -182,7 +184,7 @@ public class EventModelParser {
 							val = ( (Field) member ).get( object );
 						}
 						else {
-							throw new AssertionError();
+							throw new AssertionFailure("");
 						}
 					}
 					catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
@@ -213,7 +215,7 @@ public class EventModelParser {
 			ret = field.getAnnotation( annotationClass );
 		}
 		else {
-			throw new AssertionError( "member should either be Field or Member" );
+			throw new AssertionFailure( "member should either be Field or Member" );
 		}
 		return ret;
 	}
@@ -229,7 +231,7 @@ public class EventModelParser {
 			ret = field.getType();
 		}
 		else {
-			throw new AssertionError( "member should either be Field or Member" );
+			throw new AssertionFailure( "member should either be Field or Member" );
 		}
 		return ret;
 	}

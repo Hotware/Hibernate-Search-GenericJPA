@@ -9,7 +9,7 @@ package com.github.hotware.hsearch.db.events;
 /**
  * Classes that implement this interface provide means to create the Triggers needed on the database to write C_UD
  * information about entities in the index into the specific Updates-Table.
- * 
+ *
  * @author Martin Braun
  */
 public interface TriggerSQLStringSource {
@@ -22,41 +22,41 @@ public interface TriggerSQLStringSource {
 	 * only be done if your database is running out of ids for all the update instances. However, this shouldn't be a
 	 * real world problem :D http://stackoverflow.com/questions/277608/is-bigint-large-enough-for-an- event-log-table
 	 */
-	public String[] getRecreateUniqueIdTableCode();
+	String[] getRecreateUniqueIdTableCode();
 
 	/**
 	 * this is executed first
 	 */
-	public String[] getSetupCode();
+	String[] getSetupCode();
 
 	/**
 	 * this has to be executed before every call to getTriggerCreationCode
-	 * 
+	 *
 	 * @param eventModelInfo the EventModelInfo/type this corresponds to
 	 */
-	public String[] getSpecificSetupCode(EventModelInfo eventModelInfo);
+	String[] getSpecificSetupCode(EventModelInfo eventModelInfo);
 
 	/**
 	 * this removes all changes made by {@link #getSpecificSetupCode(EventModelInfo)}
-	 * 
+	 *
 	 * @param eventModelInfo the EventModelInfo/type this corresponds to
 	 */
-	public String[] getSpecificUnSetupCode(EventModelInfo eventModelInfo);
+	String[] getSpecificUnSetupCode(EventModelInfo eventModelInfo);
 
 	/**
 	 * this creates a specific trigger
-	 * 
+	 *
 	 * @param eventModelInfo the EventModelInfo/type this corresponds to
 	 * @param eventType see {@link EventType}
 	 */
-	public String[] getTriggerCreationCode(EventModelInfo eventModelInfo, int eventType);
+	String[] getTriggerCreationCode(EventModelInfo eventModelInfo, int eventType);
 
 	/**
 	 * this removes a specific trigger created by {@link #getTriggerCreationCode(EventModelInfo, int)}
-	 * 
+	 *
 	 * @param eventModelInfo the EventModelInfo/type this corresponds to
 	 * @param eventType see {@link EventType}
 	 */
-	public String[] getTriggerDropCode(EventModelInfo eventModelInfo, int eventType);
+	String[] getTriggerDropCode(EventModelInfo eventModelInfo, int eventType);
 
 }

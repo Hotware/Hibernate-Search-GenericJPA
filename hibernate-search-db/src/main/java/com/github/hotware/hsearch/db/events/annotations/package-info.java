@@ -8,7 +8,7 @@
  * This package contains the annotations that are used to describe Updates classes.
  * These Updates classes contain information about changes in Database
  * and only provide information that something has changed and not what.
- * 
+ *
  * @author Martin Braun
  */
 package com.github.hotware.hsearch.db.events.annotations;

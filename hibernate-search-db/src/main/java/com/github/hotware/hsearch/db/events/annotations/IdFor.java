@@ -29,20 +29,20 @@ public @interface IdFor {
 	 * <br>
 	 * the class returned has to be annotated with @InIndex
 	 */
-	public Class<?> entityClass();
+	Class<?> entityClass();
 
 	/**
 	 * @return the column names of the id in the Updates table.<br>
 	 * <b>has to be in the same order as columnsInOriginal</b>
 	 */
-	public String[] columns();
+	String[] columns();
 
 	/**
 	 * @return the column names of the id in the original table.<br>
 	 * <b>has to be in the same order as columns</b>
 	 */
-	public String[] columnsInOriginal();
+	String[] columnsInOriginal();
 
-	public Class<? extends ToOriginalIdBridge> bridge() default DefaultToOriginalIdBridge.class;
+	Class<? extends ToOriginalIdBridge> bridge() default DefaultToOriginalIdBridge.class;
 
 }
