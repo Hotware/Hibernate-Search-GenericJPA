@@ -7,12 +7,12 @@
 package com.github.hotware.hsearch.entity;
 
 /**
- * @author Martin
+ * @author Martin Braun
  */
 public interface ReusableEntityProvider extends EntityProvider {
 
-	public void close();
+	void close();
 
-	public void open();
+	void open();
 
 }

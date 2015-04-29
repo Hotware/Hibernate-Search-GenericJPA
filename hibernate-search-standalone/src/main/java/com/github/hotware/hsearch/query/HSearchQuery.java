@@ -20,35 +20,35 @@ public interface HSearchQuery {
 	// TODO: check if more methods are from hsquery are needed here
 	// FIXME: faceting is definitely needed!
 
-	public HSearchQuery sort(Sort sort);
+	HSearchQuery sort(Sort sort);
 
-	public HSearchQuery filter(Filter filter);
+	HSearchQuery filter(Filter filter);
 
-	public HSearchQuery firstResult(int firstResult);
+	HSearchQuery firstResult(int firstResult);
 
-	public HSearchQuery maxResults(int maxResults);
+	HSearchQuery maxResults(int maxResults);
 
-	public Query getLuceneQuery();
+	Query getLuceneQuery();
 
-	public <R> List<R> queryDto(Class<R> returnedType);
+	<R> List<R> queryDto(Class<R> returnedType);
 
-	public List<Object[]> queryProjection(String... projection);
+	List<Object[]> queryProjection(String... projection);
 
-	public int queryResultSize();
+	int queryResultSize();
 
-	public FullTextFilter enableFullTextFilter(String name);
+	FullTextFilter enableFullTextFilter(String name);
 
-	public void disableFullTextFilter(String name);
-
-	@SuppressWarnings("rawtypes")
-	public List query(EntityProvider entityProvider, Fetch fetchType);
+	void disableFullTextFilter(String name);
 
 	@SuppressWarnings("rawtypes")
-	public default List query(EntityProvider entityProvider) {
+	List query(EntityProvider entityProvider, Fetch fetchType);
+
+	@SuppressWarnings("rawtypes")
+	default List query(EntityProvider entityProvider) {
 		return this.query( entityProvider, Fetch.FIND_BY_ID );
 	}
 
-	public static enum Fetch {
+	public enum Fetch {
 		BATCH, FIND_BY_ID
 	}
 

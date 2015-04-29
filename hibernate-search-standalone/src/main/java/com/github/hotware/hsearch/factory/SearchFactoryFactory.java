@@ -10,13 +10,14 @@ import java.util.Collection;
 
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
+import org.hibernate.search.exception.AssertionFailure;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
 
 public final class SearchFactoryFactory {
 
 	private SearchFactoryFactory() {
-		throw new AssertionError( "can't touch this!" );
+		throw new AssertionFailure( "can't touch this!" );
 	}
 
 	public static SearchFactory createSearchFactory(SearchConfiguration searchConfiguration, Collection<Class<?>> classes) {

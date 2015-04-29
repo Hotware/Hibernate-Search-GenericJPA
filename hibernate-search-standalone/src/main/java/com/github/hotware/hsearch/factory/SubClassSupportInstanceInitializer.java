@@ -23,7 +23,7 @@ import com.github.hotware.hsearch.annotations.InIndex;
  * <br>
  * all methods not related to getting Classes out of this are delegated to
  * {@link org.hibernate.search.impl.SimpleInitializer}
- * 
+ *
  * @author Martin
  */
 public class SubClassSupportInstanceInitializer implements InstanceInitializer {

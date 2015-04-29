@@ -22,6 +22,7 @@ import org.hibernate.search.engine.metadata.impl.AnnotationMetadataProvider;
 import org.hibernate.search.engine.metadata.impl.MetadataProvider;
 import org.hibernate.search.engine.service.impl.StandardServiceManager;
 import org.hibernate.search.engine.service.spi.ServiceManager;
+import org.hibernate.search.exception.AssertionFailure;
 import org.hibernate.search.exception.ErrorHandler;
 import org.hibernate.search.exception.impl.LogErrorHandler;
 import org.hibernate.search.indexes.impl.IndexManagerHolder;
@@ -34,7 +35,7 @@ import org.hibernate.search.spi.IndexingMode;
 public class MetadataUtil {
 
 	private MetadataUtil() {
-		throw new AssertionError( "can't touch this!" );
+		throw new AssertionFailure( "can't touch this!" );
 	}
 
 	public static MetadataProvider getMetadataProvider(SearchConfiguration searchConfiguration) {
@@ -85,7 +86,7 @@ public class MetadataUtil {
 
 	/**
 	 * calculates the Entity-Classes that are relevant for the indexes represented by the rehashedTypeMetadatas
-	 * 
+	 *
 	 * @return all Entity-Classes found in the rehashedTypeMetadatas
 	 */
 	public static Set<Class<?>> calculateIndexRelevantEntities(List<RehashedTypeMetadata> rehashedTypeMetadatas) {

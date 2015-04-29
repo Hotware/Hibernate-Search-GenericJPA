@@ -164,7 +164,6 @@ public class IndexOperationsTest {
 		this.assertCount( 0 );
 
 		this.factory.index( l );
-		;
 		this.assertCount( 2 );
 
 		this.factory.delete( l.get( 0 ) );

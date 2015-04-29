@@ -12,17 +12,17 @@ import java.util.List;
 /**
  * Hibernate-Search is no object storage. All hits found on the Index have a original representation. This interface
  * provides means to retrieve these when executing a {@link com.github.hotware.hsearch.query.HSearchQuery}
- * 
+ *
  * @author Martin Braun
  */
 public interface EntityProvider extends Closeable {
 
-	public Object get(Class<?> entityClass, Object id);
+	Object get(Class<?> entityClass, Object id);
 
 	/**
 	 * ATTENTION: ORDER IS NOT PRESERVED!
 	 */
 	@SuppressWarnings("rawtypes")
-	public List getBatch(Class<?> entityClass, List<Object> id);
+	List getBatch(Class<?> entityClass, List<Object> id);
 
 }

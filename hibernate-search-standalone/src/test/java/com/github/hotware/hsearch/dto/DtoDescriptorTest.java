@@ -6,8 +6,6 @@
  */
 package com.github.hotware.hsearch.dto;
 
-import com.github.hotware.hsearch.dto.DtoDescriptor;
-import com.github.hotware.hsearch.dto.DtoDescriptorImpl;
 import com.github.hotware.hsearch.dto.DtoDescriptor.DtoDescription;
 import com.github.hotware.hsearch.dto.annotations.DtoField;
 import com.github.hotware.hsearch.dto.annotations.DtoOverEntity;

@@ -15,6 +15,7 @@ import org.hibernate.search.engine.metadata.impl.DocumentFieldMetadata;
 import org.hibernate.search.engine.metadata.impl.EmbeddedTypeMetadata;
 import org.hibernate.search.engine.metadata.impl.PropertyMetadata;
 import org.hibernate.search.engine.metadata.impl.TypeMetadata;
+import org.hibernate.search.exception.AssertionFailure;
 import org.hibernate.search.metadata.NumericFieldSettingsDescriptor.NumericEncodingType;
 
 /**
@@ -74,7 +75,7 @@ public final class MetadataRehasher {
 				} ).add( documentFieldMetadata.getName() );
 				rehashed.idPropertyNameForType.put( type, propertyMetadata.getPropertyAccessorName() );
 				if ( rehashed.documentFieldMetadataForIdFieldName.containsKey( documentFieldMetadata.getName() ) ) {
-					throw new AssertionError( "field handled twice!" );
+					throw new AssertionFailure( "field handled twice!" );
 				}
 				rehashed.documentFieldMetadataForIdFieldName.put( documentFieldMetadata.getName(), documentFieldMetadata );
 				SingularTermDeletionQuery.Type deletionQueryType;

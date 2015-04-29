@@ -16,20 +16,21 @@ import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.engine.ProjectionConstants;
+import org.hibernate.search.exception.AssertionFailure;
 import org.hibernate.search.filter.FullTextFilter;
 import org.hibernate.search.query.engine.spi.HSQuery;
 import org.hibernate.search.spi.SearchIntegrator;
 
-import com.github.hotware.hsearch.dto.HibernateSearchQueryExecutor;
+import com.github.hotware.hsearch.dto.DtoQueryExecutor;
 import com.github.hotware.hsearch.entity.EntityProvider;
 
 public class HSearchQueryImpl implements HSearchQuery {
 
 	private final HSQuery hsquery;
-	private final HibernateSearchQueryExecutor queryExec;
+	private final DtoQueryExecutor queryExec;
 	private final SearchIntegrator searchIntegrator;
 
-	public HSearchQueryImpl(HSQuery hsquery, HibernateSearchQueryExecutor queryExec, SearchIntegrator searchIntegrator) {
+	public HSearchQueryImpl(HSQuery hsquery, DtoQueryExecutor queryExec, SearchIntegrator searchIntegrator) {
 		this.hsquery = hsquery;
 		this.queryExec = queryExec;
 		this.searchIntegrator = searchIntegrator;
@@ -142,7 +143,7 @@ public class HSearchQueryImpl implements HSearchQuery {
 			} );
 		}
 		if ( ret.size() != projected.size() ) {
-			throw new AssertionError( "returned size was not equal to projected size" );
+			throw new AssertionFailure( "returned size was not equal to projected size" );
 		}
 		return ret;
 	}

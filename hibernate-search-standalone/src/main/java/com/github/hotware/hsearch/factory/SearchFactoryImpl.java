@@ -26,7 +26,7 @@ import org.hibernate.search.query.dsl.QueryContextBuilder;
 import org.hibernate.search.query.engine.spi.HSQuery;
 import org.hibernate.search.stat.Statistics;
 
-import com.github.hotware.hsearch.dto.HibernateSearchQueryExecutor;
+import com.github.hotware.hsearch.dto.DtoQueryExecutor;
 import com.github.hotware.hsearch.query.HSearchQuery;
 import com.github.hotware.hsearch.query.HSearchQueryImpl;
 import com.github.hotware.hsearch.transaction.TransactionContext;
@@ -34,12 +34,12 @@ import com.github.hotware.hsearch.transaction.TransactionContext;
 public class SearchFactoryImpl implements SearchFactory {
 
 	private final ExtendedSearchIntegrator searchIntegrator;
-	private final HibernateSearchQueryExecutor queryExec;
+	private final DtoQueryExecutor queryExec;
 
 	public SearchFactoryImpl(ExtendedSearchIntegrator searchIntegrator) {
 		super();
 		this.searchIntegrator = searchIntegrator;
-		this.queryExec = new HibernateSearchQueryExecutor();
+		this.queryExec = new DtoQueryExecutor();
 	}
 
 	@Override
