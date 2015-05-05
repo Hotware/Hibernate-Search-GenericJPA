@@ -22,6 +22,7 @@ import javax.persistence.Persistence;
 
 import org.apache.lucene.search.Query;
 import org.eclipse.persistence.descriptors.ClassDescriptor;
+import org.hibernate.search.entity.EntityProvider;
 import org.hibernate.search.genericjpa.db.events.jpa.MetaModelParser;
 import org.hibernate.search.genericjpa.entity.jpa.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.jpa.test.entities.AdditionalPlace;
@@ -30,10 +31,9 @@ import org.hibernate.search.genericjpa.jpa.test.entities.EmbeddableInfo;
 import org.hibernate.search.genericjpa.jpa.test.entities.Place;
 import org.hibernate.search.genericjpa.jpa.test.entities.Sorcerer;
 import org.hibernate.search.query.dsl.QueryBuilder;
-import org.hibernate.search.standalone.entity.EntityProvider;
 import org.hibernate.search.standalone.factory.SearchConfigurationImpl;
-import org.hibernate.search.standalone.factory.SearchFactory;
-import org.hibernate.search.standalone.factory.SearchFactoryFactory;
+import org.hibernate.search.standalone.factory.StandaloneSearchFactory;
+import org.hibernate.search.standalone.factory.StandaloneSearchFactoryFactory;
 import org.hibernate.search.standalone.query.HSearchQuery;
 import org.hibernate.search.standalone.query.HSearchQuery.Fetch;
 import org.junit.FixMethodOrder;
@@ -149,7 +149,7 @@ public class IntegrationTest {
 
 	public void metaModelParser() throws IOException {
 		EntityProvider entityProvider = null;
-		SearchFactory searchFactory = null;
+		StandaloneSearchFactory searchFactory = null;
 		try {
 			MetaModelParser parser = new MetaModelParser();
 			parser.parse( this.emf.getMetamodel() );
@@ -169,7 +169,7 @@ public class IntegrationTest {
 
 	public void integration() throws IOException {
 		EntityProvider entityProvider = null;
-		SearchFactory searchFactory = null;
+		StandaloneSearchFactory searchFactory = null;
 		try {
 			EntityManager em = null;
 			MetaModelParser parser = new MetaModelParser();
@@ -179,7 +179,7 @@ public class IntegrationTest {
 				EntityTransaction tx = em.getTransaction();
 				tx.begin();
 
-				searchFactory = SearchFactoryFactory.createSearchFactory( new SearchConfigurationImpl(), parser.getIndexRelevantEntites() );
+				searchFactory = StandaloneSearchFactoryFactory.createSearchFactory( new SearchConfigurationImpl(), parser.getIndexRelevantEntites() );
 
 				// at first: index all places we can find
 				{
@@ -403,11 +403,11 @@ public class IntegrationTest {
 		}
 	}
 
-	private List<Place> findPlaces(SearchFactory searchFactory, EntityProvider entityProvider, String field, String value) {
+	private List<Place> findPlaces(StandaloneSearchFactory searchFactory, EntityProvider entityProvider, String field, String value) {
 		return this.findPlaces( searchFactory, entityProvider, field, value, Fetch.FIND_BY_ID );
 	}
 
-	private List<Place> findPlaces(SearchFactory searchFactory, EntityProvider entityProvider, String field, String value, Fetch fetchType) {
+	private List<Place> findPlaces(StandaloneSearchFactory searchFactory, EntityProvider entityProvider, String field, String value, Fetch fetchType) {
 		Query query = searchFactory.buildQueryBuilder().forEntity( Place.class ).get().keyword().onField( field ).matching( value ).createQuery();
 		HSearchQuery jpaQuery = searchFactory.createQuery( query, Place.class );
 		@SuppressWarnings("unchecked")

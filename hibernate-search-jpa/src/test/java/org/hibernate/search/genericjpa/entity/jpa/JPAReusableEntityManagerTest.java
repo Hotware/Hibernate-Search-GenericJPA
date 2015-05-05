@@ -16,11 +16,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.hibernate.search.entity.ReusableEntityProvider;
 import org.hibernate.search.genericjpa.db.events.jpa.DatabaseIntegrationTest;
 import org.hibernate.search.genericjpa.db.events.jpa.MetaModelParser;
 import org.hibernate.search.genericjpa.entity.jpa.JPAReusableEntityProvider;
 import org.hibernate.search.genericjpa.jpa.test.entities.Place;
-import org.hibernate.search.standalone.entity.ReusableEntityProvider;
 import org.junit.Test;
 
 /**

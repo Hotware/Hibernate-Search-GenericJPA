@@ -10,9 +10,9 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
-import org.hibernate.search.genericjpa.db.events.annotations.Event;
-import org.hibernate.search.genericjpa.db.events.annotations.IdFor;
-import org.hibernate.search.genericjpa.db.events.annotations.Updates;
+import org.hibernate.search.genericjpa.annotations.Event;
+import org.hibernate.search.genericjpa.annotations.IdFor;
+import org.hibernate.search.genericjpa.annotations.Updates;
 
 /**
  * @author Martin Braun

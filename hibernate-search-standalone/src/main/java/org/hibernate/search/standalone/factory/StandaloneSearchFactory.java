@@ -9,42 +9,13 @@ package org.hibernate.search.standalone.factory;
 import java.io.Closeable;
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.Set;
-
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
-import org.hibernate.search.filter.FilterCachingStrategy;
-import org.hibernate.search.indexes.IndexReaderAccessor;
-import org.hibernate.search.query.dsl.QueryContextBuilder;
 import org.hibernate.search.standalone.query.HSearchQuery;
 import org.hibernate.search.standalone.transaction.TransactionContext;
-import org.hibernate.search.stat.Statistics;
 
-public interface SearchFactory extends Closeable {
-
-	/**
-	 * provides means for getting vanilla Lucene IndexReaders. use this if you need direct index access because the
-	 * SearchFactory doesn't allow the things you want to do
-	 *
-	 * @return IndexReaderAccessor for this Searchfactory
-	 */
-	IndexReaderAccessor getIndexReaderAccessor();
-
-	/**
-	 * @return Set of all indexed Entities' classes.
-	 */
-	Set<Class<?>> getIndexedEntities();
-
-	/**
-	 * @return
-	 */
-	QueryContextBuilder buildQueryBuilder();
-
-	void optimize();
-
-	void optimize(Class<?> entityClass);
-
-	Statistics getStatistics();
+public interface StandaloneSearchFactory extends org.hibernate.search.SearchFactory, Closeable {
+	
+	void flushToIndexes(TransactionContext tc);
 
 	void purgeAll(Class<?> entityClass, TransactionContext tc);
 
@@ -55,12 +26,6 @@ public interface SearchFactory extends Closeable {
 	}
 
 	HSearchQuery createQuery(Query query, Class<?>... targetedEntities);
-
-	FilterCachingStrategy getFilterCachingStrategy();
-
-	Analyzer getAnalyzer(String name);
-
-	Analyzer getAnalyzer(Class<?> entityClass);
 
 	void purge(Class<?> entityClass, Serializable id, TransactionContext tc);
 

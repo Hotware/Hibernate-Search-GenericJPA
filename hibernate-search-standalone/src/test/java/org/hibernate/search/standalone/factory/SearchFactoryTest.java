@@ -27,8 +27,8 @@ import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
 import org.hibernate.search.standalone.factory.SearchConfigurationImpl;
-import org.hibernate.search.standalone.factory.SearchFactory;
-import org.hibernate.search.standalone.factory.SearchFactoryFactory;
+import org.hibernate.search.standalone.factory.StandaloneSearchFactory;
+import org.hibernate.search.standalone.factory.StandaloneSearchFactoryFactory;
 import org.hibernate.search.standalone.factory.Transaction;
 import org.hibernate.search.standalone.query.HSearchQuery;
 import org.junit.Test;
@@ -158,7 +158,7 @@ public class SearchFactoryTest {
 
 	@Test
 	public void test() throws IOException {
-		try (SearchFactory factory = SearchFactoryFactory.createSearchFactory( new SearchConfigurationImpl(),
+		try (StandaloneSearchFactory factory = StandaloneSearchFactoryFactory.createSearchFactory( new SearchConfigurationImpl(),
 				Arrays.asList( TopLevel.class, Embedded.class, Embedded2.class ) )) {
 
 			TopLevel tl = new TopLevel();

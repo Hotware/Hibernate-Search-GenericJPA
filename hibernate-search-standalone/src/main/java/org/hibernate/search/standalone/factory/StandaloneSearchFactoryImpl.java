@@ -22,6 +22,7 @@ import org.hibernate.search.engine.ProjectionConstants;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.filter.FilterCachingStrategy;
 import org.hibernate.search.indexes.IndexReaderAccessor;
+import org.hibernate.search.metadata.IndexedTypeDescriptor;
 import org.hibernate.search.query.dsl.QueryContextBuilder;
 import org.hibernate.search.query.engine.spi.HSQuery;
 import org.hibernate.search.standalone.dto.DtoQueryExecutor;
@@ -30,12 +31,12 @@ import org.hibernate.search.standalone.query.HSearchQueryImpl;
 import org.hibernate.search.standalone.transaction.TransactionContext;
 import org.hibernate.search.stat.Statistics;
 
-public class SearchFactoryImpl implements SearchFactory {
+public class StandaloneSearchFactoryImpl implements StandaloneSearchFactory {
 
 	private final ExtendedSearchIntegrator searchIntegrator;
 	private final DtoQueryExecutor queryExec;
 
-	public SearchFactoryImpl(ExtendedSearchIntegrator searchIntegrator) {
+	public StandaloneSearchFactoryImpl(ExtendedSearchIntegrator searchIntegrator) {
 		super();
 		this.searchIntegrator = searchIntegrator;
 		this.queryExec = new DtoQueryExecutor();
@@ -87,7 +88,7 @@ public class SearchFactoryImpl implements SearchFactory {
 	}
 
 	@Override
-	public Set<Class<?>> getIndexedEntities() {
+	public Set<Class<?>> getIndexedTypes() {
 		return this.searchIntegrator.getIndexedTypes();
 	}
 
@@ -123,11 +124,6 @@ public class SearchFactoryImpl implements SearchFactory {
 	}
 
 	@Override
-	public FilterCachingStrategy getFilterCachingStrategy() {
-		return this.searchIntegrator.getFilterCachingStrategy();
-	}
-
-	@Override
 	public Analyzer getAnalyzer(String name) {
 		return this.searchIntegrator.getAnalyzer( name );
 	}
@@ -155,6 +151,25 @@ public class SearchFactoryImpl implements SearchFactory {
 	public void purge(Class<?> entityClass, Serializable id, TransactionContext tc) {
 		Worker worker = this.searchIntegrator.getWorker();
 		worker.performWork( new Work( entityClass, id, WorkType.PURGE ), tc );
+	}
+
+	@Override
+	public IndexedTypeDescriptor getIndexedTypeDescriptor(Class<?> entityType) {
+		return this.searchIntegrator.getIndexedTypeDescriptor( entityType );
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T unwrap(Class<T> cls) {
+		if ( StandaloneSearchFactoryImpl.class.equals( cls ) || StandaloneSearchFactory.class.equals( cls ) ) {
+			return (T) this;
+		}
+		return this.searchIntegrator.unwrap( cls );
+	}
+
+	@Override
+	public void flushToIndexes(TransactionContext tc) {
+		this.searchIntegrator.getWorker().flushWorks( tc );
 	}
 
 }

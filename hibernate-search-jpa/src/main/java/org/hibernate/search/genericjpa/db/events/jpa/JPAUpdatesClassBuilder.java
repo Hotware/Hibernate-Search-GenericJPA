@@ -26,9 +26,9 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import org.hibernate.search.genericjpa.db.events.annotations.Event;
-import org.hibernate.search.genericjpa.db.events.annotations.IdFor;
-import org.hibernate.search.genericjpa.db.events.annotations.Updates;
+import org.hibernate.search.genericjpa.annotations.Event;
+import org.hibernate.search.genericjpa.annotations.IdFor;
+import org.hibernate.search.genericjpa.annotations.Updates;
 import org.hibernate.search.genericjpa.db.id.DefaultToOriginalIdBridge;
 import org.hibernate.search.genericjpa.db.id.ToOriginalIdBridge;
 

@@ -22,7 +22,7 @@ import javax.transaction.SystemException;
 import javax.transaction.TransactionSynchronizationRegistry;
 import javax.transaction.UserTransaction;
 
-import org.hibernate.search.standalone.entity.ReusableEntityProvider;
+import org.hibernate.search.entity.ReusableEntityProvider;
 
 /**
  * @author Martin Braun

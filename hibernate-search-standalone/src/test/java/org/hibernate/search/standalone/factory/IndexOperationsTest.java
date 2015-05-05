@@ -25,8 +25,8 @@ import org.hibernate.search.annotations.Store;
 import org.hibernate.search.standalone.dto.annotations.DtoField;
 import org.hibernate.search.standalone.dto.annotations.DtoOverEntity;
 import org.hibernate.search.standalone.factory.SearchConfigurationImpl;
-import org.hibernate.search.standalone.factory.SearchFactory;
-import org.hibernate.search.standalone.factory.SearchFactoryFactory;
+import org.hibernate.search.standalone.factory.StandaloneSearchFactory;
+import org.hibernate.search.standalone.factory.StandaloneSearchFactoryFactory;
 import org.hibernate.search.standalone.factory.Transaction;
 import org.junit.After;
 import org.junit.Before;
@@ -109,12 +109,12 @@ public class IndexOperationsTest {
 
 	}
 
-	private SearchFactory factory;
+	private StandaloneSearchFactory factory;
 
 	@Before
 	public void setup() {
 		LOGGER.info( "setting up IndexOperationsTest" );
-		this.factory = SearchFactoryFactory.createSearchFactory( new SearchConfigurationImpl(), Arrays.asList( Book.class ) );
+		this.factory = StandaloneSearchFactoryFactory.createSearchFactory( new SearchConfigurationImpl(), Arrays.asList( Book.class ) );
 	}
 
 	@Test

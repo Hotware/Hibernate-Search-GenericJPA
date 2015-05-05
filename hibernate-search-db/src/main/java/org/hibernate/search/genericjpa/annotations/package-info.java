@@ -11,4 +11,4 @@
  *
  * @author Martin Braun
  */
-package org.hibernate.search.genericjpa.db.events.annotations;
+package org.hibernate.search.genericjpa.annotations;

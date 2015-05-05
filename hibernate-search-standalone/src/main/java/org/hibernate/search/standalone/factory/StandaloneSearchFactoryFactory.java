@@ -14,13 +14,13 @@ import org.hibernate.search.exception.AssertionFailure;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
 
-public final class SearchFactoryFactory {
+public final class StandaloneSearchFactoryFactory {
 
-	private SearchFactoryFactory() {
+	private StandaloneSearchFactoryFactory() {
 		throw new AssertionFailure( "can't touch this!" );
 	}
 
-	public static SearchFactory createSearchFactory(SearchConfiguration searchConfiguration, Collection<Class<?>> classes) {
+	public static StandaloneSearchFactory createSearchFactory(SearchConfiguration searchConfiguration, Collection<Class<?>> classes) {
 		SearchIntegratorBuilder builder = new SearchIntegratorBuilder();
 		// we have to build an integrator here (but we don't need it afterwards)
 		builder.configuration( searchConfiguration ).buildSearchIntegrator();
@@ -28,7 +28,7 @@ public final class SearchFactoryFactory {
 			builder.addClass( clazz );
 		} );
 		SearchIntegrator impl = builder.buildSearchIntegrator();
-		SearchFactory factory = new SearchFactoryImpl( impl.unwrap( ExtendedSearchIntegrator.class ) );
+		StandaloneSearchFactory factory = new StandaloneSearchFactoryImpl( impl.unwrap( ExtendedSearchIntegrator.class ) );
 		return factory;
 	}
 

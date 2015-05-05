@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
-package org.hibernate.search.genericjpa.ejb;
+package org.hibernate.search.genericjpa;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,7 +33,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.metadata.impl.MetadataProvider;
-import org.hibernate.search.filter.FilterCachingStrategy;
+import org.hibernate.search.entity.EntityProvider;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventType;
@@ -46,13 +46,13 @@ import org.hibernate.search.genericjpa.entity.jpa.EntityManagerCloseable;
 import org.hibernate.search.genericjpa.entity.jpa.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.entity.jpa.JPAReusableEntityProvider;
 import org.hibernate.search.indexes.IndexReaderAccessor;
+import org.hibernate.search.metadata.IndexedTypeDescriptor;
 import org.hibernate.search.query.dsl.QueryContextBuilder;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
-import org.hibernate.search.standalone.entity.EntityProvider;
 import org.hibernate.search.standalone.factory.SearchConfigurationImpl;
-import org.hibernate.search.standalone.factory.SearchFactory;
-import org.hibernate.search.standalone.factory.SearchFactoryImpl;
+import org.hibernate.search.standalone.factory.StandaloneSearchFactory;
+import org.hibernate.search.standalone.factory.StandaloneSearchFactoryImpl;
 import org.hibernate.search.standalone.metadata.MetadataRehasher;
 import org.hibernate.search.standalone.metadata.MetadataUtil;
 import org.hibernate.search.standalone.metadata.RehashedTypeMetadata;
@@ -66,10 +66,10 @@ import org.hibernate.search.stat.Statistics;
  *
  * @author Martin Braun
  */
-public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer {
+public abstract class JPASearchFactory implements StandaloneSearchFactory, UpdateConsumer {
 
 	private final Logger LOGGER = Logger.getLogger( EntityManagerFactory.class.getName() );
-	SearchFactory searchFactory;
+	StandaloneSearchFactory searchFactory;
 	UpdateSource updateSource;
 	Set<Class<?>> indexRelevantEntities;
 	Map<Class<?>, String> idProperties;
@@ -142,7 +142,7 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 			builder.addClass( clazz );
 		} );
 		SearchIntegrator impl = builder.buildSearchIntegrator();
-		this.searchFactory = new SearchFactoryImpl( impl.unwrap( ExtendedSearchIntegrator.class ) );
+		this.searchFactory = new StandaloneSearchFactoryImpl( impl.unwrap( ExtendedSearchIntegrator.class ) );
 
 		JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider( this.getEmf(), this.idProperties, this.isUseJTATransaction() );
 		IndexUpdater indexUpdater = new IndexUpdater( rehashedTypeMetadataPerIndexRoot, this.containedInIndexOf, entityProvider,
@@ -251,11 +251,6 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 	}
 
 	@Override
-	public Set<Class<?>> getIndexedEntities() {
-		return this.searchFactory.getIndexedEntities();
-	}
-
-	@Override
 	public void index(Iterable<?> entities, TransactionContext tc) {
 		this.searchFactory.index( entities, tc );
 	}
@@ -306,11 +301,6 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 	}
 
 	@Override
-	public FilterCachingStrategy getFilterCachingStrategy() {
-		return this.searchFactory.getFilterCachingStrategy();
-	}
-
-	@Override
 	public Analyzer getAnalyzer(String name) {
 		return this.searchFactory.getAnalyzer( name );
 	}
@@ -344,5 +334,21 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 	public void purge(Class<?> entityClass, Query query, TransactionContext tc) {
 		this.searchFactory.purge( entityClass, query, tc );
 	}
+
+	public void flushToIndexes(TransactionContext tc) {
+		searchFactory.flushToIndexes( tc );
+	}
+
+	public IndexedTypeDescriptor getIndexedTypeDescriptor(Class<?> entityType) {
+		return searchFactory.getIndexedTypeDescriptor( entityType );
+	}
+
+	public Set<Class<?>> getIndexedTypes() {
+		return searchFactory.getIndexedTypes();
+	}
+
+	public <T> T unwrap(Class<T> cls) {
+		return searchFactory.unwrap( cls );
+	}	
 
 }

@@ -11,8 +11,8 @@ import java.util.List;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
+import org.hibernate.search.entity.EntityProvider;
 import org.hibernate.search.filter.FullTextFilter;
-import org.hibernate.search.standalone.entity.EntityProvider;
 
 public interface HSearchQuery {
 
