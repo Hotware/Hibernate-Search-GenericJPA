@@ -2,7 +2,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.github.hotware</groupId>
-	<artifactId>hibernate-search-parent</artifactId>
+	<artifactId>hibernate-search-genericjpa-parent</artifactId>
 	<version>0.1.0.4</version>
 	<packaging>pom</packaging>
 	<name>hibernate-search</name>
@@ -24,40 +24,6 @@
 		
 		<hibernate-search.version>5.2.0.Beta1</hibernate-search.version>
 	</properties>
-
-	<licenses>
-		<license>
-			<name>Apache License, Version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-			<distribution>repo</distribution>
-		</license>
-		<!-- TODO: Hibernate License -->
-		<license>
-			<name>Beerware License</name>
-			<url>https://raw.githubusercontent.com/Hotware/Lucene-Extension/master/BEERWARE.md</url>
-			<!-- TODO: what does this mean? repo? -->
-			<distribution>repo</distribution>
-		</license>
-	</licenses>
-
-	<developers>
-		<developer>
-			<id>s4ke</id>
-			<name>Martin Braun</name>
-			<email>martinbraun123@aol.com</email>
-			<url>https://github.com/s4ke</url>
-			<organization>Hotware</organization>
-			<organizationUrl>https://github.com/Hotware</organizationUrl>
-			<roles>
-				<role>architect</role>
-				<role>developer</role>
-			</roles>
-			<timezone>0</timezone>
-			<properties>
-				<picUrl>http://getdrunkonmovies.com/files/martin.jpg</picUrl>
-			</properties>
-		</developer>
-	</developers>
 
 	<dependencyManagement>
 		<dependencies>

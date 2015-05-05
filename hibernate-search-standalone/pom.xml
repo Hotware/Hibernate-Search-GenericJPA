@@ -6,7 +6,7 @@
 	<name>hibernate-search-standalone</name>
 
 	<parent>
-		<artifactId>hibernate-search-parent</artifactId>
+		<artifactId>hibernate-search-genericjpa-parent</artifactId>
 		<groupId>com.github.hotware</groupId>
 		<version>0.1.0.4</version>
 		<relativePath>../pom.xml</relativePath>
