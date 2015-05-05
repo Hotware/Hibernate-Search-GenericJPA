@@ -80,12 +80,19 @@ public interface FullTextEntityManager extends EntityManager {
 	 * this has to be called when you want to change the index manually!
 	 */
 	void beginSearchTransaction();
+	
+	/**
+	 * <b>different from the original Hibernate Search!</b> <br>
+	 * <br>
+	 * this has to be called when you want to change the index manually!
+	 */
+	void rollbackSearchTransaction();
 
 	/**
 	 * <b>different from the original Hibernate Search!</b> <br>
 	 * <br>
 	 * this has to be called when you want to change the index manually!
 	 */
-	void endSearchTransaction();
+	void commitSearchTransaction();
 
 }

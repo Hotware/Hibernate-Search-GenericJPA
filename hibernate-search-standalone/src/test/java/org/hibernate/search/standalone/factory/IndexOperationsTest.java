@@ -137,14 +137,14 @@ public class IndexOperationsTest {
 		{
 			Transaction tc = new Transaction();
 			this.factory.purgeAll( Book.class, tc );
-			tc.end();
+			tc.commit();
 		}
 		this.assertCount( 0 );
 
 		{
 			Transaction tc = new Transaction();
 			this.factory.index( l, tc );
-			tc.end();
+			tc.commit();
 		}
 		this.assertCount( 2 );
 
@@ -154,7 +154,7 @@ public class IndexOperationsTest {
 		{
 			Transaction tc = new Transaction();
 			this.factory.index( l.get( 0 ), tc );
-			tc.end();
+			tc.commit();
 		}
 		this.assertCount( 1 );
 		this.factory.purgeAll( Book.class );
@@ -180,7 +180,7 @@ public class IndexOperationsTest {
 		{
 			Transaction tc = new Transaction();
 			this.factory.delete( l, tc );
-			tc.end();
+			tc.commit();
 		}
 		this.assertCount( 0 );
 
@@ -190,7 +190,7 @@ public class IndexOperationsTest {
 		{
 			Transaction tc = new Transaction();
 			this.factory.delete( l.get( 0 ), tc );
-			tc.end();
+			tc.commit();
 		}
 		this.assertCount( 1 );
 		this.factory.purgeAll( Book.class );
@@ -223,7 +223,7 @@ public class IndexOperationsTest {
 			Transaction tc = new Transaction();
 			id = updated.get( 0 ).getId();
 			this.factory.update( updated.get( 0 ), tc );
-			tc.end();
+			tc.commit();
 		}
 		this.assertCount( 2 );
 		assertNotEquals( this.id( id ), l.get( 0 ) );
@@ -231,7 +231,7 @@ public class IndexOperationsTest {
 		{
 			Transaction tc = new Transaction();
 			this.factory.update( updated, tc );
-			tc.end();
+			tc.commit();
 		}
 		this.assertCount( 2 );
 		assertNotEquals( this.all(), l );
@@ -242,7 +242,7 @@ public class IndexOperationsTest {
 		{
 			Transaction tc = new Transaction();
 			this.factory.purge( Book.class, new TermQuery( new Term( "id", "2" ) ), tc );
-			tc.end();
+			tc.commit();
 		}
 		this.assertCount( 0 );
 	}

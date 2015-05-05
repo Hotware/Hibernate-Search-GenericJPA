@@ -102,7 +102,7 @@ public class IndexUpdater implements UpdateConsumer {
 					LOGGER.warn( "class: " + entityClass + " not found in any index!" );
 				}
 			}
-			tx.end();
+			tx.commit();
 		}
 		catch (Exception e) {
 			LOGGER.warn( "Error while updating the index! Your index might be corrupt!" );

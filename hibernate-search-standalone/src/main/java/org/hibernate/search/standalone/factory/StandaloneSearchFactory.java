@@ -22,7 +22,7 @@ public interface StandaloneSearchFactory extends org.hibernate.search.SearchFact
 	default void purgeAll(Class<?> entityClass) {
 		Transaction tc = new Transaction();
 		this.purgeAll( entityClass, tc );
-		tc.end();
+		tc.commit();
 	}
 
 	HSearchQuery createQuery(Query query, Class<?>... targetedEntities);
@@ -32,7 +32,7 @@ public interface StandaloneSearchFactory extends org.hibernate.search.SearchFact
 	default void purge(Class<?> entityClass, Serializable id) {
 		Transaction tc = new Transaction();
 		this.purge( entityClass, id, tc );
-		tc.end();
+		tc.commit();
 	}
 
 	void purge(Iterable<?> entities, TransactionContext tc);
@@ -44,7 +44,7 @@ public interface StandaloneSearchFactory extends org.hibernate.search.SearchFact
 	default void purge(Iterable<?> entities) {
 		Transaction tc = new Transaction();
 		this.purge( entities, tc );
-		tc.end();
+		tc.commit();
 	}
 
 	default void purge(Object entity) {
@@ -57,7 +57,7 @@ public interface StandaloneSearchFactory extends org.hibernate.search.SearchFact
 	default void purge(Class<?> entityClass, Query query) {
 		Transaction tc = new Transaction();
 		this.purge( entityClass, query, tc );
-		tc.end();
+		tc.commit();
 	}
 
 	/**
@@ -77,7 +77,7 @@ public interface StandaloneSearchFactory extends org.hibernate.search.SearchFact
 	default void index(Iterable<?> entities) {
 		Transaction tc = new Transaction();
 		this.index( entities, tc );
-		tc.end();
+		tc.commit();
 	}
 
 	default void index(Object entity) {
@@ -93,7 +93,7 @@ public interface StandaloneSearchFactory extends org.hibernate.search.SearchFact
 	default void update(Iterable<?> entities) {
 		Transaction tc = new Transaction();
 		this.update( entities, tc );
-		tc.end();
+		tc.commit();
 	}
 
 	default void update(Object entity) {
@@ -109,7 +109,7 @@ public interface StandaloneSearchFactory extends org.hibernate.search.SearchFact
 	default void delete(Iterable<?> entities) {
 		Transaction tc = new Transaction();
 		this.delete( entities, tc );
-		tc.end();
+		tc.commit();
 	}
 
 	default void delete(Object entity) {

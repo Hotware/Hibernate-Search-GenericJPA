@@ -34,7 +34,7 @@ public class Transaction implements TransactionContext {
 		syncs.add( synchronization );
 	}
 
-	public void end() {
+	public void commit() {
 		this.progress = false;
 		for ( Synchronization sync : syncs ) {
 			sync.beforeCompletion();
@@ -42,6 +42,17 @@ public class Transaction implements TransactionContext {
 
 		for ( Synchronization sync : syncs ) {
 			sync.afterCompletion( Status.STATUS_COMMITTED );
+		}
+	}
+	
+	public void rollback() {
+		this.progress = false;
+		for ( Synchronization sync : syncs ) {
+			sync.beforeCompletion();
+		}
+
+		for ( Synchronization sync : syncs ) {
+			sync.afterCompletion( Status.STATUS_ROLLEDBACK );
 		}
 	}
 

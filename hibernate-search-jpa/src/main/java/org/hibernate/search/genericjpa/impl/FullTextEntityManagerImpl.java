@@ -57,11 +57,20 @@ final class FullTextEntityManagerImpl implements FullTextEntityManager, Serializ
 	}
 
 	@Override
-	public void endSearchTransaction() {
+	public void commitSearchTransaction() {
 		if ( this.standaloneTransaction == null ) {
 			throw new IllegalArgumentException( "no transaction is in progress!" );
 		}
-		this.standaloneTransaction.end();
+		this.standaloneTransaction.commit();
+		this.standaloneTransaction = null;
+	}
+
+	@Override
+	public void rollbackSearchTransaction() {
+		if ( this.standaloneTransaction == null ) {
+			throw new IllegalArgumentException( "no transaction is in progress!" );
+		}
+		this.standaloneTransaction.rollback();
 		this.standaloneTransaction = null;
 	}
 

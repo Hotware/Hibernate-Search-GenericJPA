@@ -168,7 +168,7 @@ public class IndexUpdaterTest {
 		{
 			Transaction tx = new Transaction();
 			impl.getWorker().performWork( new Work( Place.class, null, WorkType.PURGE_ALL ), tx );
-			tx.end();
+			tx.commit();
 			this.assertCount( impl, 0 );
 		}
 
@@ -178,7 +178,7 @@ public class IndexUpdaterTest {
 		{
 			Transaction tx = new Transaction();
 			impl.getWorker().performWork( new Work( Place.class, null, WorkType.PURGE_ALL ), tx );
-			tx.end();
+			tx.commit();
 			this.assertCount( impl, 0 );
 		}
 
@@ -188,7 +188,7 @@ public class IndexUpdaterTest {
 		{
 			Transaction tx = new Transaction();
 			impl.getWorker().performWork( new Work( Place.class, null, WorkType.PURGE_ALL ), tx );
-			tx.end();
+			tx.commit();
 			this.assertCount( impl, 0 );
 		}
 
