@@ -9,6 +9,7 @@ package org.hibernate.search.jpa;
 import javax.persistence.EntityManager;
 
 import org.hibernate.search.genericjpa.JPASearchFactory;
+import org.hibernate.search.genericjpa.impl.ImplementationFactory;
 
 /**
  * Helper class that should be used when building a FullTextEntityManager
@@ -38,8 +39,7 @@ public final class Search {
 			return (FullTextEntityManager) em;
 		}
 		else {
-			throw new UnsupportedOperationException( "NOT SUPPORTED YET!" );
-			// DO SOME STUFF HERE
+			return ImplementationFactory.createFullTextEntityManager( em, searchFactory );
 		}
 	}
 

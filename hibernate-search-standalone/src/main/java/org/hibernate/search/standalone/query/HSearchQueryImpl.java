@@ -10,8 +10,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
@@ -19,7 +21,10 @@ import org.hibernate.search.engine.ProjectionConstants;
 import org.hibernate.search.entity.EntityProvider;
 import org.hibernate.search.exception.AssertionFailure;
 import org.hibernate.search.filter.FullTextFilter;
+import org.hibernate.search.query.engine.spi.FacetManager;
 import org.hibernate.search.query.engine.spi.HSQuery;
+import org.hibernate.search.spatial.Coordinates;
+import org.hibernate.search.spatial.impl.Point;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.standalone.dto.DtoQueryExecutor;
 
@@ -146,4 +151,51 @@ public class HSearchQueryImpl implements HSearchQuery {
 		}
 		return ret;
 	}
+
+	@Override
+	public HSearchQuery setTimeout(long timeout, TimeUnit timeUnit) {
+		this.hsquery.getTimeoutManager().setTimeout( timeout, timeUnit );
+		this.hsquery.getTimeoutManager().raiseExceptionOnTimeout();
+		return this;
+	}
+
+	@Override
+	public HSearchQuery limitExecutionTimeTo(long timeout, TimeUnit timeUnit) {
+		this.hsquery.getTimeoutManager().setTimeout( timeout, timeUnit );
+		this.hsquery.getTimeoutManager().limitFetchingOnTimeout();
+		return this;
+	}
+
+	@Override
+	public boolean hasPartialResults() {
+		return this.hsquery.getTimeoutManager().hasPartialResults();
+	}
+
+	@Override
+	public Explanation explain(int documentId) {
+		return this.hsquery.explain( documentId );
+	}
+
+	@Override
+	public String toString() {
+		return this.hsquery.toString();
+	}
+
+	@Override
+	public FacetManager getFacetManager() {
+		return this.hsquery.getFacetManager();
+	}
+
+	@Override
+	public HSearchQuery setSpatialParameters(double latitude, double longitude, String fieldName) {
+		this.setSpatialParameters( Point.fromDegrees( latitude, longitude ), fieldName );
+		return this;
+	}
+
+	@Override
+	public HSearchQuery setSpatialParameters(Coordinates center, String fieldName) {
+		this.hsquery.setSpatialParameters( center, fieldName );
+		return this;
+	}
+
 }

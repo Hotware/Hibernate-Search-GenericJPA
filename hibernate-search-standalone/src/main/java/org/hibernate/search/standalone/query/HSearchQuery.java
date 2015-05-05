@@ -7,12 +7,16 @@
 package org.hibernate.search.standalone.query;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.entity.EntityProvider;
 import org.hibernate.search.filter.FullTextFilter;
+import org.hibernate.search.query.engine.spi.FacetManager;
+import org.hibernate.search.spatial.Coordinates;
 
 public interface HSearchQuery {
 
@@ -27,6 +31,14 @@ public interface HSearchQuery {
 
 	HSearchQuery maxResults(int maxResults);
 
+	HSearchQuery setTimeout(long timeout, TimeUnit timeUnit);
+
+	HSearchQuery limitExecutionTimeTo(long timeout, TimeUnit timeUnit);
+
+	HSearchQuery setSpatialParameters(double latitude, double longitude, String fieldName);
+
+	HSearchQuery setSpatialParameters(Coordinates center, String fieldName);
+
 	Query getLuceneQuery();
 
 	<R> List<R> queryDto(Class<R> returnedType);
@@ -38,6 +50,15 @@ public interface HSearchQuery {
 	FullTextFilter enableFullTextFilter(String name);
 
 	void disableFullTextFilter(String name);
+
+	boolean hasPartialResults();
+
+	/**
+	 * @return return the manager for all faceting related operations
+	 */
+	FacetManager getFacetManager();
+
+	Explanation explain(int documentId);
 
 	@SuppressWarnings("rawtypes")
 	List query(EntityProvider entityProvider, Fetch fetchType);

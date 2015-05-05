@@ -18,9 +18,9 @@ import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
 
+import org.hibernate.search.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.db.events.jpa.DatabaseIntegrationTest;
 import org.hibernate.search.genericjpa.db.events.jpa.MetaModelParser;
-import org.hibernate.search.genericjpa.entity.jpa.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.jpa.test.entities.Place;
 import org.junit.Test;
 
