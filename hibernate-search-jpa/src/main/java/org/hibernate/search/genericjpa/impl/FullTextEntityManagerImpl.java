@@ -59,7 +59,7 @@ final class FullTextEntityManagerImpl implements FullTextEntityManager, Serializ
 	@Override
 	public void endSearchTransaction() {
 		if ( this.standaloneTransaction == null ) {
-			throw new IllegalArgumentException( " no transaction is in progress!" );
+			throw new IllegalArgumentException( "no transaction is in progress!" );
 		}
 		this.standaloneTransaction.end();
 		this.standaloneTransaction = null;
@@ -67,8 +67,7 @@ final class FullTextEntityManagerImpl implements FullTextEntityManager, Serializ
 
 	@Override
 	public FullTextQuery createFullTextQuery(org.apache.lucene.search.Query luceneQuery, Class<?>... entities) {
-		// TODO Auto-generated method stub
-		return null;
+		return new FullTextQueryImpl( this.searchFactory.createQuery( luceneQuery, entities ), this.searchFactory.entityProvider( this.em ) );
 	}
 
 	@Override
