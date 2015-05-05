@@ -62,7 +62,8 @@ import com.github.hotware.hsearch.query.HSearchQuery;
 import com.github.hotware.hsearch.transaction.TransactionContext;
 
 /**
- * Base class to create SearchFactories in a EJB environment. Uses a JPAEventSource.
+ * Base class to create SearchFactories in a JPA environment. Uses a JPAEventSource. if this class it not used in an JPA
+ * environment, you should call the init() and shutdown() method respectively.
  *
  * @author Martin Braun
  */
@@ -236,7 +237,7 @@ public abstract class EJBSearchFactory implements SearchFactory, UpdateConsumer 
 	}
 
 	@PreDestroy
-	protected void atShutdown() {
+	protected void shutdown() {
 		try {
 			this.updateSource.stop();
 			this.close();
