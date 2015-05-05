@@ -153,97 +153,95 @@ public class JPAUpdateSource implements UpdateSource {
 			throw new IllegalStateException( "updateConsumers was null!" );
 		}
 		this.exec.scheduleWithFixedDelay( () -> {
-			try {
-				if ( !this.emf.isOpen() ) {
-					return;
-				}
-				EntityManager em = null;
 				try {
-					em = new EntityManagerCloseable( this.emf.createEntityManager() );
-					EntityTransaction tx;
-					UserTransaction utx;
-					if ( !this.useJTATransaction ) {
-						tx = em.getTransaction();
-						tx.begin();
-						utx = null;
+					if ( !this.emf.isOpen() ) {
+						return;
 					}
-					else {
-						utx = (UserTransaction) InitialContext.doLookup( "java:comp/UserTransaction" );
-						utx.begin();
-						em.joinTransaction();
-						tx = null;
-					}
-					MultiQueryAccess query = this.query( em );
-					List<Object[]> toRemove = new ArrayList<>( this.batchSizeForUpdates );
-					List<UpdateInfo> updateInfos = new ArrayList<>( this.batchSizeForUpdates );
-					long processed = 0;
-					while ( query.next() ) {
-						// we have no order problems here since
-						// the query does
-						// the ordering for us
-				Object val = query.get();
-				toRemove.add( new Object[] { query.entityClass(), val } );
-				EventModelInfo evi = this.updateClassToEventModelInfo.get( query.entityClass() );
-				for ( IdInfo info : evi.getIdInfos() ) {
-					updateInfos.add( new UpdateInfo( info.getEntityClass(), info.getIdAccessor().apply( val ), evi.getEventTypeAccessor().apply( val ) ) );
-				}
-				// TODO: maybe move this to a method as
-				// it is getting reused
-				if ( ++processed % this.batchSizeForUpdates == 0 ) {
-					for ( UpdateConsumer consumer : this.updateConsumers ) {
-						consumer.updateEvent( updateInfos );
-					}
-					for ( Object[] rem : toRemove ) {
-						// the class is in rem[0], the
-						// entity is in
-						// rem[1]
-						query.addToNextValuePosition( (Class<?>) rem[0], -1L );
-						em.remove( rem[1] );
-					}
-					toRemove.clear();
-					updateInfos.clear();
-					em.flush();
-					// clear memory :)
-					em.clear();
-				}
-			}
-			if ( updateInfos.size() > 0 ) {
-				for ( UpdateConsumer consumer : this.updateConsumers ) {
-					consumer.updateEvent( updateInfos );
-				}
-				for ( Object[] rem : toRemove ) {
-					// the class is in rem[0], the
-					// entity is in rem[1]
-					query.addToNextValuePosition( (Class<?>) rem[0], -1L );
-					em.remove( rem[1] );
-				}
-				toRemove.clear();
-				updateInfos.clear();
-				em.flush();
-				// clear memory :)
-				em.clear();
-			}
+					EntityManager em = null;
+					try {
+						em = new EntityManagerCloseable( this.emf.createEntityManager() );
+						EntityTransaction tx;
+						UserTransaction utx;
+						if ( !this.useJTATransaction ) {
+							tx = em.getTransaction();
+							tx.begin();
+							utx = null;
+						}
+						else {
+							utx = (UserTransaction) InitialContext.doLookup( "java:comp/UserTransaction" );
+							utx.begin();
+							em.joinTransaction();
+							tx = null;
+						}
+						MultiQueryAccess query = this.query( em );
+						List<Object[]> toRemove = new ArrayList<>( this.batchSizeForUpdates );
+						List<UpdateInfo> updateInfos = new ArrayList<>( this.batchSizeForUpdates );
+						long processed = 0;
+						while ( query.next() ) {
+							// we have no order problems here since
+							// the query does
+							// the ordering for us
+							Object val = query.get();
+							toRemove.add( new Object[] { query.entityClass(), val } );
+							EventModelInfo evi = this.updateClassToEventModelInfo.get( query.entityClass() );
+							for ( IdInfo info : evi.getIdInfos() ) {
+								updateInfos.add( new UpdateInfo( info.getEntityClass(), info.getIdAccessor().apply( val ), evi.getEventTypeAccessor().apply( val ) ) );
+							}
+							// TODO: maybe move this to a method as
+							// it is getting reused
+							if ( ++processed % this.batchSizeForUpdates == 0 ) {
+								for ( UpdateConsumer consumer : this.updateConsumers ) {
+									consumer.updateEvent( updateInfos );
+								}
+								for ( Object[] rem : toRemove ) {
+									// the class is in rem[0], the
+									// entity is in
+									// rem[1]
+									query.addToNextValuePosition( (Class<?>) rem[0], -1L );
+									em.remove( rem[1] );
+								}
+								toRemove.clear();
+								updateInfos.clear();
+							}
+						}
+						if ( updateInfos.size() > 0 ) {
+							for ( UpdateConsumer consumer : this.updateConsumers ) {
+								consumer.updateEvent( updateInfos );
+							}
+							for ( Object[] rem : toRemove ) {
+								// the class is in rem[0], the
+								// entity is in rem[1]
+								query.addToNextValuePosition( (Class<?>) rem[0], -1L );
+								em.remove( rem[1] );
+							}
+							toRemove.clear();
+							updateInfos.clear();
+						}
 
-			if ( !this.useJTATransaction ) {
-				tx.commit();
+						em.flush();
+						// clear memory :)
+						em.clear();
+			
+						if ( !this.useJTATransaction ) {
+							tx.commit();
+						}
+						else {
+							utx.commit();
+						}
+					}
+				catch (Exception e) {
+					throw new RuntimeException( "Error occured during Update processing!", e );
+				}
+				finally {
+					if ( em != null ) {
+						em.close();
+					}
+				}
 			}
-			else {
-				utx.commit();
+			catch (Exception e) {
+				LOGGER.log( Level.SEVERE, e.getMessage(), e );
 			}
-		}
-		catch (Exception e) {
-			throw new RuntimeException( "Error occured during Update processing!", e );
-		}
-		finally {
-			if ( em != null ) {
-				em.close();
-			}
-		}
-	}
-	catch (Exception e) {
-		LOGGER.log( Level.SEVERE, e.getMessage(), e );
-	}
-}, 0, this.timeOut, this.timeUnit );
+		}, 0, this.timeOut, this.timeUnit );
 	}
 
 	MultiQueryAccess query(EntityManager em) {

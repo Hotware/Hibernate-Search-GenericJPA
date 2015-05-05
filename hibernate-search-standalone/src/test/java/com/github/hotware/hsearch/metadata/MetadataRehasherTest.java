@@ -39,7 +39,7 @@ public class MetadataRehasherTest {
 	}
 
 	@Test
-	public void test() {
+	public void test() {		
 		TypeMetadata fromRoot = this.metadataProvider.getTypeMetadataFor( RootEntity.class );
 		RehashedTypeMetadata fromRootRehashed = this.metadataRehasher.rehash( fromRoot );
 		{
