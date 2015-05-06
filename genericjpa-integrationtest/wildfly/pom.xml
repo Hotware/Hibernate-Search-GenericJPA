@@ -11,8 +11,8 @@
 
     <parent>
         <artifactId>generic-jpa-parent</artifactId>
-        <groupId>org.hibernate.search</groupId>
-        <version>5.3.0.Beta1</version>
+        <groupId>org.hibernate</groupId>
+        <version>0.1.0.4</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
