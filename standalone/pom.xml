@@ -7,7 +7,7 @@
 
 	<parent>
 		<artifactId>hibernate-search-genericjpa-parent</artifactId>
-		<groupId>org.hibernate.search</groupId>
+		<groupId>org.hibernate</groupId>
 		<version>0.1.0.4</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
