@@ -1,16 +1,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<artifactId>hibernate-search-db</artifactId>
+	<artifactId>standalone</artifactId>
 	<packaging>jar</packaging>
-	<name>hibernate-search-db</name>
-	
+	<name>hibernate-search-standalone</name>
+
 	<parent>
-        <artifactId>hibernate-search-genericjpa-parent</artifactId>
-        <groupId>com.github.hotware</groupId>
-        <version>0.1.0.4</version>
-        <relativePath>../pom.xml</relativePath>
-    </parent>
+		<artifactId>genericjpa-parent</artifactId>
+		<groupId>org.hibernate.search</groupId>
+		<version>0.1.0.4</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
 
 	<build>
 		<plugins>
@@ -26,29 +26,17 @@
 		</plugins>
 	</build>
 
-	<properties>
-		<hibernate.version>4.3.7.Final</hibernate.version>
-	</properties>
-
 	<dependencies>
-		<dependency>
-			<groupId>com.github.hotware</groupId>
-			<artifactId>hibernate-search-standalone</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
 		</dependency>
-		
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-search-engine</artifactId>
 			<scope>provided</scope>
 		</dependency>
-		
 		<dependency>
 			<groupId>javax.transaction</groupId>
 			<artifactId>jta</artifactId>

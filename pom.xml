@@ -1,16 +1,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.github.hotware</groupId>
-	<artifactId>hibernate-search-genericjpa-parent</artifactId>
+	<groupId>org.hibernate.search</groupId>
+	<artifactId>genericjpa-parent</artifactId>
 	<version>0.1.0.4</version>
 	<packaging>pom</packaging>
 	<name>hibernate-search</name>
 
 	<modules>
-		<module>hibernate-search-standalone</module>
-		<module>hibernate-search-db</module>
-		<module>hibernate-search-jpa</module>
+		<module>standalone</module>
+		<module>db</module>
+		<module>jpa</module>
 	</modules>
 
 	<description>
