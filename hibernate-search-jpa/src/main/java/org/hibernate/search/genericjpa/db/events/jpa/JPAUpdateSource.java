@@ -133,20 +133,11 @@ public class JPAUpdateSource implements UpdateSource {
 		this.useJTATransaction = useJTATransaction;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see com.github.hotware.hsearch.db.events.UpdateSource#setUpdateConsumer(com
-	 * .github.hotware.hsearch.db.events.UpdateConsumer)
-	 */
 	@Override
 	public void setUpdateConsumers(List<UpdateConsumer> updateConsumers) {
 		this.updateConsumers = updateConsumers;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see com.github.hotware.hsearch.db.events.UpdateSource#start()
-	 */
 	@Override
 	public void start() {
 		if ( this.updateConsumers == null ) {
@@ -279,10 +270,7 @@ public class JPAUpdateSource implements UpdateSource {
 		return ( (Number) this.idAccessorMap.get( val.clazz ).apply( val.object ) ).longValue();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see com.github.hotware.hsearch.db.events.UpdateSource#stop()
-	 */
+
 	@Override
 	public void stop() {
 		if ( this.exec != null ) {
