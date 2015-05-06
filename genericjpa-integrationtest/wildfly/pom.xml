@@ -39,7 +39,11 @@
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-search-engine</artifactId>
-			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.github.hotware</groupId>
+			<artifactId>hibernate-search-jpa</artifactId>
+			<version>${project.version}</version>
 		</dependency>
 	</dependencies>
 
