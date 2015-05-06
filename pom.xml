@@ -11,6 +11,7 @@
 		<module>standalone</module>
 		<module>db</module>
 		<module>jpa</module>
+		<module>genericjpa-integrationtest\wildfly/</module>
 	</modules>
 
 	<description>
