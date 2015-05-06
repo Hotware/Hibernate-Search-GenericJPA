@@ -66,8 +66,8 @@ public class IndexUpdater implements UpdateConsumer {
 	@Override
 	public void updateEvent(List<UpdateInfo> updateInfos) {
 		this.entityProvider.open();
+		Transaction tx = new Transaction();
 		try {
-			Transaction tx = new Transaction();
 			for ( UpdateInfo updateInfo : updateInfos ) {
 				Class<?> entityClass = updateInfo.getEntityClass();
 				List<Class<?>> inIndexOf = this.containedInIndexOf.get( entityClass );
@@ -105,6 +105,7 @@ public class IndexUpdater implements UpdateConsumer {
 			tx.commit();
 		}
 		catch (Exception e) {
+			tx.rollback();
 			LOGGER.warn( "Error while updating the index! Your index might be corrupt!" );
 			throw new RuntimeException( "Error while updating the index! Your index might be corrupt!" );
 		}

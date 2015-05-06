@@ -14,15 +14,21 @@ import org.hibernate.search.standalone.query.HSearchQuery;
 import org.hibernate.search.standalone.transaction.TransactionContext;
 
 public interface StandaloneSearchFactory extends org.hibernate.search.SearchFactory, Closeable {
-	
+
 	void flushToIndexes(TransactionContext tc);
 
 	void purgeAll(Class<?> entityClass, TransactionContext tc);
 
 	default void purgeAll(Class<?> entityClass) {
 		Transaction tc = new Transaction();
-		this.purgeAll( entityClass, tc );
-		tc.commit();
+		try {
+			this.purgeAll( entityClass, tc );
+			tc.commit();
+		}
+		catch (Exception e) {
+			tc.rollback();
+			throw e;
+		}
 	}
 
 	HSearchQuery createQuery(Query query, Class<?>... targetedEntities);
@@ -31,8 +37,14 @@ public interface StandaloneSearchFactory extends org.hibernate.search.SearchFact
 
 	default void purge(Class<?> entityClass, Serializable id) {
 		Transaction tc = new Transaction();
-		this.purge( entityClass, id, tc );
-		tc.commit();
+		try {
+			this.purge( entityClass, id, tc );
+			tc.commit();
+		}
+		catch (Exception e) {
+			tc.rollback();
+			throw e;
+		}
 	}
 
 	void purge(Iterable<?> entities, TransactionContext tc);
@@ -43,8 +55,14 @@ public interface StandaloneSearchFactory extends org.hibernate.search.SearchFact
 
 	default void purge(Iterable<?> entities) {
 		Transaction tc = new Transaction();
-		this.purge( entities, tc );
-		tc.commit();
+		try {
+			this.purge( entities, tc );
+			tc.commit();
+		}
+		catch (Exception e) {
+			tc.rollback();
+			throw e;
+		}
 	}
 
 	default void purge(Object entity) {
@@ -56,8 +74,14 @@ public interface StandaloneSearchFactory extends org.hibernate.search.SearchFact
 	 */
 	default void purge(Class<?> entityClass, Query query) {
 		Transaction tc = new Transaction();
-		this.purge( entityClass, query, tc );
-		tc.commit();
+		try {
+			this.purge( entityClass, query, tc );
+			tc.commit();
+		}
+		catch (Exception e) {
+			tc.rollback();
+			throw e;
+		}
 	}
 
 	/**
@@ -76,8 +100,14 @@ public interface StandaloneSearchFactory extends org.hibernate.search.SearchFact
 
 	default void index(Iterable<?> entities) {
 		Transaction tc = new Transaction();
-		this.index( entities, tc );
-		tc.commit();
+		try {
+			this.index( entities, tc );
+			tc.commit();
+		}
+		catch (Exception e) {
+			tc.rollback();
+			throw e;
+		}
 	}
 
 	default void index(Object entity) {
@@ -92,8 +122,14 @@ public interface StandaloneSearchFactory extends org.hibernate.search.SearchFact
 
 	default void update(Iterable<?> entities) {
 		Transaction tc = new Transaction();
-		this.update( entities, tc );
-		tc.commit();
+		try {
+			this.update( entities, tc );
+			tc.commit();
+		}
+		catch (Exception e) {
+			tc.rollback();
+			throw e;
+		}
 	}
 
 	default void update(Object entity) {
@@ -108,8 +144,14 @@ public interface StandaloneSearchFactory extends org.hibernate.search.SearchFact
 
 	default void delete(Iterable<?> entities) {
 		Transaction tc = new Transaction();
-		this.delete( entities, tc );
-		tc.commit();
+		try {
+			this.delete( entities, tc );
+			tc.commit();
+		}
+		catch (Exception e) {
+			tc.rollback();
+			throw e;
+		}
 	}
 
 	default void delete(Object entity) {
