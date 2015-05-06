@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -98,12 +99,19 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 
 	protected abstract TriggerSQLStringSource getTriggerSQLStringSource();
 
-	protected abstract ManagedScheduledExecutorService getManagedScheduledExecutorServiceForUpdater();
+	/**
+	 * for JTA transactions this has to be a {@link javax.enterprise.concurrent.ManagedScheduledExecutorService}
+	 */
+	protected abstract ScheduledExecutorService getExecutorServiceForUpdater();
 
 	protected abstract boolean isUseJTATransaction();
 
 	@PostConstruct
 	protected void init() {
+		if ( this.isUseJTATransaction() && !( this.getExecutorServiceForUpdater() instanceof ManagedScheduledExecutorService ) ) {
+			throw new IllegalArgumentException( "an instance of" + ManagedScheduledExecutorService.class
+					+ "has to be used for scheduling when using JTA transactions!" );
+		}
 		SearchConfigurationImpl config;
 		if ( this.getConfigFile() != null && !this.getConfigFile().equals( "" ) ) {
 			LOGGER.info( "using config @" + this.getConfigFile() );
@@ -153,7 +161,7 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 		this.setupTriggers( eventModelInfos );
 
 		this.updateSource = new JPAUpdateSource( eventModelInfos, this.getEmf(), this.isUseJTATransaction(), this.getDelay(), this.getDelayUnit(),
-				this.getBatchSizeForUpdates(), this.getManagedScheduledExecutorServiceForUpdater() );
+				this.getBatchSizeForUpdates(), this.getExecutorServiceForUpdater() );
 		this.updateSource.setUpdateConsumers( Arrays.asList( indexUpdater, this ) );
 		this.updateSource.start();
 	}
@@ -349,6 +357,6 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 
 	public <T> T unwrap(Class<T> cls) {
 		return searchFactory.unwrap( cls );
-	}	
+	}
 
 }

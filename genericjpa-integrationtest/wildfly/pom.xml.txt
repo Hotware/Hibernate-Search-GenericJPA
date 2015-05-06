@@ -1,15 +1,15 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<artifactId>hibernate-search-jpa</artifactId>
+	<artifactId>hibernate-search-jpa-integration-wildfly</artifactId>
 	<packaging>jar</packaging>
-	<name>hibernate-search-jpa</name>
+	<name>hibernate-search-jpa-integration-wildfly</name>
 
 	<parent>
 		<artifactId>hibernate-search-genericjpa-parent</artifactId>
 		<groupId>org.hibernate</groupId>
 		<version>0.1.0.4</version>
-		<relativePath>../pom.xml</relativePath>
+		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
 	<build>
@@ -44,52 +44,10 @@
 		</dependency>
 
 		<dependency>
-			<groupId>javax.transaction</groupId>
-			<artifactId>jta</artifactId>
-		</dependency>
-
-		<dependency>
 			<groupId>com.github.hotware</groupId>
-			<artifactId>hibernate-search-standalone</artifactId>
+			<artifactId>hibernate-search-jpa</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>com.github.hotware</groupId>
-			<artifactId>hibernate-search-db</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-
-		<!-- our in-memory database provider -->
-		<dependency>
-			<groupId>org.hsqldb</groupId>
-			<artifactId>hsqldb</artifactId>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>mysql</groupId>
-			<artifactId>mysql-connector-java</artifactId>
-			<scope>test</scope>
-		</dependency>
-
-		<!-- Eclipselink -->
-		<dependency>
-			<groupId>org.eclipse.persistence</groupId>
-			<artifactId>eclipselink</artifactId>
-			<scope>provided</scope>
-		</dependency>
-
-		<!-- code gen -->
-		<dependency>
-			<groupId>com.squareup</groupId>
-			<artifactId>javapoet</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>org.jboss.spec</groupId>
-			<artifactId>jboss-javaee-all-7.0</artifactId>
-		</dependency>
-
 	</dependencies>
 
 </project>

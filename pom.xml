@@ -11,6 +11,7 @@
 		<module>standalone</module>
 		<module>db</module>
 		<module>jpa</module>
+		<module>genericjpa-integrationtest/wildfly</module>
 	</modules>
 
 	<description>
@@ -21,7 +22,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		
+
 		<hibernate-search.version>5.3.0.Beta1</hibernate-search.version>
 	</properties>
 
@@ -85,11 +86,11 @@
 			</dependency>
 
 			<dependency>
-				<groupId>javax</groupId>
-				<artifactId>javaee-api</artifactId>
-				<version>7.0</version>
-				<scope>provided</scope>
+				<groupId>org.jboss.spec</groupId>
+				<artifactId>jboss-javaee-all-7.0</artifactId>
+				<version>1.0.2.Final</version>
 			</dependency>
+
 		</dependencies>
 	</dependencyManagement>
 
