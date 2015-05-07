@@ -8,7 +8,7 @@
 	<parent>
 		<artifactId>hibernate-search-genericjpa-parent</artifactId>
 		<groupId>org.hibernate</groupId>
-		<version>0.1.0.4</version>
+		<version>0.2.0.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -49,12 +49,12 @@
 		</dependency>
 
 		<dependency>
-			<groupId>com.github.hotware</groupId>
+			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-search-standalone</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>com.github.hotware</groupId>
+			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-search-db</artifactId>
 			<version>${project.version}</version>
 		</dependency>
@@ -85,10 +85,15 @@
 			<artifactId>javapoet</artifactId>
 		</dependency>
 
+		<!-- <dependency> <groupId>org.jboss.spec</groupId> <artifactId>jboss-javaee-all-7.0</artifactId> 
+			</dependency> -->
+
 		<dependency>
-			<groupId>org.jboss.spec</groupId>
-			<artifactId>jboss-javaee-all-7.0</artifactId>
+			<groupId>javax</groupId>
+			<artifactId>javaee-api</artifactId>
+			<scope>provided</scope>
 		</dependency>
+
 
 	</dependencies>
 

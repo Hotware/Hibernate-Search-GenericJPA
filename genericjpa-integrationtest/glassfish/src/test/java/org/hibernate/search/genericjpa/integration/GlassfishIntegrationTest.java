@@ -18,6 +18,7 @@ import javax.persistence.PersistenceContext;
 import javax.transaction.UserTransaction;
 
 import org.hibernate.search.genericjpa.test.entities.Game;
+import org.hibernate.search.genericjpa.test.searchFactory.EJBSearchFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -35,8 +36,9 @@ public class GlassfishIntegrationTest {
 
 	@Deployment
 	public static Archive<?> createDeployment() {
-		return ShrinkWrap.create( WebArchive.class, "test.war" ).addPackage( Game.class.getPackage() )
-				.addAsResource( "META-INF/persistence.xml", "META-INF/persistence.xml" ).addAsWebInfResource( EmptyAsset.INSTANCE, "beans.xml" );
+		return ShrinkWrap.create( WebArchive.class, "test.war" ).setWebXML( "web.xml" ).addPackage( Game.class.getPackage() )
+				.addPackage( EJBSearchFactory.class.getPackage() ).addAsResource( "META-INF/persistence.xml", "META-INF/persistence.xml" )
+				.addAsWebInfResource( EmptyAsset.INSTANCE, "beans.xml" );
 	}
 
 	private static final String[] GAME_TITLES = { "Super Mario Brothers", "Mario Kart", "F-Zero" };
@@ -88,15 +90,15 @@ public class GlassfishIntegrationTest {
 		System.out.println( "Found " + games.size() + " games (using JPQL):" );
 		assertContainsAllGames( games );
 	}
-	
+
 	private static void assertContainsAllGames(Collection<Game> retrievedGames) {
-	    Assert.assertEquals(GAME_TITLES.length, retrievedGames.size());
-	    final Set<String> retrievedGameTitles = new HashSet<String>();
-	    for (Game game : retrievedGames) {
-	        System.out.println("* " + game);
-	        retrievedGameTitles.add(game.getTitle());
-	    }
-	    Assert.assertTrue(retrievedGameTitles.containsAll(Arrays.asList(GAME_TITLES)));
+		Assert.assertEquals( GAME_TITLES.length, retrievedGames.size() );
+		final Set<String> retrievedGameTitles = new HashSet<String>();
+		for ( Game game : retrievedGames ) {
+			System.out.println( "* " + game );
+			retrievedGameTitles.add( game.getTitle() );
+		}
+		Assert.assertTrue( retrievedGameTitles.containsAll( Arrays.asList( GAME_TITLES ) ) );
 	}
 
 	private void startTransaction() throws Exception {

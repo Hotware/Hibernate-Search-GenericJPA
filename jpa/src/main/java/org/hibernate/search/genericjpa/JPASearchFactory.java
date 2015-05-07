@@ -106,8 +106,7 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 
 	protected abstract boolean isUseJTATransaction();
 
-	@PostConstruct
-	protected void init() {
+	public void init() {
 		if ( this.isUseJTATransaction() && !( this.getExecutorServiceForUpdater() instanceof ManagedScheduledExecutorService ) ) {
 			throw new IllegalArgumentException( "an instance of" + ManagedScheduledExecutorService.class
 					+ "has to be used for scheduling when using JTA transactions!" );
@@ -243,8 +242,7 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 		}
 	}
 
-	@PreDestroy
-	protected void shutdown() {
+	public void shutdown() {
 		try {
 			this.updateSource.stop();
 			this.close();

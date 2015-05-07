@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.hibernate</groupId>
 	<artifactId>hibernate-search-genericjpa-parent</artifactId>
-	<version>0.1.0.4</version>
+	<version>0.2.0.0</version>
 	<packaging>pom</packaging>
 	<name>hibernate-search-genericjpa-parent</name>
 
@@ -87,11 +87,11 @@
 			</dependency>
 
 			<dependency>
-				<groupId>org.jboss.spec</groupId>
-				<artifactId>jboss-javaee-all-7.0</artifactId>
-				<version>1.0.2.Final</version>
+				<groupId>javax</groupId>
+				<artifactId>javaee-api</artifactId>
+				<version>7.0</version>
 			</dependency>
-			
+
 			<dependency>
 				<groupId>org.jboss.arquillian</groupId>
 				<artifactId>arquillian-bom</artifactId>
