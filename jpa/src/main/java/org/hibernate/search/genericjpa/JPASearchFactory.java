@@ -229,13 +229,8 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 			}
 		}
 		finally {
-			if ( em != null ) {
-				try {
-					em.close();
-				}
-				catch (IllegalStateException e) {
-					// yay, JPA...
-				}
+			if ( em != null && !this.isUseJTATransaction() ) {
+				em.close();
 			}
 		}
 	}
