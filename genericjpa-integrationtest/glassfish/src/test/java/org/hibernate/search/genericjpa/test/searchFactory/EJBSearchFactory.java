@@ -8,18 +8,13 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
-import javax.ejb.LocalBean;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.ejb.Stateful;
 import javax.enterprise.concurrent.ManagedScheduledExecutorService;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
 
-import org.glassfish.embeddable.CommandResult;
-import org.glassfish.embeddable.CommandResult.ExitStatus;
 import org.glassfish.embeddable.CommandRunner;
 import org.hibernate.search.genericjpa.JPASearchFactory;
 import org.hibernate.search.genericjpa.db.events.MySQLTriggerSQLStringSource;
@@ -28,10 +23,9 @@ import org.hibernate.search.genericjpa.test.entities.Game;
 import org.hibernate.search.genericjpa.test.entities.GameUpdates;
 import org.hibernate.search.genericjpa.test.entities.GameVendorUpdates;
 import org.hibernate.search.genericjpa.test.entities.VendorUpdates;
-import org.junit.Assert;
+import org.hibernate.search.jpa.Search;
 
 @Singleton
-@LocalBean
 @Stateful
 @Startup
 public class EJBSearchFactory extends JPASearchFactory {
@@ -39,6 +33,7 @@ public class EJBSearchFactory extends JPASearchFactory {
 	@Resource(mappedName = "org.glassfish.embeddable.CommandRunner")
 	private CommandRunner commandRunner;
 
+	@Resource
 	private ManagedScheduledExecutorService exec;
 
 	@PersistenceUnit
@@ -57,8 +52,8 @@ public class EJBSearchFactory extends JPASearchFactory {
 //		catch (NamingException e) {
 //			throw new RuntimeException( e );
 //		}
-//
-//		super.init();
+		super.init();
+		Search.setup( this );
 	}
 
 	@PreDestroy
@@ -78,7 +73,7 @@ public class EJBSearchFactory extends JPASearchFactory {
 
 	@Override
 	protected String getConfigFile() {
-		return "hsearch.properties";
+		return "/hsearch.properties";
 	}
 
 	@Override

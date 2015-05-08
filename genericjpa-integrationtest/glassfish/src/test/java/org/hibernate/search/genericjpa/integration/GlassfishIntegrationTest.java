@@ -6,6 +6,7 @@
  */
 package org.hibernate.search.genericjpa.integration;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -17,8 +18,13 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.UserTransaction;
 
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.TermQuery;
 import org.hibernate.search.genericjpa.test.entities.Game;
 import org.hibernate.search.genericjpa.test.searchFactory.EJBSearchFactory;
+import org.hibernate.search.jpa.FullTextEntityManager;
+import org.hibernate.search.jpa.FullTextQuery;
+import org.hibernate.search.jpa.Search;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -36,7 +42,7 @@ public class GlassfishIntegrationTest {
 
 	@Deployment
 	public static Archive<?> createDeployment() {
-		return ShrinkWrap.create( WebArchive.class, "test.war" ).setWebXML( "web.xml" ).addPackage( Game.class.getPackage() )
+		return ShrinkWrap.create( WebArchive.class, "test.war" ).setWebXML( "WEB-INF/web.xml" ).addPackage( Game.class.getPackage() )
 				.addPackage( EJBSearchFactory.class.getPackage() ).addAsResource( "META-INF/persistence.xml", "META-INF/persistence.xml" )
 				.addAsWebInfResource( EmptyAsset.INSTANCE, "beans.xml" );
 	}
@@ -50,10 +56,15 @@ public class GlassfishIntegrationTest {
 	UserTransaction utx;
 
 	@Before
-	public void preparePersistenceTest() throws Exception {
-		clearData();
-		insertData();
-		startTransaction();
+	public void setup() throws Exception {
+		this.clearData();
+		this.insertData();
+		this.startTransaction();
+	}
+
+	@After
+	public void commitTransaction() throws Exception {
+		utx.commit();
 	}
 
 	private void clearData() throws Exception {
@@ -77,17 +88,20 @@ public class GlassfishIntegrationTest {
 		em.clear();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
-	public void shouldFindAllGamesUsingJpqlQuery() throws Exception {
-		// given
-		String fetchingAllGamesInJpql = "select g from Game g order by g.id";
+	public void shouldFindAllGamesInIndex() throws Exception {
+		Thread.sleep( 1000 );
 
-		// when
-		System.out.println( "Selecting (using JPQL)..." );
-		List<Game> games = em.createQuery( fetchingAllGamesInJpql, Game.class ).getResultList();
+		List<Game> games = new ArrayList<>();
+		FullTextEntityManager fem = Search.getFullTextEntityManager( this.em );
+		for ( String title : GAME_TITLES ) {
+			FullTextQuery query = fem.createFullTextQuery( new TermQuery( new Term( "title", title ) ), Game.class );
+			games.addAll( query.getResultList() );
+		}
 
 		// then
-		System.out.println( "Found " + games.size() + " games (using JPQL):" );
+		System.out.println( "Found " + games.size() + " games (using Hibernate-Search):" );
 		assertContainsAllGames( games );
 	}
 
@@ -104,11 +118,6 @@ public class GlassfishIntegrationTest {
 	private void startTransaction() throws Exception {
 		utx.begin();
 		em.joinTransaction();
-	}
-
-	@After
-	public void commitTransaction() throws Exception {
-		utx.commit();
 	}
 
 }

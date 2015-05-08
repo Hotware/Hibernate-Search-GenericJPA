@@ -27,7 +27,7 @@ public class GameVendorUpdates {
 	@Column
 	private Long gameId;
 	
-	@IdFor(entityClass = Vendor.class, columns = "vendorId", columnsInOriginal = "vendor_ID")
+	@IdFor(entityClass = Vendor.class, columns = "vendorId", columnsInOriginal = "vendors_ID")
 	@Column
 	private Long vendorId;
 

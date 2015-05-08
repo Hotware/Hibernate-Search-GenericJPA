@@ -124,7 +124,7 @@ final class FullTextQueryImpl implements FullTextQuery {
 	@Override
 	public List getResultList() {
 		try {
-			if ( this.projection != null ) {
+			if ( this.projection == null ) {
 				return this.hsearchQuery.query( this.entityProvider, this.getFetch() );
 			}
 			else {
@@ -169,7 +169,7 @@ final class FullTextQueryImpl implements FullTextQuery {
 	public Object getSingleResult() {
 		try {
 			List result;
-			if ( this.projection != null ) {
+			if ( this.projection == null ) {
 				result = this.hsearchQuery.query( this.entityProvider, this.getFetch() );
 			}
 			else {

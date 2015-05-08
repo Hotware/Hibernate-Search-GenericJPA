@@ -15,6 +15,7 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.InIndex;
 import org.hibernate.search.annotations.Index;
@@ -50,7 +51,7 @@ public class Game {
 		this.id = id;
 	}
 
-	@Field(store = Store.YES, index = Index.YES)
+	@Field(store = Store.YES, index = Index.YES, analyze = Analyze.NO)
 	@Column
 	public String getTitle() {
 		return title;
