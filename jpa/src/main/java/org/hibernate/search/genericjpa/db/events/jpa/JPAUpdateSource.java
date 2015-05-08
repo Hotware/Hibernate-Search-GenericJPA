@@ -164,7 +164,7 @@ public class JPAUpdateSource implements UpdateSource {
 						em.joinTransaction();
 						tx = null;
 					}
-					MultiQueryAccess query = this.query( em );
+					MultiQueryAccess query = query( this, em );
 					List<Object[]> toRemove = new ArrayList<>( this.batchSizeForUpdates );
 					List<UpdateInfo> updateInfos = new ArrayList<>( this.batchSizeForUpdates );
 					long processed = 0;
@@ -235,10 +235,10 @@ public class JPAUpdateSource implements UpdateSource {
 }, 0, this.timeOut, this.timeUnit );
 	}
 
-	MultiQueryAccess query(EntityManager em) {
+	public static MultiQueryAccess query(JPAUpdateSource updateSource, EntityManager em) {
 		Map<Class<?>, Long> countMap = new HashMap<>();
 		Map<Class<?>, Query> queryMap = new HashMap<>();
-		for ( EventModelInfo evi : this.eventModelInfos ) {
+		for ( EventModelInfo evi : updateSource.eventModelInfos ) {
 			CriteriaBuilder cb = em.getCriteriaBuilder();
 			long count;
 			{
@@ -257,12 +257,12 @@ public class JPAUpdateSource implements UpdateSource {
 			}
 		}
 		MultiQueryAccess access = new MultiQueryAccess( countMap, queryMap, (first, second) -> {
-			int res = Long.compare( this.id( first ), this.id( second ) );
+			int res = Long.compare( updateSource.id( first ), updateSource.id( second ) );
 			if ( res == 0 ) {
 				throw new IllegalStateException( "database contained two update entries with the same id!" );
 			}
 			return res;
-		}, this.batchSizeForDatabaseQueries );
+		}, updateSource.batchSizeForDatabaseQueries );
 		return access;
 	}
 
