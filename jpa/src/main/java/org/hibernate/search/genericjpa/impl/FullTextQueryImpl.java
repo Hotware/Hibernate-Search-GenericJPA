@@ -29,7 +29,6 @@ import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.filter.FullTextFilter;
-import org.hibernate.search.entity.EntityProvider;
 import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.jpa.FullTextQuery;
 import org.hibernate.search.query.DatabaseRetrievalMethod;
@@ -37,6 +36,7 @@ import org.hibernate.search.query.ObjectLookupMethod;
 import org.hibernate.search.query.engine.QueryTimeoutException;
 import org.hibernate.search.query.engine.spi.FacetManager;
 import org.hibernate.search.spatial.Coordinates;
+import org.hibernate.search.standalone.entity.EntityProvider;
 import org.hibernate.search.standalone.query.HSearchQuery;
 
 /**

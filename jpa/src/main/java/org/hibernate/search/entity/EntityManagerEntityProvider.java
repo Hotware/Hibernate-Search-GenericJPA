@@ -17,7 +17,7 @@ import javax.persistence.criteria.CriteriaBuilder.In;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 
-import org.hibernate.search.entity.EntityProvider;
+import org.hibernate.search.standalone.entity.EntityProvider;
 
 public class EntityManagerEntityProvider implements EntityProvider {
 

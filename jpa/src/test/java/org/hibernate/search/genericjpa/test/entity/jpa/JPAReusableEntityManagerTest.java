@@ -17,10 +17,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.hibernate.search.entity.JPAReusableEntityProvider;
-import org.hibernate.search.entity.ReusableEntityProvider;
 import org.hibernate.search.genericjpa.test.db.events.jpa.DatabaseIntegrationTest;
 import org.hibernate.search.genericjpa.test.db.events.jpa.MetaModelParser;
 import org.hibernate.search.genericjpa.test.jpa.entities.Place;
+import org.hibernate.search.standalone.entity.ReusableEntityProvider;
 import org.junit.Test;
 
 /**

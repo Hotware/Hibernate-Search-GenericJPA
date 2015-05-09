@@ -18,7 +18,6 @@ import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.engine.ProjectionConstants;
-import org.hibernate.search.entity.EntityProvider;
 import org.hibernate.search.exception.AssertionFailure;
 import org.hibernate.search.filter.FullTextFilter;
 import org.hibernate.search.query.engine.spi.FacetManager;
@@ -27,6 +26,7 @@ import org.hibernate.search.spatial.Coordinates;
 import org.hibernate.search.spatial.impl.Point;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.standalone.dto.DtoQueryExecutor;
+import org.hibernate.search.standalone.entity.EntityProvider;
 
 public class HSearchQueryImpl implements HSearchQuery {
 

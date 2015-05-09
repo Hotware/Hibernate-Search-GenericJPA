@@ -9,16 +9,16 @@ package org.hibernate.search.standalone.factory;
 import java.util.Collection;
 import java.util.Map;
 
-import org.hibernate.search.annotations.InIndex;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.engine.impl.SimpleInitializer;
 import org.hibernate.search.spi.InstanceInitializer;
+import org.hibernate.search.standalone.annotations.InIndex;
 
 /**
  * this initializer is needed i.e. for JPA implementations that subclass the entities, which would prevent
  * Hibernate-Search from indexing these, as it could otherwise not find any Annotations to process. <br>
  * <br>
- * All original Subclasses have to be annotated with {@link org.hibernate.search.annotations.InIndex}. <br>
+ * All original Subclasses have to be annotated with {@link org.hibernate.search.standalone.annotations.InIndex}. <br>
  * <br>
  * all methods not related to getting Classes out of this are delegated to
  * {@link org.hibernate.search.impl.SimpleInitializer}
