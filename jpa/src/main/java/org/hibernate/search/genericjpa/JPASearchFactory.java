@@ -60,8 +60,8 @@ import org.hibernate.search.standalone.transaction.TransactionContext;
 import org.hibernate.search.stat.Statistics;
 
 /**
- * Base class to create SearchFactories in a JPA environment. Uses a JPAEventSource. if this class it not used in an JPA
- * environment, you should call the init() and shutdown() method respectively.
+ * Base class to create SearchFactories in a JPA environment. Uses a JPAEventSource. 
+ * <b>You have to call the init() and shutdown() method respectively.</b>
  *
  * @author Martin Braun
  */

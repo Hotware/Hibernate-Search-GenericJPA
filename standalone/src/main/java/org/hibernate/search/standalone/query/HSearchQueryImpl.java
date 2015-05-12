@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.search.Explanation;
@@ -18,7 +19,6 @@ import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.engine.ProjectionConstants;
-import org.hibernate.search.exception.AssertionFailure;
 import org.hibernate.search.filter.FullTextFilter;
 import org.hibernate.search.query.engine.spi.FacetManager;
 import org.hibernate.search.query.engine.spi.HSQuery;
@@ -29,6 +29,8 @@ import org.hibernate.search.standalone.dto.DtoQueryExecutor;
 import org.hibernate.search.standalone.entity.EntityProvider;
 
 public class HSearchQueryImpl implements HSearchQuery {
+
+	private static final Logger LOGGER = Logger.getLogger( HSearchQueryImpl.class.getName() );
 
 	private final HSQuery hsquery;
 	private final DtoQueryExecutor queryExec;
@@ -143,11 +145,17 @@ public class HSearchQueryImpl implements HSearchQuery {
 			} );
 			// and put everything back into order
 			originalOrder.stream().forEach( (id) -> {
-				ret.add( idToObject.get( id ) );
+				Object value = idToObject.get( id );
+				if ( value == null ) {
+					LOGGER.info( "ommiting object of id " + id + " which was found in the index but not in the database!" );
+				}
+				else {
+					ret.add( idToObject.get( id ) );
+				}
 			} );
 		}
 		if ( ret.size() != projected.size() ) {
-			throw new AssertionFailure( "returned size was not equal to projected size" );
+			LOGGER.info( "returned size was not equal to projected size" );
 		}
 		return ret;
 	}

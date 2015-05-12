@@ -10,7 +10,6 @@ import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
-import javax.ejb.Stateful;
 import javax.enterprise.concurrent.ManagedScheduledExecutorService;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
@@ -26,7 +25,6 @@ import org.hibernate.search.genericjpa.test.entities.VendorUpdates;
 import org.hibernate.search.jpa.Search;
 
 @Singleton
-@Stateful
 @Startup
 public class EJBSearchFactory extends JPASearchFactory {
 

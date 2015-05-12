@@ -119,8 +119,8 @@ public class BasicGlassfishIntegrationTest {
 		FullTextQuery fullTextQuery = fem.createFullTextQuery( new TermQuery( new Term( "title", "Legend of Zelda" ) ), Game.class );
 		// we can find it in the index even though it is not persisted in the database
 		assertEquals( 1, fullTextQuery.getResultSize() );
-		// FIXME: is this the correct behaviour?
-		assertEquals( null, fullTextQuery.getResultList().get( 0 ) );
+		// but no result should be returned here:
+		assertEquals( 0, fullTextQuery.getResultList().size() );
 	}
 
 	@Test
