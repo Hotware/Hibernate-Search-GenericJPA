@@ -41,17 +41,6 @@ public class EJBSearchFactory extends JPASearchFactory {
 
 	@PostConstruct
 	public void startup() {
-//		Assert.assertNotNull( "Verify that the asadmin CommandRunner resource is available", this.commandRunner );
-//		CommandResult result = this.commandRunner.run( "help" );
-//
-//		Assert.assertEquals( result.getFailureCause().toString(), ExitStatus.SUCCESS, result.getExitStatus() );
-//
-//		try {
-//			this.exec = InitialContext.doLookup( "concurrent/exec" );
-//		}
-//		catch (NamingException e) {
-//			throw new RuntimeException( e );
-//		}
 		super.init();
 		Search.setup( this );
 	}

@@ -6,6 +6,8 @@
  */
 package org.hibernate.search.genericjpa.test.integration;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -19,6 +21,7 @@ import javax.persistence.PersistenceContext;
 import javax.transaction.UserTransaction;
 
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.TermQuery;
 import org.hibernate.search.genericjpa.test.entities.Game;
 import org.hibernate.search.jpa.FullTextEntityManager;
@@ -36,20 +39,18 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 public class BasicGlassfishIntegrationTest {
 
-
 	@Deployment
 	public static Archive<?> createDeployment() {
 		return IntegrationTestUtil.createDeployment();
 	}
 
-
 	private static final String[] GAME_TITLES = { "Super Mario Brothers", "Mario Kart", "F-Zero" };
 
 	@PersistenceContext
-	EntityManager em;
+	private EntityManager em;
 
 	@Inject
-	UserTransaction utx;
+	private UserTransaction utx;
 
 	@Before
 	public void setup() throws Exception {
@@ -69,6 +70,11 @@ public class BasicGlassfishIntegrationTest {
 		System.out.println( "Dumping old records..." );
 		em.createQuery( "delete from Game" ).executeUpdate();
 		utx.commit();
+
+		FullTextEntityManager fem = Search.getFullTextEntityManager( this.em );
+		fem.beginSearchTransaction();
+		fem.purgeAll( Game.class );
+		fem.commitSearchTransaction();
 	}
 
 	private void insertData() throws Exception {
@@ -96,9 +102,34 @@ public class BasicGlassfishIntegrationTest {
 			games.addAll( query.getResultList() );
 		}
 
-		// then
 		System.out.println( "Found " + games.size() + " games (using Hibernate-Search):" );
 		assertContainsAllGames( games );
+	}
+
+	@Test
+	public void testManualIndexing() throws Exception {
+		Thread.sleep( 1000 );
+
+		FullTextEntityManager fem = Search.getFullTextEntityManager( this.em );
+		fem.beginSearchTransaction();
+		Game newGame = new Game( "Legend of Zelda" );
+		fem.index( newGame );
+		fem.commitSearchTransaction();
+		Thread.sleep( 500 );
+		FullTextQuery fullTextQuery = fem.createFullTextQuery( new TermQuery( new Term( "title", "Legend of Zelda" ) ), Game.class );
+		// we can find it in the index even though it is not persisted in the database
+		assertEquals( 1, fullTextQuery.getResultSize() );
+		// FIXME: is this the correct behaviour?
+		assertEquals( null, fullTextQuery.getResultList().get( 0 ) );
+	}
+
+	@Test
+	public void testUnwrap() {
+		FullTextEntityManager fem = Search.getFullTextEntityManager( this.em );
+		assertEquals( fem, fem.unwrap( FullTextEntityManager.class ) );
+
+		FullTextQuery query = fem.createFullTextQuery( new MatchAllDocsQuery(), Game.class );
+		assertEquals( query, query.unwrap( FullTextQuery.class ) );
 	}
 
 	private static void assertContainsAllGames(Collection<Game> retrievedGames) {

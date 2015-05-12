@@ -383,7 +383,6 @@ final class FullTextQueryImpl implements FullTextQuery {
 	@Override
 	public FlushModeType getFlushMode() {
 		return this.jpaFlushMode;
-
 	}
 
 	@Override

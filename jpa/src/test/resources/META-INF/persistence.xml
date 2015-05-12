@@ -18,8 +18,8 @@
 		<properties>
 			<property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver" />
 			<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/hsearch-test" />
-			<property name="javax.persistence.jdbc.user" value="hsearch-test" />
-			<property name="javax.persistence.jdbc.password" value="" />
+			<property name="javax.persistence.jdbc.user" value="hibernate_user" />
+			<property name="javax.persistence.jdbc.password" value="hibernate_password" />
 			<property name="eclipselink.ddl-generation" value="drop-and-create-tables" />
 			<property name="eclipselink.ddl-generation.output-mode"
 				value="both" />

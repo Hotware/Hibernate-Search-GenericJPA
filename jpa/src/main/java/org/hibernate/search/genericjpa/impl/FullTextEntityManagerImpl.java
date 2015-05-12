@@ -104,6 +104,14 @@ final class FullTextEntityManagerImpl implements FullTextEntityManager, Serializ
 		this.searchFactory.flushToIndexes( this.standaloneTransaction );
 	}
 
+	@SuppressWarnings("unchecked")
+	public <T> T unwrap(Class<T> clazz) {
+		if ( FullTextEntityManagerImpl.class.equals( clazz ) || FullTextEntityManager.class.equals( clazz ) ) {
+			return (T) this;
+		}
+		return em.unwrap( clazz );
+	}
+
 	public void clear() {
 		em.clear();
 	}
@@ -302,10 +310,6 @@ final class FullTextEntityManagerImpl implements FullTextEntityManager, Serializ
 
 	public void setProperty(String arg0, Object arg1) {
 		em.setProperty( arg0, arg1 );
-	}
-
-	public <T> T unwrap(Class<T> arg0) {
-		return em.unwrap( arg0 );
 	}
 
 }
