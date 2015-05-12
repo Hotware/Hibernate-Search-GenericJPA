@@ -122,6 +122,23 @@ public class BasicGlassfishIntegrationTest {
 		// but no result should be returned here:
 		assertEquals( 0, fullTextQuery.getResultList().size() );
 	}
+	
+	@Test
+	public void testRollback() throws Exception {
+		Thread.sleep( 1000 );
+
+		FullTextEntityManager fem = Search.getFullTextEntityManager( this.em );
+		fem.beginSearchTransaction();
+		Game newGame = new Game( "Pong" );
+		fem.index( newGame );
+		Thread.sleep( 500 );
+		fem.rollbackSearchTransaction();
+		FullTextQuery fullTextQuery = fem.createFullTextQuery( new TermQuery( new Term( "title", "Pong" ) ), Game.class );
+		// we can find it in the index even though it is not persisted in the database
+		assertEquals( 0, fullTextQuery.getResultSize() );
+		// no result should be returned here either
+		assertEquals( 0, fullTextQuery.getResultList().size() );
+	}
 
 	@Test
 	public void testUnwrap() {
