@@ -41,7 +41,7 @@ public class BasicGlassfishIntegrationTest {
 
 	@Deployment
 	public static Archive<?> createDeployment() {
-		return IntegrationTestUtil.createDeployment();
+		return IntegrationTestUtil.createEclipseLinkMySQLDeployment();
 	}
 
 	private static final String[] GAME_TITLES = { "Super Mario Brothers", "Mario Kart", "F-Zero" };

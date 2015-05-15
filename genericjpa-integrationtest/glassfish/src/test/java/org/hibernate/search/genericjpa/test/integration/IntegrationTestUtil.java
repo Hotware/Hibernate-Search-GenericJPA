@@ -28,10 +28,9 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
  */
 public class IntegrationTestUtil {
 
-	@Deployment
-	public static Archive<?> createDeployment() {
+	public static Archive<?> createEclipseLinkMySQLDeployment() {
 		return ShrinkWrap.create( WebArchive.class, "test.war" ).setWebXML( "WEB-INF/web.xml" ).addPackage( Game.class.getPackage() )
-				.addPackage( EJBSearchFactory.class.getPackage() ).addAsResource( "META-INF/persistence.xml", "META-INF/persistence.xml" )
+				.addPackage( EJBSearchFactory.class.getPackage() ).addAsResource( "META-INF/eclipselink-mysql-persistence.xml", "META-INF/persistence.xml" )
 				.addAsWebInfResource( EmptyAsset.INSTANCE, "beans.xml" );
 	}
 
