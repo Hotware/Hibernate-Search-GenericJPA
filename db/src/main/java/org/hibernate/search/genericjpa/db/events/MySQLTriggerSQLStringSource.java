@@ -59,13 +59,20 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 	}
 
 	private void init() {
-		this.createUniqueIdTable = String.format( "CREATE TABLE IF NOT EXISTS %s (                  \n" + "id BIGINT(64) NOT NULL AUTO_INCREMENT, \n"
-				+ " PRIMARY KEY (id)                      \n" + ");                                     \n", this.uniqueIdTableName );
+		this.createUniqueIdTable = String.format( "CREATE TABLE IF NOT EXISTS %s (                                                 \n"
+				+ "id BIGINT(64) NOT NULL AUTO_INCREMENT,                                                                          \n"
+				+ " PRIMARY KEY (id)                                                                                               \n"
+				+ ");                                                                                                              \n", this.uniqueIdTableName );
 		this.dropUniqueIdTable = String.format( "DROP TABLE IF EXISTS %s;", this.uniqueIdTableName );
-		this.dropUniqueIdProcedure = String.format( "DROP PROCEDURE IF EXISTS %s;                 \n", this.uniqueIdProcedureName );
-		this.createUniqueIdProcedure = String.format( "CREATE PROCEDURE %s                          \n" + "(OUT ret BIGINT)                   \n"
-				+ "BEGIN                              \n" + "	INSERT INTO %s VALUES ();         \n" + "	SET ret = last_insert_id();       \n"
-				+ "END;                               \n", this.uniqueIdProcedureName, this.uniqueIdTableName );
+		this.dropUniqueIdProcedure = String.format( "DROP PROCEDURE IF EXISTS %s;                                                  \n",
+				this.uniqueIdProcedureName );
+		this.createUniqueIdProcedure = String.format( "CREATE PROCEDURE %s                                                         \n"
+				+ "(OUT ret BIGINT)                                                                                                \n"
+				+ "BEGIN                                                                                                           \n"
+				+ "	INSERT INTO %s VALUES ();                                                                                      \n"
+				+ "	SET ret = last_insert_id();                                                                                    \n"
+				+ "END;                                                                                                            \n",
+				this.uniqueIdProcedureName, this.uniqueIdTableName );
 		this.createTriggerCleanUpSQLFormat = CREATE_TRIGGER_CLEANUP_SQL_FORMAT.replaceAll( "#UNIQUE_ID_TABLE_NAME#", this.uniqueIdTableName );
 	}
 
