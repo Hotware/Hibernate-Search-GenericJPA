@@ -33,7 +33,7 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 			+ "FOR EACH ROW                                                                                                       \n"
 			+ "BEGIN                                                                                                              \n"
 			+ "DELETE FROM #UNIQUE_ID_TABLE_NAME# WHERE id = OLD.id;                                                              \n"
-			+ "END;                                                  \n";
+			+ "END;                                                                                                               \n";
 	private static final String DROP_TRIGGER_SQL_FORMAT = "" + "DROP TRIGGER IF EXISTS %s;\n";
 
 	private final String uniqueIdTableName;
