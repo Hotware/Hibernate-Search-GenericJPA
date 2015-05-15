@@ -23,12 +23,17 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 	public static final String DEFAULT_UNIQUE_ID_PROCEDURE_NAME = "get_unique_id_hsearch";
 
 	private static final String CREATE_TRIGGER_ORIGINAL_TABLE_SQL_FORMAT = "" + "CREATE TRIGGER %s AFTER %s ON %s                 \n"
-			+ "FOR EACH ROW                                     \n" + "BEGIN                                            \n"
-			+ "    CALL %s(@unique_id);                         \n" + "    INSERT INTO %s(id, %s, %s) \n" + "		VALUES(@unique_id, %s, %s);                 \n"
-			+ "END;                                             \n";
-	private static final String CREATE_TRIGGER_CLEANUP_SQL_FORMAT = "" + "CREATE TRIGGER %s AFTER DELETE ON %s                  \n"
-			+ "FOR EACH ROW                                          \n" + "BEGIN                                                 \n"
-			+ "DELETE FROM #UNIQUE_ID_TABLE_NAME# WHERE id = OLD.id; \n" + "END;                                                  \n";
+			+ "FOR EACH ROW                                                                                                       \n"
+			+ "BEGIN                                                                                                              \n"
+			+ "    CALL %s(@unique_id);                                                                                           \n"
+			+ "    INSERT INTO %s(id, %s, %s)                                                                                     \n"
+			+ "		VALUES(@unique_id, %s, %s);                                                                                   \n"
+			+ "END;                                                                                                               \n";
+	private static final String CREATE_TRIGGER_CLEANUP_SQL_FORMAT = "" + "CREATE TRIGGER %s AFTER DELETE ON %s                    \n"
+			+ "FOR EACH ROW                                                                                                       \n"
+			+ "BEGIN                                                                                                              \n"
+			+ "DELETE FROM #UNIQUE_ID_TABLE_NAME# WHERE id = OLD.id;                                                              \n"
+			+ "END;                                                  \n";
 	private static final String DROP_TRIGGER_SQL_FORMAT = "" + "DROP TRIGGER IF EXISTS %s;\n";
 
 	private final String uniqueIdTableName;
