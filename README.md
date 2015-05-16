@@ -52,4 +52,5 @@ The goal of Hibernate-Search-JPA is to fix this and provide an integration of Hi
 Examples
 ========
 
-An example on how to use this project can be found in the wiki: https://github.com/Hotware/Hibernate-Search-JPA/wiki/How-To
+An example on how to use this project can be found in the wiki: 
+https://github.com/Hotware/Hibernate-Search-JPA/wiki/How-To
