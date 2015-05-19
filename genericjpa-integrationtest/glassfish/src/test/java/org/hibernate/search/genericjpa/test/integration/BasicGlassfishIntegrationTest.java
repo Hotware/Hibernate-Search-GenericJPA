@@ -122,7 +122,7 @@ public class BasicGlassfishIntegrationTest {
 		// but no result should be returned here:
 		assertEquals( 0, fullTextQuery.getResultList().size() );
 	}
-	
+
 	@Test
 	public void testRollback() throws Exception {
 		Thread.sleep( 1000 );
