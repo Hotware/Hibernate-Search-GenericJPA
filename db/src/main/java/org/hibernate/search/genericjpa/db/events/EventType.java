@@ -39,4 +39,5 @@ public final class EventType {
 	public static int[] values() {
 		return VALUES;
 	}
+
 }
