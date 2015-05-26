@@ -27,6 +27,7 @@ import javax.persistence.metamodel.Metamodel;
 /**
  * @author Martin Braun
  */
+@Deprecated
 public class EntityManagerCloseable implements EntityManager {
 
 	private final EntityManager em;
