@@ -17,7 +17,6 @@ package org.hibernate.search.genericjpa.test.integration;
 
 import org.hibernate.search.genericjpa.test.entities.Game;
 import org.hibernate.search.genericjpa.test.searchFactory.EJBSearchFactory;
-import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
