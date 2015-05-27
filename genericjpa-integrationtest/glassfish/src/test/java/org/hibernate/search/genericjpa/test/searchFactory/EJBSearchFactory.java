@@ -14,7 +14,6 @@ import javax.enterprise.concurrent.ManagedScheduledExecutorService;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
 
-import org.glassfish.embeddable.CommandRunner;
 import org.hibernate.search.genericjpa.JPASearchFactory;
 import org.hibernate.search.genericjpa.db.events.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.TriggerSQLStringSource;
@@ -27,9 +26,6 @@ import org.hibernate.search.jpa.Search;
 @Singleton
 @Startup
 public class EJBSearchFactory extends JPASearchFactory {
-
-	@Resource(mappedName = "org.glassfish.embeddable.CommandRunner")
-	private CommandRunner commandRunner;
 
 	@Resource
 	private ManagedScheduledExecutorService exec;

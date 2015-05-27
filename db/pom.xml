@@ -4,13 +4,13 @@
 	<artifactId>hibernate-search-db</artifactId>
 	<packaging>jar</packaging>
 	<name>hibernate-search-db</name>
-	
+
 	<parent>
-        <artifactId>hibernate-search-genericjpa-parent</artifactId>
-        <groupId>org.hibernate</groupId>
-        <version>0.2.0.0</version>
-        <relativePath>../pom.xml</relativePath>
-    </parent>
+		<artifactId>hibernate-search-genericjpa-parent</artifactId>
+		<groupId>org.hibernate</groupId>
+		<version>0.2.0.0</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
 
 	<build>
 		<plugins>
@@ -36,19 +36,25 @@
 			<artifactId>hibernate-search-standalone</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-search-engine</artifactId>
 			<scope>provided</scope>
 		</dependency>
-		
+
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>provided</scope>
+		</dependency>
+
 		<dependency>
 			<groupId>javax.transaction</groupId>
 			<artifactId>jta</artifactId>
