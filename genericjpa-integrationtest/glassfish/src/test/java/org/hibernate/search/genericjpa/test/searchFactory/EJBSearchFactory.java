@@ -23,6 +23,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
 
 import org.hibernate.internal.SessionImpl;
+import org.hibernate.search.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.SQLJPASearchFactory;
 import org.hibernate.search.genericjpa.db.events.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.TriggerSQLStringSource;
@@ -116,7 +117,7 @@ public class EJBSearchFactory extends SQLJPASearchFactory {
 		else if ( em instanceof org.hibernate.jpa.internal.EntityManagerImpl ) {
 			return ( (SessionImpl) ( (org.hibernate.jpa.internal.EntityManagerImpl) em ).getSession() ).connection();
 		}
-		throw new AssertionError();
+		throw new AssertionFailure("unrecognized EntityManager implementation");
 	}
 
 }
