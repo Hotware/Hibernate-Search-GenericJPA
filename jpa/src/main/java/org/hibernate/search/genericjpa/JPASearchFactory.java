@@ -10,8 +10,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,14 +33,9 @@ import org.hibernate.search.engine.metadata.impl.MetadataProvider;
 import org.hibernate.search.entity.EntityManagerCloseable;
 import org.hibernate.search.entity.EntityManagerEntityProvider;
 import org.hibernate.search.entity.JPAReusableEntityProvider;
-import org.hibernate.search.genericjpa.db.events.EventModelInfo;
-import org.hibernate.search.genericjpa.db.events.EventModelParser;
-import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.IndexUpdater;
-import org.hibernate.search.genericjpa.db.events.TriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateSource;
-import org.hibernate.search.genericjpa.db.events.jpa.JPAUpdateSource;
 import org.hibernate.search.indexes.IndexReaderAccessor;
 import org.hibernate.search.metadata.IndexedTypeDescriptor;
 import org.hibernate.search.query.dsl.QueryContextBuilder;
@@ -60,19 +53,17 @@ import org.hibernate.search.standalone.transaction.TransactionContext;
 import org.hibernate.search.stat.Statistics;
 
 /**
- * Base class to create SearchFactories in a JPA environment. Uses a JPAEventSource. 
- * <b>You have to call the init() and shutdown() method respectively.</b>
- *
+ * Base class to create SearchFactories in a JPA environment.
+ * 
  * @author Martin Braun
  */
 public abstract class JPASearchFactory implements StandaloneSearchFactory, UpdateConsumer {
 
-	private final Logger LOGGER = Logger.getLogger( EntityManagerFactory.class.getName() );
+	private final Logger LOGGER = Logger.getLogger( JPASearchFactory.class.getName() );
 	StandaloneSearchFactory searchFactory;
-	UpdateSource updateSource;
+	private UpdateSource updateSource;
 	Set<Class<?>> indexRelevantEntities;
 	Map<Class<?>, String> idProperties;
-	Map<Class<?>, List<Class<?>>> containedInIndexOf;
 
 	public EntityProvider entityProvider(EntityManager em) {
 		return new EntityManagerEntityProvider( new EntityManagerCloseable( em ), this.idProperties );
@@ -95,8 +86,6 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 
 	protected abstract int getBatchSizeForUpdates();
 
-	protected abstract TriggerSQLStringSource getTriggerSQLStringSource();
-	
 	protected abstract Connection getConnectionForSetup(EntityManager em);
 
 	/**
@@ -106,7 +95,9 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 
 	protected abstract boolean isUseJTATransaction();
 
-	public void init() {
+	protected abstract UpdateSource getUpdateSource();
+
+	public final void init() {
 		if ( this.isUseJTATransaction() && !( this.getExecutorServiceForUpdater() instanceof ManagedScheduledExecutorService ) ) {
 			throw new IllegalArgumentException( "an instance of" + ManagedScheduledExecutorService.class
 					+ "has to be used for scheduling when using JTA transactions!" );
@@ -140,7 +131,6 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 
 		this.indexRelevantEntities = Collections.unmodifiableSet( MetadataUtil.calculateIndexRelevantEntities( rehashedTypeMetadatas ) );
 		this.idProperties = MetadataUtil.calculateIdProperties( rehashedTypeMetadatas );
-		this.containedInIndexOf = MetadataUtil.calculateInIndexOf( rehashedTypeMetadatas );
 
 		SearchIntegratorBuilder builder = new SearchIntegratorBuilder();
 		// we have to build an integrator here (but we don't need it afterwards)
@@ -151,89 +141,15 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 		SearchIntegrator impl = builder.buildSearchIntegrator();
 		this.searchFactory = new StandaloneSearchFactoryImpl( impl.unwrap( ExtendedSearchIntegrator.class ) );
 
-		JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider( this.getEmf(), this.idProperties, this.isUseJTATransaction() );
-		IndexUpdater indexUpdater = new IndexUpdater( rehashedTypeMetadataPerIndexRoot, this.containedInIndexOf, entityProvider,
-				impl.unwrap( ExtendedSearchIntegrator.class ) );
-		EventModelParser eventModelParser = new EventModelParser();
-		List<EventModelInfo> eventModelInfos = eventModelParser.parse( new ArrayList<>( this.getUpdateClasses() ) );
+		this.updateSource = this.getUpdateSource();
+		if ( this.updateSource != null ) {
+			Map<Class<?>, List<Class<?>>> containedInIndexOf = MetadataUtil.calculateInIndexOf( rehashedTypeMetadatas );
 
-		this.setupTriggers( eventModelInfos );
-
-		this.updateSource = new JPAUpdateSource( eventModelInfos, this.getEmf(), this.isUseJTATransaction(), this.getDelay(), this.getDelayUnit(),
-				this.getBatchSizeForUpdates(), this.getExecutorServiceForUpdater() );
-		this.updateSource.setUpdateConsumers( Arrays.asList( indexUpdater, this ) );
-		this.updateSource.start();
-	}
-
-	private void setupTriggers(List<EventModelInfo> eventModelInfos) {
-		EntityManager em = null;
-		try {
-			em = this.getEmf().createEntityManager();
-			Connection connection = this.getConnectionForSetup( em );
-
-			TriggerSQLStringSource triggerSource = this.getTriggerSQLStringSource();
-			try {
-				for ( String str : triggerSource.getSetupCode() ) {
-					Statement statement = connection.createStatement();
-					LOGGER.info( str );
-					statement.addBatch( connection.nativeSQL( str ) );
-					statement.executeBatch();
-					connection.commit();
-				}
-				for ( EventModelInfo info : eventModelInfos ) {
-					for ( String unSetupCode : triggerSource.getSpecificUnSetupCode( info ) ) {
-						Statement statement = connection.createStatement();
-						LOGGER.info( unSetupCode );
-						statement.addBatch( connection.nativeSQL( unSetupCode ) );
-						statement.executeBatch();
-						connection.commit();
-					}
-					for ( String setupCode : triggerSource.getSpecificSetupCode( info ) ) {
-						Statement statement = connection.createStatement();
-						LOGGER.info( setupCode );
-						statement.addBatch( connection.nativeSQL( setupCode ) );
-						statement.executeBatch();
-						connection.commit();
-					}
-					for ( int eventType : EventType.values() ) {
-						String[] triggerDropStrings = triggerSource.getTriggerDropCode( info, eventType );
-						for ( String triggerCreationString : triggerDropStrings ) {
-							Statement statement = connection.createStatement();
-							LOGGER.info( triggerCreationString );
-							statement.addBatch( connection.nativeSQL( triggerCreationString ) );
-							statement.executeBatch();
-							connection.commit();
-						}
-					}
-					for ( int eventType : EventType.values() ) {
-						String[] triggerCreationStrings = triggerSource.getTriggerCreationCode( info, eventType );
-						for ( String triggerCreationString : triggerCreationStrings ) {
-							Statement statement = connection.createStatement();
-							LOGGER.info( triggerCreationString );
-							statement.addBatch( connection.nativeSQL( triggerCreationString ) );
-							statement.executeBatch();
-							connection.commit();
-						}
-					}
-
-				}
-			}
-			catch (SQLException e) {
-				try {
-					connection.rollback();
-				}
-				catch (SQLException e1) {
-					// TODO: better Exception:
-					throw new RuntimeException( e1 );
-				}
-				// TODO: better Exception:
-				throw new RuntimeException( e );
-			}
-		}
-		finally {
-			if ( em != null && !this.isUseJTATransaction() ) {
-				em.close();
-			}
+			JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider( this.getEmf(), this.idProperties, this.isUseJTATransaction() );
+			IndexUpdater indexUpdater = new IndexUpdater( rehashedTypeMetadataPerIndexRoot, containedInIndexOf, entityProvider,
+					impl.unwrap( ExtendedSearchIntegrator.class ) );
+			this.updateSource.setUpdateConsumers( Arrays.asList( indexUpdater, this ) );
+			this.updateSource.start();
 		}
 	}
 

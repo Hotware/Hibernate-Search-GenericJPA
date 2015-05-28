@@ -1,3 +1,9 @@
+/*
+ * Hibernate Search, full-text search for your domain model
+ *
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
+ */
 package org.hibernate.search.genericjpa.test.searchFactory;
 
 import java.sql.Connection;
@@ -17,7 +23,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
 
 import org.hibernate.internal.SessionImpl;
-import org.hibernate.search.genericjpa.JPASearchFactory;
+import org.hibernate.search.genericjpa.SQLJPASearchFactory;
 import org.hibernate.search.genericjpa.db.events.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.TriggerSQLStringSource;
 import org.hibernate.search.genericjpa.test.entities.Game;
@@ -28,7 +34,7 @@ import org.hibernate.search.jpa.Search;
 
 @Singleton
 @Startup
-public class EJBSearchFactory extends JPASearchFactory {
+public class EJBSearchFactory extends SQLJPASearchFactory {
 
 	@Resource
 	private ManagedScheduledExecutorService exec;
