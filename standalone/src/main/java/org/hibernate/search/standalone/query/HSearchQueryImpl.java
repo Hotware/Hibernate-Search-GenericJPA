@@ -130,6 +130,10 @@ public class HSearchQueryImpl implements HSearchQuery {
 			// split the ids for each class (and also make sure the original
 			// order is saved. this is needed even for only one class)
 			projected.stream().forEach( (arr) -> {
+				if ( arr[1] == null ) {
+					LOGGER.info( "null id ommited" );
+					return;
+				}
 				originalOrder.add( arr[1] );
 				idsForClass.computeIfAbsent( (Class<?>) arr[0], (clazz) -> {
 					return new ArrayList<>();

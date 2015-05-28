@@ -249,10 +249,8 @@ public class JPAUpdateSource implements UpdateSource {
 			countMap.put( evi.getUpdateClass(), count );
 
 			{
-				CriteriaQuery<?> q = cb.createQuery( evi.getUpdateClass() );
-				Root<?> ent = q.from( evi.getUpdateClass() );
-				q = q.orderBy( cb.asc( ent.get( "id" ) ) );
-				TypedQuery<?> query = em.createQuery( q.multiselect( ent ) );
+				Query query = em.createQuery( new StringBuilder().append( "SELECT obj FROM " ).append( evi.getUpdateClass().getName() )
+						.append( " obj ORDER BY obj.id" ).toString() );
 				queryMap.put( evi.getUpdateClass(), query );
 			}
 		}

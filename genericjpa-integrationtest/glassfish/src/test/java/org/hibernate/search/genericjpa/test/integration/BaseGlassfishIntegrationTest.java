@@ -27,30 +27,20 @@ import org.hibernate.search.genericjpa.test.entities.Game;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.FullTextQuery;
 import org.hibernate.search.jpa.Search;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.shrinkwrap.api.Archive;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-@RunWith(Arquillian.class)
-public class BasicGlassfishIntegrationTest {
-
-	@Deployment
-	public static Archive<?> createDeployment() {
-		return IntegrationTestUtil.createEclipseLinkMySQLDeployment();
-	}
+public abstract class BaseGlassfishIntegrationTest {
 
 	private static final String[] GAME_TITLES = { "Super Mario Brothers", "Mario Kart", "F-Zero" };
 
 	@PersistenceContext
-	private EntityManager em;
+	public EntityManager em;
 
 	@Inject
-	private UserTransaction utx;
+	public UserTransaction utx;
 
 	@Before
 	public void setup() throws Exception {

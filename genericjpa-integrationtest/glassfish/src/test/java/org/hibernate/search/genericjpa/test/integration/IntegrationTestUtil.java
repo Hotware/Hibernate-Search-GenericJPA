@@ -26,10 +26,20 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
  * @author Martin Braun
  */
 public class IntegrationTestUtil {
+	
+	private IntegrationTestUtil() {
+		// can't touch this
+	}
 
 	public static Archive<?> createEclipseLinkMySQLDeployment() {
-		return ShrinkWrap.create( WebArchive.class, "test.war" ).setWebXML( "WEB-INF/web.xml" ).addPackage( Game.class.getPackage() )
+		return ShrinkWrap.create( WebArchive.class, "eclipselink-mysql.war" ).setWebXML( "WEB-INF/web.xml" ).addPackage( Game.class.getPackage() )
 				.addPackage( EJBSearchFactory.class.getPackage() ).addAsResource( "META-INF/eclipselink-mysql-persistence.xml", "META-INF/persistence.xml" )
+				.addAsWebInfResource( EmptyAsset.INSTANCE, "beans.xml" );
+	}
+	
+	public static Archive<?> createHibernateMySQLDeployment() {
+		return ShrinkWrap.create( WebArchive.class, "hibernate-mysql.war" ).setWebXML( "WEB-INF/web.xml" ).addPackage( Game.class.getPackage() )
+				.addPackage( EJBSearchFactory.class.getPackage() ).addAsResource( "META-INF/hibernate-mysql-persistence.xml", "META-INF/persistence.xml" )
 				.addAsWebInfResource( EmptyAsset.INSTANCE, "beans.xml" );
 	}
 

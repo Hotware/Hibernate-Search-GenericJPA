@@ -6,6 +6,8 @@
  */
 package org.hibernate.search.genericjpa.test.entities;
 
+import java.io.Serializable;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -18,7 +20,9 @@ import org.hibernate.search.genericjpa.annotations.Updates;
 @Entity
 @Table(name = "VendorUpdates")
 @Updates(tableName = "VendorUpdates", originalTableName = "Vendor")
-public class VendorUpdates {
+public class VendorUpdates implements Serializable {
+
+	private static final long serialVersionUID = 1L;
 
 	@Id
 	private Long id;

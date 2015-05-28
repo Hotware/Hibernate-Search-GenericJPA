@@ -6,6 +6,7 @@
  */
 package org.hibernate.search.genericjpa.test.entities;
 
+import java.io.Serializable;
 import java.util.List;
 
 import javax.persistence.Column;
@@ -27,7 +28,9 @@ import org.hibernate.search.standalone.annotations.InIndex;
 @Indexed
 @Entity
 @Table(name = "Game")
-public class Game {
+public class Game implements Serializable {
+	
+	private static final long serialVersionUID = 1L;
 
 	private Long id;
 	private String title;

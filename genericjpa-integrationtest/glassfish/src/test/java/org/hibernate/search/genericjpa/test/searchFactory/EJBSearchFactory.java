@@ -1,5 +1,6 @@
 package org.hibernate.search.genericjpa.test.searchFactory;
 
+import java.sql.Connection;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -11,9 +12,11 @@ import javax.annotation.Resource;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.enterprise.concurrent.ManagedScheduledExecutorService;
+import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
 
+import org.hibernate.internal.SessionImpl;
 import org.hibernate.search.genericjpa.JPASearchFactory;
 import org.hibernate.search.genericjpa.db.events.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.TriggerSQLStringSource;
@@ -97,6 +100,17 @@ public class EJBSearchFactory extends JPASearchFactory {
 	@Override
 	protected ScheduledExecutorService getExecutorServiceForUpdater() {
 		return this.exec;
+	}
+
+	@Override
+	protected Connection getConnectionForSetup(EntityManager em) {
+		if ( em instanceof org.eclipse.persistence.internal.jpa.EntityManagerImpl ) {
+			return em.unwrap( Connection.class );
+		}
+		else if ( em instanceof org.hibernate.jpa.internal.EntityManagerImpl ) {
+			return ( (SessionImpl) ( (org.hibernate.jpa.internal.EntityManagerImpl) em ).getSession() ).connection();
+		}
+		throw new AssertionError();
 	}
 
 }

@@ -151,7 +151,6 @@ final class FullTextQueryImpl implements FullTextQuery {
 		return this.hsearchQuery.toString();
 	}
 
-	// TODO mutualize this code with the EM this will fix the rollback issues
 	@SuppressWarnings({ "ThrowableInstanceNeverThrown" })
 	private void throwPersistenceException(Exception e) {
 		throwPersistenceException( new PersistenceException( e ) );

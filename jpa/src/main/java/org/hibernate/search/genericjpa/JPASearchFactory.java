@@ -96,6 +96,8 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 	protected abstract int getBatchSizeForUpdates();
 
 	protected abstract TriggerSQLStringSource getTriggerSQLStringSource();
+	
+	protected abstract Connection getConnectionForSetup(EntityManager em);
 
 	/**
 	 * for JTA transactions this has to be a {@link javax.enterprise.concurrent.ManagedScheduledExecutorService}
@@ -167,7 +169,7 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 		EntityManager em = null;
 		try {
 			em = this.getEmf().createEntityManager();
-			Connection connection = em.unwrap( Connection.class );
+			Connection connection = this.getConnectionForSetup( em );
 
 			TriggerSQLStringSource triggerSource = this.getTriggerSQLStringSource();
 			try {

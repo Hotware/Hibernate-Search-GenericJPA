@@ -12,10 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.persistence.EntityManager;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaBuilder.In;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
+import javax.persistence.Query;
 
 import org.hibernate.search.standalone.entity.EntityProvider;
 
@@ -23,6 +20,9 @@ public class EntityManagerEntityProvider implements EntityProvider {
 
 	private final EntityManager em;
 	private final Map<Class<?>, String> idProperties;
+
+	private static final String QUERY_FORMAT = "SELECT obj FROM %s obj "
+			+ "WHERE obj.%s IN :ids";
 
 	// TODO: add support for fetch profiles?
 
@@ -41,20 +41,16 @@ public class EntityManagerEntityProvider implements EntityProvider {
 		return this.em.find( entityClass, id );
 	}
 
-	@SuppressWarnings("rawtypes")
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public List getBatch(Class<?> entityClass, List<Object> ids) {
 		List<Object> ret = new ArrayList<>( ids.size() );
 		if ( ids.size() > 0 ) {
-			CriteriaBuilder cb = this.em.getCriteriaBuilder();
-			CriteriaQuery<?> q = cb.createQuery( entityClass );
-			Root<?> ent = q.from( entityClass );
 			String idProperty = this.idProperties.get( entityClass );
-			In<Object> in = cb.in( ent.get( idProperty ) );
-			for ( Object id : ids ) {
-				in.value( id );
-			}
-			ret.addAll( this.em.createQuery( q.multiselect( ent ).where( in ) ).getResultList() );
+			String queryString = String.format(QUERY_FORMAT, entityClass.getName(), idProperty);
+			Query query = this.em.createQuery( queryString );	
+			query.setParameter( "ids", ids );
+			ret.addAll( query.getResultList() );
 		}
 		return ret;
 	}
