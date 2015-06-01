@@ -35,6 +35,7 @@ import org.hibernate.search.genericjpa.db.id.ToOriginalIdBridge;
 /**
  * @author Martin Braun
  */
+@Deprecated
 public class JPAUpdatesClassBuilder {
 
 	private String tableName;

@@ -28,6 +28,7 @@ import org.junit.Test;
 /**
  * @author Martin
  */
+@Deprecated
 public class JPAUpdatesClassBuilderTest {
 
 	@Test
