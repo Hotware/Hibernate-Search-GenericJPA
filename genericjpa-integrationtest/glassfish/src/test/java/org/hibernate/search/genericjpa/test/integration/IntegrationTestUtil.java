@@ -34,4 +34,10 @@ public class IntegrationTestUtil {
 				.addAsWebInfResource( EmptyAsset.INSTANCE, "beans.xml" );
 	}
 
+	public static Archive<?> createBatooMySQLDeployment() {
+		return ShrinkWrap.create( WebArchive.class, "batoo-mysql.war" ).setWebXML( "WEB-INF/web.xml" ).addPackage( Game.class.getPackage() )
+				.addPackage( EJBSearchFactory.class.getPackage() ).addAsResource( "META-INF/batoo-mysql-persistence.xml", "META-INF/persistence.xml" )
+				.addAsWebInfResource( EmptyAsset.INSTANCE, "beans.xml" );
+	}
+
 }

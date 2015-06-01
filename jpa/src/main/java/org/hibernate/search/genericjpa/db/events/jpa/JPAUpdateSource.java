@@ -59,6 +59,7 @@ public class JPAUpdateSource implements UpdateSource {
 
 	private List<UpdateConsumer> updateConsumers;
 	private final ScheduledExecutorService exec;
+	private boolean createdOwnExecutorService = false;
 	private final boolean useJTATransaction;
 
 	/**
@@ -67,6 +68,7 @@ public class JPAUpdateSource implements UpdateSource {
 	public JPAUpdateSource(List<EventModelInfo> eventModelInfos, EntityManagerFactory emf, boolean useJTATransaction, long timeOut, TimeUnit timeUnit,
 			int batchSizeForUpdates) {
 		this( eventModelInfos, emf, useJTATransaction, timeOut, timeUnit, batchSizeForUpdates, Executors.newScheduledThreadPool( 1 ) );
+		this.createdOwnExecutorService = true;
 	}
 
 	/**
@@ -84,6 +86,7 @@ public class JPAUpdateSource implements UpdateSource {
 			int batchSizeForUpdates, int batchSizeForDatabaseQueries) {
 		this( eventModelInfos, emf, useJTATransaction, timeOut, timeUnit, batchSizeForUpdates, batchSizeForDatabaseQueries, Executors
 				.newScheduledThreadPool( 1 ) );
+		this.createdOwnExecutorService = true;
 	}
 
 	/**
@@ -126,6 +129,9 @@ public class JPAUpdateSource implements UpdateSource {
 			catch (SecurityException | NoSuchMethodException e) {
 				throw new RuntimeException( "could not access the \"getId()\" method of class: " + evi.getUpdateClass() );
 			}
+		}
+		if(exec == null) {
+			throw new IllegalArgumentException("the ScheduledExecutorService may not be null!");
 		}
 		this.exec = exec;
 		this.useJTATransaction = useJTATransaction;
@@ -268,7 +274,7 @@ public class JPAUpdateSource implements UpdateSource {
 
 	@Override
 	public void stop() {
-		if ( this.exec != null ) {
+		if ( this.createdOwnExecutorService && this.exec != null ) {
 			this.exec.shutdown();
 		}
 	}

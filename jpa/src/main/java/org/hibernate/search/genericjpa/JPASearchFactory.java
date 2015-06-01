@@ -22,7 +22,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import javax.enterprise.concurrent.ManagedScheduledExecutorService;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 
@@ -98,9 +97,19 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 	protected abstract UpdateSource getUpdateSource();
 
 	public final void init() {
-		if ( this.isUseJTATransaction() && !( this.getExecutorServiceForUpdater() instanceof ManagedScheduledExecutorService ) ) {
-			throw new IllegalArgumentException( "an instance of" + ManagedScheduledExecutorService.class
-					+ "has to be used for scheduling when using JTA transactions!" );
+		if ( this.isUseJTATransaction() ) {
+			ScheduledExecutorService exec = this.getExecutorServiceForUpdater();
+			try {
+				if ( !Class.forName( "javax.enterprise.concurrent.ManagedScheduledExecutorService" ).isAssignableFrom( exec.getClass() ) ) {
+					throw new IllegalArgumentException( "an instance of" + " javax.enterprise.concurrent.ManagedScheduledExecutorService"
+							+ "has to be used for scheduling when using JTA transactions!" );
+				}
+			}
+			catch (ClassNotFoundException e) {
+				throw new RuntimeException(
+						"coudln't load class javax.enterprise.concurrent.ManagedScheduledExecutorService "
+						+ "even though JTA transaction is to be used!" );
+			}
 		}
 		SearchConfigurationImpl config;
 		if ( this.getConfigFile() != null && !this.getConfigFile().equals( "" ) ) {
