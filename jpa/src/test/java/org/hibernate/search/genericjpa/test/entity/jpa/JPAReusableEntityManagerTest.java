@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.hibernate.search.entity.JPAReusableEntityProvider;
+import org.hibernate.search.genericjpa.entity.JPAReusableEntityProvider;
 import org.hibernate.search.genericjpa.test.db.events.jpa.DatabaseIntegrationTest;
 import org.hibernate.search.genericjpa.test.db.events.jpa.MetaModelParser;
 import org.hibernate.search.genericjpa.test.jpa.entities.Place;

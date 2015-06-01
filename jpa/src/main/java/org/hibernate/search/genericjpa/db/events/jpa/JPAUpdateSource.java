@@ -23,18 +23,16 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Query;
-import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
 import javax.transaction.UserTransaction;
 
-import org.hibernate.search.entity.EntityManagerCloseable;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateSource;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo.IdInfo;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
+import org.hibernate.search.genericjpa.entity.EntityManagerCloseable;
 import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess;
 import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess.ObjectClassWrapper;
 
@@ -172,67 +170,67 @@ public class JPAUpdateSource implements UpdateSource {
 						// we have no order problems here since
 						// the query does
 						// the ordering for us
-				Object val = query.get();
-				toRemove.add( new Object[] { query.entityClass(), val } );
-				EventModelInfo evi = this.updateClassToEventModelInfo.get( query.entityClass() );
-				for ( IdInfo info : evi.getIdInfos() ) {
-					updateInfos.add( new UpdateInfo( info.getEntityClass(), info.getIdAccessor().apply( val ), evi.getEventTypeAccessor().apply( val ) ) );
-				}
-				// TODO: maybe move this to a method as
-				// it is getting reused
-				if ( ++processed % this.batchSizeForUpdates == 0 ) {
-					for ( UpdateConsumer consumer : this.updateConsumers ) {
-						consumer.updateEvent( updateInfos );
+						Object val = query.get();
+						toRemove.add( new Object[] { query.entityClass(), val } );
+						EventModelInfo evi = this.updateClassToEventModelInfo.get( query.entityClass() );
+						for ( IdInfo info : evi.getIdInfos() ) {
+							updateInfos.add( new UpdateInfo( info.getEntityClass(), info.getIdAccessor().apply( val ), evi.getEventTypeAccessor().apply( val ) ) );
+						}
+						// TODO: maybe move this to a method as
+						// it is getting reused
+						if ( ++processed % this.batchSizeForUpdates == 0 ) {
+							for ( UpdateConsumer consumer : this.updateConsumers ) {
+								consumer.updateEvent( updateInfos );
+							}
+							for ( Object[] rem : toRemove ) {
+								// the class is in rem[0], the
+								// entity is in
+								// rem[1]
+								query.addToNextValuePosition( (Class<?>) rem[0], -1L );
+								em.remove( rem[1] );
+							}
+							toRemove.clear();
+							updateInfos.clear();
+						}
 					}
-					for ( Object[] rem : toRemove ) {
-						// the class is in rem[0], the
-						// entity is in
-						// rem[1]
-						query.addToNextValuePosition( (Class<?>) rem[0], -1L );
-						em.remove( rem[1] );
+					if ( updateInfos.size() > 0 ) {
+						for ( UpdateConsumer consumer : this.updateConsumers ) {
+							consumer.updateEvent( updateInfos );
+						}
+						for ( Object[] rem : toRemove ) {
+							// the class is in rem[0], the
+							// entity is in rem[1]
+							query.addToNextValuePosition( (Class<?>) rem[0], -1L );
+							em.remove( rem[1] );
+						}
+						toRemove.clear();
+						updateInfos.clear();
 					}
-					toRemove.clear();
-					updateInfos.clear();
+	
+					em.flush();
+					// clear memory :)
+					em.clear();
+		
+					if ( !this.useJTATransaction ) {
+						tx.commit();
+					}
+					else {
+						utx.commit();
+					}
+				}
+				catch (Exception e) {
+					throw new RuntimeException( "Error occured during Update processing!", e );
+				}
+				finally {
+					if ( em != null ) {
+						em.close();
+					}
 				}
 			}
-			if ( updateInfos.size() > 0 ) {
-				for ( UpdateConsumer consumer : this.updateConsumers ) {
-					consumer.updateEvent( updateInfos );
-				}
-				for ( Object[] rem : toRemove ) {
-					// the class is in rem[0], the
-					// entity is in rem[1]
-					query.addToNextValuePosition( (Class<?>) rem[0], -1L );
-					em.remove( rem[1] );
-				}
-				toRemove.clear();
-				updateInfos.clear();
+			catch (Exception e) {
+				LOGGER.log( Level.SEVERE, e.getMessage(), e );
 			}
-
-			em.flush();
-			// clear memory :)
-			em.clear();
-
-			if ( !this.useJTATransaction ) {
-				tx.commit();
-			}
-			else {
-				utx.commit();
-			}
-		}
-		catch (Exception e) {
-			throw new RuntimeException( "Error occured during Update processing!", e );
-		}
-		finally {
-			if ( em != null ) {
-				em.close();
-			}
-		}
-	}
-	catch (Exception e) {
-		LOGGER.log( Level.SEVERE, e.getMessage(), e );
-	}
-}, 0, this.timeOut, this.timeUnit );
+		}, 0, this.timeOut, this.timeUnit );
 	}
 
 	public static MultiQueryAccess query(JPAUpdateSource updateSource, EntityManager em) {

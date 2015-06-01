@@ -65,6 +65,7 @@ public class HibernateGlassfishIntegrationTest {
 	@After
 	public void commitTransaction() throws Exception {
 		utx.commit();
+		Thread.sleep( 500 );
 	}
 
 	private void clearData() throws Exception {

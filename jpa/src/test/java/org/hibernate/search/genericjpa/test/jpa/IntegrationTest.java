@@ -22,7 +22,7 @@ import javax.persistence.Persistence;
 
 import org.apache.lucene.search.Query;
 import org.eclipse.persistence.descriptors.ClassDescriptor;
-import org.hibernate.search.entity.EntityManagerEntityProvider;
+import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.test.db.events.jpa.MetaModelParser;
 import org.hibernate.search.genericjpa.test.jpa.entities.AdditionalPlace;
 import org.hibernate.search.genericjpa.test.jpa.entities.AdditionalPlace2;

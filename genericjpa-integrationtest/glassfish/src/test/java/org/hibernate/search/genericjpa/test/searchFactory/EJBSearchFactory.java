@@ -71,7 +71,7 @@ public class EJBSearchFactory extends SQLJPASearchFactory {
 
 	@Override
 	protected long getDelay() {
-		return 500;
+		return 100;
 	}
 
 	@Override
