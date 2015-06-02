@@ -13,7 +13,7 @@
 		<class>org.hibernate.search.genericjpa.test.entities.GameVendorUpdates</class>
 		<properties>
 			<property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver" />
-			<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/hsearch-test" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/testingdb" />
 			<property name="javax.persistence.jdbc.user" value="hibernate_user" />
 			<property name="javax.persistence.jdbc.password" value="hibernate_password" />
 			<property name="eclipselink.ddl-generation" value="drop-and-create-tables" />

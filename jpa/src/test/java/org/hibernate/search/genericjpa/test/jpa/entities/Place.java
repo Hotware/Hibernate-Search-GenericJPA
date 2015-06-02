@@ -21,6 +21,7 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 import javax.persistence.Transient;
 
 import org.hibernate.search.annotations.ContainedIn;
@@ -33,6 +34,7 @@ import org.hibernate.search.annotations.Store;
 import org.hibernate.search.standalone.annotations.InIndex;
 
 @Entity
+@Table(name = "PLACE")
 @Indexed
 @InIndex
 public class Place {

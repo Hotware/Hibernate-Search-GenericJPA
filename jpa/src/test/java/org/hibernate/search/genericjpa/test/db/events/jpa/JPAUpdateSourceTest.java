@@ -7,7 +7,6 @@
 package org.hibernate.search.genericjpa.test.db.events.jpa;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 import java.util.HashSet;
 import java.util.List;
@@ -28,6 +27,7 @@ import org.hibernate.search.genericjpa.test.jpa.entities.Place;
 import org.hibernate.search.genericjpa.test.jpa.entities.PlaceSorcererUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.PlaceUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
+import org.hibernate.search.genericjpa.test.util.Sleep;
 import org.junit.Test;
 
 /**
@@ -83,13 +83,16 @@ public class JPAUpdateSourceTest {
 				}
 			} ) );
 			updateSource.start();
-			Thread.sleep( 1000 * 3 );
-			updateSource.stop();
-			for ( boolean ev : gotEvent ) {
-				if ( !ev ) {
-					fail( "didn't get all events that were expected" );
+			Sleep.sleep( 1000 * 3, () -> {
+				for ( boolean ev : gotEvent ) {
+					if ( !ev ) {
+						return false;
+					}
 				}
-			}
+				return true;
+			});
+			updateSource.stop();
+			
 
 			EntityManager em = null;
 			try {

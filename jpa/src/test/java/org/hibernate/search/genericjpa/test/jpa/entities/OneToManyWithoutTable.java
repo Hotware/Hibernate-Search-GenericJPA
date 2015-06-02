@@ -9,6 +9,7 @@ package org.hibernate.search.genericjpa.test.jpa.entities;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 import org.hibernate.search.annotations.ContainedIn;
 
@@ -16,6 +17,8 @@ import org.hibernate.search.annotations.ContainedIn;
  * @author Martin Braun
  */
 @Entity
+//well...
+@Table(name = "ONETOMANYWITHOUTTABLE")
 public class OneToManyWithoutTable {
 
 	@Id

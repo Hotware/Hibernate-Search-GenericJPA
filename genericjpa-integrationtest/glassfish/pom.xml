@@ -58,6 +58,14 @@
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-search-engine</artifactId>
 		</dependency>
+
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-search-genericjpa-test-util</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-search-jpa</artifactId>
@@ -140,7 +148,7 @@
 		<dependency>
 			<groupId>javax</groupId>
 			<artifactId>javaee-api</artifactId>
-			<version>7.0</version><!--$NO-MVN-MAN-VER$-->
+			<version>7.0</version><!--$NO-MVN-MAN-VER$ -->
 			<scope>test</scope>
 		</dependency>
 

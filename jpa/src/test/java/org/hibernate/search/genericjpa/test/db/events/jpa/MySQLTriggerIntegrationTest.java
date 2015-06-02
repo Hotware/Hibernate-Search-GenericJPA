@@ -25,6 +25,7 @@ import org.hibernate.search.genericjpa.test.jpa.entities.Place;
 import org.hibernate.search.genericjpa.test.jpa.entities.PlaceSorcererUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.PlaceUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
+import org.hibernate.search.genericjpa.test.util.Sleep;
 import org.junit.Test;
 
 /**
@@ -37,9 +38,8 @@ public class MySQLTriggerIntegrationTest extends DatabaseIntegrationTest {
 		this.setup( "EclipseLink_MySQL" );
 		this.setupTriggers();
 
-		EntityManager em = null;
+		EntityManager em = this.emf.createEntityManager();
 		try {
-			em = this.emf.createEntityManager();
 			EntityTransaction tx = em.getTransaction();
 			tx.begin();
 			java.sql.Connection connection = em.unwrap( java.sql.Connection.class );
@@ -95,19 +95,22 @@ public class MySQLTriggerIntegrationTest extends DatabaseIntegrationTest {
 			} ) );
 
 			updateSource.start();
-			Thread.sleep( 1000 );
-			tx.begin();
-			assertEquals( 0, em.createQuery( "SELECT a FROM PlaceSorcererUpdates a" ).getResultList().size() );
-			tx.commit();
+			Sleep.sleep( 1000, () -> {
+				tx.begin();
+				try {
+					return em.createQuery( "SELECT a FROM PlaceSorcererUpdates a" ).getResultList().size() == 0;
+				}
+				finally {
+					tx.commit();
+				}
+			} );
 
 			if ( exceptionString != null ) {
 				fail( exceptionString );
 			}
 		}
 		finally {
-			if ( em != null ) {
-				em.close();
-			}
+			em.close();
 			this.tearDownTriggers();
 		}
 	}

@@ -9,11 +9,13 @@ package org.hibernate.search.genericjpa.test.jpa.entities;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Table;
 
 /**
  * @author Martin
  */
 @Entity
+@Table(name = "WITHOUTUPDATES")
 public class WithoutUpdates {
 
 	@Id

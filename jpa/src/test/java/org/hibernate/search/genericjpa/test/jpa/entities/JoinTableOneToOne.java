@@ -11,11 +11,13 @@ import javax.persistence.Id;
 import javax.persistence.JoinTable;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
+import javax.persistence.Table;
 
 /**
  * @author Martin Braun
  */
 @Entity
+@Table(name = "JOINTABLEONETOONE")
 public class JoinTableOneToOne {
 
 	@Id

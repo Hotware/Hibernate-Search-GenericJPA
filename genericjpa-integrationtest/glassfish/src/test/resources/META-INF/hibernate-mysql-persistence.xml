@@ -16,7 +16,7 @@
 			<property name="hibernate.transaction.jta.platform"
 				value="org.hibernate.service.jta.platform.internal.SunOneJtaPlatform" />
 			<property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver" />
-			<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/hsearch-test" />
+			<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/testingdb" />
 			<property name="javax.persistence.jdbc.user" value="hibernate_user" />
 			<property name="javax.persistence.jdbc.password" value="hibernate_password" />
 			<property name="hibernate.dialect" value="org.hibernate.dialect.MySQL5Dialect" />

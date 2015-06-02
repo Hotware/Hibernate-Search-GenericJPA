@@ -23,12 +23,18 @@ import org.hibernate.search.genericjpa.db.events.UpdateSource;
 import org.hibernate.search.genericjpa.db.events.jpa.JPAUpdateSource;
 
 /**
+ * an implementation of {@link JPASearchFactory} that uses an {@link UpdateSource} that gets it's information out of
+ * tables that hold all the information about changes in the index tree. These tables are filled via triggers
+ * 
  * @author Martin Braun
  */
 public abstract class SQLJPASearchFactory extends JPASearchFactory {
 
 	private final Logger LOGGER = Logger.getLogger( SQLJPASearchFactory.class.getName() );
 
+	/**
+	 * @return the RDBMS specific trigger source
+	 */
 	protected abstract TriggerSQLStringSource getTriggerSQLStringSource();
 
 	@Override

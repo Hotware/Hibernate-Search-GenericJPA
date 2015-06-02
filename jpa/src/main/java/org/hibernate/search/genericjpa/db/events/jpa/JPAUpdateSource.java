@@ -168,60 +168,71 @@ public class JPAUpdateSource implements UpdateSource {
 						em.joinTransaction();
 						tx = null;
 					}
-					MultiQueryAccess query = query( this, em );
-					List<Object[]> toRemove = new ArrayList<>( this.batchSizeForUpdates );
-					List<UpdateInfo> updateInfos = new ArrayList<>( this.batchSizeForUpdates );
-					long processed = 0;
-					while ( query.next() ) {
-						// we have no order problems here since
-						// the query does
-						// the ordering for us
-						Object val = query.get();
-						toRemove.add( new Object[] { query.entityClass(), val } );
-						EventModelInfo evi = this.updateClassToEventModelInfo.get( query.entityClass() );
-						for ( IdInfo info : evi.getIdInfos() ) {
-							updateInfos.add( new UpdateInfo( info.getEntityClass(), info.getIdAccessor().apply( val ), evi.getEventTypeAccessor().apply( val ) ) );
+					try {
+						MultiQueryAccess query = query( this, em );
+						List<Object[]> toRemove = new ArrayList<>( this.batchSizeForUpdates );
+						List<UpdateInfo> updateInfos = new ArrayList<>( this.batchSizeForUpdates );
+						long processed = 0;
+						while ( query.next() ) {
+							// we have no order problems here since
+							// the query does
+							// the ordering for us
+							Object val = query.get();
+							toRemove.add( new Object[] { query.entityClass(), val } );
+							EventModelInfo evi = this.updateClassToEventModelInfo.get( query.entityClass() );
+							for ( IdInfo info : evi.getIdInfos() ) {
+								updateInfos.add( new UpdateInfo( info.getEntityClass(), info.getIdAccessor().apply( val ), evi.getEventTypeAccessor().apply( val ) ) );
+							}
+							// TODO: maybe move this to a method as
+							// it is getting reused
+							if ( ++processed % this.batchSizeForUpdates == 0 ) {
+								for ( UpdateConsumer consumer : this.updateConsumers ) {
+									consumer.updateEvent( updateInfos );
+								}
+								for ( Object[] rem : toRemove ) {
+									// the class is in rem[0], the
+									// entity is in
+									// rem[1]
+									query.addToNextValuePosition( (Class<?>) rem[0], -1L );
+									em.remove( rem[1] );
+								}
+								toRemove.clear();
+								updateInfos.clear();
+							}
 						}
-						// TODO: maybe move this to a method as
-						// it is getting reused
-						if ( ++processed % this.batchSizeForUpdates == 0 ) {
+						if ( updateInfos.size() > 0 ) {
 							for ( UpdateConsumer consumer : this.updateConsumers ) {
 								consumer.updateEvent( updateInfos );
 							}
 							for ( Object[] rem : toRemove ) {
 								// the class is in rem[0], the
-								// entity is in
-								// rem[1]
+								// entity is in rem[1]
 								query.addToNextValuePosition( (Class<?>) rem[0], -1L );
 								em.remove( rem[1] );
 							}
 							toRemove.clear();
 							updateInfos.clear();
 						}
-					}
-					if ( updateInfos.size() > 0 ) {
-						for ( UpdateConsumer consumer : this.updateConsumers ) {
-							consumer.updateEvent( updateInfos );
-						}
-						for ( Object[] rem : toRemove ) {
-							// the class is in rem[0], the
-							// entity is in rem[1]
-							query.addToNextValuePosition( (Class<?>) rem[0], -1L );
-							em.remove( rem[1] );
-						}
-						toRemove.clear();
-						updateInfos.clear();
-					}
-	
-					em.flush();
-					// clear memory :)
-					em.clear();
 		
-					if ( !this.useJTATransaction ) {
-						tx.commit();
+						em.flush();
+						// clear memory :)
+						em.clear();
+			
+						if ( !this.useJTATransaction ) {
+							tx.commit();
+						}
+						else {
+							utx.commit();
+						}
 					}
-					else {
-						utx.commit();
+					catch(Throwable e) {
+						if( !this.useJTATransaction ) {
+							tx.rollback();
+						}
+						else {
+							utx.rollback();
+						}
+						throw e;
 					}
 				}
 				catch (Exception e) {

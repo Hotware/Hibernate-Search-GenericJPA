@@ -8,6 +8,8 @@
 	<name>hibernate-search-genericjpa-parent</name>
 
 	<modules>
+		<module>build-config</module>
+		<module>test-util</module>
 		<module>standalone</module>
 		<module>db</module>
 		<module>jpa</module>
@@ -119,6 +121,14 @@
 
 	<build>
 		<plugins>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<version>2.8.1</version>
+			</plugin>
+
+			<!-- 
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
@@ -126,20 +136,20 @@
 				<dependencies>
 					<dependency>
 						<groupId>org.hibernate</groupId>
-						<artifactId>hibernate-search-build-config</artifactId>
-						<version>${hibernate-search.version}</version>
+						<artifactId>hibernate-search-genericjpa-build-config</artifactId>
+						<version>${project.version}</version>
 					</dependency>
 				</dependencies>
-				<configuration>
+				<configuration>-->
 					<!-- Location is relative to the classpath -->
-					<configLocation>checkstyle.xml</configLocation>
+					<!-- <configLocation>checkstyle.xml</configLocation>
 					<consoleOutput>true</consoleOutput>
 					<failsOnError>false</failsOnError>
 					<violationSeverity>error</violationSeverity>
 					<includeTestSourceDirectory>true</includeTestSourceDirectory>
-					<resourceIncludes>**/*.xml,**/*.properties</resourceIncludes>
+					<resourceIncludes>**/*.xml,**/*.properties</resourceIncludes> -->
 					<!-- generated respectively copied code -->
-					<excludes>**/Generated.java,**/TypeHelper*.java,**/MatchSuppressor.java,**/CommentSuppressor.java,**/NeverSuppress.java</excludes>
+					<!-- <excludes>**/Generated.java,**/TypeHelper*.java,**/MatchSuppressor.java,**/CommentSuppressor.java,**/NeverSuppress.java</excludes>
 				</configuration>
 				<executions>
 					<execution>
@@ -150,7 +160,7 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
+			</plugin> -->
 		</plugins>
 	</build>
 

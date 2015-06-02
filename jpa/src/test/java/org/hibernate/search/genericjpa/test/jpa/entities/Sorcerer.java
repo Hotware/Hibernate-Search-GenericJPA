@@ -11,6 +11,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 import org.hibernate.search.annotations.ContainedIn;
 import org.hibernate.search.annotations.Field;
@@ -20,6 +21,7 @@ import org.hibernate.search.annotations.Store;
 import org.hibernate.search.standalone.annotations.InIndex;
 
 @Entity
+@Table(name = "SORCERER")
 @InIndex
 public class Sorcerer {
 

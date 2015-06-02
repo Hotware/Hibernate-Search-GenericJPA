@@ -35,6 +35,7 @@ import org.hibernate.search.genericjpa.test.jpa.entities.PlaceSorcererUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.PlaceUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
 import org.hibernate.search.genericjpa.test.jpa.entities.SorcererUpdates;
+import org.hibernate.search.genericjpa.test.util.Sleep;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
 import org.hibernate.search.standalone.entity.ReusableEntityProvider;
 import org.hibernate.search.standalone.factory.SearchConfigurationImpl;
@@ -93,24 +94,28 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 			EventModelParser eventModelParser = new EventModelParser();
 			List<EventModelInfo> eventModelInfos = eventModelParser.parse( new HashSet<>( Arrays.asList( PlaceUpdates.class, SorcererUpdates.class,
 					PlaceSorcererUpdates.class ) ) );
-			JPAUpdateSource updateSource = new JPAUpdateSource( eventModelInfos, this.emf, false, 500, TimeUnit.MILLISECONDS, 10 );
+			JPAUpdateSource updateSource = new JPAUpdateSource( eventModelInfos, this.emf, false, 100, TimeUnit.MILLISECONDS, 10 );
 			updateSource.setUpdateConsumers( Arrays.asList( indexUpdater ) );
 			updateSource.start();
 
 			// database already contains stuff, so clear everything out here
 			EntityManager em = this.emf.createEntityManager();
 			try {
-				this.assertCount( impl, 0 );
+				if(!this.assertCount( impl, 0 )) {
+					throw new AssertionError();
+				}
 				this.deleteAllData( em );
 
-				Thread.sleep( 3000 );
-				this.assertCount( impl, 0 );
+				Sleep.sleep( 3000, () -> {
+					return this.assertCount( impl, 0 );
+				} );
 
 				this.writeAllIntoIndex( em, impl );
 
 				this.deleteAllData( em );
-				Thread.sleep( 3000 );
-				this.assertCount( impl, 0 );
+				Sleep.sleep( 3000, () -> {
+					return this.assertCount( impl, 0 );
+				} );
 
 				this.writeAllIntoIndex( em, impl );
 
@@ -127,10 +132,9 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 						em.persist( valinor );
 						tx.commit();
 					}
-					Thread.sleep( 3000 );
-					assertEquals( "shouldn't have found \"Valinor\" in the index anymore!", 0, this.queryPlaceIds( impl, "name", "Valinor" ).size() );
-					this.assertCount( impl, 2 );
-
+					Sleep.sleep( 3000, () -> {
+						return this.queryPlaceIds( impl, "name", "Valinor" ).size() == 0 && this.assertCount( impl, 2 );
+					}, "shouldn't have found \"Valinor\" in the index anymore, but overall count should have been equal to 2!" );
 					{
 						String oldName;
 						{
@@ -144,10 +148,9 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 							someSorcerer.setName( "Odalbert" );
 							tx.commit();
 						}
-						Thread.sleep( 3000 );
-						assertEquals( "shouldn't have found \"" + oldName + "\" in the index anymore!", 0, this.queryPlaceIds( impl, "sorcerers.name", oldName )
-								.size() );
-						this.assertCount( impl, 2 );
+						Sleep.sleep( 3000, () -> {
+							return this.queryPlaceIds( impl, "sorcerers.name", oldName ).size() == 0 && this.assertCount( impl, 2 );
+						}, "shouldn't have found \"" + oldName + "\" in the index anymore, but overall count should have been equal to 2!" );
 					}
 				}
 
@@ -167,15 +170,14 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 		// and write data in the index again
 		this.setupData( em );
 		// wait a bit until the UpdateSource sent the appropriate events
-		Thread.sleep( 3000 );
-		this.assertCount( impl, 2 );
+		Sleep.sleep( 3000, () -> {
+			return this.assertCount( impl, 2 );
+		});
 	}
 
-	private void assertCount(ExtendedSearchIntegrator impl, int count) {
-		assertEquals(
-				count,
-				impl.createHSQuery().targetedEntities( Arrays.asList( Place.class ) )
-						.luceneQuery( impl.buildQueryBuilder().forEntity( Place.class ).get().all().createQuery() ).queryResultSize() );
+	private boolean assertCount(ExtendedSearchIntegrator impl, int count) {
+		return count == impl.createHSQuery().targetedEntities( Arrays.asList( Place.class ) )
+				.luceneQuery( impl.buildQueryBuilder().forEntity( Place.class ).get().all().createQuery() ).queryResultSize();
 	}
 
 	private List<Integer> queryPlaceIds(ExtendedSearchIntegrator impl, String field, String value) {
