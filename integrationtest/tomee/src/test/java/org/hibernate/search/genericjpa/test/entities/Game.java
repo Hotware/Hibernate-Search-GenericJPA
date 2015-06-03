@@ -13,7 +13,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
+import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 
 import org.hibernate.search.annotations.Analyze;
@@ -65,7 +65,7 @@ public class Game implements Serializable {
 	}
 	
 	@IndexedEmbedded(includeEmbeddedObjectId = true, targetElement = Vendor.class)
-	@OneToMany
+	@ManyToMany
 	public List<Vendor> getVendors() {
 		return vendors;
 	}

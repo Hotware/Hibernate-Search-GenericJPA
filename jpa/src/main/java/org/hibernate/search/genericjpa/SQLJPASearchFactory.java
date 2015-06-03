@@ -101,13 +101,6 @@ public abstract class SQLJPASearchFactory extends JPASearchFactory {
 				}
 			}
 			catch (SQLException e) {
-				try {
-					connection.rollback();
-				}
-				catch (SQLException e1) {
-					// TODO: better Exception:
-					throw new RuntimeException( e1 );
-				}
 				// TODO: better Exception:
 				throw new RuntimeException( e );
 			}

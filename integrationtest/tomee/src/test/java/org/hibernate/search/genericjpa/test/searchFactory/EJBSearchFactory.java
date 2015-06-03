@@ -22,7 +22,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
 
-import org.hibernate.internal.SessionImpl;
+import org.apache.openjpa.persistence.OpenJPAEntityManager;
+import org.apache.openjpa.persistence.OpenJPAPersistence;
 import org.hibernate.search.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.SQLJPASearchFactory;
 import org.hibernate.search.genericjpa.db.events.MySQLTriggerSQLStringSource;
@@ -112,13 +113,12 @@ public class EJBSearchFactory extends SQLJPASearchFactory {
 
 	@Override
 	protected Connection getConnectionForSetup(EntityManager em) {
-		if ( em instanceof org.eclipse.persistence.internal.jpa.EntityManagerImpl ) {
-			return em.unwrap( Connection.class );
+		if ( em instanceof OpenJPAEntityManager ) {
+			OpenJPAEntityManager kem = OpenJPAPersistence.cast( em );
+			Connection conn = (Connection) kem.getConnection();
+			return conn;
 		}
-		else if ( em instanceof org.hibernate.jpa.internal.EntityManagerImpl ) {
-			return ( (SessionImpl) ( (org.hibernate.jpa.internal.EntityManagerImpl) em ).getSession() ).connection();
-		}
-		throw new AssertionFailure("unrecognized EntityManager implementation");
+		throw new AssertionFailure( "unrecognized EntityManager implementation: " + em );
 	}
 
 }

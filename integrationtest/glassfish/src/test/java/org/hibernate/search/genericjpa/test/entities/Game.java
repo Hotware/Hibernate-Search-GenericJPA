@@ -13,26 +13,36 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.ManyToOne;
+import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 
 import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.ContainedIn;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Index;
+import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.IndexedEmbedded;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.standalone.annotations.InIndex;
 
 @InIndex
+@Indexed
 @Entity
-@Table(name = "Vendor")
-public class Vendor implements Serializable {
+@Table(name = "Game")
+public class Game implements Serializable {
 	
 	private static final long serialVersionUID = 1L;
-	
+
 	private Long id;
-	private String name;
-	private List<Game> games;
+	private String title;
+	private List<Vendor> vendors;
+	
+	public Game() {
+		
+	}
+
+	public Game(String title) {
+		this.title = title;
+	}
 
 	@Id
 	@GeneratedValue
@@ -44,24 +54,29 @@ public class Vendor implements Serializable {
 		this.id = id;
 	}
 
-	@Column
 	@Field(store = Store.YES, index = Index.YES, analyze = Analyze.NO)
-	public String getName() {
-		return name;
+	@Column
+	public String getTitle() {
+		return title;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public void setTitle(String title) {
+		this.title = title;
+	}
+	
+	@IndexedEmbedded(includeEmbeddedObjectId = true, targetElement = Vendor.class)
+	@ManyToMany
+	public List<Vendor> getVendors() {
+		return vendors;
 	}
 
-	@ManyToOne(targetEntity = Game.class)
-	@ContainedIn
-	public List<Game> getGames() {
-		return games;
+	public void setVendors(List<Vendor> vendors) {
+		this.vendors = vendors;
 	}
 
-	public void setGames(List<Game> games) {
-		this.games = games;
+	@Override
+	public String toString() {
+		return "Game [id=" + id + ", title=" + title + ", vendors=" + vendors + "]";
 	}
 
 }

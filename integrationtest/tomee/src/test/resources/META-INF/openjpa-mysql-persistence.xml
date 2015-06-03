@@ -1,0 +1,26 @@
+<persistence xmlns="http://java.sun.com/xml/ns/persistence"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"
+	version="2.0">
+
+	<persistence-unit name="OpenJPA_MySQL"
+		transaction-type="JTA">
+		<provider>org.apache.openjpa.persistence.PersistenceProviderImpl</provider>
+		<jta-data-source>jdbc/mysql</jta-data-source>
+		<class>org.hibernate.search.genericjpa.test.entities.Game</class>
+		<class>org.hibernate.search.genericjpa.test.entities.GameUpdates</class>
+		<class>org.hibernate.search.genericjpa.test.entities.Vendor</class>
+		<class>org.hibernate.search.genericjpa.test.entities.VendorUpdates</class>
+		<class>org.hibernate.search.genericjpa.test.entities.GameVendorUpdates</class>
+		<properties>
+			<property name="openjpa.ConnectionURL" value="jdbc:mysql://localhost:3306/testingdb" />
+			<property name="openjpa.ConnectionDriverName" value="com.mysql.jdbc.Driver" />
+			<property name="openjpa.ConnectionUserName" value="hibernate_user" />
+			<property name="openjpa.ConnectionPassword" value="hibernate_password" />
+			<property name="openjpa.Log" value="DefaultLevel=WARN, Tool=INFO" />
+			<property name="openjpa.jdbc.SynchronizeMappings" value="buildSchema" />
+			<property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
+		</properties>
+	</persistence-unit>
+
+</persistence>

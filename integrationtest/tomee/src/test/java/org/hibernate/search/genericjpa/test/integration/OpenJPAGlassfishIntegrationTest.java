@@ -40,11 +40,11 @@ import org.junit.runner.RunWith;
  * @author Martin Braun
  */
 @RunWith(Arquillian.class)
-public class HibernateGlassfishIntegrationTest {
+public class OpenJPAGlassfishIntegrationTest {
 
 	@Deployment
 	public static Archive<?> createDeployment() {
-		return IntegrationTestUtil.createHibernateMySQLDeployment();
+		return IntegrationTestUtil.createOpenJPAMySQLDeployment();
 	}
 	private static final String[] GAME_TITLES = { "Super Mario Brothers", "Mario Kart", "F-Zero" };
 
