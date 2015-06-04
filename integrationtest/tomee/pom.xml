@@ -29,13 +29,10 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
-				<skipTests>true</skipTests>
+					<skipTests>true</skipTests>
 					<systemPropertyVariables>
 						<tomee.version>${tomee.version}</tomee.version>
 					</systemPropertyVariables>
-					<systemProperties>
-						<arquillian.launch>tomee</arquillian.launch>
-					</systemProperties>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -55,6 +52,14 @@
 
 
 	<dependencies>
+
+		<dependency>
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>tomcat7-websocket</artifactId>
+			<version>7.0.59</version>
+			<scope>runtime</scope>
+		</dependency>
+
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -79,20 +84,8 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.jboss.weld</groupId>
-			<artifactId>weld-core</artifactId>
-			<version>2.2.11.Final</version>
-		</dependency>
-
-		<dependency>
 			<groupId>org.jboss.arquillian.junit</groupId>
 			<artifactId>arquillian-junit-container</artifactId>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.jboss.arquillian.testenricher</groupId>
-			<artifactId>arquillian-testenricher-cdi</artifactId>
 			<scope>test</scope>
 		</dependency>
 
@@ -116,40 +109,20 @@
 		</dependency>
 
 		<dependency>
-			<groupId>javax</groupId>
-			<artifactId>javaee-api</artifactId>
-			<version>7.0</version><!--$NO-MVN-MAN-VER$ -->
-			<scope>provided</scope>
-		</dependency>
-
-		<dependency>
 			<groupId>org.apache.openejb</groupId>
 			<artifactId>arquillian-tomee-embedded</artifactId>
-			<version>${tomee.version}</version> <!--Current version -->
+			<version>${tomee.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.openejb</groupId>
 			<artifactId>tomee-embedded</artifactId>
 			<version>${tomee.version}</version>
 		</dependency>
-		<!--Required for WebServices and RESTful WebServices -->
-		<dependency>
-			<groupId>org.apache.openejb</groupId>
-			<artifactId>tomee-webservices</artifactId>
-			<version>${tomee.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.openejb</groupId>
-			<artifactId>tomee-jaxrs</artifactId>
-			<version>${tomee.version}</version>
-		</dependency>
-
 		<dependency>
 			<groupId>org.apache.openejb</groupId>
 			<artifactId>tomee-common</artifactId>
 			<version>${tomee.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.apache.openejb</groupId>
 			<artifactId>arquillian-tomee-common</artifactId>
@@ -157,23 +130,10 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-validator</artifactId>
-			<version>5.1.3.Final</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-validator-cdi</artifactId>
-			<version>5.1.3.Final</version>
-		</dependency>
-
-		<dependency>
 			<groupId>org.apache.openejb</groupId>
 			<artifactId>openejb-concurrency-utilities-ee</artifactId>
 			<version>4.7.0</version>
 		</dependency>
-
 
 		<dependency>
 			<groupId>org.apache.openjpa</groupId>

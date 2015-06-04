@@ -61,7 +61,7 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 	private void init() {
 		this.createUniqueIdTable = String.format( "CREATE TABLE IF NOT EXISTS %s (                                                 \n"
 				+ "id BIGINT(64) NOT NULL AUTO_INCREMENT,                                                                          \n"
-				+ " PRIMARY KEY (id)                                                                                               \n"
+				+ "PRIMARY KEY (id)                                                                                               \n"
 				+ ");                                                                                                              \n", this.uniqueIdTableName );
 		this.dropUniqueIdTable = String.format( "DROP TABLE IF EXISTS %s;", this.uniqueIdTableName );
 		this.dropUniqueIdProcedure = String.format( "DROP PROCEDURE IF EXISTS %s;                                                  \n",

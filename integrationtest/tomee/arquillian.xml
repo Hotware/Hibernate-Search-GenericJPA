@@ -10,6 +10,10 @@
 			<property name="stopPort">-1</property>
 			<property name="portRange">20001-30000</property>
 			<property name="properties">
+				jdbc/mysql.JdbcUrl = jdbc:mysql://localhost:3306/testingdb
+				jdbc/mysql.JdbcDriver = com.mysql.jdbc.Driver
+			    jdbc/mysql.UserName = hibernate_user
+			    jdbc/mysql.Password = hibernate_password
 			</property>
 		</configuration>
 	</container>

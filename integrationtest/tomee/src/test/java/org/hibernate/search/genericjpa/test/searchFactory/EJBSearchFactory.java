@@ -114,9 +114,7 @@ public class EJBSearchFactory extends SQLJPASearchFactory {
 	@Override
 	protected Connection getConnectionForSetup(EntityManager em) {
 		if ( em instanceof OpenJPAEntityManager ) {
-			OpenJPAEntityManager kem = OpenJPAPersistence.cast( em );
-			Connection conn = (Connection) kem.getConnection();
-			return conn;
+			return em.unwrap(Connection.class);
 		}
 		throw new AssertionFailure( "unrecognized EntityManager implementation: " + em );
 	}
