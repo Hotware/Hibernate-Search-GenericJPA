@@ -60,6 +60,7 @@ public abstract class SQLJPASearchFactory extends JPASearchFactory {
 					LOGGER.info( str );
 					statement.addBatch( connection.nativeSQL( str ) );
 					statement.executeBatch();
+					this.maybeCommit( connection );
 				}
 				for ( EventModelInfo info : eventModelInfos ) {
 					for ( String unSetupCode : triggerSource.getSpecificUnSetupCode( info ) ) {
@@ -67,12 +68,14 @@ public abstract class SQLJPASearchFactory extends JPASearchFactory {
 						LOGGER.info( unSetupCode );
 						statement.addBatch( connection.nativeSQL( unSetupCode ) );
 						statement.executeBatch();
+						this.maybeCommit( connection );
 					}
 					for ( String setupCode : triggerSource.getSpecificSetupCode( info ) ) {
 						Statement statement = connection.createStatement();
 						LOGGER.info( setupCode );
 						statement.addBatch( connection.nativeSQL( setupCode ) );
 						statement.executeBatch();
+						this.maybeCommit( connection );
 					}
 					for ( int eventType : EventType.values() ) {
 						String[] triggerDropStrings = triggerSource.getTriggerDropCode( info, eventType );
@@ -81,6 +84,7 @@ public abstract class SQLJPASearchFactory extends JPASearchFactory {
 							LOGGER.info( triggerCreationString );
 							statement.addBatch( connection.nativeSQL( triggerCreationString ) );
 							statement.executeBatch();
+							this.maybeCommit( connection );
 						}
 					}
 					for ( int eventType : EventType.values() ) {
@@ -90,6 +94,7 @@ public abstract class SQLJPASearchFactory extends JPASearchFactory {
 							LOGGER.info( triggerCreationString );
 							statement.addBatch( connection.nativeSQL( triggerCreationString ) );
 							statement.executeBatch();
+							this.maybeCommit( connection );
 						}
 					}
 
@@ -97,6 +102,7 @@ public abstract class SQLJPASearchFactory extends JPASearchFactory {
 			}
 			catch (SQLException e) {
 				// TODO: better Exception:
+				this.maybeRollback( connection );
 				throw new RuntimeException( e );
 			}
 		}
@@ -104,6 +110,28 @@ public abstract class SQLJPASearchFactory extends JPASearchFactory {
 			if ( em != null && !this.isUseJTATransaction() ) {
 				em.close();
 			}
+		}
+	}
+
+	private void maybeCommit(Connection conn) {
+		try {
+			if ( !conn.getAutoCommit() ) {
+				conn.commit();
+			}
+		}
+		catch (SQLException e) {
+			// we silently catch this. OpenJPA doesn't want us to call this in a JTA managed environment
+		}
+	}
+
+	private void maybeRollback(Connection conn) {
+		try {
+			if ( !conn.getAutoCommit() ) {
+				conn.rollback();
+			}
+		}
+		catch (SQLException e) {
+			// we silently catch this. OpenJPA doesn't want us to call this in a JTA managed environment
 		}
 	}
 
