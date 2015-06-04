@@ -51,7 +51,7 @@ public class EJBSearchFactory extends SQLJPASearchFactory {
 
 	@PreDestroy
 	public void shutdown() {
-		this.exec.shutdownNow();
+		super.shutdown();
 	}
 
 	@Override

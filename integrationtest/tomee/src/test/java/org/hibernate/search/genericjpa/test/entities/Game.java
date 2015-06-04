@@ -76,7 +76,7 @@ public class Game implements Serializable {
 
 	@Override
 	public String toString() {
-		return "Game [id=" + id + ", title=" + title + ", vendors=" + vendors + "]";
+		return "Game [id=" + this.getId() + ", title=" + this.getTitle() + ", vendors=" + this.getVendors() + "]";
 	}
 
 }
