@@ -6,16 +6,12 @@
  */
 package org.hibernate.search.genericjpa.test.integration;
 
-import java.io.File;
-import javax.websocket.server.ServerEndpointConfig;
-
 import org.hibernate.search.genericjpa.test.entities.Game;
 import org.hibernate.search.genericjpa.test.searchFactory.EJBSearchFactory;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 
 /**
  * @author Martin Braun

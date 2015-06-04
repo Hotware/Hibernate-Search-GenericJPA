@@ -131,7 +131,7 @@ public class HSearchQueryImpl implements HSearchQuery {
 			// order is saved. this is needed even for only one class)
 			projected.stream().forEach( (arr) -> {
 				if ( arr[1] == null ) {
-					LOGGER.info( "null id ommited" );
+					LOGGER.info( "null id omited" );
 					return;
 				}
 				originalOrder.add( arr[1] );

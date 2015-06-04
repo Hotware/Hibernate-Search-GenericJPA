@@ -60,7 +60,6 @@ public abstract class SQLJPASearchFactory extends JPASearchFactory {
 					LOGGER.info( str );
 					statement.addBatch( connection.nativeSQL( str ) );
 					statement.executeBatch();
-					connection.commit();
 				}
 				for ( EventModelInfo info : eventModelInfos ) {
 					for ( String unSetupCode : triggerSource.getSpecificUnSetupCode( info ) ) {
@@ -68,14 +67,12 @@ public abstract class SQLJPASearchFactory extends JPASearchFactory {
 						LOGGER.info( unSetupCode );
 						statement.addBatch( connection.nativeSQL( unSetupCode ) );
 						statement.executeBatch();
-						connection.commit();
 					}
 					for ( String setupCode : triggerSource.getSpecificSetupCode( info ) ) {
 						Statement statement = connection.createStatement();
 						LOGGER.info( setupCode );
 						statement.addBatch( connection.nativeSQL( setupCode ) );
 						statement.executeBatch();
-						connection.commit();
 					}
 					for ( int eventType : EventType.values() ) {
 						String[] triggerDropStrings = triggerSource.getTriggerDropCode( info, eventType );
@@ -84,7 +81,6 @@ public abstract class SQLJPASearchFactory extends JPASearchFactory {
 							LOGGER.info( triggerCreationString );
 							statement.addBatch( connection.nativeSQL( triggerCreationString ) );
 							statement.executeBatch();
-							connection.commit();
 						}
 					}
 					for ( int eventType : EventType.values() ) {
@@ -94,7 +90,6 @@ public abstract class SQLJPASearchFactory extends JPASearchFactory {
 							LOGGER.info( triggerCreationString );
 							statement.addBatch( connection.nativeSQL( triggerCreationString ) );
 							statement.executeBatch();
-							connection.commit();
 						}
 					}
 

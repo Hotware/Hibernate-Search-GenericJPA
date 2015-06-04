@@ -23,7 +23,6 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
 
 import org.apache.openjpa.persistence.OpenJPAEntityManager;
-import org.apache.openjpa.persistence.OpenJPAPersistence;
 import org.hibernate.search.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.SQLJPASearchFactory;
 import org.hibernate.search.genericjpa.db.events.MySQLTriggerSQLStringSource;
@@ -52,7 +51,6 @@ public class EJBSearchFactory extends SQLJPASearchFactory {
 
 	@PreDestroy
 	public void shutdown() {
-		super.shutdown();
 		this.exec.shutdownNow();
 	}
 
