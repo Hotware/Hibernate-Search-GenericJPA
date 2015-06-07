@@ -32,7 +32,6 @@ import org.hibernate.search.engine.metadata.impl.MetadataProvider;
 import org.hibernate.search.genericjpa.db.events.IndexUpdater;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateSource;
-import org.hibernate.search.genericjpa.entity.EntityManagerCloseable;
 import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.entity.JPAReusableEntityProvider;
 import org.hibernate.search.indexes.IndexReaderAccessor;
@@ -65,7 +64,7 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 	Map<Class<?>, String> idProperties;
 
 	public EntityProvider entityProvider(EntityManager em) {
-		return new EntityManagerEntityProvider( new EntityManagerCloseable( em ), this.idProperties );
+		return new EntityManagerEntityProvider( em , this.idProperties );
 	}
 
 	protected abstract EntityManagerFactory getEmf();
@@ -84,8 +83,6 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 	protected abstract long getDelay();
 
 	protected abstract int getBatchSizeForUpdates();
-
-	protected abstract Connection getConnectionForSetup(EntityManager em);
 
 	/**
 	 * for JTA transactions this has to be a {@link javax.enterprise.concurrent.ManagedScheduledExecutorService}

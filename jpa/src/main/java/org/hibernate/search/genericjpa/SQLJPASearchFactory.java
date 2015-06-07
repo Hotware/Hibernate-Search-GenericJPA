@@ -6,14 +6,12 @@
  */
 package org.hibernate.search.genericjpa;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
 import javax.persistence.EntityManager;
+import javax.persistence.FlushModeType;
 
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
@@ -21,6 +19,7 @@ import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.TriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.UpdateSource;
 import org.hibernate.search.genericjpa.db.events.jpa.JPAUpdateSource;
+import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 
 /**
  * an implementation of {@link JPASearchFactory} that uses an {@link UpdateSource} that gets it's information out of
@@ -51,88 +50,72 @@ public abstract class SQLJPASearchFactory extends JPASearchFactory {
 		EntityManager em = null;
 		try {
 			em = this.getEmf().createEntityManager();
-			Connection connection = this.getConnectionForSetup( em );
+			// tx is null if we cannot get a UserTransaction. This could be because we are
+			// a container managed bean
+			JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.isUseJTATransaction(), true );
+			if ( tx != null ) {
+				tx.setIgnoreExceptionsForUserTransaction( true );
+				tx.begin();
+			}
 
 			TriggerSQLStringSource triggerSource = this.getTriggerSQLStringSource();
 			try {
 				for ( String str : triggerSource.getSetupCode() ) {
-					Statement statement = connection.createStatement();
 					LOGGER.info( str );
-					statement.addBatch( connection.nativeSQL( str ) );
-					statement.executeBatch();
-					this.maybeCommit( connection );
+					em.createNativeQuery( str ).executeUpdate();
+					if ( tx != null ) {
+						LOGGER.info( "commiting setup code!");
+						tx.commit();
+						tx.begin();
+					}
 				}
 				for ( EventModelInfo info : eventModelInfos ) {
 					for ( String unSetupCode : triggerSource.getSpecificUnSetupCode( info ) ) {
-						Statement statement = connection.createStatement();
 						LOGGER.info( unSetupCode );
-						statement.addBatch( connection.nativeSQL( unSetupCode ) );
-						statement.executeBatch();
-						this.maybeCommit( connection );
+						em.createNativeQuery( unSetupCode ).executeUpdate();
 					}
 					for ( String setupCode : triggerSource.getSpecificSetupCode( info ) ) {
-						Statement statement = connection.createStatement();
 						LOGGER.info( setupCode );
-						statement.addBatch( connection.nativeSQL( setupCode ) );
-						statement.executeBatch();
-						this.maybeCommit( connection );
+						em.createNativeQuery( setupCode ).executeUpdate();
 					}
 					for ( int eventType : EventType.values() ) {
 						String[] triggerDropStrings = triggerSource.getTriggerDropCode( info, eventType );
 						for ( String triggerCreationString : triggerDropStrings ) {
-							Statement statement = connection.createStatement();
 							LOGGER.info( triggerCreationString );
-							statement.addBatch( connection.nativeSQL( triggerCreationString ) );
-							statement.executeBatch();
-							this.maybeCommit( connection );
+							em.createNativeQuery( triggerCreationString ).executeUpdate();
 						}
 					}
 					for ( int eventType : EventType.values() ) {
 						String[] triggerCreationStrings = triggerSource.getTriggerCreationCode( info, eventType );
 						for ( String triggerCreationString : triggerCreationStrings ) {
-							Statement statement = connection.createStatement();
 							LOGGER.info( triggerCreationString );
-							statement.addBatch( connection.nativeSQL( triggerCreationString ) );
-							statement.executeBatch();
-							this.maybeCommit( connection );
+							em.createNativeQuery( triggerCreationString ).executeUpdate();
 						}
 					}
 
 				}
 			}
-			catch (SQLException e) {
-				// TODO: better Exception:
-				this.maybeRollback( connection );
+			catch (Exception e) {
+				if ( tx != null ) {
+					tx.rollback();
+					LOGGER.warning( "rolling back trigger setup!" );
+				}
 				throw new RuntimeException( e );
 			}
+			if ( tx != null ) {
+				tx.commit();
+				LOGGER.info( "commited trigger setup!" );
+			}
+			em.setFlushMode( FlushModeType.COMMIT );
+			LOGGER.info( "finished setting up triggers!" );
+		}
+		catch (SecurityException e) {
+			throw new RuntimeException( e );
 		}
 		finally {
-			if ( em != null && !this.isUseJTATransaction() ) {
+			if ( em != null ) {
 				em.close();
 			}
 		}
 	}
-
-	private void maybeCommit(Connection conn) {
-		try {
-			if ( !conn.getAutoCommit() ) {
-				conn.commit();
-			}
-		}
-		catch (SQLException e) {
-			// we silently catch this. OpenJPA doesn't want us to call this in a JTA managed environment
-		}
-	}
-
-	private void maybeRollback(Connection conn) {
-		try {
-			if ( !conn.getAutoCommit() ) {
-				conn.rollback();
-			}
-		}
-		catch (SQLException e) {
-			// we silently catch this. OpenJPA doesn't want us to call this in a JTA managed environment
-		}
-	}
-
 }

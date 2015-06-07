@@ -18,21 +18,17 @@ import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.naming.InitialContext;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
-import javax.persistence.EntityTransaction;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.transaction.UserTransaction;
-
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateSource;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo.IdInfo;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
-import org.hibernate.search.genericjpa.entity.EntityManagerCloseable;
+import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess;
 import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess.ObjectClassWrapper;
 
@@ -154,20 +150,9 @@ public class JPAUpdateSource implements UpdateSource {
 				}
 				EntityManager em = null;
 				try {
-					em = new EntityManagerCloseable( this.emf.createEntityManager() );
-					EntityTransaction tx;
-					UserTransaction utx;
-					if ( !this.useJTATransaction ) {
-						tx = em.getTransaction();
-						tx.begin();
-						utx = null;
-					}
-					else {
-						utx = (UserTransaction) InitialContext.doLookup( "java:comp/UserTransaction" );
-						utx.begin();
-						em.joinTransaction();
-						tx = null;
-					}
+					em = this.emf.createEntityManager();
+					JPATransactionWrapper tx = JPATransactionWrapper.get( em, useJTATransaction );
+					tx.begin();
 					try {
 						MultiQueryAccess query = query( this, em );
 						List<Object[]> toRemove = new ArrayList<>( this.batchSizeForUpdates );
@@ -218,20 +203,10 @@ public class JPAUpdateSource implements UpdateSource {
 						// clear memory :)
 						em.clear();
 			
-						if ( !this.useJTATransaction ) {
-							tx.commit();
-						}
-						else {
-							utx.commit();
-						}
+						tx.commit();
 					}
 					catch(Throwable e) {
-						if( !this.useJTATransaction ) {
-							tx.rollback();
-						}
-						else {
-							utx.rollback();
-						}
+						tx.rollback();
 						throw e;
 					}
 				}

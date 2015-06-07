@@ -81,7 +81,7 @@ public class JPAReusableEntityProvider implements ReusableEntityProvider {
 			if ( this.provider != null ) {
 				throw new IllegalStateException( "already open!" );
 			}
-			this.em = new EntityManagerCloseable( this.emf.createEntityManager() );
+			this.em = this.emf.createEntityManager();
 			this.provider = new EntityManagerEntityProvider( this.em, this.idProperties );
 			this.beginTransaction();
 		}
