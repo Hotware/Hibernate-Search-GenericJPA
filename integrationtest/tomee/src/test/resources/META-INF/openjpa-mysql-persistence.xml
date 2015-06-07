@@ -13,10 +13,6 @@
 		<class>org.hibernate.search.genericjpa.test.entities.VendorUpdates</class>
 		<class>org.hibernate.search.genericjpa.test.entities.GameVendorUpdates</class>
 		<properties>
-			<property name="openjpa.ConnectionURL" value="jdbc:mysql://localhost:3306/testingdb" />
-			<property name="openjpa.ConnectionDriverName" value="com.mysql.jdbc.Driver" />
-			<property name="openjpa.ConnectionUserName" value="hibernate_user" />
-			<property name="openjpa.ConnectionPassword" value="hibernate_password" />
 			<property name="openjpa.Log" value="DefaultLevel=WARN, Tool=INFO" />
 			<property name="openjpa.jdbc.SynchronizeMappings" value="buildSchema" />
 			<property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>

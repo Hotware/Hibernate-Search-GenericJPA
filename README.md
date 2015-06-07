@@ -5,6 +5,12 @@ Hibernate-Search-JPA
 
 Hibernate-Search with the JPA provider you want.
 
+Currently supported JPA providers:
+
+* Hibernate
+* EclipseLink
+* OpenJPA
+
 http://hibernatesearchandjpa.blogspot.de/
 
 Introduction

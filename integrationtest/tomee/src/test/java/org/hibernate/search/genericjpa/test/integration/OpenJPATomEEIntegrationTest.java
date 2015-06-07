@@ -40,7 +40,7 @@ import org.junit.runner.RunWith;
  * @author Martin Braun
  */
 @RunWith(Arquillian.class)
-public class OpenJPAGlassfishIntegrationTest {
+public class OpenJPATomEEIntegrationTest {
 
 	@Deployment
 	public static Archive<?> createDeployment() {
