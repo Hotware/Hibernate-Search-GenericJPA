@@ -201,12 +201,7 @@ public class EntityManagerCloseable implements EntityManager {
 	}
 
 	public void close() {
-		try {
-			em.close();
-		}
-		catch (IllegalStateException e) {
-			// yay, JPA...
-		}
+		em.close();
 	}
 
 	public boolean isOpen() {
