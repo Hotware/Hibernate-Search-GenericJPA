@@ -8,6 +8,7 @@ package org.hibernate.search.genericjpa.test.searchFactory;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -62,11 +63,6 @@ public class EJBSearchFactory extends SQLJPASearchFactory {
 	}
 
 	@Override
-	protected String getConfigFile() {
-		return "/hsearch.properties";
-	}
-
-	@Override
 	protected long getDelay() {
 		return 100;
 	}
@@ -104,6 +100,11 @@ public class EJBSearchFactory extends SQLJPASearchFactory {
 	@Override
 	protected ScheduledExecutorService getExecutorServiceForUpdater() {
 		return this.exec;
+	}
+
+	@Override
+	protected Properties getConfigProperties() {
+		return new Properties();
 	}
 
 }
