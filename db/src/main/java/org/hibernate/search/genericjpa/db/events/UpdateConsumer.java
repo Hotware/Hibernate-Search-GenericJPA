@@ -113,8 +113,8 @@ public interface UpdateConsumer {
 		@Override
 		public String toString() {
 			StringBuilder builder = new StringBuilder();
-			builder.append( "UpdateInfo [entityClass=" ).append( entityClass ).append( ", id=" ).append( id ).append( ", eventType=" ).append( eventType )
-					.append( "]" );
+			builder.append( "UpdateInfo [entityClass=" ).append( entityClass ).append( ", id=" ).append( id ).append( ", eventType=" )
+					.append( EventType.toString( eventType ) ).append( "]" );
 			return builder.toString();
 		}
 

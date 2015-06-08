@@ -185,6 +185,7 @@ public class JPAUpdateSource implements UpdateSource {
 				if ( ++processed % this.batchSizeForUpdates == 0 ) {
 					for ( UpdateConsumer consumer : this.updateConsumers ) {
 						consumer.updateEvent( updateInfos );
+						LOGGER.fine( "handled update-event: " + updateInfos );
 					}
 					for ( Object[] rem : toRemove ) {
 						// the class is in rem[0], the
@@ -200,6 +201,7 @@ public class JPAUpdateSource implements UpdateSource {
 			if ( updateInfos.size() > 0 ) {
 				for ( UpdateConsumer consumer : this.updateConsumers ) {
 					consumer.updateEvent( updateInfos );
+					LOGGER.fine( "handled update-event: " + updateInfos );
 				}
 				for ( Object[] rem : toRemove ) {
 					// the class is in rem[0], the
@@ -277,12 +279,6 @@ finally {
 	public void stop() {
 		if ( this.createdOwnExecutorService && this.exec != null ) {
 			this.exec.shutdown();
-			try {
-				this.exec.awaitTermination( 100000, TimeUnit.MILLISECONDS );
-			}
-			catch (InterruptedException e) {
-				LOGGER.log( Level.WARNING, "Exception while shutting down JPAUpdateSource", e );
-			}
 		}
 		if ( this.job != null ) {
 			this.lock.lock();
