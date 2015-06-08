@@ -18,7 +18,7 @@
 			<property name="javax.persistence.jdbc.user" value="hibernate_user" />
 			<property name="javax.persistence.jdbc.password" value="hibernate_password" />
 			<property name="hibernate.dialect" value="org.hibernate.dialect.MySQL5Dialect" />
-			<property name="hibernate.hbm2ddl.auto" value="create-drop" />
+			<property name="hibernate.hbm2ddl.auto" value="create" />
 		</properties>
 	</persistence-unit>
 

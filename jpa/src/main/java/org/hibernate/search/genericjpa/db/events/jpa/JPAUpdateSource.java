@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -23,6 +24,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateSource;
@@ -57,6 +59,8 @@ public class JPAUpdateSource implements UpdateSource {
 	private final ScheduledExecutorService exec;
 	private boolean createdOwnExecutorService = false;
 	private final boolean useJTATransaction;
+	
+	private Future<?> job;
 
 	/**
 	 * this doesn't do real batching for the databasequeries
@@ -143,7 +147,7 @@ public class JPAUpdateSource implements UpdateSource {
 		if ( this.updateConsumers == null ) {
 			throw new IllegalStateException( "updateConsumers was null!" );
 		}
-		this.exec.scheduleWithFixedDelay( () -> {
+		this.job = this.exec.scheduleWithFixedDelay( () -> {
 			try {
 				if ( !this.emf.isOpen() ) {
 					return;
@@ -262,6 +266,9 @@ public class JPAUpdateSource implements UpdateSource {
 	public void stop() {
 		if ( this.createdOwnExecutorService && this.exec != null ) {
 			this.exec.shutdown();
+		}
+		if(this.job != null) {
+			this.job.cancel( false );
 		}
 	}
 
