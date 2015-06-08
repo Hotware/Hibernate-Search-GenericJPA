@@ -15,6 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,7 +34,6 @@ import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess;
 import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess.ObjectClassWrapper;
-import org.hibernate.search.genericjpa.util.Sleep;
 
 /**
  * a {@link UpdateSource} implementation that uses JPA to retrieve the updates from the database. For this to work the
@@ -60,8 +60,9 @@ public class JPAUpdateSource implements UpdateSource {
 	private final ScheduledExecutorService exec;
 	private boolean createdOwnExecutorService = false;
 	private final boolean useUserTransaction;
-	
+
 	private Future<?> job;
+	private final ReentrantLock lock = new ReentrantLock();
 
 	/**
 	 * this doesn't do real batching for the databasequeries
@@ -131,8 +132,8 @@ public class JPAUpdateSource implements UpdateSource {
 				throw new RuntimeException( "could not access the \"getId()\" method of class: " + evi.getUpdateClass() );
 			}
 		}
-		if(exec == null) {
-			throw new IllegalArgumentException("the ScheduledExecutorService may not be null!");
+		if ( exec == null ) {
+			throw new IllegalArgumentException( "the ScheduledExecutorService may not be null!" );
 		}
 		this.exec = exec;
 		this.useUserTransaction = useUserTransaction;
@@ -149,6 +150,7 @@ public class JPAUpdateSource implements UpdateSource {
 			throw new IllegalStateException( "updateConsumers was null!" );
 		}
 		this.job = this.exec.scheduleWithFixedDelay( () -> {
+			this.lock.lock();
 			try {
 				if ( !this.emf.isOpen() ) {
 					return;
@@ -167,67 +169,70 @@ public class JPAUpdateSource implements UpdateSource {
 							// we have no order problems here since
 							// the query does
 							// the ordering for us
-							Object val = query.get();
-							toRemove.add( new Object[] { query.entityClass(), val } );
-							EventModelInfo evi = this.updateClassToEventModelInfo.get( query.entityClass() );
-							for ( IdInfo info : evi.getIdInfos() ) {
-								updateInfos.add( new UpdateInfo( info.getEntityClass(), info.getIdAccessor().apply( val ), evi.getEventTypeAccessor().apply( val ) ) );
-							}
-							// TODO: maybe move this to a method as
-							// it is getting reused
-							if ( ++processed % this.batchSizeForUpdates == 0 ) {
-								for ( UpdateConsumer consumer : this.updateConsumers ) {
-									consumer.updateEvent( updateInfos );
-								}
-								for ( Object[] rem : toRemove ) {
-									// the class is in rem[0], the
-									// entity is in
-									// rem[1]
-									query.addToNextValuePosition( (Class<?>) rem[0], -1L );
-									em.remove( rem[1] );
-								}
-								toRemove.clear();
-								updateInfos.clear();
-							}
-						}
-						if ( updateInfos.size() > 0 ) {
-							for ( UpdateConsumer consumer : this.updateConsumers ) {
-								consumer.updateEvent( updateInfos );
-							}
-							for ( Object[] rem : toRemove ) {
-								// the class is in rem[0], the
-								// entity is in rem[1]
-								query.addToNextValuePosition( (Class<?>) rem[0], -1L );
-								em.remove( rem[1] );
-							}
-							toRemove.clear();
-							updateInfos.clear();
-						}
-		
-						em.flush();
-						// clear memory :)
-						em.clear();
-			
-						tx.commit();
-					}
-					catch(Throwable e) {
-						tx.rollback();
-						throw e;
-					}
+				Object val = query.get();
+				toRemove.add( new Object[] { query.entityClass(), val } );
+				EventModelInfo evi = this.updateClassToEventModelInfo.get( query.entityClass() );
+				for ( IdInfo info : evi.getIdInfos() ) {
+					updateInfos.add( new UpdateInfo( info.getEntityClass(), info.getIdAccessor().apply( val ), evi.getEventTypeAccessor().apply( val ) ) );
 				}
-				catch (Exception e) {
-					throw new RuntimeException( "Error occured during Update processing!", e );
-				}
-				finally {
-					if ( em != null ) {
-						em.close();
+				// TODO: maybe move this to a method as
+				// it is getting reused
+				if ( ++processed % this.batchSizeForUpdates == 0 ) {
+					for ( UpdateConsumer consumer : this.updateConsumers ) {
+						consumer.updateEvent( updateInfos );
 					}
+					for ( Object[] rem : toRemove ) {
+						// the class is in rem[0], the
+						// entity is in
+						// rem[1]
+						query.addToNextValuePosition( (Class<?>) rem[0], -1L );
+						em.remove( rem[1] );
+					}
+					toRemove.clear();
+					updateInfos.clear();
 				}
 			}
-			catch (Exception e) {
-				LOGGER.log( Level.SEVERE, e.getMessage(), e );
+			if ( updateInfos.size() > 0 ) {
+				for ( UpdateConsumer consumer : this.updateConsumers ) {
+					consumer.updateEvent( updateInfos );
+				}
+				for ( Object[] rem : toRemove ) {
+					// the class is in rem[0], the
+					// entity is in rem[1]
+					query.addToNextValuePosition( (Class<?>) rem[0], -1L );
+					em.remove( rem[1] );
+				}
+				toRemove.clear();
+				updateInfos.clear();
 			}
-		}, 0, this.timeOut, this.timeUnit );
+
+			em.flush();
+			// clear memory :)
+			em.clear();
+
+			tx.commit();
+		}
+		catch (Throwable e) {
+			tx.rollback();
+			throw e;
+		}
+	}
+	catch (Exception e) {
+		throw new RuntimeException( "Error occured during Update processing!", e );
+	}
+	finally {
+		if ( em != null ) {
+			em.close();
+		}
+	}
+}
+catch (Exception e) {
+	LOGGER.log( Level.SEVERE, e.getMessage(), e );
+}
+finally {
+	this.lock.unlock();
+}
+}, 0, this.timeOut, this.timeUnit );
 	}
 
 	public static MultiQueryAccess query(JPAUpdateSource updateSource, EntityManager em) {
@@ -267,16 +272,20 @@ public class JPAUpdateSource implements UpdateSource {
 	public void stop() {
 		if ( this.createdOwnExecutorService && this.exec != null ) {
 			this.exec.shutdown();
-		}
-		if(this.job != null) {
-			this.job.cancel( false );
 			try {
-				Sleep.sleep(100000, () -> {
-					return this.job.isDone();
-				}, 100, "");
+				this.exec.awaitTermination( 100000, TimeUnit.MILLISECONDS );
 			}
-			catch (Exception e) {
+			catch (InterruptedException e) {
 				LOGGER.log( Level.WARNING, "Exception while shutting down JPAUpdateSource", e );
+			}
+		}
+		if ( this.job != null ) {
+			this.lock.lock();
+			try {
+				this.job.cancel( false );
+			}
+			finally {
+				this.lock.unlock();
 			}
 		}
 	}
