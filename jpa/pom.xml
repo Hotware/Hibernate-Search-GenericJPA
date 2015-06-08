@@ -48,7 +48,7 @@
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-search-genericjpa-util</artifactId>
 			<version>${project.version}</version>
-			<scope>runtime</scope>
+			<scope>compile</scope>
 		</dependency>
 
 		<dependency>
