@@ -169,70 +169,70 @@ public class JPAUpdateSource implements UpdateSource {
 							// we have no order problems here since
 							// the query does
 							// the ordering for us
-				Object val = query.get();
-				toRemove.add( new Object[] { query.entityClass(), val } );
-				EventModelInfo evi = this.updateClassToEventModelInfo.get( query.entityClass() );
-				for ( IdInfo info : evi.getIdInfos() ) {
-					updateInfos.add( new UpdateInfo( info.getEntityClass(), info.getIdAccessor().apply( val ), evi.getEventTypeAccessor().apply( val ) ) );
+						Object val = query.get();
+						toRemove.add( new Object[] { query.entityClass(), val } );
+						EventModelInfo evi = this.updateClassToEventModelInfo.get( query.entityClass() );
+						for ( IdInfo info : evi.getIdInfos() ) {
+							updateInfos.add( new UpdateInfo( info.getEntityClass(), info.getIdAccessor().apply( val ), evi.getEventTypeAccessor().apply( val ) ) );
+						}
+						// TODO: maybe move this to a method as
+						// it is getting reused
+						if ( ++processed % this.batchSizeForUpdates == 0 ) {
+							for ( UpdateConsumer consumer : this.updateConsumers ) {
+								consumer.updateEvent( updateInfos );
+							}
+							for ( Object[] rem : toRemove ) {
+								// the class is in rem[0], the
+								// entity is in
+								// rem[1]
+								query.addToNextValuePosition( (Class<?>) rem[0], -1L );
+								em.remove( rem[1] );
+							}
+							toRemove.clear();
+							updateInfos.clear();
+						}
+					}
+					if ( updateInfos.size() > 0 ) {
+						for ( UpdateConsumer consumer : this.updateConsumers ) {
+							consumer.updateEvent( updateInfos );
+						}
+						for ( Object[] rem : toRemove ) {
+							// the class is in rem[0], the
+							// entity is in rem[1]
+							query.addToNextValuePosition( (Class<?>) rem[0], -1L );
+							em.remove( rem[1] );
+						}
+						toRemove.clear();
+						updateInfos.clear();
+					}
+		
+					em.flush();
+					// clear memory :)
+					em.clear();
+		
+					tx.commit();
 				}
-				// TODO: maybe move this to a method as
-				// it is getting reused
-				if ( ++processed % this.batchSizeForUpdates == 0 ) {
-					for ( UpdateConsumer consumer : this.updateConsumers ) {
-						consumer.updateEvent( updateInfos );
-					}
-					for ( Object[] rem : toRemove ) {
-						// the class is in rem[0], the
-						// entity is in
-						// rem[1]
-						query.addToNextValuePosition( (Class<?>) rem[0], -1L );
-						em.remove( rem[1] );
-					}
-					toRemove.clear();
-					updateInfos.clear();
+				catch (Throwable e) {
+					tx.rollback();
+					throw e;
 				}
 			}
-			if ( updateInfos.size() > 0 ) {
-				for ( UpdateConsumer consumer : this.updateConsumers ) {
-					consumer.updateEvent( updateInfos );
-				}
-				for ( Object[] rem : toRemove ) {
-					// the class is in rem[0], the
-					// entity is in rem[1]
-					query.addToNextValuePosition( (Class<?>) rem[0], -1L );
-					em.remove( rem[1] );
-				}
-				toRemove.clear();
-				updateInfos.clear();
+			catch (Exception e) {
+				throw new RuntimeException( "Error occured during Update processing!", e );
 			}
-
-			em.flush();
-			// clear memory :)
-			em.clear();
-
-			tx.commit();
+			finally {
+				if ( em != null ) {
+					em.close();
+				}
+			}
 		}
-		catch (Throwable e) {
-			tx.rollback();
-			throw e;
+		catch (Exception e) {
+			LOGGER.log( Level.SEVERE, e.getMessage(), e );
 		}
-	}
-	catch (Exception e) {
-		throw new RuntimeException( "Error occured during Update processing!", e );
-	}
-	finally {
-		if ( em != null ) {
-			em.close();
+		finally {
+			this.lock.unlock();
 		}
-	}
-}
-catch (Exception e) {
-	LOGGER.log( Level.SEVERE, e.getMessage(), e );
-}
-finally {
-	this.lock.unlock();
-}
-}, 0, this.timeOut, this.timeUnit );
+		}, 0, this.timeOut, this.timeUnit );
 	}
 
 	public static MultiQueryAccess query(JPAUpdateSource updateSource, EntityManager em) {
