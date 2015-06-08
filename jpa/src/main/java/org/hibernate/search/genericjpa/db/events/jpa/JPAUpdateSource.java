@@ -150,6 +150,7 @@ public class JPAUpdateSource implements UpdateSource {
 		if ( this.updateConsumers == null ) {
 			throw new IllegalStateException( "updateConsumers was null!" );
 		}
+		this.cancelled = false;
 		this.job = this.exec.scheduleWithFixedDelay( () -> {
 			this.lock.lock();
 			try {
