@@ -83,14 +83,14 @@ public class JPAUpdateSourceTest {
 				}
 			} ) );
 			updateSource.start();
-			Sleep.sleep( 1000 * 3, () -> {
+			Sleep.sleep( 1000 * 100, () -> {
 				for ( boolean ev : gotEvent ) {
 					if ( !ev ) {
 						return false;
 					}
 				}
 				return true;
-			});
+			}, 100, "");
 			updateSource.stop();
 			
 

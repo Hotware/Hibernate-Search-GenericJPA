@@ -64,12 +64,12 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 	Map<Class<?>, String> idProperties;
 
 	public EntityProvider entityProvider(EntityManager em) {
-		return new EntityManagerEntityProvider( em , this.idProperties );
+		return new EntityManagerEntityProvider( em, this.idProperties );
 	}
 
 	protected abstract EntityManagerFactory getEmf();
 
-	protected abstract String getConfigFile();
+	protected abstract Properties getConfigProperties();
 
 	protected abstract List<Class<?>> getIndexRootTypes();
 
@@ -103,22 +103,14 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 				}
 			}
 			catch (ClassNotFoundException e) {
-				throw new RuntimeException(
-						"coudln't load class javax.enterprise.concurrent.ManagedScheduledExecutorService "
+				throw new RuntimeException( "coudln't load class javax.enterprise.concurrent.ManagedScheduledExecutorService "
 						+ "even though JTA transaction is to be used!" );
 			}
 		}
 		SearchConfigurationImpl config;
-		if ( this.getConfigFile() != null && !this.getConfigFile().equals( "" ) ) {
-			LOGGER.info( "using config @" + this.getConfigFile() );
-			try (InputStream is = this.getClass().getResourceAsStream( this.getConfigFile() )) {
-				Properties props = new Properties();
-				props.load( is );
-				config = new SearchConfigurationImpl( props );
-			}
-			catch (IOException e) {
-				throw new RuntimeException( "IOException while loading property file.", e );
-			}
+		if ( this.getConfigProperties() != null && !this.getConfigProperties().equals( "" ) ) {
+			LOGGER.info( "using config @" + this.getConfigProperties() );
+			config = new SearchConfigurationImpl( this.getConfigProperties() );
 		}
 		else {
 			config = new SearchConfigurationImpl();
