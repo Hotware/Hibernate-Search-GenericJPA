@@ -42,7 +42,7 @@ public abstract class SQLJPASearchFactory extends JPASearchFactory {
 		List<EventModelInfo> eventModelInfos = eventModelParser.parse( new ArrayList<>( this.getUpdateClasses() ) );
 		this.setupTriggers( eventModelInfos );
 
-		return new JPAUpdateSource( eventModelInfos, this.getEmf(), this.isUseJTATransaction(), this.getDelay(), this.getDelayUnit(),
+		return new JPAUpdateSource( eventModelInfos, this.getEmf(), this.isUseUserTransaction(), this.getDelay(), this.getDelayUnit(),
 				this.getBatchSizeForUpdates(), this.getExecutorServiceForUpdater() );
 	}
 
@@ -52,7 +52,7 @@ public abstract class SQLJPASearchFactory extends JPASearchFactory {
 			em = this.getEmf().createEntityManager();
 			// tx is null if we cannot get a UserTransaction. This could be because we are
 			// a container managed bean
-			JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.isUseJTATransaction(), true );
+			JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.isUseUserTransaction(), true );
 			if ( tx != null ) {
 				tx.setIgnoreExceptionsForUserTransaction( true );
 				tx.begin();

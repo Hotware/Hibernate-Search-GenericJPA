@@ -89,12 +89,12 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 	 */
 	protected abstract ScheduledExecutorService getExecutorServiceForUpdater();
 
-	protected abstract boolean isUseJTATransaction();
+	protected abstract boolean isUseUserTransaction();
 
 	protected abstract UpdateSource getUpdateSource();
 
 	public final void init() {
-		if ( this.isUseJTATransaction() ) {
+		if ( this.isUseUserTransaction() ) {
 			ScheduledExecutorService exec = this.getExecutorServiceForUpdater();
 			try {
 				if ( !Class.forName( "javax.enterprise.concurrent.ManagedScheduledExecutorService" ).isAssignableFrom( exec.getClass() ) ) {
@@ -143,7 +143,7 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 		if ( this.updateSource != null ) {
 			Map<Class<?>, List<Class<?>>> containedInIndexOf = MetadataUtil.calculateInIndexOf( rehashedTypeMetadatas );
 
-			JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider( this.getEmf(), this.idProperties, this.isUseJTATransaction() );
+			JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider( this.getEmf(), this.idProperties, this.isUseUserTransaction() );
 			IndexUpdater indexUpdater = new IndexUpdater( rehashedTypeMetadataPerIndexRoot, containedInIndexOf, entityProvider,
 					impl.unwrap( ExtendedSearchIntegrator.class ) );
 			this.updateSource.setUpdateConsumers( Arrays.asList( indexUpdater, this ) );

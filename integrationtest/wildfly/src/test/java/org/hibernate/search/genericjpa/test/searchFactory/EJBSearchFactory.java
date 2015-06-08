@@ -92,7 +92,7 @@ public class EJBSearchFactory extends SQLJPASearchFactory {
 	}
 
 	@Override
-	protected boolean isUseJTATransaction() {
+	protected boolean isUseUserTransaction() {
 		return true;
 	}
 

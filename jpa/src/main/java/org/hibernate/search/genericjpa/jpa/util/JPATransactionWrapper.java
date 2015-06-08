@@ -81,14 +81,14 @@ public class JPATransactionWrapper {
 		}
 	}
 
-	public static JPATransactionWrapper get(EntityManager em, boolean useJTATransaction) {
-		return get( em, useJTATransaction, false );
+	public static JPATransactionWrapper get(EntityManager em, boolean useUserTransaction) {
+		return get( em, useUserTransaction, false );
 	}
 
-	public static JPATransactionWrapper get(EntityManager em, boolean useJTATransaction, boolean nullInsteadExceptionUtx) {
+	public static JPATransactionWrapper get(EntityManager em, boolean useUserTransaction, boolean nullInsteadExceptionUtx) {
 		EntityTransaction tx;
 		UserTransaction utx;
-		if ( !useJTATransaction ) {
+		if ( !useUserTransaction ) {
 			tx = em.getTransaction();
 			utx = null;
 		}

@@ -92,7 +92,7 @@ public class TestSQLJPASearchFactory extends SQLJPASearchFactory {
 	}
 
 	@Override
-	protected boolean isUseJTATransaction() {
+	protected boolean isUseUserTransaction() {
 		return false;
 	}
 
