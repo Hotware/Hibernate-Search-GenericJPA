@@ -90,7 +90,7 @@ public class JPAUpdateSourceTest {
 					}
 				}
 				return true;
-			});
+			}, 100, "");
 			updateSource.stop();
 			
 
