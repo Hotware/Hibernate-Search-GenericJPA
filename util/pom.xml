@@ -7,20 +7,13 @@
 		<artifactId>hibernate-search-genericjpa-parent</artifactId>
 		<version>0.2.0.0</version>
 	</parent>
-	<artifactId>hibernate-search-genericjpa-test-util</artifactId>
+	<artifactId>hibernate-search-genericjpa-util</artifactId>
 
 	<name>Hibernate Search GenericJPA Test Utilities</name>
 	<description>Utilities for testing of Hibernate Search GenericJPA</description>
 
 	<build>
 		<plugins>
-			<plugin>
-				<artifactId>maven-deploy-plugin</artifactId>
-				<configuration>
-					<skip>true</skip>
-				</configuration>
-			</plugin>
-
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
@@ -33,19 +26,6 @@
 	</build>
 
 	<dependencies>
-		<dependency>
-			<groupId>com.puppycrawl.tools</groupId>
-			<artifactId>checkstyle</artifactId>
-			<version>5.7</version>
-			<exclusions>
-				<!-- Excluding com.sun:tools since it causes errors when importing this 
-					module into an IDE on Windows (HSEARCH-1374) -->
-				<exclusion>
-					<groupId>com.sun</groupId>
-					<artifactId>tools</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>

@@ -34,6 +34,7 @@ import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess;
 import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess.ObjectClassWrapper;
+import org.hibernate.search.genericjpa.test.util.Sleep;
 
 /**
  * a {@link UpdateSource} implementation that uses JPA to retrieve the updates from the database. For this to work the
@@ -271,7 +272,9 @@ public class JPAUpdateSource implements UpdateSource {
 		if(this.job != null) {
 			this.job.cancel( false );
 			try {
-				this.job.get();
+				Sleep.sleep(100000, () -> {
+					return this.job.isDone();
+				}, 100, "");
 			}
 			catch (Exception e) {
 				LOGGER.log( Level.WARNING, "Exception while shutting down JPAUpdateSource", e );

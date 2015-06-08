@@ -6,6 +6,7 @@
  */
 package org.hibernate.search.genericjpa.test.util;
 
+import java.util.concurrent.TimeoutException;
 import java.util.function.BooleanSupplier;
 
 /**
@@ -32,7 +33,7 @@ public final class Sleep {
 			Thread.sleep( delayMillis );
 			waited += System.currentTimeMillis() - start;
 			if(waited >= millis) {
-				throw new AssertionError("timeout: " + message); 
+				throw new RuntimeException("timeout: " + message); 
 			}
 		}
 	}

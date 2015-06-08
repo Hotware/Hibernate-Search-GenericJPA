@@ -46,9 +46,9 @@
 
 		<dependency>
 			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-search-genericjpa-test-util</artifactId>
+			<artifactId>hibernate-search-genericjpa-util</artifactId>
 			<version>${project.version}</version>
-			<scope>test</scope>
+			<scope>runtime</scope>
 		</dependency>
 
 		<dependency>

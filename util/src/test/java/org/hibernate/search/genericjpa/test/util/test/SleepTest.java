@@ -32,7 +32,7 @@ public class SleepTest {
 			} );
 			fail( "timeout expected!" );
 		}
-		catch (AssertionError e) {
+		catch (RuntimeException e) {
 		}
 	}
 

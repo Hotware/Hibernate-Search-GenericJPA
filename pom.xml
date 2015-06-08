@@ -9,7 +9,7 @@
 
 	<modules>
 		<module>build-config</module>
-		<module>test-util</module>
+		<module>util</module>
 		<module>standalone</module>
 		<module>db</module>
 		<module>jpa</module>
