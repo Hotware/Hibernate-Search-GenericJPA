@@ -46,6 +46,7 @@ public class OpenJPATomEEIntegrationTest {
 	public static Archive<?> createDeployment() {
 		return IntegrationTestUtil.createOpenJPAMySQLDeployment();
 	}
+
 	private static final String[] GAME_TITLES = { "Super Mario Brothers", "Mario Kart", "F-Zero" };
 
 	@PersistenceContext
@@ -53,12 +54,12 @@ public class OpenJPATomEEIntegrationTest {
 
 	@Inject
 	public UserTransaction utx;
-	
+
 	boolean firstStart = true;
 
 	@Before
 	public void setup() throws Exception {
-		if(this.firstStart) {
+		if ( this.firstStart ) {
 			Thread.sleep( 3000 );
 			this.firstStart = false;
 		}

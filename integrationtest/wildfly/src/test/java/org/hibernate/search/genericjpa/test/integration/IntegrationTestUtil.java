@@ -6,26 +6,29 @@
  */
 package org.hibernate.search.genericjpa.test.integration;
 
+import java.io.File;
+
 import org.hibernate.search.genericjpa.test.entities.Game;
 import org.hibernate.search.genericjpa.test.searchFactory.EJBSearchFactory;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 
 /**
  * @author Martin Braun
  */
 public class IntegrationTestUtil {
-	
+
 	private IntegrationTestUtil() {
 		// can't touch this
 	}
 
-	public static Archive<?> createEclipseLinkMySQLDeployment() {
-		return ShrinkWrap.create( WebArchive.class, "eclipselink-mysql.war" ).setWebXML( "WEB-INF/web.xml" ).addPackage( Game.class.getPackage() )
-				.addPackage( EJBSearchFactory.class.getPackage() ).addAsResource( "META-INF/eclipselink-mysql-persistence.xml", "META-INF/persistence.xml" )
-				.addAsWebInfResource( EmptyAsset.INSTANCE, "beans.xml" );
+	public static Archive<?> createHibernateMySQLDeployment() {
+		File[] libs = Maven.resolver().loadPomFromFile( "pom.xml" ).importRuntimeDependencies().resolve().withTransitivity().asFile();
+		return ShrinkWrap.create( WebArchive.class, "hibernate-mysql.war" ).addAsLibraries( libs ).setWebXML( "WEB-INF/web.xml" )
+				.addPackage( Game.class.getPackage() ).addPackage( EJBSearchFactory.class.getPackage() )
+				.addAsResource( "META-INF/hibernate-mysql-persistence.xml", "META-INF/persistence.xml" ).addAsWebInfResource( "beans.xml", "beans.xml" );
 	}
 
 }

@@ -40,7 +40,7 @@ import org.junit.runner.RunWith;
  * @author Martin Braun
  */
 @RunWith(Arquillian.class)
-public class HibernateGlassfishIntegrationTest {
+public class HibernateWildflyIntegrationTest {
 
 	@Deployment
 	public static Archive<?> createDeployment() {

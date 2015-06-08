@@ -13,8 +13,6 @@
 		<class>org.hibernate.search.genericjpa.test.entities.VendorUpdates</class>
 		<class>org.hibernate.search.genericjpa.test.entities.GameVendorUpdates</class>
 		<properties>
-			<property name="hibernate.transaction.jta.platform"
-				value="org.hibernate.service.jta.platform.internal.SunOneJtaPlatform" />
 			<property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver" />
 			<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/testingdb" />
 			<property name="javax.persistence.jdbc.user" value="hibernate_user" />

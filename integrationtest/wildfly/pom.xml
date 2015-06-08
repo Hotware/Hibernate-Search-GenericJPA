@@ -1,0 +1,220 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>hibernate-search-jpa-integration-wildfly</artifactId>
+	<packaging>jar</packaging>
+	<name>hibernate-search-jpa-integration-wildfly</name>
+
+	<parent>
+		<artifactId>hibernate-search-genericjpa-parent</artifactId>
+		<groupId>org.hibernate</groupId>
+		<version>0.2.0.0</version>
+		<relativePath>../../pom.xml</relativePath>
+	</parent>
+
+	<build>
+		<testResources>
+			<testResource>
+				<directory>src/test/resources</directory>
+				<filtering>true</filtering>
+			</testResource>
+		</testResources>
+		<plugins>
+			<plugin>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<configuration>
+					<skip>${maven.test.skip}</skip>
+				</configuration>
+				<executions>
+					<execution>
+						<id>unpack</id>
+						<phase>process-test-classes</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>org.wildfly</groupId>
+									<artifactId>wildfly-dist</artifactId>
+									<version>${org.wildfly}</version>
+									<type>zip</type>
+									<!-- only overwrite the mysql connector -->
+									<overWrite>true</overWrite>
+									<outputDirectory>${project.build.directory}</outputDirectory>
+								</artifactItem>
+
+								<artifactItem>
+									<groupId>org.hibernate</groupId>
+									<artifactId>hibernate-search-modules</artifactId>
+									<version>${hibernate-search.version}</version>
+									<classifier>wildfly-8-dist</classifier>
+									<type>zip</type>
+									<overWrite>true</overWrite>
+									<outputDirectory>${project.build.directory}/wildfly-${org.wildfly}/modules</outputDirectory>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+					</execution>
+					<execution>
+						<id>copy-mysql</id>
+						<phase>process-test-classes</phase>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>mysql</groupId>
+									<artifactId>mysql-connector-java</artifactId>
+									<type>jar</type>
+									<overWrite>true</overWrite>
+									<outputDirectory>${project.build.directory}/wildfly-${org.wildfly}/modules/system/layers/base/mysql/mysql-connector-java/main</outputDirectory>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<environmentVariables>
+						<JBOSS_HOME>${project.build.directory}/wildfly-${org.wildfly}</JBOSS_HOME>
+					</environmentVariables>
+					<systemPropertyVariables>
+						<arquillian.launch>wildfly</arquillian.launch>
+					</systemPropertyVariables>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<executions>
+					<!-- Copy the AS configuration files so we can use our custom configurations -->
+					<execution>
+						<id>configs</id>
+						<phase>process-test-classes</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/wildfly-${org.wildfly}</outputDirectory>
+							<overwrite>true</overwrite>
+							<resources>
+								<resource>
+									<directory>${basedir}/src/wildflyConfig</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+
+					<!-- Copy the module files so we can use our custom configurations -->
+					<execution>
+						<id>module</id>
+						<phase>process-test-classes</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/wildfly-${org.wildfly}</outputDirectory>
+							<overwrite>true</overwrite>
+							<resources>
+								<resource>
+									<directory>${basedir}/src/wildflyModules</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+	<properties>
+		<hibernate.version>4.3.7.Final</hibernate.version>
+		<org.wildfly>8.2.0.Final</org.wildfly>
+	</properties>
+
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.jboss.arquillian</groupId>
+				<artifactId>arquillian-bom</artifactId>
+				<version>1.1.8.Final</version>
+				<scope>import</scope>
+				<type>pom</type>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-search-engine</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-search-genericjpa-test-util</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-search-jpa</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.jboss.arquillian.junit</groupId>
+			<artifactId>arquillian-junit-container</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>javax</groupId>
+			<artifactId>javaee-api</artifactId>
+			<version>7.0</version><!--$NO-MVN-MAN-VER$ -->
+			<scope>compile</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.wildfly</groupId>
+			<artifactId>wildfly-arquillian-container-managed</artifactId>
+			<version>${org.wildfly}</version>
+			<scope>test</scope>
+			<exclusions>
+				<!-- This exclusion is needed to be able to setup the project in Windows: 
+					it otherwise includes transitive dependency to the JDK JConsole -->
+				<exclusion>
+					<artifactId>wildfly-patching</artifactId>
+					<groupId>org.wildfly</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>org.jboss.shrinkwrap.resolver</groupId>
+			<artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+	</dependencies>
+
+</project>

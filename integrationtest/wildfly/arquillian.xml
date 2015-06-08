@@ -3,9 +3,12 @@
         <property name="deploymentExportPath">target/arquillian</property>
     </engine>
 
-    <container default="true" qualifier="glassfish">
+    <container qualifier="wildfly" default="true">
         <configuration>
-            <property name="resourcesXml">src/test/resources/glassfish-embedded/glassfish-resources.xml</property>
+            <property name="serverConfig">standalone-full-hsearch-jpa.xml</property>
+            <!-- uncomment below for debugging
+            <property name="javaVmArguments">-Xmx512m -XX:MaxPermSize=128m -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=8787</property>
+            -->
         </configuration>
     </container>
 </arquillian>
