@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -34,7 +33,7 @@ import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess;
 import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess.ObjectClassWrapper;
-import org.hibernate.search.genericjpa.test.util.Sleep;
+import org.hibernate.search.genericjpa.util.Sleep;
 
 /**
  * a {@link UpdateSource} implementation that uses JPA to retrieve the updates from the database. For this to work the

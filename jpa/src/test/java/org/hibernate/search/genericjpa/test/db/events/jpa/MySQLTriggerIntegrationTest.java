@@ -25,7 +25,7 @@ import org.hibernate.search.genericjpa.test.jpa.entities.Place;
 import org.hibernate.search.genericjpa.test.jpa.entities.PlaceSorcererUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.PlaceUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
-import org.hibernate.search.genericjpa.test.util.Sleep;
+import org.hibernate.search.genericjpa.util.Sleep;
 import org.junit.Test;
 
 /**

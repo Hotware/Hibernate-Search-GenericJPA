@@ -9,8 +9,8 @@
 	</parent>
 	<artifactId>hibernate-search-genericjpa-util</artifactId>
 
-	<name>Hibernate Search GenericJPA Test Utilities</name>
-	<description>Utilities for testing of Hibernate Search GenericJPA</description>
+	<name>Hibernate Search GenericJPA Utilities</name>
+	<description>Utilities for Hibernate Search GenericJPA</description>
 
 	<build>
 		<plugins>

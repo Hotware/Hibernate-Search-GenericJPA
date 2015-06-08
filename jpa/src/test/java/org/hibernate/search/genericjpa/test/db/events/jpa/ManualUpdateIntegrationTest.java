@@ -35,7 +35,7 @@ import org.hibernate.search.genericjpa.test.jpa.entities.PlaceSorcererUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.PlaceUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
 import org.hibernate.search.genericjpa.test.jpa.entities.SorcererUpdates;
-import org.hibernate.search.genericjpa.test.util.Sleep;
+import org.hibernate.search.genericjpa.util.Sleep;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
 import org.hibernate.search.standalone.entity.ReusableEntityProvider;
 import org.hibernate.search.standalone.factory.SearchConfigurationImpl;

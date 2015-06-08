@@ -8,7 +8,7 @@ package org.hibernate.search.genericjpa.test.util.test;
 
 import static org.junit.Assert.fail;
 
-import org.hibernate.search.genericjpa.test.util.Sleep;
+import org.hibernate.search.genericjpa.util.Sleep;
 import org.junit.Test;
 
 public class SleepTest {
