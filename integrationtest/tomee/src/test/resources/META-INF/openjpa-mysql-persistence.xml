@@ -13,7 +13,7 @@
 		<class>org.hibernate.search.genericjpa.test.entities.VendorUpdates</class>
 		<class>org.hibernate.search.genericjpa.test.entities.GameVendorUpdates</class>
 		<properties>
-			<property name="openjpa.Log" value="DefaultLevel=WARN, Tool=INFO" />
+			<property name="openjpa.Log" value="DefaultLevel=INFO, Tool=INFO" />
 			<property name="openjpa.jdbc.SynchronizeMappings" value="buildSchema" />
 			<property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
 		</properties>
