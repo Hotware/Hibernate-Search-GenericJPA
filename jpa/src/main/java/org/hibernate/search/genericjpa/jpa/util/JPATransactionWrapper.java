@@ -12,6 +12,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
 import javax.transaction.UserTransaction;
 
+import org.hibernate.search.genericjpa.exception.SearchException;
+
 /**
  * @author Martin Braun
  */
@@ -43,7 +45,7 @@ public class JPATransactionWrapper {
 			}
 			catch (Exception e) {
 				if ( !this.ignoreExceptionsForUserTransaction ) {
-					throw new RuntimeException( e );
+					throw new SearchException( e );
 				}
 			}
 		}
@@ -59,7 +61,7 @@ public class JPATransactionWrapper {
 			}
 			catch (Exception e) {
 				if ( !this.ignoreExceptionsForUserTransaction ) {
-					throw new RuntimeException( e );
+					throw new SearchException( e );
 				}
 			}
 		}
@@ -75,7 +77,7 @@ public class JPATransactionWrapper {
 			}
 			catch (Exception e) {
 				if ( !this.ignoreExceptionsForUserTransaction ) {
-					throw new RuntimeException( e );
+					throw new SearchException( e );
 				}
 			}
 		}
@@ -98,7 +100,7 @@ public class JPATransactionWrapper {
 			}
 			catch (NamingException e) {
 				if ( !nullInsteadExceptionUtx ) {
-					throw new RuntimeException( e );
+					throw new SearchException( e );
 				}
 				else {
 					return null;

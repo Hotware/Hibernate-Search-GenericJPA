@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.query.engine.spi.HSQuery;
 import org.hibernate.search.standalone.dto.DtoDescriptor.DtoDescription;
 
@@ -65,7 +66,7 @@ public class DtoQueryExecutor {
 						return val;
 					}
 					catch (InstantiationException | IllegalAccessException e) {
-						throw new RuntimeException( e );
+						throw new SearchException( e );
 					}
 				} ).collect( Collectors.toList() );
 

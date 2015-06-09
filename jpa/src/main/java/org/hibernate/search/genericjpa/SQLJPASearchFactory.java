@@ -19,6 +19,7 @@ import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.TriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.UpdateSource;
 import org.hibernate.search.genericjpa.db.events.jpa.JPAUpdateSource;
+import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 
 /**
@@ -100,7 +101,7 @@ public abstract class SQLJPASearchFactory extends JPASearchFactory {
 					tx.rollback();
 					LOGGER.warning( "rolling back trigger setup!" );
 				}
-				throw new RuntimeException( e );
+				throw new SearchException( e );
 			}
 			if ( tx != null ) {
 				tx.commit();
@@ -110,7 +111,7 @@ public abstract class SQLJPASearchFactory extends JPASearchFactory {
 			LOGGER.info( "finished setting up triggers!" );
 		}
 		catch (SecurityException e) {
-			throw new RuntimeException( e );
+			throw new SearchException( e );
 		}
 		finally {
 			if ( em != null ) {

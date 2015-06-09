@@ -26,6 +26,7 @@ import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 
+import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateSource;
@@ -125,12 +126,12 @@ public class JPAUpdateSource implements UpdateSource {
 						return idMethod.invoke( obj );
 					}
 					catch (Exception e) {
-						throw new RuntimeException( e );
+						throw new SearchException( e );
 					}
 				} );
 			}
 			catch (SecurityException | NoSuchMethodException e) {
-				throw new RuntimeException( "could not access the \"getId()\" method of class: " + evi.getUpdateClass() );
+				throw new SearchException( "could not access the \"getId()\" method of class: " + evi.getUpdateClass() );
 			}
 		}
 		if ( exec == null ) {
@@ -225,7 +226,7 @@ public class JPAUpdateSource implements UpdateSource {
 		}
 	}
 	catch (Exception e) {
-		throw new RuntimeException( "Error occured during Update processing!", e );
+		throw new SearchException( "Error occured during Update processing!", e );
 	}
 	finally {
 		if ( em != null ) {

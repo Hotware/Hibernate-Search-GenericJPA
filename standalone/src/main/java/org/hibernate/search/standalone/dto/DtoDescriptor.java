@@ -40,10 +40,7 @@ public interface DtoDescriptor {
 			try {
 				return annotationClass.getDeclaredMethod( name ).getDefaultValue();
 			}
-			catch (NoSuchMethodException e) {
-				throw new RuntimeException( e );
-			}
-			catch (SecurityException e) {
+			catch (NoSuchMethodException | SecurityException e) {
 				throw new RuntimeException( e );
 			}
 		}

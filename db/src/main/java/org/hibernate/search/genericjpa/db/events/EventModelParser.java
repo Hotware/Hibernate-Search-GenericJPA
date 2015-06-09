@@ -16,7 +16,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
-import org.hibernate.search.exception.AssertionFailure;
+import org.hibernate.search.genericjpa.exception.AssertionFailure;
+import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.annotations.Event;
 import org.hibernate.search.genericjpa.annotations.IdFor;
 import org.hibernate.search.genericjpa.annotations.Updates;
@@ -119,7 +120,7 @@ public class EventModelParser {
 					}
 				}
 				catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-					throw new RuntimeException( e );
+					throw new SearchException( e );
 				}
 			};
 			ret.add( new EventModelInfo( clazz, updates.tableName(), updates.originalTableName(), eventTypeAccessor, eventTypeColumn, idInfos ) );
@@ -171,7 +172,7 @@ public class EventModelParser {
 					toOriginalBridge = idFor.bridge().newInstance();
 				}
 				catch (IllegalAccessException | InstantiationException e) {
-					throw new RuntimeException( e );
+					throw new SearchException( e );
 				}
 				Function<Object, Object> idAccessor = (Object object) -> {
 					Object val;
@@ -187,7 +188,7 @@ public class EventModelParser {
 						}
 					}
 					catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-						throw new RuntimeException( e );
+						throw new SearchException( e );
 					}
 					return toOriginalBridge.toOriginal( val );
 				};

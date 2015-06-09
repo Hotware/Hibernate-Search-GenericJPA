@@ -151,7 +151,7 @@ public class HSearchQueryImpl implements HSearchQuery {
 			originalOrder.stream().forEach( (id) -> {
 				Object value = idToObject.get( id );
 				if ( value == null ) {
-					LOGGER.info( "omiting object of id " + id + " which was found in the index but not in the database!" );
+					LOGGER.info( "ommiting object of id " + id + " which was found in the index but not in the database!" );
 				}
 				else {
 					ret.add( idToObject.get( id ) );

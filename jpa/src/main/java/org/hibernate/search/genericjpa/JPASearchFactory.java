@@ -34,6 +34,7 @@ import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateSource;
 import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.entity.JPAReusableEntityProvider;
+import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.indexes.IndexReaderAccessor;
 import org.hibernate.search.metadata.IndexedTypeDescriptor;
 import org.hibernate.search.query.dsl.QueryContextBuilder;
@@ -103,7 +104,7 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 				}
 			}
 			catch (ClassNotFoundException e) {
-				throw new RuntimeException( "coudln't load class javax.enterprise.concurrent.ManagedScheduledExecutorService "
+				throw new SearchException( "coudln't load class javax.enterprise.concurrent.ManagedScheduledExecutorService "
 						+ "even though JTA transaction is to be used!" );
 			}
 		}
@@ -157,7 +158,7 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 			this.close();
 		}
 		catch (IOException e) {
-			throw new RuntimeException( e );
+			throw new SearchException( e );
 		}
 	}
 

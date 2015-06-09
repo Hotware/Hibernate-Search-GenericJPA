@@ -22,6 +22,7 @@ import javax.transaction.SystemException;
 import javax.transaction.TransactionSynchronizationRegistry;
 import javax.transaction.UserTransaction;
 
+import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.standalone.entity.ReusableEntityProvider;
 
 /**
@@ -116,7 +117,7 @@ public class JPAReusableEntityProvider implements ReusableEntityProvider {
 				}
 			}
 			catch (NamingException | NotSupportedException | SystemException e1) {
-				throw new RuntimeException( "couldn't start a JTA UserTransaction", e1 );
+				throw new SearchException( "couldn't start a JTA UserTransaction", e1 );
 			}
 		}
 	}
@@ -133,7 +134,7 @@ public class JPAReusableEntityProvider implements ReusableEntityProvider {
 				}
 			}
 			catch (SecurityException | IllegalStateException | RollbackException | HeuristicMixedException | HeuristicRollbackException | SystemException e1) {
-				throw new RuntimeException( "couldn't commit a JTA UserTransaction", e1 );
+				throw new SearchException( "couldn't commit a JTA UserTransaction", e1 );
 			}
 		}
 	}

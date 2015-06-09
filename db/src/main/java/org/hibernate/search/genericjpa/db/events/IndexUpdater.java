@@ -19,6 +19,7 @@ import org.hibernate.search.bridge.StringBridge;
 import org.hibernate.search.engine.ProjectionConstants;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.metadata.impl.DocumentFieldMetadata;
+import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.hibernate.search.query.engine.spi.HSQuery;
 import org.hibernate.search.standalone.entity.ReusableEntityProvider;
@@ -107,7 +108,7 @@ public class IndexUpdater implements UpdateConsumer {
 		catch (Exception e) {
 			tx.rollback();
 			LOGGER.warn( "Error while updating the index! Your index might be corrupt!" );
-			throw new RuntimeException( "Error while updating the index! Your index might be corrupt!" );
+			throw new SearchException( "Error while updating the index! Your index might be corrupt!" );
 		}
 		finally {
 			this.entityProvider.close();
