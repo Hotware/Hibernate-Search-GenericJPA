@@ -65,6 +65,7 @@ public class JPAUpdateSource implements UpdateSource {
 	private Future<?> job;
 	private final ReentrantLock lock = new ReentrantLock();
 	private boolean cancelled = false;
+	private boolean pause = false;
 
 	/**
 	 * this doesn't do real batching for the databasequeries
@@ -155,6 +156,9 @@ public class JPAUpdateSource implements UpdateSource {
 		this.job = this.exec.scheduleWithFixedDelay( () -> {
 			this.lock.lock();
 			try {
+				if ( this.pause ) {
+					return;
+				}
 				if ( this.cancelled ) {
 					return;
 				}
@@ -290,6 +294,16 @@ finally {
 			finally {
 				this.lock.unlock();
 			}
+		}
+	}
+
+	@Override
+	public void pause(boolean pause) {
+		this.lock.lock();
+		try {
+			this.pause = pause;
+		} finally {
+			this.lock.unlock();
 		}
 	}
 

@@ -19,6 +19,8 @@ import org.hibernate.search.genericjpa.impl.ImplementationFactory;
  * @author Martin Braun
  */
 public final class Search {
+	
+	//FIXME: is this okay for multiple classloaders?
 
 	private static JPASearchFactory searchFactory;
 
@@ -30,6 +32,12 @@ public final class Search {
 	public static void setup(JPASearchFactory searchFactory) {
 		Search.searchFactory = searchFactory;
 	}
+	
+	public void pauseUpdating(boolean pause) {
+		if(Search.searchFactory != null) {
+			Search.searchFactory.pauseUpdateSource( pause );
+		}
+	}
 
 	/**
 	 * Build a full text capable EntityManager The underlying EM implementation has to be Hibernate EntityManager
@@ -39,7 +47,7 @@ public final class Search {
 			return (FullTextEntityManager) em;
 		}
 		else {
-			return ImplementationFactory.createFullTextEntityManager( em, searchFactory );
+			return ImplementationFactory.createFullTextEntityManager( em, Search.searchFactory );
 		}
 	}
 

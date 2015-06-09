@@ -7,9 +7,7 @@
 package org.hibernate.search.genericjpa;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Serializable;
-import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -59,10 +57,10 @@ import org.hibernate.search.stat.Statistics;
 public abstract class JPASearchFactory implements StandaloneSearchFactory, UpdateConsumer {
 
 	private final Logger LOGGER = Logger.getLogger( JPASearchFactory.class.getName() );
-	StandaloneSearchFactory searchFactory;
+	private StandaloneSearchFactory searchFactory;
 	private UpdateSource updateSource;
-	Set<Class<?>> indexRelevantEntities;
-	Map<Class<?>, String> idProperties;
+	private Set<Class<?>> indexRelevantEntities;
+	private Map<Class<?>, String> idProperties;
 
 	public EntityProvider entityProvider(EntityManager em) {
 		return new EntityManagerEntityProvider( em, this.idProperties );
@@ -92,7 +90,7 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 
 	protected abstract boolean isUseUserTransaction();
 
-	protected abstract UpdateSource getUpdateSource();
+	protected abstract UpdateSource createUpdateSource();
 
 	public final void init() {
 		if ( this.isUseUserTransaction() ) {
@@ -140,7 +138,7 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 		SearchIntegrator impl = builder.buildSearchIntegrator();
 		this.searchFactory = new StandaloneSearchFactoryImpl( impl.unwrap( ExtendedSearchIntegrator.class ) );
 
-		this.updateSource = this.getUpdateSource();
+		this.updateSource = this.createUpdateSource();
 		if ( this.updateSource != null ) {
 			Map<Class<?>, List<Class<?>>> containedInIndexOf = MetadataUtil.calculateInIndexOf( rehashedTypeMetadatas );
 
@@ -150,6 +148,10 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 			this.updateSource.setUpdateConsumers( Arrays.asList( indexUpdater, this ) );
 			this.updateSource.start();
 		}
+	}
+	
+	public void pauseUpdateSource(boolean pause) {
+		this.updateSource.pause( pause );
 	}
 
 	public void shutdown() {

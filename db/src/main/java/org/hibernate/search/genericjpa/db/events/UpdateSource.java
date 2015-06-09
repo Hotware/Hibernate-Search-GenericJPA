@@ -20,6 +20,14 @@ public interface UpdateSource {
 
 	void start();
 
+	/**
+	 * this has to wait until the current jobs are finished
+	 */
 	void stop();
+
+	/**
+	 * this may wait until the current jobs are finished
+	 */
+	void pause(boolean pause);
 
 }

@@ -38,7 +38,7 @@ public abstract class SQLJPASearchFactory extends JPASearchFactory {
 	protected abstract TriggerSQLStringSource getTriggerSQLStringSource();
 
 	@Override
-	protected UpdateSource getUpdateSource() {
+	protected UpdateSource createUpdateSource() {
 		EventModelParser eventModelParser = new EventModelParser();
 		List<EventModelInfo> eventModelInfos = eventModelParser.parse( new ArrayList<>( this.getUpdateClasses() ) );
 		this.setupTriggers( eventModelInfos );
