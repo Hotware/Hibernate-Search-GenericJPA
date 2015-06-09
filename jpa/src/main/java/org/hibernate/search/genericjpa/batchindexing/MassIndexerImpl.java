@@ -6,12 +6,20 @@
  */
 package org.hibernate.search.genericjpa.batchindexing;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.metamodel.EntityType;
+import javax.persistence.metamodel.Metamodel;
+import javax.persistence.metamodel.SingularAttribute;
 
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.genericjpa.exception.SearchException;
@@ -27,6 +35,7 @@ public class MassIndexerImpl implements MassIndexer {
 	private final ExtendedSearchIntegrator searchIntegrator;
 	private final List<Class<?>> rootEntities;
 	private final boolean useUserTransaction;
+	private final EntityManagerFactory emf;
 
 	private ExecutorService executorServiceForIds;
 	private ExecutorService executorServiceForObjects;
@@ -39,8 +48,9 @@ public class MassIndexerImpl implements MassIndexer {
 	private int threadsToLoadIds = 2;
 	private int threadsToLoadObjects = 4;
 
-	public MassIndexerImpl(Map<Class<?>, RehashedTypeMetadata> metadataPerForIndexRoot, Map<Class<?>, List<Class<?>>> containedInIndexOf,
-			ExtendedSearchIntegrator searchIntegrator, List<Class<?>> rootEntities, boolean useUserTransaction) {
+	public MassIndexerImpl(EntityManagerFactory emf, Map<Class<?>, RehashedTypeMetadata> metadataPerForIndexRoot,
+			Map<Class<?>, List<Class<?>>> containedInIndexOf, ExtendedSearchIntegrator searchIntegrator, List<Class<?>> rootEntities, boolean useUserTransaction) {
+		this.emf = emf;
 		this.metadataPerForIndexRoot = metadataPerForIndexRoot;
 		this.containedInIndexOf = containedInIndexOf;
 		this.searchIntegrator = searchIntegrator;
@@ -108,6 +118,8 @@ public class MassIndexerImpl implements MassIndexer {
 		if ( this.executorServiceForObjects != null ) {
 			this.executorServiceForObjects = Executors.newFixedThreadPool( this.threadsToLoadObjects );
 		}
+		Map<Class<?>, String> idProperties = this.getIdProperties( this.rootEntities );
+		
 		return null;
 	}
 
@@ -119,6 +131,32 @@ public class MassIndexerImpl implements MassIndexer {
 		catch (ExecutionException e) {
 			throw new SearchException( e );
 		}
+	}
+
+	public Map<Class<?>, String> getIdProperties(List<Class<?>> entityClasses) {
+		Map<Class<?>, String> ret = new HashMap<>( entityClasses.size() );
+		for ( Class<?> entityClass : entityClasses ) {
+			ret.put( entityClass, this.getIdProperty( entityClass ) );
+		}
+		return ret;
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public String getIdProperty(Class<?> entityClass) {
+		String idProperty = null;
+		Metamodel metamodel = this.emf.getMetamodel();
+		EntityType entity = metamodel.entity( entityClass );
+		Set<SingularAttribute> singularAttributes = entity.getSingularAttributes();
+		for ( SingularAttribute singularAttribute : singularAttributes ) {
+			if ( singularAttribute.isId() ) {
+				idProperty = singularAttribute.getName();
+				break;
+			}
+		}
+		if ( idProperty == null ) {
+			throw new SearchException( "id field not found for: " + entityClass );
+		}
+		return idProperty;
 	}
 
 }

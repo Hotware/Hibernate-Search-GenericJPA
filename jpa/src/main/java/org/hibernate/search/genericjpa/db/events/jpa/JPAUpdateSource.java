@@ -261,8 +261,8 @@ finally {
 			countMap.put( evi.getUpdateClass(), count );
 
 			{
-				Query query = em.createQuery( new StringBuilder().append( "SELECT obj FROM " ).append( evi.getUpdateClass().getName() )
-						.append( " obj ORDER BY obj.id" ).toString() );
+				Query query = em.createQuery( new StringBuilder().append( "SELECT obj FROM " )
+						.append( em.getMetamodel().entity( evi.getUpdateClass() ).getName() ).append( " obj ORDER BY obj.id" ).toString() );
 				queryMap.put( evi.getUpdateClass(), query );
 			}
 		}
@@ -302,7 +302,8 @@ finally {
 		this.lock.lock();
 		try {
 			this.pause = pause;
-		} finally {
+		}
+		finally {
 			this.lock.unlock();
 		}
 	}

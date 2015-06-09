@@ -47,7 +47,7 @@ public class EntityManagerEntityProvider implements EntityProvider {
 		List<Object> ret = new ArrayList<>( ids.size() );
 		if ( ids.size() > 0 ) {
 			String idProperty = this.idProperties.get( entityClass );
-			String queryString = String.format(QUERY_FORMAT, entityClass.getName(), idProperty);
+			String queryString = String.format(QUERY_FORMAT, this.em.getMetamodel().entity( entityClass ).getName(), idProperty);
 			Query query = this.em.createQuery( queryString );	
 			query.setParameter( "ids", ids );
 			ret.addAll( query.getResultList() );

@@ -66,7 +66,11 @@ public class IndexUpdater implements UpdateConsumer {
 
 	@Override
 	public void updateEvent(List<UpdateInfo> updateInfos) {
-		this.entityProvider.open();
+		this.updateEvent( updateInfos, this.entityProvider );
+	}
+
+	public void updateEvent(List<UpdateInfo> updateInfos, ReusableEntityProvider provider) {
+		provider.open();
 		Transaction tx = new Transaction();
 		try {
 			for ( UpdateInfo updateInfo : updateInfos ) {
@@ -77,14 +81,14 @@ public class IndexUpdater implements UpdateConsumer {
 					Object id = updateInfo.getId();
 					switch ( eventType ) {
 						case EventType.INSERT: {
-							Object obj = this.entityProvider.get( entityClass, id );
+							Object obj = provider.get( entityClass, id );
 							if ( obj != null ) {
 								this.indexWrapper.index( obj, tx );
 							}
 							break;
 						}
 						case EventType.UPDATE: {
-							Object obj = this.entityProvider.get( entityClass, id );
+							Object obj = provider.get( entityClass, id );
 							if ( obj != null ) {
 								this.indexWrapper.update( obj, tx );
 							}
@@ -111,7 +115,7 @@ public class IndexUpdater implements UpdateConsumer {
 			throw new SearchException( "Error while updating the index! Your index might be corrupt!" );
 		}
 		finally {
-			this.entityProvider.close();
+			provider.close();
 		}
 	}
 
