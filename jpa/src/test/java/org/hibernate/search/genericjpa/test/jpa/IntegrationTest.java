@@ -10,25 +10,20 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.Query;
-import org.eclipse.persistence.descriptors.ClassDescriptor;
-import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
+import org.hibernate.search.genericjpa.batchindexing.IdProducerTask;
+import org.hibernate.search.genericjpa.batchindexing.ObjectHandlerTask;
+import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
 import org.hibernate.search.genericjpa.test.db.events.jpa.MetaModelParser;
-import org.hibernate.search.genericjpa.test.jpa.entities.AdditionalPlace;
-import org.hibernate.search.genericjpa.test.jpa.entities.AdditionalPlace2;
-import org.hibernate.search.genericjpa.test.jpa.entities.EmbeddableInfo;
 import org.hibernate.search.genericjpa.test.jpa.entities.Place;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
 import org.hibernate.search.genericjpa.util.Sleep;
@@ -36,13 +31,8 @@ import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.Search;
 import org.hibernate.search.query.DatabaseRetrievalMethod;
 import org.hibernate.search.query.ObjectLookupMethod;
-import org.hibernate.search.query.dsl.QueryBuilder;
 import org.hibernate.search.standalone.entity.EntityProvider;
-import org.hibernate.search.standalone.factory.SearchConfigurationImpl;
 import org.hibernate.search.standalone.factory.StandaloneSearchFactory;
-import org.hibernate.search.standalone.factory.StandaloneSearchFactoryFactory;
-import org.hibernate.search.standalone.query.HSearchQuery;
-import org.hibernate.search.standalone.query.HSearchQuery.Fetch;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -77,6 +67,45 @@ public class IntegrationTest {
 				searchFactory.close();
 			}
 		}
+	}
+
+	// TODO: different test class?
+	@Test
+	public void testIdProducerTask() {
+		ObjectHandlerTask objHandlerTask = new ObjectHandlerTask() {
+
+			private boolean hadOne = false;
+			private List<UpdateInfo> batch;
+
+			@Override
+			public void run() {
+				if ( !hadOne ) {
+					assertEquals( "Helm's Deep", IntegrationTest.this.em.find( Place.class, this.batch.get( 0 ).getId() ).getName() );
+					hadOne = true;
+				}
+				else {
+					assertEquals( "Valinor", IntegrationTest.this.em.find( Place.class, this.batch.get( 0 ).getId() ).getName() );
+				}
+			}
+
+			@Override
+			public ObjectHandlerTask batch(List<UpdateInfo> batch) {
+				this.batch = batch;
+				return this;
+			}
+
+		};
+		IdProducerTask idProducer = new IdProducerTask( Place.class, "id", this.emf, false, 1, 1, null, (clazz) -> {
+			return objHandlerTask;
+		} );
+		idProducer.run();
+
+	}
+
+	// TODO: different test class?
+	@Test
+	public void testObjectHandlerWithIdProducerTask() {
+		//TODO:
 	}
 
 	@Test
@@ -211,10 +240,11 @@ public class IntegrationTest {
 
 	@After
 	public void shutdown() {
-		//has to be shut down first (update processing!)
+		// has to be shut down first (update processing!)
 		try {
 			this.searchFactory.shutdown();
-		} catch(Exception e) {
+		}
+		catch (Exception e) {
 			e.printStackTrace();
 		}
 		if ( this.em != null ) {

@@ -6,14 +6,15 @@
  */
 package org.hibernate.search.genericjpa.batchindexing;
 
+import java.util.List;
+
+import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
+
 /**
  * @author Martin Braun
  */
-public class ObjectHandlerTask implements Runnable {
+public interface ObjectHandlerTask extends Runnable {
 
-	@Override
-	public void run() {
-		
-	}
+	ObjectHandlerTask batch(List<UpdateInfo> batch);
 
 }
