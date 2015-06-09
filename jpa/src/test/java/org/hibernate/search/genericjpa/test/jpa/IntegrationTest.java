@@ -11,6 +11,7 @@ import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,6 +21,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.eclipse.persistence.descriptors.ClassDescriptor;
 import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
@@ -29,8 +31,11 @@ import org.hibernate.search.genericjpa.test.jpa.entities.AdditionalPlace2;
 import org.hibernate.search.genericjpa.test.jpa.entities.EmbeddableInfo;
 import org.hibernate.search.genericjpa.test.jpa.entities.Place;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
+import org.hibernate.search.genericjpa.util.Sleep;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.Search;
+import org.hibernate.search.query.DatabaseRetrievalMethod;
+import org.hibernate.search.query.ObjectLookupMethod;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.hibernate.search.standalone.entity.EntityProvider;
 import org.hibernate.search.standalone.factory.SearchConfigurationImpl;
@@ -38,6 +43,8 @@ import org.hibernate.search.standalone.factory.StandaloneSearchFactory;
 import org.hibernate.search.standalone.factory.StandaloneSearchFactoryFactory;
 import org.hibernate.search.standalone.query.HSearchQuery;
 import org.hibernate.search.standalone.query.HSearchQuery.Fetch;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
@@ -48,38 +55,94 @@ public class IntegrationTest {
 	private int valinorId = 0;
 	private Place valinor;
 	private EntityManagerFactory emf;
+	private EntityManager em;
 	private TestSQLJPASearchFactory searchFactory;
 
 	@Test
-	public void testEclipseLink() throws IOException {
-		this.setup( "EclipseLink_MySQL" );
+	public void metaModelParser() throws IOException {
+		EntityProvider entityProvider = null;
+		StandaloneSearchFactory searchFactory = null;
 		try {
-			this.metaModelParser();
+			MetaModelParser parser = new MetaModelParser();
+			parser.parse( this.emf.getMetamodel() );
+			{
+				assertEquals( 4, parser.getIndexRelevantEntites().size() );
+			}
 		}
 		finally {
-			this.shutdown();
-		}
-	}
-	
-	public void testJPAInterfaces() {
-		EntityManager em = null;
-		try {
-			em = this.emf.createEntityManager();
-			FullTextEntityManager fem = Search.getFullTextEntityManager( em );
-			fem.beginSearchTransaction();
-			
-			
-			
-			fem.commitSearchTransaction();
-		} finally {
-			if( em != null) {
-				em.close();
+			if ( entityProvider != null ) {
+				entityProvider.close();
+			}
+			if ( searchFactory != null ) {
+				searchFactory.close();
 			}
 		}
 	}
 
-	public void setup(String persistence) {
-		this.emf = Persistence.createEntityManagerFactory( persistence );
+	@Test
+	public void testJPAInterfaces() throws InterruptedException {
+		FullTextEntityManager fem = Search.getFullTextEntityManager( em );
+		fem.beginSearchTransaction();
+
+		Sleep.sleep(
+				1000,
+				() -> {
+					return 2 == fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class )
+							.initializeObjectsWith( ObjectLookupMethod.SKIP, DatabaseRetrievalMethod.QUERY ).getResultList().size();
+				}, 100, "coudln't find all entities in index!" );
+
+		fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class ).initializeObjectsWith( ObjectLookupMethod.SKIP, DatabaseRetrievalMethod.QUERY )
+				.entityProvider( new EntityProvider() {
+
+					@Override
+					public void close() throws IOException {
+						// no-op
+					}
+
+					@Override
+					public List getBatch(Class<?> entityClass, List<Object> id) {
+						// this should happen!
+						return Collections.emptyList();
+					}
+
+					@Override
+					public Object get(Class<?> entityClass, Object id) {
+						throw new AssertionError( "should have used getBatch instead!" );
+					}
+
+				} ).getResultList();
+
+		fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class ).initializeObjectsWith( ObjectLookupMethod.SKIP, DatabaseRetrievalMethod.FIND_BY_ID )
+				.entityProvider( new EntityProvider() {
+
+					@Override
+					public void close() throws IOException {
+						// no-op
+					}
+
+					@Override
+					public List getBatch(Class<?> entityClass, List<Object> id) {
+						throw new AssertionError( "should have used get instead!" );
+					}
+
+					@Override
+					public Object get(Class<?> entityClass, Object id) {
+						try {
+							return entityClass.newInstance();
+						}
+						catch (InstantiationException | IllegalAccessException e) {
+							throw new RuntimeException( e );
+						}
+					}
+
+				} ).getResultList();
+
+		fem.commitSearchTransaction();
+	}
+
+	@Before
+	public void setup() {
+		this.emf = Persistence.createEntityManagerFactory( "EclipseLink_MySQL" );
 		this.searchFactory = new TestSQLJPASearchFactory( this.emf );
 		this.searchFactory.start();
 		EntityManager em = emf.createEntityManager();
@@ -143,33 +206,31 @@ public class IntegrationTest {
 				em.close();
 			}
 		}
-
+		this.em = this.emf.createEntityManager();
 	}
 
+	@After
 	public void shutdown() {
-		if ( this.emf != null ) {
-			System.out.println( "killing EntityManagerFactory" );
-			this.emf.close();
-		}
-		this.searchFactory.shutdown();
-	}
-
-	public void metaModelParser() throws IOException {
-		EntityProvider entityProvider = null;
-		StandaloneSearchFactory searchFactory = null;
+		//has to be shut down first (update processing!)
 		try {
-			MetaModelParser parser = new MetaModelParser();
-			parser.parse( this.emf.getMetamodel() );
-			{
-				assertEquals( 4, parser.getIndexRelevantEntites().size() );
+			this.searchFactory.shutdown();
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		if ( this.em != null ) {
+			try {
+				this.em.close();
+			}
+			catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
-		finally {
-			if ( entityProvider != null ) {
-				entityProvider.close();
+		if ( this.emf != null ) {
+			try {
+				this.emf.close();
 			}
-			if ( searchFactory != null ) {
-				searchFactory.close();
+			catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
 	}

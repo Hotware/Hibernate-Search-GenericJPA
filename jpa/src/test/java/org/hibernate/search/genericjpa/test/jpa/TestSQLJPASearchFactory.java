@@ -22,6 +22,7 @@ import org.hibernate.search.genericjpa.test.jpa.entities.Place;
 import org.hibernate.search.genericjpa.test.jpa.entities.PlaceSorcererUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.PlaceUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.SorcererUpdates;
+import org.hibernate.search.jpa.Search;
 
 /**
  * @author Martin Braun
@@ -37,11 +38,12 @@ public class TestSQLJPASearchFactory extends SQLJPASearchFactory {
 	}
 	
 	public void start() {
+		Search.setup( this );
 		super.init();
 	}
 	
 	public void shutdown() {
-		this.exec.shutdownNow();
+		this.exec.shutdown();
 		super.shutdown();
 	}
 
