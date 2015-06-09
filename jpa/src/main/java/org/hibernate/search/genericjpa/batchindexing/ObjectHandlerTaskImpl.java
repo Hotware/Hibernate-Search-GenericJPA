@@ -13,6 +13,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceUnitUtil;
+
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.db.events.IndexUpdater;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
@@ -27,23 +29,24 @@ public class ObjectHandlerTaskImpl implements ObjectHandlerTask {
 
 	private final IndexUpdater indexUpdater;
 	private final Class<?> entityClass;
-	private final String idProperty;
 	private final EntityManager em;
 	private final boolean useUserTransaction;
 	private final Map<Class<?>, String> idProperties;
 	private final Consumer<EntityManager> entityManagerDisposer;
+	private final PersistenceUnitUtil peristenceUnitUtil;
 
 	private List<UpdateInfo> batch;
 
-	public ObjectHandlerTaskImpl(IndexUpdater indexUpdater, Class<?> entityClass, String idProperty, EntityManager em, boolean useUserTransaction,
-			int createNewEntityManagerCount, Map<Class<?>, String> idProperties, Consumer<EntityManager> entityManagerDisposer) {
+	public ObjectHandlerTaskImpl(IndexUpdater indexUpdater, Class<?> entityClass, EntityManager em, boolean useUserTransaction,
+			int createNewEntityManagerCount, Map<Class<?>, String> idProperties, Consumer<EntityManager> entityManagerDisposer,
+			PersistenceUnitUtil peristenceUnitUtil) {
 		this.indexUpdater = indexUpdater;
 		this.entityClass = entityClass;
-		this.idProperty = idProperty;
 		this.em = em;
 		this.useUserTransaction = useUserTransaction;
 		this.idProperties = idProperties;
 		this.entityManagerDisposer = entityManagerDisposer;
+		this.peristenceUnitUtil = peristenceUnitUtil;
 	}
 
 	@Override
@@ -66,12 +69,7 @@ public class ObjectHandlerTaskImpl implements ObjectHandlerTask {
 			@SuppressWarnings("unchecked")
 			Map<Object, Object> idsToEntities = (Map<Object, Object>) providerForBatch.getBatch( this.entityClass, ids ).stream()
 					.collect( Collectors.toMap( (entity) -> {
-						try {
-							return entity.getClass().getMethod( this.idProperty ).invoke( entity );
-						}
-						catch (Exception e) {
-							throw new SearchException( e );
-						}
+						return this.peristenceUnitUtil.getIdentifier( entity );
 					}, (entity) -> {
 						return entity;
 					} ) );
