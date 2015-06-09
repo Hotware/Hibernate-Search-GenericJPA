@@ -34,11 +34,12 @@ public interface FullTextEntityManager extends EntityManager {
 	FullTextQuery createFullTextQuery(org.apache.lucene.search.Query luceneQuery, Class<?>... entities);
 
 	/**
-	 * Force the (re)indexing of a given <b>managed</b> object. Indexation is batched per transaction: if a transaction
-	 * is active, the operation will not affect the index at least until commit.
-	 *
+	 * Force the (re)indexing of a given <b>managed</b> object. Indexation is batched per search-transaction: if a
+	 * transaction is active, the operation will not affect the index at least until commit.
+	 * 
 	 * @param entity The entity to index - must not be <code>null</code>.
 	 * @throws IllegalArgumentException if entity is null or not an @Indexed entity
+	 * @throws IllegalStateException if no search-transaction is in progress
 	 */
 	<T> void index(T entity);
 
@@ -56,6 +57,7 @@ public interface FullTextEntityManager extends EntityManager {
 	 * @param id The id of the entity to delete.
 	 * @throws IllegalArgumentException if entityType is <code>null</code> or not a class or superclass annotated with
 	 * <code>@Indexed</code>.
+	 * @throws IllegalStateException if no search-transaction is in progress
 	 */
 	<T> void purge(Class<T> entityType, Serializable id);
 
@@ -65,12 +67,15 @@ public interface FullTextEntityManager extends EntityManager {
 	 * @param entityType The class of the entities to remove.
 	 * @throws IllegalArgumentException if entityType is <code>null</code> or not a class or superclass annotated with
 	 * <code>@Indexed</code>.
+	 * @throws IllegalStateException if no search-transaction is in progress
 	 */
 	<T> void purgeAll(Class<T> entityType);
 
 	/**
 	 * Flush all index changes forcing Hibernate Search to apply all changes to the index not waiting for the batch
 	 * limit.
+	 * 
+	 * @throws IllegalStateException if no search-transaction is in progress
 	 */
 	void flushToIndexes();
 
@@ -78,13 +83,17 @@ public interface FullTextEntityManager extends EntityManager {
 	 * <b>different from the original Hibernate Search!</b> <br>
 	 * <br>
 	 * this has to be called when you want to change the index manually!
+	 * 
+	 * @throws IllegalStateException if a search-transaction is already in progress
 	 */
 	void beginSearchTransaction();
-	
+
 	/**
 	 * <b>different from the original Hibernate Search!</b> <br>
 	 * <br>
 	 * this has to be called when you want to change the index manually!
+	 * 
+	 * @throws IllegalStateException if no search-transaction is in progress
 	 */
 	void rollbackSearchTransaction();
 
@@ -92,7 +101,15 @@ public interface FullTextEntityManager extends EntityManager {
 	 * <b>different from the original Hibernate Search!</b> <br>
 	 * <br>
 	 * this has to be called when you want to change the index manually!
+	 * 
+	 * @throws IllegalStateException if no search-transaction is in progress
 	 */
 	void commitSearchTransaction();
+
+	/**
+	 * @throws IllegalStateException if search-transaction is still in progress. underlying EntityManager is still
+	 * closed.
+	 */
+	void close();
 
 }

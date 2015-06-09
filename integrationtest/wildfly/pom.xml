@@ -50,16 +50,6 @@
 									<overWrite>true</overWrite>
 									<outputDirectory>${project.build.directory}</outputDirectory>
 								</artifactItem>
-
-								<artifactItem>
-									<groupId>org.hibernate</groupId>
-									<artifactId>hibernate-search-modules</artifactId>
-									<version>${hibernate-search.version}</version>
-									<classifier>wildfly-8-dist</classifier>
-									<type>zip</type>
-									<overWrite>true</overWrite>
-									<outputDirectory>${project.build.directory}/wildfly-${org.wildfly}/modules</outputDirectory>
-								</artifactItem>
 							</artifactItems>
 						</configuration>
 					</execution>

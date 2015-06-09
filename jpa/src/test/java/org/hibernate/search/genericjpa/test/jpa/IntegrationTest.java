@@ -29,6 +29,8 @@ import org.hibernate.search.genericjpa.test.jpa.entities.AdditionalPlace2;
 import org.hibernate.search.genericjpa.test.jpa.entities.EmbeddableInfo;
 import org.hibernate.search.genericjpa.test.jpa.entities.Place;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
+import org.hibernate.search.jpa.FullTextEntityManager;
+import org.hibernate.search.jpa.Search;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.hibernate.search.standalone.entity.EntityProvider;
 import org.hibernate.search.standalone.factory.SearchConfigurationImpl;
@@ -56,6 +58,23 @@ public class IntegrationTest {
 		}
 		finally {
 			this.shutdown();
+		}
+	}
+	
+	public void testJPAInterfaces() {
+		EntityManager em = null;
+		try {
+			em = this.emf.createEntityManager();
+			FullTextEntityManager fem = Search.getFullTextEntityManager( em );
+			fem.beginSearchTransaction();
+			
+			
+			
+			fem.commitSearchTransaction();
+		} finally {
+			if( em != null) {
+				em.close();
+			}
 		}
 	}
 

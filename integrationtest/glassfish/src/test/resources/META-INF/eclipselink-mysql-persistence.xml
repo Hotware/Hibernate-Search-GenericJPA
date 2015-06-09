@@ -17,7 +17,7 @@
 			<property name="javax.persistence.jdbc.user" value="hibernate_user" />
 			<property name="javax.persistence.jdbc.password" value="hibernate_password" />
 			<property name="eclipselink.ddl-generation" value="drop-and-create-tables" />
-			<property name="eclipselink.logging.level" value="FINE"/>
+			<property name="eclipselink.logging.level" value="INFO"/>
 			<property name="eclipselink.ddl-generation.output-mode"
 				value="both" />
 		</properties>
