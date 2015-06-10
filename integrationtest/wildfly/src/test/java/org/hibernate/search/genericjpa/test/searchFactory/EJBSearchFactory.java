@@ -43,7 +43,6 @@ public class EJBSearchFactory extends SQLJPASearchFactory {
 	@PostConstruct
 	public void startup() {
 		super.init();
-		Search.setup( this );
 	}
 
 	@PreDestroy

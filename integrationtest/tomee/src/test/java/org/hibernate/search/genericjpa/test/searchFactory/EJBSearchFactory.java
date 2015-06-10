@@ -30,7 +30,6 @@ import org.hibernate.search.genericjpa.test.entities.Game;
 import org.hibernate.search.genericjpa.test.entities.GameUpdates;
 import org.hibernate.search.genericjpa.test.entities.GameVendorUpdates;
 import org.hibernate.search.genericjpa.test.entities.VendorUpdates;
-import org.hibernate.search.jpa.Search;
 
 @Singleton
 @Startup
@@ -46,7 +45,6 @@ public class EJBSearchFactory extends SQLJPASearchFactory {
 	@PostConstruct
 	public void startup() {
 		super.init();
-		Search.setup( this );
 	}
 
 	@PreDestroy

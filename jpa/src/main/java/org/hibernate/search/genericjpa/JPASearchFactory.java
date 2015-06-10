@@ -148,8 +148,9 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 			this.updateSource.setUpdateConsumers( Arrays.asList( indexUpdater, this ) );
 			this.updateSource.start();
 		}
+		Setup.setup( this );
 	}
-	
+
 	public void pauseUpdateSource(boolean pause) {
 		this.updateSource.pause( pause );
 	}

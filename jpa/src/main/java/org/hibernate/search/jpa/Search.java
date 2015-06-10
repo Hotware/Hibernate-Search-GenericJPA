@@ -9,6 +9,7 @@ package org.hibernate.search.jpa;
 import javax.persistence.EntityManager;
 
 import org.hibernate.search.genericjpa.JPASearchFactory;
+import org.hibernate.search.genericjpa.Setup;
 import org.hibernate.search.genericjpa.impl.ImplementationFactory;
 
 /**
@@ -19,23 +20,13 @@ import org.hibernate.search.genericjpa.impl.ImplementationFactory;
  * @author Martin Braun
  */
 public final class Search {
-	
-	//FIXME: is this okay for multiple classloaders?
-
-	private static JPASearchFactory searchFactory;
 
 	private Search() {
 	}
 
-	// TODO: make this easier together with a JPASearchFactory that can be configured via properties
-	// rather than by overriding methods
-	public static void setup(JPASearchFactory searchFactory) {
-		Search.searchFactory = searchFactory;
-	}
-	
 	public void pauseUpdating(boolean pause) {
-		if(Search.searchFactory != null) {
-			Search.searchFactory.pauseUpdateSource( pause );
+		if ( Setup.getSearchFactory() != null ) {
+			Setup.getSearchFactory().pauseUpdateSource( pause );
 		}
 	}
 
@@ -47,7 +38,7 @@ public final class Search {
 			return (FullTextEntityManager) em;
 		}
 		else {
-			return ImplementationFactory.createFullTextEntityManager( em, Search.searchFactory );
+			return ImplementationFactory.createFullTextEntityManager( em, Setup.getSearchFactory() );
 		}
 	}
 
