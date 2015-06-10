@@ -8,7 +8,6 @@ package org.hibernate.search.jpa;
 
 import javax.persistence.EntityManager;
 
-import org.hibernate.search.genericjpa.JPASearchFactory;
 import org.hibernate.search.genericjpa.Setup;
 import org.hibernate.search.genericjpa.impl.ImplementationFactory;
 
