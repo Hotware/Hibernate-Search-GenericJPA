@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -286,9 +285,7 @@ finally {
 
 	@Override
 	public void stop() {
-		if ( this.createdOwnExecutorService && this.exec != null ) {
-			this.exec.shutdown();
-		}
+		//first cancel the update job and wait for it to be done.
 		if ( this.job != null ) {
 			this.lock.lock();
 			try {
@@ -298,6 +295,10 @@ finally {
 			finally {
 				this.lock.unlock();
 			}
+		}
+		//and shutdown the executorservice if we created our own.
+		if ( this.createdOwnExecutorService && this.exec != null ) {
+			this.exec.shutdown();
 		}
 	}
 
