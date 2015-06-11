@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import javax.persistence.EntityManager;
@@ -52,7 +54,7 @@ import org.hibernate.search.stat.Statistics;
  * 
  * @author Martin Braun
  */
-public abstract class JPASearchFactory implements StandaloneSearchFactory, UpdateConsumer {
+public final class JPASearchFactory implements StandaloneSearchFactory, UpdateConsumer {
 
 	private final Logger LOGGER = Logger.getLogger( JPASearchFactory.class.getName() );
 	private StandaloneSearchFactory searchFactory;
@@ -60,19 +62,42 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 	private Set<Class<?>> indexRelevantEntities;
 	private Map<Class<?>, String> idProperties;
 
+	private final EntityManagerFactory emf;
+	private final Properties properties;
+	private final UpdateConsumer updateConsumer;
+	private final ScheduledExecutorService exec;
+	private final UpdateSourceProvider updateSourceProvider;
+	private final List<Class<?>> indexRootTypes;
+	private final boolean useUserTransaction;
+
+	private int updateDelay = 500;
+	private int batchSizeForUpdates = 5;
+
+	JPASearchFactory(EntityManagerFactory emf, boolean useUserTransaction, List<Class<?>> indexRootTypes, Properties properties,
+			UpdateConsumer updateConsumer, ScheduledExecutorService exec, UpdateSourceProvider updateSourceProvider) {
+		this.emf = emf;
+		this.useUserTransaction = useUserTransaction;
+		this.indexRootTypes = indexRootTypes;
+		this.properties = properties;
+		this.updateConsumer = updateConsumer;
+		this.exec = exec;
+		this.updateSourceProvider = updateSourceProvider;
+	}
+
+	@Override
+	public void updateEvent(List<UpdateInfo> updateInfo) {
+		if ( this.updateConsumer != null ) {
+			this.updateConsumer.updateEvent( updateInfo );
+		}
+	}
+
+	private UpdateSource createUpdateSource() {
+		return this.updateSourceProvider.getUpdateSource( this.updateDelay, TimeUnit.MILLISECONDS, this.batchSizeForUpdates, this.exec );
+	}
+
 	public EntityProvider entityProvider(EntityManager em) {
 		return new EntityManagerEntityProvider( em, this.idProperties );
 	}
-
-	protected abstract EntityManagerFactory getEmf();
-
-	protected abstract Properties getConfigProperties();
-
-	protected abstract List<Class<?>> getIndexRootTypes();
-
-	protected abstract boolean isUseUserTransaction();
-
-	protected abstract UpdateSource createUpdateSource();
 
 	public final void init() {
 		SearchConfigurationImpl config;
@@ -132,10 +157,6 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 		catch (IOException e) {
 			throw new SearchException( e );
 		}
-	}
-
-	public Set<Class<?>> getIndexRelevantEntities() {
-		return this.indexRelevantEntities;
 	}
 
 	@Override
@@ -232,19 +253,63 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 	}
 
 	public void flushToIndexes(TransactionContext tc) {
-		searchFactory.flushToIndexes( tc );
+		this.searchFactory.flushToIndexes( tc );
 	}
 
 	public IndexedTypeDescriptor getIndexedTypeDescriptor(Class<?> entityType) {
-		return searchFactory.getIndexedTypeDescriptor( entityType );
+		return this.searchFactory.getIndexedTypeDescriptor( entityType );
 	}
 
 	public Set<Class<?>> getIndexedTypes() {
-		return searchFactory.getIndexedTypes();
+		return this.searchFactory.getIndexedTypes();
 	}
 
 	public <T> T unwrap(Class<T> cls) {
-		return searchFactory.unwrap( cls );
+		return this.searchFactory.unwrap( cls );
+	}
+
+	/**
+	 * @return the updateDelay
+	 */
+	public int getUpdateDelay() {
+		return this.updateDelay;
+	}
+
+	/**
+	 * @param updateDelay the updateDelay to set
+	 */
+	public void setUpdateDelay(int updateDelay) {
+		this.updateDelay = updateDelay;
+	}
+
+	/**
+	 * @return the batchSizeForUpdates
+	 */
+	public int getBatchSizeForUpdates() {
+		return this.batchSizeForUpdates;
+	}
+
+	/**
+	 * @param batchSizeForUpdates the batchSizeForUpdates to set
+	 */
+	public void setBatchSizeForUpdates(int batchSizeForUpdates) {
+		this.batchSizeForUpdates = batchSizeForUpdates;
+	}
+
+	private EntityManagerFactory getEmf() {
+		return this.emf;
+	}
+
+	private Properties getConfigProperties() {
+		return this.properties;
+	}
+
+	private List<Class<?>> getIndexRootTypes() {
+		return this.indexRootTypes;
+	}
+
+	private boolean isUseUserTransaction() {
+		return this.useUserTransaction;
 	}
 
 }

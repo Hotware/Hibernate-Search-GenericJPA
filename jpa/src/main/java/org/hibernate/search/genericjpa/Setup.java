@@ -75,7 +75,7 @@ public final class Setup {
 			String type = properties.getProperty( "org.hibernate.search.genericjpa.searchfactory.type", "sql" );
 			Integer batchSizeForUpdates = Integer.parseInt( properties.getProperty( "org.hibernate.search.genericjpa.searchfactory.batchsizeForUpdates", "5" ) );
 			Integer updateDelay = Integer.parseInt( properties.getProperty( "org.hibernate.search.genericjpa.searchfactory.updateDelay", "500" ) );
-			UnmanagedSearchFactoryImpl ret = null;
+			JPASearchFactory ret = null;
 			if ( "sql".equals( type ) ) {
 				String triggerSource = properties.getProperty( "org.hibernate.search.genericjpa.searchfactory.triggerSource" );
 				Class<?> triggerSourceClass;
@@ -85,7 +85,7 @@ public final class Setup {
 				if ( useUserTransactions ) {
 					LOGGER.info( "using userTransactions" );
 				}
-				ret = new UnmanagedSearchFactoryImpl( emf, useUserTransactions, indexRootTypes, properties, updateConsumer, exec,
+				ret = new JPASearchFactory( emf, useUserTransactions, indexRootTypes, properties, updateConsumer, exec,
 						new SQLJPAUpdateSourceProvider( emf, useUserTransactions, (TriggerSQLStringSource) triggerSourceClass.newInstance(), updateClasses ) );
 				ret.setBatchSizeForUpdates( batchSizeForUpdates );
 				ret.setUpdateDelay( updateDelay );
