@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
@@ -62,7 +63,7 @@ public class JPAUpdateSource implements UpdateSource {
 	private boolean createdOwnExecutorService = false;
 	private final boolean useUserTransaction;
 
-	private Future<?> job;
+	private ScheduledFuture<?> job;
 	private final ReentrantLock lock = new ReentrantLock();
 	private boolean cancelled = false;
 	private boolean pause = false;
@@ -72,7 +73,7 @@ public class JPAUpdateSource implements UpdateSource {
 	 */
 	public JPAUpdateSource(List<EventModelInfo> eventModelInfos, EntityManagerFactory emf, boolean useUserTransaction, long timeOut, TimeUnit timeUnit,
 			int batchSizeForUpdates) {
-		this( eventModelInfos, emf, useUserTransaction, timeOut, timeUnit, batchSizeForUpdates, Executors.newScheduledThreadPool( 1 ) );
+		this( eventModelInfos, emf, useUserTransaction, timeOut, timeUnit, batchSizeForUpdates, Executors.newSingleThreadScheduledExecutor() );
 		this.createdOwnExecutorService = true;
 	}
 
@@ -89,8 +90,7 @@ public class JPAUpdateSource implements UpdateSource {
 	 */
 	public JPAUpdateSource(List<EventModelInfo> eventModelInfos, EntityManagerFactory emf, boolean useUserTransaction, long timeOut, TimeUnit timeUnit,
 			int batchSizeForUpdates, int batchSizeForDatabaseQueries) {
-		this( eventModelInfos, emf, useUserTransaction, timeOut, timeUnit, batchSizeForUpdates, batchSizeForDatabaseQueries, Executors
-				.newScheduledThreadPool( 1 ) );
+		this( eventModelInfos, emf, useUserTransaction, timeOut, timeUnit, batchSizeForUpdates, batchSizeForDatabaseQueries, Executors.newSingleThreadScheduledExecutor() );
 		this.createdOwnExecutorService = true;
 	}
 
@@ -216,6 +216,10 @@ public class JPAUpdateSource implements UpdateSource {
 				}
 				toRemove.clear();
 				updateInfos.clear();
+			}
+			
+			if(processed > 0) {
+				LOGGER.info( "processed " + processed + " updates");
 			}
 
 			em.flush();

@@ -16,8 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import javax.persistence.EntityManager;
@@ -72,40 +70,11 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 
 	protected abstract List<Class<?>> getIndexRootTypes();
 
-	// THESE ARE NEEDED FOR THE UPDATES
-	// TODO: make this easier
-
-	protected abstract List<Class<?>> getUpdateClasses();
-
-	protected abstract TimeUnit getDelayUnit();
-
-	protected abstract long getDelay();
-
-	protected abstract int getBatchSizeForUpdates();
-
-	/**
-	 * for JTA transactions this has to be a {@link javax.enterprise.concurrent.ManagedScheduledExecutorService}
-	 */
-	protected abstract ScheduledExecutorService getExecutorServiceForUpdater();
-
 	protected abstract boolean isUseUserTransaction();
 
 	protected abstract UpdateSource createUpdateSource();
 
 	public final void init() {
-		if ( this.isUseUserTransaction() ) {
-			ScheduledExecutorService exec = this.getExecutorServiceForUpdater();
-			try {
-				if ( !Class.forName( "javax.enterprise.concurrent.ManagedScheduledExecutorService" ).isAssignableFrom( exec.getClass() ) ) {
-					throw new IllegalArgumentException( "an instance of" + " javax.enterprise.concurrent.ManagedScheduledExecutorService"
-							+ "has to be used for scheduling when using JTA transactions!" );
-				}
-			}
-			catch (ClassNotFoundException e) {
-				throw new SearchException( "coudln't load class javax.enterprise.concurrent.ManagedScheduledExecutorService "
-						+ "even though JTA transaction is to be used!" );
-			}
-		}
 		SearchConfigurationImpl config;
 		if ( this.getConfigProperties() != null && !this.getConfigProperties().equals( "" ) ) {
 			LOGGER.info( "using config @" + this.getConfigProperties() );
@@ -148,16 +117,16 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 			this.updateSource.setUpdateConsumers( Arrays.asList( indexUpdater, this ) );
 			this.updateSource.start();
 		}
-		Setup.setup( this );
 	}
 
 	public void pauseUpdateSource(boolean pause) {
-		this.updateSource.pause( pause );
+		if ( this.updateSource != null ) {
+			this.updateSource.pause( pause );
+		}
 	}
 
 	public void shutdown() {
 		try {
-			this.updateSource.stop();
 			this.close();
 		}
 		catch (IOException e) {
@@ -176,7 +145,15 @@ public abstract class JPASearchFactory implements StandaloneSearchFactory, Updat
 
 	@Override
 	public void close() throws IOException {
-		this.searchFactory.close();
+		try {
+			if ( this.updateSource != null ) {
+				this.updateSource.stop();
+			}
+			this.searchFactory.close();
+		}
+		finally {
+			SearchFactoryRegistry.unsetup( this );
+		}
 	}
 
 	@Override

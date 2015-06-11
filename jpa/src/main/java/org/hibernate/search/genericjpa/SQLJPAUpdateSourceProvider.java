@@ -8,9 +8,12 @@ package org.hibernate.search.genericjpa;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.persistence.FlushModeType;
 
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
@@ -23,49 +26,57 @@ import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 
 /**
- * an implementation of {@link JPASearchFactory} that uses an {@link UpdateSource} that gets it's information out of
- * tables that hold all the information about changes in the index tree. These tables are filled via triggers
- * 
  * @author Martin Braun
  */
-public abstract class SQLJPASearchFactory extends JPASearchFactory {
+public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 
-	private final Logger LOGGER = Logger.getLogger( SQLJPASearchFactory.class.getName() );
+	private static final Logger LOGGER = Logger.getLogger( SQLJPAUpdateSourceProvider.class.getName() );
 
-	/**
-	 * @return the RDBMS specific trigger source
-	 */
-	protected abstract TriggerSQLStringSource getTriggerSQLStringSource();
+	private final TriggerSQLStringSource triggerSource;
+	private final List<Class<?>> updateClasses;
+	private final EntityManagerFactory emf;
+	private final boolean useUserTransaction;
+
+	public SQLJPAUpdateSourceProvider(EntityManagerFactory emf, boolean useUserTransaction, TriggerSQLStringSource triggerSource, List<Class<?>> updateClasses) {
+		this.triggerSource = triggerSource;
+		this.updateClasses = updateClasses;
+		this.emf = emf;
+		this.useUserTransaction = useUserTransaction;
+	}
 
 	@Override
-	protected UpdateSource createUpdateSource() {
+	public UpdateSource getUpdateSource(long delay, TimeUnit timeUnit, int batchSizeForUpdates, ScheduledExecutorService exec) {
 		EventModelParser eventModelParser = new EventModelParser();
-		List<EventModelInfo> eventModelInfos = eventModelParser.parse( new ArrayList<>( this.getUpdateClasses() ) );
+		List<EventModelInfo> eventModelInfos = eventModelParser.parse( new ArrayList<>( this.updateClasses ) );
 		this.setupTriggers( eventModelInfos );
+		if ( exec == null ) {
+			return new JPAUpdateSource( eventModelInfos, this.emf, this.useUserTransaction, delay, timeUnit, batchSizeForUpdates );
+		}
+		else {
+			return new JPAUpdateSource( eventModelInfos, this.emf, this.useUserTransaction, delay, timeUnit, batchSizeForUpdates, exec );
+		}
 
-		return new JPAUpdateSource( eventModelInfos, this.getEmf(), this.isUseUserTransaction(), this.getDelay(), this.getDelayUnit(),
-				this.getBatchSizeForUpdates(), this.getExecutorServiceForUpdater() );
 	}
 
 	private void setupTriggers(List<EventModelInfo> eventModelInfos) {
 		EntityManager em = null;
 		try {
-			em = this.getEmf().createEntityManager();
+			em = this.emf.createEntityManager();
 			// tx is null if we cannot get a UserTransaction. This could be because we are
 			// a container managed bean
-			JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.isUseUserTransaction(), true );
+			JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useUserTransaction, true );
 			if ( tx != null ) {
 				tx.setIgnoreExceptionsForUserTransaction( true );
 				tx.begin();
 			}
 
-			TriggerSQLStringSource triggerSource = this.getTriggerSQLStringSource();
+			TriggerSQLStringSource triggerSource = this.triggerSource;
 			try {
 				for ( String str : triggerSource.getSetupCode() ) {
 					LOGGER.info( str );
 					em.createNativeQuery( str ).executeUpdate();
 					if ( tx != null ) {
-						LOGGER.info( "commiting setup code!");
+						LOGGER.info( "commiting setup code!" );
 						tx.commit();
 						tx.begin();
 					}
@@ -119,4 +130,5 @@ public abstract class SQLJPASearchFactory extends JPASearchFactory {
 			}
 		}
 	}
+
 }

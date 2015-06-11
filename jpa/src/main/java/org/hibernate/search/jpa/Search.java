@@ -8,7 +8,7 @@ package org.hibernate.search.jpa;
 
 import javax.persistence.EntityManager;
 
-import org.hibernate.search.genericjpa.Setup;
+import org.hibernate.search.genericjpa.SearchFactoryRegistry;
 import org.hibernate.search.genericjpa.impl.ImplementationFactory;
 
 /**
@@ -24,8 +24,8 @@ public final class Search {
 	}
 
 	public void pauseUpdating(boolean pause) {
-		if ( Setup.getSearchFactory() != null ) {
-			Setup.getSearchFactory().pauseUpdateSource( pause );
+		if ( SearchFactoryRegistry.getSearchFactory() != null ) {
+			SearchFactoryRegistry.getSearchFactory().pauseUpdateSource( pause );
 		}
 	}
 
@@ -37,7 +37,7 @@ public final class Search {
 			return (FullTextEntityManager) em;
 		}
 		else {
-			return ImplementationFactory.createFullTextEntityManager( em, Setup.getSearchFactory() );
+			return ImplementationFactory.createFullTextEntityManager( em, SearchFactoryRegistry.getSearchFactory() );
 		}
 	}
 

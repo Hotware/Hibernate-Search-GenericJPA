@@ -13,15 +13,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
+
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.hibernate.search.genericjpa.Setup;
 import org.hibernate.search.genericjpa.batchindexing.IdProducerTask;
 import org.hibernate.search.genericjpa.batchindexing.ObjectHandlerTask;
+import org.hibernate.search.genericjpa.db.events.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
 import org.hibernate.search.genericjpa.test.db.events.jpa.MetaModelParser;
 import org.hibernate.search.genericjpa.test.jpa.entities.Place;
@@ -46,7 +50,7 @@ public class IntegrationTest {
 	private Place valinor;
 	private EntityManagerFactory emf;
 	private EntityManager em;
-	private TestSQLJPASearchFactory searchFactory;
+	private StandaloneSearchFactory searchFactory;
 
 	@Test
 	public void metaModelParser() throws IOException {
@@ -105,7 +109,7 @@ public class IntegrationTest {
 	// TODO: different test class?
 	@Test
 	public void testObjectHandlerWithIdProducerTask() {
-		//TODO:
+		// TODO:
 	}
 
 	@Test
@@ -114,7 +118,7 @@ public class IntegrationTest {
 		fem.beginSearchTransaction();
 
 		Sleep.sleep(
-				1000,
+				5000,
 				() -> {
 					return 2 == fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class )
 							.initializeObjectsWith( ObjectLookupMethod.SKIP, DatabaseRetrievalMethod.QUERY ).getResultList().size();
@@ -172,8 +176,10 @@ public class IntegrationTest {
 	@Before
 	public void setup() {
 		this.emf = Persistence.createEntityManagerFactory( "EclipseLink_MySQL" );
-		this.searchFactory = new TestSQLJPASearchFactory( this.emf );
-		this.searchFactory.start();
+		Properties properties = new Properties();
+		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.triggerSource", MySQLTriggerSQLStringSource.class.getName() );
+		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.type", "sql");
+		this.searchFactory = Setup.createUnmanagedSearchFactory( emf, properties, null );
 		EntityManager em = emf.createEntityManager();
 		try {
 			EntityTransaction tx = em.getTransaction();
@@ -242,7 +248,7 @@ public class IntegrationTest {
 	public void shutdown() {
 		// has to be shut down first (update processing!)
 		try {
-			this.searchFactory.shutdown();
+			this.searchFactory.close();
 		}
 		catch (Exception e) {
 			e.printStackTrace();
