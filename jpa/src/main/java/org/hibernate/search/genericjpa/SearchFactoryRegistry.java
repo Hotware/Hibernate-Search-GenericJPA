@@ -6,10 +6,16 @@
  */
 package org.hibernate.search.genericjpa;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author Martin Braun
  */
 public class SearchFactoryRegistry {
+
+	public static String NAME_PROPERTY = "org.hibernate.search.genericjpa.searchfactory.name";
+	public static String DEFAULT_NAME = "default";
 
 	private SearchFactoryRegistry() {
 		// can't touch this!
@@ -17,22 +23,25 @@ public class SearchFactoryRegistry {
 
 	// FIXME: is this okay for multiple classloaders?
 
-	private static JPASearchFactory searchFactory;
+	private static Map<String, JPASearchFactory> searchFactories = new HashMap<>();
 
-	public static JPASearchFactory getSearchFactory() {
-		return searchFactory;
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public static String getNameProperty(Map properties) {
+		return (String) properties.getOrDefault( NAME_PROPERTY, DEFAULT_NAME );
 	}
 
-	// TODO: make this easier together with a JPASearchFactory that can be configured via properties
-	// rather than by overriding methods
-	static void setup(JPASearchFactory searchFactory) {
-		SearchFactoryRegistry.searchFactory = searchFactory;
+	public static JPASearchFactory getSearchFactory(String name) {
+		return SearchFactoryRegistry.searchFactories.get( name );
 	}
-	
-	static void unsetup(JPASearchFactory searchFactory) {
-		if(SearchFactoryRegistry.searchFactory == searchFactory) {
-			SearchFactoryRegistry.searchFactory = null;
+
+	static void setup(String name, JPASearchFactory searchFactory) {
+		if ( !SearchFactoryRegistry.searchFactories.containsKey( name ) ) {
+			SearchFactoryRegistry.searchFactories.put( name, searchFactory );
 		}
+	}
+
+	static void unsetup(String name, JPASearchFactory searchFactory) {
+		SearchFactoryRegistry.searchFactories.remove( name, searchFactory );
 	}
 
 }

@@ -62,6 +62,7 @@ public final class JPASearchFactory implements StandaloneSearchFactory, UpdateCo
 	private Set<Class<?>> indexRelevantEntities;
 	private Map<Class<?>, String> idProperties;
 
+	private final String name;
 	private final EntityManagerFactory emf;
 	private final Properties properties;
 	private final UpdateConsumer updateConsumer;
@@ -73,8 +74,9 @@ public final class JPASearchFactory implements StandaloneSearchFactory, UpdateCo
 	private int updateDelay = 500;
 	private int batchSizeForUpdates = 5;
 
-	JPASearchFactory(EntityManagerFactory emf, boolean useUserTransaction, List<Class<?>> indexRootTypes, Properties properties,
+	JPASearchFactory(String name, EntityManagerFactory emf, boolean useUserTransaction, List<Class<?>> indexRootTypes, Properties properties,
 			UpdateConsumer updateConsumer, ScheduledExecutorService exec, UpdateSourceProvider updateSourceProvider) {
+		this.name = name;
 		this.emf = emf;
 		this.useUserTransaction = useUserTransaction;
 		this.indexRootTypes = indexRootTypes;
@@ -173,7 +175,7 @@ public final class JPASearchFactory implements StandaloneSearchFactory, UpdateCo
 			this.searchFactory.close();
 		}
 		finally {
-			SearchFactoryRegistry.unsetup( this );
+			SearchFactoryRegistry.unsetup( name, this );
 		}
 	}
 
@@ -258,6 +260,10 @@ public final class JPASearchFactory implements StandaloneSearchFactory, UpdateCo
 
 	public IndexedTypeDescriptor getIndexedTypeDescriptor(Class<?> entityType) {
 		return this.searchFactory.getIndexedTypeDescriptor( entityType );
+	}
+
+	public String getName() {
+		return this.name;
 	}
 
 	public Set<Class<?>> getIndexedTypes() {

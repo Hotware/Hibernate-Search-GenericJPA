@@ -55,11 +55,9 @@ public final class Setup {
 						+ "even though JTA transaction is to be used!" );
 			}
 		}
-		if ( SearchFactoryRegistry.getSearchFactory() != null ) {
-			throw new SearchException( "there is already a searchfactory running. close it first!" );
-		}
+
 		try {
-			//hack... but OpenJPA wants this so it can enhance the classes.
+			// hack... but OpenJPA wants this so it can enhance the classes.
 			emf.createEntityManager().close();
 			List<Class<?>> updateClasses = emf.getMetamodel().getEntities().stream().map( (entityType) -> {
 				return entityType.getBindableJavaType();
@@ -72,21 +70,28 @@ public final class Setup {
 				return entityClass.isAnnotationPresent( InIndex.class ) && entityClass.isAnnotationPresent( Indexed.class );
 			} ).collect( Collectors.toList() );
 
+			// get the basic properties
+			String name = SearchFactoryRegistry.getNameProperty( properties );
 			String type = properties.getProperty( "org.hibernate.search.genericjpa.searchfactory.type", "sql" );
 			Integer batchSizeForUpdates = Integer.parseInt( properties.getProperty( "org.hibernate.search.genericjpa.searchfactory.batchsizeForUpdates", "5" ) );
 			Integer updateDelay = Integer.parseInt( properties.getProperty( "org.hibernate.search.genericjpa.searchfactory.updateDelay", "500" ) );
+
+			if ( SearchFactoryRegistry.getSearchFactory( name ) != null ) {
+				throw new SearchException( "there is already a searchfactory running for name: " + name + ". close it first!" );
+			}
+
 			JPASearchFactory ret = null;
 			if ( "sql".equals( type ) ) {
 				String triggerSource = properties.getProperty( "org.hibernate.search.genericjpa.searchfactory.triggerSource" );
 				Class<?> triggerSourceClass;
 				if ( triggerSource == null || ( triggerSourceClass = Class.forName( triggerSource ) ) == null ) {
-					throw new SearchException( "org.hibernate.search.genericjpa.searchfactory.triggerSource must be a class type" );
+					throw new SearchException( "org.hibernate.search.genericjpa.searchfactory.triggerSource must be a class type when using type=\"sql\"" );
 				}
 				if ( useUserTransactions ) {
 					LOGGER.info( "using userTransactions" );
 				}
-				ret = new JPASearchFactory( emf, useUserTransactions, indexRootTypes, properties, updateConsumer, exec,
-						new SQLJPAUpdateSourceProvider( emf, useUserTransactions, (TriggerSQLStringSource) triggerSourceClass.newInstance(), updateClasses ) );
+				ret = new JPASearchFactory( name, emf, useUserTransactions, indexRootTypes, properties, updateConsumer, exec, new SQLJPAUpdateSourceProvider(
+						emf, useUserTransactions, (TriggerSQLStringSource) triggerSourceClass.newInstance(), updateClasses ) );
 				ret.setBatchSizeForUpdates( batchSizeForUpdates );
 				ret.setUpdateDelay( updateDelay );
 				ret.init();
@@ -94,7 +99,7 @@ public final class Setup {
 			else {
 				throw new SearchException( "unrecognized type : " + type );
 			}
-			SearchFactoryRegistry.setup( ret );
+			SearchFactoryRegistry.setup( name, ret );
 			return ret;
 		}
 		catch (Exception e) {
