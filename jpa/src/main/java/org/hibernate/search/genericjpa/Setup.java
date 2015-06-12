@@ -56,7 +56,7 @@ public final class Setup {
 		boolean useUserTransactions = Boolean.parseBoolean( (String) properties.getOrDefault( USE_USER_TRANSACTIONS_KEY, USE_USER_TRANSACTIONS_DEFAULT_VALUE ) );
 		if ( useUserTransactions ) {
 			if ( exec == null ) {
-				throw new IllegalArgumentException( "provided ScheduledExecutorService may not be null if using userTransactions" );
+				throw new IllegalArgumentException( "must specify a javax.enterprise.concurrent.ManagedScheduledExecutorService if using userTransactions" );
 			}
 			try {
 				if ( !Class.forName( "javax.enterprise.concurrent.ManagedScheduledExecutorService" ).isAssignableFrom( exec.getClass() ) ) {
