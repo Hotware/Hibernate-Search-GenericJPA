@@ -28,6 +28,23 @@ public final class Setup {
 
 	private static final Logger LOGGER = Logger.getLogger( Setup.class.getName() );
 
+	public static final String USE_USER_TRANSACTIONS_KEY = "org.hibernate.search.genericjpa.searchfactory.useUserTransactions";
+	public static final String USE_USER_TRANSACTIONS_DEFAULT_VALUE = "false";
+
+	public static final String SEARCH_FACTORY_TYPE_KEY = "org.hibernate.search.genericjpa.searchfactory.type";
+	public static final String SEARCH_FACTORY_TYPE_DEFAULT_VALUE = "sql";
+
+	public static final String BATCH_SIZE_FOR_UPDATES_KEY = "org.hibernate.search.genericjpa.searchfactory.batchSizeForUpdates";
+	public static final String BATCH_SIZE_FOR_UPDATES_DEFAULT_VALUE = "5";
+
+	public static final String UPDATE_DELAY_KEY = "org.hibernate.search.genericjpa.searchfactory.updateDelay";
+	public static final String UPDATE_DELAY_DEFAULT_VALUE = "500";
+
+	public static final String TRIGGER_SOURCE_KEY = "org.hibernate.search.genericjpa.searchfactory.triggerSource";
+	
+	public static final String NAME_KEY = SearchFactoryRegistry.NAME_PROPERTY;
+	public static final String NAME_DEFAULT_VALUE = SearchFactoryRegistry.DEFAULT_NAME;
+
 	private Setup() {
 		// can't touch this!
 	}
@@ -51,8 +68,7 @@ public final class Setup {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static JPASearchFactory createSearchFactory(EntityManagerFactory emf, Map properties, UpdateConsumer updateConsumer, ScheduledExecutorService exec) {
-		boolean useUserTransactions = Boolean.parseBoolean( (String) properties.getOrDefault(
-				"org.hibernate.search.genericjpa.searchfactory.useUserTransactions", "false" ) );
+		boolean useUserTransactions = Boolean.parseBoolean( (String) properties.getOrDefault( USE_USER_TRANSACTIONS_KEY, USE_USER_TRANSACTIONS_DEFAULT_VALUE ) );
 		if ( useUserTransactions ) {
 			if ( exec == null ) {
 				throw new IllegalArgumentException( "provided ScheduledExecutorService may not be null if using userTransactions" );
@@ -90,10 +106,10 @@ public final class Setup {
 			LOGGER.info( "using hibernate-search properties: " + properties );
 			// get the basic properties
 			String name = SearchFactoryRegistry.getNameProperty( properties );
-			String type = (String) properties.getOrDefault( "org.hibernate.search.genericjpa.searchfactory.type", "sql" );
-			Integer batchSizeForUpdates = Integer.parseInt( (String) properties.getOrDefault(
-					"org.hibernate.search.genericjpa.searchfactory.batchSizeForUpdates", "5" ) );
-			Integer updateDelay = Integer.parseInt( (String) properties.getOrDefault( "org.hibernate.search.genericjpa.searchfactory.updateDelay", "500" ) );
+			String type = (String) properties.getOrDefault( SEARCH_FACTORY_TYPE_KEY, SEARCH_FACTORY_TYPE_DEFAULT_VALUE );
+			Integer batchSizeForUpdates = Integer
+					.parseInt( (String) properties.getOrDefault( BATCH_SIZE_FOR_UPDATES_KEY, BATCH_SIZE_FOR_UPDATES_DEFAULT_VALUE ) );
+			Integer updateDelay = Integer.parseInt( (String) properties.getOrDefault( UPDATE_DELAY_KEY, UPDATE_DELAY_DEFAULT_VALUE ) );
 
 			if ( SearchFactoryRegistry.getSearchFactory( name ) != null ) {
 				throw new SearchException( "there is already a searchfactory running for name: " + name + ". close it first!" );
@@ -101,7 +117,7 @@ public final class Setup {
 
 			JPASearchFactoryAdapter ret = null;
 			if ( "sql".equals( type ) ) {
-				String triggerSource = (String) properties.get( "org.hibernate.search.genericjpa.searchfactory.triggerSource" );
+				String triggerSource = (String) properties.get( TRIGGER_SOURCE_KEY );
 				Class<?> triggerSourceClass;
 				if ( triggerSource == null || ( triggerSourceClass = Class.forName( triggerSource ) ) == null ) {
 					throw new SearchException( "class specified in org.hibernate.search.genericjpa.searchfactory.triggerSource could not be found." );
