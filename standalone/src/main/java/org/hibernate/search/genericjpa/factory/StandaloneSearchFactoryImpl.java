@@ -20,7 +20,6 @@ import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.backend.spi.Worker;
 import org.hibernate.search.engine.ProjectionConstants;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
-import org.hibernate.search.filter.FilterCachingStrategy;
 import org.hibernate.search.genericjpa.dto.DtoQueryExecutor;
 import org.hibernate.search.genericjpa.query.HSearchQuery;
 import org.hibernate.search.genericjpa.query.HSearchQueryImpl;
