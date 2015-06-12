@@ -8,7 +8,6 @@ package org.hibernate.search.genericjpa.impl;
 
 import javax.persistence.EntityManager;
 
-import org.hibernate.search.genericjpa.JPASearchFactory;
 import org.hibernate.search.jpa.FullTextEntityManager;
 
 /**
@@ -23,7 +22,7 @@ public final class ImplementationFactory {
 		// not meant to be instantiated
 	}
 
-	public static FullTextEntityManager createFullTextEntityManager(EntityManager em, JPASearchFactory searchFactory) {
+	public static FullTextEntityManager createFullTextEntityManager(EntityManager em, JPASearchFactoryAdapter searchFactory) {
 		return new FullTextEntityManagerImpl( em, searchFactory );
 	}
 

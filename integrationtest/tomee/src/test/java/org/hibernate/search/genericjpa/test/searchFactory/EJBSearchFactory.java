@@ -6,6 +6,7 @@
  */
 package org.hibernate.search.genericjpa.test.searchFactory;
 
+import java.io.IOException;
 import java.util.Properties;
 
 import javax.annotation.PostConstruct;
@@ -25,7 +26,7 @@ import org.hibernate.search.genericjpa.db.events.MySQLTriggerSQLStringSource;
 
 @Singleton
 @Startup
-@TransactionAttribute(TransactionAttributeType.SUPPORTS)
+@TransactionAttribute( TransactionAttributeType.SUPPORTS )
 public class EJBSearchFactory {
 
 	@Resource
@@ -48,7 +49,12 @@ public class EJBSearchFactory {
 
 	@PreDestroy
 	public void shutdown() {
-		this.searchFactory.shutdown();
+		try {
+			this.searchFactory.close();
+		}
+		catch (IOException e) {
+			throw new AssertionError(e);
+		}
 	}
 
 }

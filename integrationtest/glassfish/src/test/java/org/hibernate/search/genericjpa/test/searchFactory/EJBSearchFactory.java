@@ -6,6 +6,7 @@
  */
 package org.hibernate.search.genericjpa.test.searchFactory;
 
+import java.io.IOException;
 import java.util.Properties;
 
 import javax.annotation.PostConstruct;
@@ -45,7 +46,12 @@ public class EJBSearchFactory {
 
 	@PreDestroy
 	public void shutdown() {
-		this.searchFactory.shutdown();
+		try {
+			this.searchFactory.close();
+		}
+		catch (IOException e) {
+			throw new AssertionError(e);
+		}
 	}
 
 }

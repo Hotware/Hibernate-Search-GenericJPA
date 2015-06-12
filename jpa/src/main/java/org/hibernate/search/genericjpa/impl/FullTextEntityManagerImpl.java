@@ -25,7 +25,6 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaUpdate;
 
-import org.hibernate.search.genericjpa.JPASearchFactory;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.FullTextQuery;
 import org.hibernate.search.standalone.factory.Transaction;
@@ -40,10 +39,10 @@ final class FullTextEntityManagerImpl implements FullTextEntityManager, Serializ
 	private static final long serialVersionUID = 5348732906148044722L;
 
 	private final EntityManager em;
-	private final JPASearchFactory searchFactory;
+	private final JPASearchFactoryAdapter searchFactory;
 	private Transaction standaloneTransaction;
 
-	public FullTextEntityManagerImpl(EntityManager em, JPASearchFactory searchFactory) {
+	public FullTextEntityManagerImpl(EntityManager em, JPASearchFactoryAdapter searchFactory) {
 		this.em = em;
 		this.searchFactory = searchFactory;
 	}

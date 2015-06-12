@@ -22,6 +22,7 @@ import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.hibernate.search.genericjpa.JPASearchFactory;
 import org.hibernate.search.genericjpa.Setup;
 import org.hibernate.search.genericjpa.batchindexing.IdProducerTask;
 import org.hibernate.search.genericjpa.batchindexing.ObjectHandlerTask;
@@ -50,7 +51,7 @@ public class IntegrationTest {
 	private Place valinor;
 	private EntityManagerFactory emf;
 	private EntityManager em;
-	private StandaloneSearchFactory searchFactory;
+	private JPASearchFactory searchFactory;
 
 	@Test
 	public void metaModelParser() throws IOException {
@@ -114,7 +115,7 @@ public class IntegrationTest {
 
 	@Test
 	public void testJPAInterfaces() throws InterruptedException {
-		FullTextEntityManager fem = Search.getFullTextEntityManager( em );
+	FullTextEntityManager fem = Search.getFullTextEntityManager( em );
 		fem.beginSearchTransaction();
 
 		Sleep.sleep(

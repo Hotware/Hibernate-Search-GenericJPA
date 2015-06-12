@@ -7,7 +7,7 @@
 package org.hibernate.search.genericjpa;
 
 import java.util.List;
-import java.util.Properties;
+import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -16,10 +16,13 @@ import javax.persistence.EntityManagerFactory;
 
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.genericjpa.annotations.Updates;
-import org.hibernate.search.standalone.annotations.InIndex;
 import org.hibernate.search.genericjpa.db.events.TriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.exception.SearchException;
+import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
+import org.hibernate.search.genericjpa.impl.SQLJPAUpdateSourceProvider;
+import org.hibernate.search.genericjpa.impl.SearchFactoryRegistry;
+import org.hibernate.search.standalone.annotations.InIndex;
 
 public final class Setup {
 
@@ -29,17 +32,44 @@ public final class Setup {
 		// can't touch this!
 	}
 
-	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, Properties properties, UpdateConsumer updateConsumer) {
-		return createUnmanagedSearchFactory( emf, false, properties, updateConsumer );
+	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf) {
+		return createSearchFactory( emf, false, emf.getProperties(), null, null );
 	}
 
-	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, boolean useUserTransactions, Properties properties,
+	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, UpdateConsumer updateConsumer) {
+		return createSearchFactory( emf, false, emf.getProperties(), updateConsumer, null );
+	}
+
+	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, @SuppressWarnings("rawtypes") Map properties,
 			UpdateConsumer updateConsumer) {
+		return createSearchFactory( emf, false, properties, updateConsumer, null );
+	}
+	
+	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, @SuppressWarnings("rawtypes") Map properties) {
+		return createSearchFactory( emf, false, properties, null, null );
+	}
+
+	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, boolean useUserTransactions, UpdateConsumer updateConsumer) {
+		return createSearchFactory( emf, useUserTransactions, emf.getProperties(), updateConsumer, null );
+	}
+	
+	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, boolean useUserTransactions) {
+		return createSearchFactory( emf, useUserTransactions, emf.getProperties(), null, null );
+	}
+
+	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, boolean useUserTransactions,
+			@SuppressWarnings("rawtypes") Map properties, UpdateConsumer updateConsumer) {
 		return createSearchFactory( emf, useUserTransactions, properties, updateConsumer, null );
 	}
+	
+	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, boolean useUserTransactions,
+			@SuppressWarnings("rawtypes") Map properties) {
+		return createSearchFactory( emf, useUserTransactions, properties, null, null );
+	}
 
-	public static JPASearchFactory createSearchFactory(EntityManagerFactory emf, boolean useUserTransactions, Properties properties,
-			UpdateConsumer updateConsumer, ScheduledExecutorService exec) {
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public static JPASearchFactory createSearchFactory(EntityManagerFactory emf, boolean useUserTransactions, Map properties, UpdateConsumer updateConsumer,
+			ScheduledExecutorService exec) {
 		if ( useUserTransactions ) {
 			if ( exec == null ) {
 				throw new IllegalArgumentException( "provided ScheduledExecutorService may not be null if using userTransactions" );
@@ -59,11 +89,15 @@ public final class Setup {
 		try {
 			// hack... but OpenJPA wants this so it can enhance the classes.
 			emf.createEntityManager().close();
+
+			// get all the updates classes marked by an @Updates annotation
 			List<Class<?>> updateClasses = emf.getMetamodel().getEntities().stream().map( (entityType) -> {
 				return entityType.getBindableJavaType();
 			} ).filter( (entityClass) -> {
 				return entityClass.isAnnotationPresent( Updates.class );
 			} ).collect( Collectors.toList() );
+
+			// get all the root types maked by an @InIndex and @Indexed (@Indexed isn't sufficient here!)
 			List<Class<?>> indexRootTypes = emf.getMetamodel().getEntities().stream().map( (entityType) -> {
 				return entityType.getBindableJavaType();
 			} ).filter( (entityClass) -> {
@@ -72,17 +106,18 @@ public final class Setup {
 
 			// get the basic properties
 			String name = SearchFactoryRegistry.getNameProperty( properties );
-			String type = properties.getProperty( "org.hibernate.search.genericjpa.searchfactory.type", "sql" );
-			Integer batchSizeForUpdates = Integer.parseInt( properties.getProperty( "org.hibernate.search.genericjpa.searchfactory.batchsizeForUpdates", "5" ) );
-			Integer updateDelay = Integer.parseInt( properties.getProperty( "org.hibernate.search.genericjpa.searchfactory.updateDelay", "500" ) );
+			String type = (String) properties.getOrDefault( "org.hibernate.search.genericjpa.searchfactory.type", "sql" );
+			Integer batchSizeForUpdates = Integer.parseInt( (String) properties.getOrDefault(
+					"org.hibernate.search.genericjpa.searchfactory.batchsizeForUpdates", "5" ) );
+			Integer updateDelay = Integer.parseInt( (String) properties.getOrDefault( "org.hibernate.search.genericjpa.searchfactory.updateDelay", "500" ) );
 
 			if ( SearchFactoryRegistry.getSearchFactory( name ) != null ) {
 				throw new SearchException( "there is already a searchfactory running for name: " + name + ". close it first!" );
 			}
 
-			JPASearchFactory ret = null;
+			JPASearchFactoryAdapter ret = null;
 			if ( "sql".equals( type ) ) {
-				String triggerSource = properties.getProperty( "org.hibernate.search.genericjpa.searchfactory.triggerSource" );
+				String triggerSource = (String) properties.get( "org.hibernate.search.genericjpa.searchfactory.triggerSource" );
 				Class<?> triggerSourceClass;
 				if ( triggerSource == null || ( triggerSourceClass = Class.forName( triggerSource ) ) == null ) {
 					throw new SearchException( "org.hibernate.search.genericjpa.searchfactory.triggerSource must be a class type when using type=\"sql\"" );
@@ -90,7 +125,7 @@ public final class Setup {
 				if ( useUserTransactions ) {
 					LOGGER.info( "using userTransactions" );
 				}
-				ret = new JPASearchFactory( name, emf, useUserTransactions, indexRootTypes, properties, updateConsumer, exec, new SQLJPAUpdateSourceProvider(
+				ret = new JPASearchFactoryAdapter( name, emf, useUserTransactions, indexRootTypes, properties, updateConsumer, exec, new SQLJPAUpdateSourceProvider(
 						emf, useUserTransactions, (TriggerSQLStringSource) triggerSourceClass.newInstance(), updateClasses ) );
 				ret.setBatchSizeForUpdates( batchSizeForUpdates );
 				ret.setUpdateDelay( updateDelay );

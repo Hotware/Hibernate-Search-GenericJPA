@@ -9,8 +9,8 @@ package org.hibernate.search.jpa;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 
-import org.hibernate.search.genericjpa.SearchFactoryRegistry;
 import org.hibernate.search.genericjpa.impl.ImplementationFactory;
+import org.hibernate.search.genericjpa.impl.SearchFactoryRegistry;
 
 /**
  * Helper class that should be used when building a FullTextEntityManager

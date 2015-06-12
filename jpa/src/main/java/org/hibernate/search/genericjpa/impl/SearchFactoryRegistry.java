@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
-package org.hibernate.search.genericjpa;
+package org.hibernate.search.genericjpa.impl;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,24 +23,24 @@ public class SearchFactoryRegistry {
 
 	// FIXME: is this okay for multiple classloaders?
 
-	private static Map<String, JPASearchFactory> searchFactories = new HashMap<>();
+	private static Map<String, JPASearchFactoryAdapter> searchFactories = new HashMap<>();
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static String getNameProperty(Map properties) {
 		return (String) properties.getOrDefault( NAME_PROPERTY, DEFAULT_NAME );
 	}
 
-	public static JPASearchFactory getSearchFactory(String name) {
+	public static JPASearchFactoryAdapter getSearchFactory(String name) {
 		return SearchFactoryRegistry.searchFactories.get( name );
 	}
 
-	static void setup(String name, JPASearchFactory searchFactory) {
+	public static void setup(String name, JPASearchFactoryAdapter searchFactory) {
 		if ( !SearchFactoryRegistry.searchFactories.containsKey( name ) ) {
 			SearchFactoryRegistry.searchFactories.put( name, searchFactory );
 		}
 	}
 
-	static void unsetup(String name, JPASearchFactory searchFactory) {
+	static void unsetup(String name, JPASearchFactoryAdapter searchFactory) {
 		SearchFactoryRegistry.searchFactories.remove( name, searchFactory );
 	}
 
