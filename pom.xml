@@ -21,7 +21,7 @@
 	</modules>
 
 	<description>
-		Use the JPA Provider you want but still keep Hibernate-Search :)
+		Use the JPA Provider you want but still keep Hibernate-Search
 	</description>
 	<url>https://github.com/Hotware/Hibernate-Search-JPA</url>
 
