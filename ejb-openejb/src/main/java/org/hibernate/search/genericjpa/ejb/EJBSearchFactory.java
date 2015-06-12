@@ -63,7 +63,7 @@ public class EJBSearchFactory implements UpdateConsumer {
 		catch (IOException e) {
 			throw new SearchException( "couldn't load hibernate-search specific properties from: " + PROPERTIES_PATH );
 		}
-		this.jpaSearchFactory = Setup.createSearchFactory( this.emf, true, properties, this, this.exec );
+		this.jpaSearchFactory = Setup.createSearchFactory( this.emf, properties, this, this.exec );
 	}
 
 	@PreDestroy

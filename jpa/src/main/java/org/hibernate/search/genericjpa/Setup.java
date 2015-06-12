@@ -33,43 +33,26 @@ public final class Setup {
 	}
 
 	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf) {
-		return createSearchFactory( emf, false, emf.getProperties(), null, null );
+		return createSearchFactory( emf, emf.getProperties(), null, null );
+	}
+
+	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, @SuppressWarnings("rawtypes") Map properties) {
+		return createSearchFactory( emf, properties, null, null );
 	}
 
 	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, UpdateConsumer updateConsumer) {
-		return createSearchFactory( emf, false, emf.getProperties(), updateConsumer, null );
+		return createSearchFactory( emf, emf.getProperties(), updateConsumer, null );
 	}
 
 	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, @SuppressWarnings("rawtypes") Map properties,
 			UpdateConsumer updateConsumer) {
-		return createSearchFactory( emf, false, properties, updateConsumer, null );
-	}
-
-	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, @SuppressWarnings("rawtypes") Map properties) {
-		return createSearchFactory( emf, false, properties, null, null );
-	}
-
-	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, boolean useUserTransactions, UpdateConsumer updateConsumer) {
-		return createSearchFactory( emf, useUserTransactions, emf.getProperties(), updateConsumer, null );
-	}
-
-	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, boolean useUserTransactions) {
-		return createSearchFactory( emf, useUserTransactions, emf.getProperties(), null, null );
-	}
-
-	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, boolean useUserTransactions,
-			@SuppressWarnings("rawtypes") Map properties, UpdateConsumer updateConsumer) {
-		return createSearchFactory( emf, useUserTransactions, properties, updateConsumer, null );
-	}
-
-	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, boolean useUserTransactions,
-			@SuppressWarnings("rawtypes") Map properties) {
-		return createSearchFactory( emf, useUserTransactions, properties, null, null );
+		return createSearchFactory( emf, properties, updateConsumer, null );
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public static JPASearchFactory createSearchFactory(EntityManagerFactory emf, boolean useUserTransactions, Map properties, UpdateConsumer updateConsumer,
-			ScheduledExecutorService exec) {
+	public static JPASearchFactory createSearchFactory(EntityManagerFactory emf, Map properties, UpdateConsumer updateConsumer, ScheduledExecutorService exec) {
+		String useUserTransactionsString = (String) properties.getOrDefault( "org.hibernate.search.genericjpa.searchfactory.useUserTransactions", "false" );
+		boolean useUserTransactions = Boolean.parseBoolean( useUserTransactionsString );
 		if ( useUserTransactions ) {
 			if ( exec == null ) {
 				throw new IllegalArgumentException( "provided ScheduledExecutorService may not be null if using userTransactions" );
