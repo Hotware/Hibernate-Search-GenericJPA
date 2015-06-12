@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import javax.persistence.EntityManagerFactory;
 
 import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.genericjpa.annotations.InIndex;
 import org.hibernate.search.genericjpa.annotations.Updates;
 import org.hibernate.search.genericjpa.db.events.TriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
@@ -22,7 +23,6 @@ import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
 import org.hibernate.search.genericjpa.impl.SQLJPAUpdateSourceProvider;
 import org.hibernate.search.genericjpa.impl.SearchFactoryRegistry;
-import org.hibernate.search.standalone.annotations.InIndex;
 
 public final class Setup {
 
@@ -51,8 +51,8 @@ public final class Setup {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static JPASearchFactory createSearchFactory(EntityManagerFactory emf, Map properties, UpdateConsumer updateConsumer, ScheduledExecutorService exec) {
-		String useUserTransactionsString = (String) properties.getOrDefault( "org.hibernate.search.genericjpa.searchfactory.useUserTransactions", "false" );
-		boolean useUserTransactions = Boolean.parseBoolean( useUserTransactionsString );
+		boolean useUserTransactions = Boolean.parseBoolean( (String) properties.getOrDefault(
+				"org.hibernate.search.genericjpa.searchfactory.useUserTransactions", "false" ) );
 		if ( useUserTransactions ) {
 			if ( exec == null ) {
 				throw new IllegalArgumentException( "provided ScheduledExecutorService may not be null if using userTransactions" );

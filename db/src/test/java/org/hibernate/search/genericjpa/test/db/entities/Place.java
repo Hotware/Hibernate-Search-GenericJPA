@@ -15,7 +15,7 @@ import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
 import org.hibernate.search.annotations.Store;
-import org.hibernate.search.standalone.annotations.InIndex;
+import org.hibernate.search.genericjpa.annotations.InIndex;
 
 /**
  * @author Martin

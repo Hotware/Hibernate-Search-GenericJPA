@@ -19,12 +19,12 @@ import org.hibernate.search.bridge.StringBridge;
 import org.hibernate.search.engine.ProjectionConstants;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.metadata.impl.DocumentFieldMetadata;
+import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
 import org.hibernate.search.genericjpa.exception.SearchException;
+import org.hibernate.search.genericjpa.factory.Transaction;
+import org.hibernate.search.genericjpa.metadata.RehashedTypeMetadata;
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.hibernate.search.query.engine.spi.HSQuery;
-import org.hibernate.search.standalone.entity.ReusableEntityProvider;
-import org.hibernate.search.standalone.factory.Transaction;
-import org.hibernate.search.standalone.metadata.RehashedTypeMetadata;
 import org.jboss.logging.Logger;
 
 /**

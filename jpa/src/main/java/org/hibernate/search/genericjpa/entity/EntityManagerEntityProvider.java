@@ -14,7 +14,7 @@ import java.util.Map;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.hibernate.search.standalone.entity.EntityProvider;
+import org.hibernate.search.genericjpa.entity.EntityProvider;
 
 public class EntityManagerEntityProvider implements EntityProvider {
 

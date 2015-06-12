@@ -22,8 +22,8 @@ import javax.transaction.SystemException;
 import javax.transaction.TransactionSynchronizationRegistry;
 import javax.transaction.UserTransaction;
 
+import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
 import org.hibernate.search.genericjpa.exception.SearchException;
-import org.hibernate.search.standalone.entity.ReusableEntityProvider;
 
 /**
  * @author Martin Braun

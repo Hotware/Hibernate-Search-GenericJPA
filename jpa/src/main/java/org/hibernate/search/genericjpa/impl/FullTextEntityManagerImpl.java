@@ -25,9 +25,9 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaUpdate;
 
+import org.hibernate.search.genericjpa.factory.Transaction;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.FullTextQuery;
-import org.hibernate.search.standalone.factory.Transaction;
 import org.hibernate.search.SearchFactory;
 
 /**

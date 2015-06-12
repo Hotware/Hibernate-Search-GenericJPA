@@ -29,6 +29,8 @@ import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.filter.FullTextFilter;
+import org.hibernate.search.genericjpa.entity.EntityProvider;
+import org.hibernate.search.genericjpa.query.HSearchQuery;
 import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.jpa.FullTextQuery;
 import org.hibernate.search.query.DatabaseRetrievalMethod;
@@ -36,8 +38,6 @@ import org.hibernate.search.query.ObjectLookupMethod;
 import org.hibernate.search.query.engine.QueryTimeoutException;
 import org.hibernate.search.query.engine.spi.FacetManager;
 import org.hibernate.search.spatial.Coordinates;
-import org.hibernate.search.standalone.entity.EntityProvider;
-import org.hibernate.search.standalone.query.HSearchQuery;
 
 /**
  * Implements JPA 2 query interface and delegate the call to a Hibernate Core FullTextQuery. This has the consequence of

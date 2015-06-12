@@ -19,8 +19,8 @@ import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.db.events.IndexUpdater;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
 import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
+import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
-import org.hibernate.search.standalone.entity.ReusableEntityProvider;
 
 /**
  * @author Martin Braun

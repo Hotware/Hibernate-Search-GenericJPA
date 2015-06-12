@@ -23,7 +23,7 @@ import javax.persistence.metamodel.SingularAttribute;
 
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.genericjpa.exception.SearchException;
-import org.hibernate.search.standalone.metadata.RehashedTypeMetadata;
+import org.hibernate.search.genericjpa.metadata.RehashedTypeMetadata;
 
 /**
  * @author Martin Braun

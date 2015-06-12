@@ -18,7 +18,7 @@ import org.hibernate.search.annotations.ContainedIn;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Store;
-import org.hibernate.search.standalone.annotations.InIndex;
+import org.hibernate.search.genericjpa.annotations.InIndex;
 
 @Entity
 @Table(name = "ADDITIONALPLACE2")
