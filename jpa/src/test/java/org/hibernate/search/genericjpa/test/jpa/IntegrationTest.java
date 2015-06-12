@@ -115,7 +115,7 @@ public class IntegrationTest {
 
 	@Test
 	public void testJPAInterfaces() throws InterruptedException {
-	FullTextEntityManager fem = Search.getFullTextEntityManager( em );
+	FullTextEntityManager fem = Search.getFullTextEntityManager( em, "test" );
 		fem.beginSearchTransaction();
 
 		Sleep.sleep(
@@ -178,6 +178,7 @@ public class IntegrationTest {
 	public void setup() {
 		this.emf = Persistence.createEntityManagerFactory( "EclipseLink_MySQL" );
 		Properties properties = new Properties();
+		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.name", "test");
 		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.triggerSource", MySQLTriggerSQLStringSource.class.getName() );
 		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.type", "sql");
 		this.searchFactory = Setup.createUnmanagedSearchFactory( emf, properties, null );

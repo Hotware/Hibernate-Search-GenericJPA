@@ -38,17 +38,23 @@ public final class Search {
 	}
 
 	/**
-	 * Build a full text capable EntityManager The underlying EM implementation has to be Hibernate EntityManager
+	 * Build a full text capable EntityManager.
 	 */
 	public static FullTextEntityManager getFullTextEntityManager(EntityManager em) {
+		return getFullTextEntityManager( em, SearchFactoryRegistry.DEFAULT_NAME );
+	}
+
+	/**
+	 * Build a full text capable EntityManager with a non default searchFactoryName
+	 */
+	public static FullTextEntityManager getFullTextEntityManager(EntityManager em, String searchFactoryName) {
 		if ( em instanceof FullTextEntityManager ) {
 			return (FullTextEntityManager) em;
 		}
 		else {
-			String name = SearchFactoryRegistry.getNameProperty( em.getProperties() );
-			JPASearchFactoryAdapter adapter = SearchFactoryRegistry.getSearchFactory( name );
+			JPASearchFactoryAdapter adapter = SearchFactoryRegistry.getSearchFactory( searchFactoryName );
 			if ( adapter == null ) {
-				throw new SearchException( "couldn't find a JPASearchFactory for name: " + name );
+				throw new SearchException( "couldn't find a JPASearchFactory for name: " + searchFactoryName );
 			}
 			return ImplementationFactory.createFullTextEntityManager( em, adapter );
 		}
