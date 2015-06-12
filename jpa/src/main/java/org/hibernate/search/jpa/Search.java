@@ -24,7 +24,7 @@ public final class Search {
 	private Search() {
 	}
 
-	public static void pauseUpdateing(EntityManager em, boolean pause) {
+	public static void pauseUpdating(EntityManager em, boolean pause) {
 		Search.pauseUpdating( em.getEntityManagerFactory(), pause );
 	}
 
