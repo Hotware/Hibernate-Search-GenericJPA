@@ -106,14 +106,14 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 				}
 				this.deleteAllData( em );
 
-				Sleep.sleep( 3000, () -> {
+				Sleep.sleep( 5000, () -> {
 					return this.assertCount( impl, 0 );
 				} );
 
 				this.writeAllIntoIndex( em, impl );
 
 				this.deleteAllData( em );
-				Sleep.sleep( 3000, () -> {
+				Sleep.sleep( 5000, () -> {
 					return this.assertCount( impl, 0 );
 				} );
 
@@ -132,7 +132,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 						em.persist( valinor );
 						tx.commit();
 					}
-					Sleep.sleep( 3000, () -> {
+					Sleep.sleep( 5000, () -> {
 						return this.queryPlaceIds( impl, "name", "Valinor" ).size() == 0 && this.assertCount( impl, 2 );
 					}, "shouldn't have found \"Valinor\" in the index anymore, but overall count should have been equal to 2!" );
 					{
@@ -148,7 +148,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 							someSorcerer.setName( "Odalbert" );
 							tx.commit();
 						}
-						Sleep.sleep( 3000, () -> {
+						Sleep.sleep( 5000, () -> {
 							return this.queryPlaceIds( impl, "sorcerers.name", oldName ).size() == 0 && this.assertCount( impl, 2 );
 						}, "shouldn't have found \"" + oldName + "\" in the index anymore, but overall count should have been equal to 2!" );
 					}
@@ -170,7 +170,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 		// and write data in the index again
 		this.setupData( em );
 		// wait a bit until the UpdateSource sent the appropriate events
-		Sleep.sleep( 3000, () -> {
+		Sleep.sleep( 5000, () -> {
 			return this.assertCount( impl, 2 );
 		});
 	}

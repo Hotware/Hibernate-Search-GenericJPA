@@ -9,7 +9,9 @@ package org.hibernate.search.jpa;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 
+import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.impl.ImplementationFactory;
+import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
 import org.hibernate.search.genericjpa.impl.SearchFactoryRegistry;
 
 /**
@@ -44,7 +46,11 @@ public final class Search {
 		}
 		else {
 			String name = SearchFactoryRegistry.getNameProperty( em.getProperties() );
-			return ImplementationFactory.createFullTextEntityManager( em, SearchFactoryRegistry.getSearchFactory( name ) );
+			JPASearchFactoryAdapter adapter = SearchFactoryRegistry.getSearchFactory( name );
+			if ( adapter == null ) {
+				throw new SearchException( "couldn't find a JPASearchFactory for name: " + name );
+			}
+			return ImplementationFactory.createFullTextEntityManager( em, adapter );
 		}
 	}
 }

@@ -44,7 +44,7 @@ public final class Setup {
 			UpdateConsumer updateConsumer) {
 		return createSearchFactory( emf, false, properties, updateConsumer, null );
 	}
-	
+
 	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, @SuppressWarnings("rawtypes") Map properties) {
 		return createSearchFactory( emf, false, properties, null, null );
 	}
@@ -52,7 +52,7 @@ public final class Setup {
 	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, boolean useUserTransactions, UpdateConsumer updateConsumer) {
 		return createSearchFactory( emf, useUserTransactions, emf.getProperties(), updateConsumer, null );
 	}
-	
+
 	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, boolean useUserTransactions) {
 		return createSearchFactory( emf, useUserTransactions, emf.getProperties(), null, null );
 	}
@@ -61,7 +61,7 @@ public final class Setup {
 			@SuppressWarnings("rawtypes") Map properties, UpdateConsumer updateConsumer) {
 		return createSearchFactory( emf, useUserTransactions, properties, updateConsumer, null );
 	}
-	
+
 	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, boolean useUserTransactions,
 			@SuppressWarnings("rawtypes") Map properties) {
 		return createSearchFactory( emf, useUserTransactions, properties, null, null );
@@ -104,11 +104,12 @@ public final class Setup {
 				return entityClass.isAnnotationPresent( InIndex.class ) && entityClass.isAnnotationPresent( Indexed.class );
 			} ).collect( Collectors.toList() );
 
+			LOGGER.info( "using hibernate-search properties: " + properties );
 			// get the basic properties
 			String name = SearchFactoryRegistry.getNameProperty( properties );
 			String type = (String) properties.getOrDefault( "org.hibernate.search.genericjpa.searchfactory.type", "sql" );
 			Integer batchSizeForUpdates = Integer.parseInt( (String) properties.getOrDefault(
-					"org.hibernate.search.genericjpa.searchfactory.batchsizeForUpdates", "5" ) );
+					"org.hibernate.search.genericjpa.searchfactory.batchSizeForUpdates", "5" ) );
 			Integer updateDelay = Integer.parseInt( (String) properties.getOrDefault( "org.hibernate.search.genericjpa.searchfactory.updateDelay", "500" ) );
 
 			if ( SearchFactoryRegistry.getSearchFactory( name ) != null ) {
@@ -120,13 +121,13 @@ public final class Setup {
 				String triggerSource = (String) properties.get( "org.hibernate.search.genericjpa.searchfactory.triggerSource" );
 				Class<?> triggerSourceClass;
 				if ( triggerSource == null || ( triggerSourceClass = Class.forName( triggerSource ) ) == null ) {
-					throw new SearchException( "org.hibernate.search.genericjpa.searchfactory.triggerSource must be a class type when using type=\"sql\"" );
+					throw new SearchException( "class specified in org.hibernate.search.genericjpa.searchfactory.triggerSource could not be found." );
 				}
 				if ( useUserTransactions ) {
 					LOGGER.info( "using userTransactions" );
 				}
-				ret = new JPASearchFactoryAdapter( name, emf, useUserTransactions, indexRootTypes, properties, updateConsumer, exec, new SQLJPAUpdateSourceProvider(
-						emf, useUserTransactions, (TriggerSQLStringSource) triggerSourceClass.newInstance(), updateClasses ) );
+				ret = new JPASearchFactoryAdapter( name, emf, useUserTransactions, indexRootTypes, properties, updateConsumer, exec,
+						new SQLJPAUpdateSourceProvider( emf, useUserTransactions, (TriggerSQLStringSource) triggerSourceClass.newInstance(), updateClasses ) );
 				ret.setBatchSizeForUpdates( batchSizeForUpdates );
 				ret.setUpdateDelay( updateDelay );
 				ret.init();

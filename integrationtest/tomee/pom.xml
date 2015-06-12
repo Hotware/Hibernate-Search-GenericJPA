@@ -75,6 +75,12 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-search-ejb-openejb</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.jboss.arquillian.junit</groupId>
 			<artifactId>arquillian-junit-container</artifactId>
 			<scope>test</scope>
@@ -104,6 +110,12 @@
 			<groupId>org.apache.openejb</groupId>
 			<artifactId>arquillian-tomee-common</artifactId>
 			<version>${tomee.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.jboss.shrinkwrap.resolver</groupId>
+			<artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+			<scope>test</scope>
 		</dependency>
 
 		<dependency>

@@ -8,14 +8,10 @@
 		<provider>org.apache.openjpa.persistence.PersistenceProviderImpl</provider>
 		<jta-data-source>jdbc/mysql</jta-data-source>
 		<class>org.hibernate.search.genericjpa.test.entities.Game</class>
-		<class>org.hibernate.search.genericjpa.test.entities.GameUpdates</class>
-		<class>org.hibernate.search.genericjpa.test.entities.Vendor</class>
-		<class>org.hibernate.search.genericjpa.test.entities.VendorUpdates</class>
-		<class>org.hibernate.search.genericjpa.test.entities.GameVendorUpdates</class>
 		<properties>
 			<property name="openjpa.Log" value="DefaultLevel=INFO, Tool=INFO" />
 			<property name="openjpa.jdbc.SynchronizeMappings" value="buildSchema" />
-			<property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
+			<property name="openjpa.RuntimeUnenhancedClasses" value="supported" />
 		</properties>
 	</persistence-unit>
 

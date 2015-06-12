@@ -13,6 +13,8 @@
 		<module>standalone</module>
 		<module>db</module>
 		<module>jpa</module>
+		<module>ejb</module>
+		<module>ejb-openejb</module>
 		<module>integrationtest/glassfish</module>
 		<module>integrationtest/tomee</module>
 		<module>integrationtest/wildfly</module>
@@ -103,6 +105,12 @@
 				<artifactId>javaee-api</artifactId>
 				<version>6.0</version>
 			</dependency>
+			
+			<dependency>
+				<groupId>javax.enterprise.concurrent</groupId>
+				<artifactId>javax.enterprise.concurrent-api</artifactId>
+				<version>1.0</version>
+			</dependency>
 
 			<dependency>
 				<groupId>org.jboss.arquillian</groupId>
@@ -117,6 +125,7 @@
 				<artifactId>arquillian-junit-container</artifactId>
 				<version>${arquillian.version}</version>
 			</dependency>
+
 
 		</dependencies>
 	</dependencyManagement>

@@ -6,12 +6,15 @@
  */
 package org.hibernate.search.genericjpa.test.integration;
 
+import java.io.File;
+
+import org.hibernate.search.genericjpa.ejb.EJBSearchFactory;
 import org.hibernate.search.genericjpa.test.entities.Game;
-import org.hibernate.search.genericjpa.test.searchFactory.EJBSearchFactory;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 
 /**
  * @author Martin Braun
@@ -23,10 +26,11 @@ public class IntegrationTestUtil {
 	}
 
 	public static Archive<?> createOpenJPAMySQLDeployment() {
-		return ShrinkWrap.create( WebArchive.class, "openjpa-mysql.war" ).setWebXML( "WEB-INF/web.xml" )
-				.addAsResource( "WEB-INF/context.xml", "WEB-INF/context.xml" ).addPackage( Game.class.getPackage() )
-				.addPackage( EJBSearchFactory.class.getPackage() ).addAsResource( "META-INF/openjpa-mysql-persistence.xml", "META-INF/persistence.xml" )
-				.addAsWebInfResource( EmptyAsset.INSTANCE, "beans.xml" );
+		File[] libs = Maven.resolver().loadPomFromFile( "pom.xml" ).importRuntimeDependencies().resolve().withTransitivity().asFile();
+		return ShrinkWrap.create( WebArchive.class, "openjpa-mysql.war" ).setWebXML( "WEB-INF/web.xml" ).addClass( EJBSearchFactory.class )
+				.addAsResource( "WEB-INF/context.xml", "WEB-INF/context.xml" ).addAsResource( "META-INF/hsearch.properties", "META-INF/hsearch.properties" )
+				.addPackage( Game.class.getPackage() ).addAsLibraries( libs )
+				.addAsResource( "META-INF/openjpa-mysql-persistence.xml", "META-INF/persistence.xml" ).addAsWebInfResource( EmptyAsset.INSTANCE, "beans.xml" );
 	}
 
 }

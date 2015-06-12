@@ -172,6 +172,12 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-search-ejb</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.jboss.arquillian.junit</groupId>
 			<artifactId>arquillian-junit-container</artifactId>
 			<scope>test</scope>
