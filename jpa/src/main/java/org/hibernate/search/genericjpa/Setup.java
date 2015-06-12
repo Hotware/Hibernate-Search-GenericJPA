@@ -24,26 +24,11 @@ import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
 import org.hibernate.search.genericjpa.impl.SQLJPAUpdateSourceProvider;
 import org.hibernate.search.genericjpa.impl.SearchFactoryRegistry;
 
+import static org.hibernate.search.genericjpa.Constants.*;
+
 public final class Setup {
 
 	private static final Logger LOGGER = Logger.getLogger( Setup.class.getName() );
-
-	public static final String USE_USER_TRANSACTIONS_KEY = "org.hibernate.search.genericjpa.searchfactory.useUserTransactions";
-	public static final String USE_USER_TRANSACTIONS_DEFAULT_VALUE = "false";
-
-	public static final String SEARCH_FACTORY_TYPE_KEY = "org.hibernate.search.genericjpa.searchfactory.type";
-	public static final String SEARCH_FACTORY_TYPE_DEFAULT_VALUE = "sql";
-
-	public static final String BATCH_SIZE_FOR_UPDATES_KEY = "org.hibernate.search.genericjpa.searchfactory.batchSizeForUpdates";
-	public static final String BATCH_SIZE_FOR_UPDATES_DEFAULT_VALUE = "5";
-
-	public static final String UPDATE_DELAY_KEY = "org.hibernate.search.genericjpa.searchfactory.updateDelay";
-	public static final String UPDATE_DELAY_DEFAULT_VALUE = "500";
-
-	public static final String TRIGGER_SOURCE_KEY = "org.hibernate.search.genericjpa.searchfactory.triggerSource";
-	
-	public static final String NAME_KEY = SearchFactoryRegistry.NAME_PROPERTY;
-	public static final String NAME_DEFAULT_VALUE = SearchFactoryRegistry.DEFAULT_NAME;
 
 	private Setup() {
 		// can't touch this!
