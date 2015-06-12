@@ -103,7 +103,7 @@ public class OpenJPATomEEIntegrationTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void shouldFindAllGamesInIndex() throws Exception {
-		Sleep.sleep( 1000, () -> {
+		Sleep.sleep( 5000, () -> {
 			List<Game> games = new ArrayList<>();
 			FullTextEntityManager fem = Search.getFullTextEntityManager( this.em );
 			for ( String title : GAME_TITLES ) {
@@ -113,7 +113,7 @@ public class OpenJPATomEEIntegrationTest {
 
 			System.out.println( "Found " + games.size() + " games (using Hibernate-Search):" );
 			return assertContainsAllGames( games );
-		}, 500, "coudln't find all games!" );
+		}, 100, "coudln't find all games!" );
 	}
 
 	@Test
@@ -124,14 +124,14 @@ public class OpenJPATomEEIntegrationTest {
 		Game newGame = new Game( "Legend of Zelda" );
 		fem.index( newGame );
 		fem.commitSearchTransaction();
-		Sleep.sleep( 500, () -> {
+		Sleep.sleep( 5000, () -> {
 			FullTextQuery fullTextQuery = fem.createFullTextQuery( new TermQuery( new Term( "title", "Legend of Zelda" ) ), Game.class );
 			// we can find it in the index even though it is not persisted in the database
 				boolean val1 = 1 == fullTextQuery.getResultSize();
 				// but no result should be returned here:
 				boolean val2 = 0 == fullTextQuery.getResultList().size();
 				return val1 && val2;
-			} );
+			}, 100, "");
 	}
 
 	@Test
@@ -143,14 +143,14 @@ public class OpenJPATomEEIntegrationTest {
 		Game newGame = new Game( "Pong" );
 		fem.index( newGame );
 		fem.rollbackSearchTransaction();
-		Sleep.sleep( 500, () -> {
+		Sleep.sleep( 5000, () -> {
 			FullTextQuery fullTextQuery = fem.createFullTextQuery( new TermQuery( new Term( "title", "Pong" ) ), Game.class );
 			// we can find it in the index even though it is not persisted in the database
 				boolean val1 = 0 == fullTextQuery.getResultSize();
 				// no result should be returned here either
 				boolean val2 = 0 == fullTextQuery.getResultList().size();
 				return val1 && val2;
-			} );
+			}, 100, "" );
 	}
 
 	@Test
