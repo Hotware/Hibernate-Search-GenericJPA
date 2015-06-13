@@ -4,12 +4,13 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
-package org.hibernate.search.genericjpa.batchindexing;
+package org.hibernate.search.genericjpa.batchindexing.impl;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
+
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
@@ -30,21 +31,26 @@ public class IdProducerTask implements Runnable {
 	private final String idProperty;
 	private final EntityManagerFactory emf;
 	private final boolean useUserTransaction;
-	private final int batchSize;
+	private final int batchSizeToLoadIds;
+	private final int batchSizeToLoadObjects;
 	private final int createNewEntityManagerCount;
 	private final ExecutorService executorService;
 	private final Function<Class<?>, ObjectHandlerTask> objectHandlerSupplier;
+	private final List<UpdateInfo> updateInfoBatch;
 
-	public IdProducerTask(Class<?> entityClass, String idProperty, EntityManagerFactory emf, boolean useUserTransaction, int batchSize,
-			int createNewEntityManagerCount, ExecutorService executorService, Function<Class<?>, ObjectHandlerTask> objectHandlerSupplier) {
+	public IdProducerTask(Class<?> entityClass, String idProperty, EntityManagerFactory emf, boolean useUserTransaction, int batchSizeToLoadIds,
+			int batchSizeToLoadObjects, int createNewEntityManagerCount, ExecutorService executorService,
+			Function<Class<?>, ObjectHandlerTask> objectHandlerSupplier) {
 		this.entityClass = entityClass;
 		this.idProperty = idProperty;
 		this.emf = emf;
 		this.useUserTransaction = useUserTransaction;
-		this.batchSize = batchSize;
+		this.batchSizeToLoadIds = batchSizeToLoadIds;
+		this.batchSizeToLoadObjects = batchSizeToLoadObjects;
 		this.createNewEntityManagerCount = createNewEntityManagerCount;
 		this.executorService = executorService;
 		this.objectHandlerSupplier = objectHandlerSupplier;
+		this.updateInfoBatch = new ArrayList<>( batchSizeToLoadObjects );
 	}
 
 	@Override
@@ -62,29 +68,47 @@ public class IdProducerTask implements Runnable {
 			try {
 				Query query = em.createQuery( new StringBuilder().append( "SELECT obj." ).append( this.idProperty ).append( " FROM " )
 						.append( em.getMetamodel().entity( this.entityClass ).getName() ).append( " obj ORDER BY obj." ).append( this.idProperty ).toString() );
-				query.setFirstResult( (int) processed ).setMaxResults( this.batchSize ).getResultList();
-				List<UpdateInfo> currentBatch = new ArrayList<>();
-				for ( Object id : query.getResultList() ) {
-					currentBatch.add( new UpdateInfo( this.entityClass, id, EventType.INSERT ) );
-				}
-				ObjectHandlerTask task = this.objectHandlerSupplier.apply( this.entityClass ).batch( currentBatch );
-				if ( this.executorService != null ) {
-					this.executorService.submit( task );
-				}
-				else {
-					task.run();
-				}
-				processed += this.batchSize;
+				query.setFirstResult( (int) processed ).setMaxResults( this.batchSizeToLoadIds ).getResultList();
+
+				this.enlistToBatch( query.getResultList() );
+
+				processed += this.batchSizeToLoadIds;
 				tx.commit();
 			}
 			catch (Exception e) {
 				tx.rollback();
 				throw new SearchException( e );
 			}
-			if ( processed % this.createNewEntityManagerCount == 0 || processed >= this.batchSize ) {
+			if ( processed % this.createNewEntityManagerCount == 0 ) {
 				em.close();
 				em = null;
 			}
+		}
+		this.flushBatch();
+		if ( em != null ) {
+			em.close();
+		}
+	}
+
+	private void enlistToBatch(@SuppressWarnings("rawtypes") List ids) {
+		for ( Object id : ids ) {
+			this.updateInfoBatch.add( new UpdateInfo( this.entityClass, id, EventType.INSERT ) );
+			if ( this.updateInfoBatch.size() >= this.batchSizeToLoadObjects ) {
+				this.flushBatch();
+			}
+		}
+	}
+	
+	private void flushBatch() {
+		if(this.updateInfoBatch.size() > 0) {
+			ObjectHandlerTask task = this.objectHandlerSupplier.apply( this.entityClass ).batch( new ArrayList<>( this.updateInfoBatch ) );
+			if ( this.executorService != null ) {
+				this.executorService.submit( task );
+			}
+			else {
+				task.run();
+			}
+			this.updateInfoBatch.clear();
 		}
 	}
 

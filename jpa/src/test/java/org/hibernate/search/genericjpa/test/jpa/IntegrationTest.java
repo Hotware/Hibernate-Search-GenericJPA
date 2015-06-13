@@ -11,8 +11,10 @@ import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -22,14 +24,17 @@ import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
-import org.hibernate.search.genericjpa.JPASearchFactory;
 import org.hibernate.search.genericjpa.Setup;
-import org.hibernate.search.genericjpa.batchindexing.IdProducerTask;
-import org.hibernate.search.genericjpa.batchindexing.ObjectHandlerTask;
+import org.hibernate.search.genericjpa.batchindexing.impl.IdProducerTask;
+import org.hibernate.search.genericjpa.batchindexing.impl.ObjectHandlerTask;
+import org.hibernate.search.genericjpa.batchindexing.impl.ObjectHandlerTaskImpl;
+import org.hibernate.search.genericjpa.db.events.EventType;
+import org.hibernate.search.genericjpa.db.events.IndexUpdater;
 import org.hibernate.search.genericjpa.db.events.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchFactory;
+import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
 import org.hibernate.search.genericjpa.test.db.events.jpa.MetaModelParser;
 import org.hibernate.search.genericjpa.test.jpa.entities.Place;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
@@ -48,10 +53,11 @@ import org.junit.runners.MethodSorters;
 public class IntegrationTest {
 
 	private int valinorId = 0;
-	private Place valinor;
+	private int helmsDeepId = 0;
+
 	private EntityManagerFactory emf;
 	private EntityManager em;
-	private JPASearchFactory searchFactory;
+	private JPASearchFactoryAdapter searchFactory;
 
 	@Test
 	public void metaModelParser() throws IOException {
@@ -77,6 +83,12 @@ public class IntegrationTest {
 	// TODO: different test class?
 	@Test
 	public void testIdProducerTask() {
+		this.testIdProducerTask( 2, 1, 1 );
+		this.testIdProducerTask( 1, 1, 5 );
+		this.testIdProducerTask( 1, 2, 5 );
+	}
+
+	private void testIdProducerTask(int batchSizeToLoadIds, int batchSizeToLoadObjects, int createNewEntityManagerCount) {
 		ObjectHandlerTask objHandlerTask = new ObjectHandlerTask() {
 
 			private boolean hadOne = false;
@@ -100,22 +112,42 @@ public class IntegrationTest {
 			}
 
 		};
-		IdProducerTask idProducer = new IdProducerTask( Place.class, "id", this.emf, false, 1, 1, null, (clazz) -> {
-			return objHandlerTask;
-		} );
+		IdProducerTask idProducer = new IdProducerTask( Place.class, "id", this.emf, false, batchSizeToLoadIds, batchSizeToLoadObjects,
+				createNewEntityManagerCount, null, (clazz) -> {
+					return objHandlerTask;
+				} );
 		idProducer.run();
-
 	}
 
-	// TODO: different test class?
 	@Test
-	public void testObjectHandlerWithIdProducerTask() {
-		// TODO:
+	public void testObjectHandlerTask() {
+		FullTextEntityManager fem = Search.getFullTextEntityManager( em, "test" );
+		fem.beginSearchTransaction();
+		fem.purgeAll( Place.class );
+		fem.commitSearchTransaction();
+
+		assertEquals( 0, fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class ).getResultList().size() );
+
+		Map<Class<?>, String> idProperties = new HashMap<>();
+		idProperties.put( Place.class, "id" );
+		IndexUpdater indexUpdater = this.searchFactory.getIndexUpdater();
+		ObjectHandlerTask handler = new ObjectHandlerTaskImpl( indexUpdater, Place.class, this.em, false, 1, idProperties, (em) -> {
+
+		}, this.emf.getPersistenceUnitUtil() );
+
+		List<UpdateInfo> batch = new ArrayList<>();
+		batch.add( new UpdateInfo( Place.class, this.valinorId, EventType.INSERT ) );
+		batch.add( new UpdateInfo( Place.class, this.helmsDeepId, EventType.INSERT ) );
+
+		handler.batch( batch );
+		handler.run();
+
+		assertEquals( 2, fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class ).getResultList().size() );
 	}
 
 	@Test
 	public void testJPAInterfaces() throws InterruptedException {
-	FullTextEntityManager fem = Search.getFullTextEntityManager( em, "test" );
+		FullTextEntityManager fem = Search.getFullTextEntityManager( em, "test" );
 		fem.beginSearchTransaction();
 
 		Sleep.sleep(
@@ -178,10 +210,10 @@ public class IntegrationTest {
 	public void setup() {
 		this.emf = Persistence.createEntityManagerFactory( "EclipseLink_MySQL" );
 		Properties properties = new Properties();
-		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.name", "test");
+		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.name", "test" );
 		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.triggerSource", MySQLTriggerSQLStringSource.class.getName() );
-		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.type", "sql");
-		this.searchFactory = Setup.createUnmanagedSearchFactory( emf, properties, null );
+		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.type", "sql" );
+		this.searchFactory = (JPASearchFactoryAdapter) Setup.createUnmanagedSearchFactory( emf, properties, null );
 		EntityManager em = emf.createEntityManager();
 		try {
 			EntityTransaction tx = em.getTransaction();
@@ -231,9 +263,8 @@ public class IntegrationTest {
 			valinor.setSorcerers( sorcerersAtValinor );
 			em.persist( valinor );
 
-			valinorId = valinor.getId();
-
-			this.valinor = valinor;
+			this.valinorId = valinor.getId();
+			this.helmsDeepId = helmsDeep.getId();
 
 			em.flush();
 			tx.commit();

@@ -74,6 +74,8 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 
 	private int updateDelay = 500;
 	private int batchSizeForUpdates = 5;
+	
+	private IndexUpdater indexUpdater;
 
 	@SuppressWarnings("unchecked")
 	public JPASearchFactoryAdapter(String name, EntityManagerFactory emf, boolean useUserTransaction, List<Class<?>> indexRootTypes, @SuppressWarnings("rawtypes") Map properties,
@@ -142,7 +144,7 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 			Map<Class<?>, List<Class<?>>> containedInIndexOf = MetadataUtil.calculateInIndexOf( rehashedTypeMetadatas );
 
 			JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider( this.getEmf(), this.idProperties, this.isUseUserTransaction() );
-			IndexUpdater indexUpdater = new IndexUpdater( rehashedTypeMetadataPerIndexRoot, containedInIndexOf, entityProvider,
+			this.indexUpdater = new IndexUpdater( rehashedTypeMetadataPerIndexRoot, containedInIndexOf, entityProvider,
 					impl.unwrap( ExtendedSearchIntegrator.class ) );
 			this.updateSource.setUpdateConsumers( Arrays.asList( indexUpdater, this ) );
 			this.updateSource.start();
@@ -303,6 +305,10 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 	 */
 	public void setBatchSizeForUpdates(int batchSizeForUpdates) {
 		this.batchSizeForUpdates = batchSizeForUpdates;
+	}
+	
+	public IndexUpdater getIndexUpdater() {
+		return this.indexUpdater;
 	}
 
 	private EntityManagerFactory getEmf() {

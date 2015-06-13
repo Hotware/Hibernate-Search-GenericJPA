@@ -45,14 +45,14 @@ public class IndexUpdater implements UpdateConsumer {
 
 	private static final int HSQUERY_BATCH = 50;
 
-	private final Map<Class<?>, RehashedTypeMetadata> metadataPerForIndexRoot;
+	private final Map<Class<?>, RehashedTypeMetadata> metadataForIndexRoot;
 	private final Map<Class<?>, List<Class<?>>> containedInIndexOf;
 	private final ReusableEntityProvider entityProvider;
 	private IndexWrapper indexWrapper;
 
-	public IndexUpdater(Map<Class<?>, RehashedTypeMetadata> metadataPerForIndexRoot, Map<Class<?>, List<Class<?>>> containedInIndexOf,
+	public IndexUpdater(Map<Class<?>, RehashedTypeMetadata> metadataForIndexRoot, Map<Class<?>, List<Class<?>>> containedInIndexOf,
 			ReusableEntityProvider entityProvider, IndexWrapper indexWrapper) {
-		this.metadataPerForIndexRoot = metadataPerForIndexRoot;
+		this.metadataForIndexRoot = metadataForIndexRoot;
 		this.containedInIndexOf = containedInIndexOf;
 		this.entityProvider = entityProvider;
 		this.indexWrapper = indexWrapper;
@@ -141,7 +141,7 @@ public class IndexUpdater implements UpdateConsumer {
 		public void delete(Class<?> entityClass, List<Class<?>> inIndexOf, Object id, Transaction tx) {
 			for ( int i = 0; i < inIndexOf.size(); ++i ) {
 				Class<?> indexClass = inIndexOf.get( i );
-				RehashedTypeMetadata metadata = IndexUpdater.this.metadataPerForIndexRoot.get( indexClass );
+				RehashedTypeMetadata metadata = IndexUpdater.this.metadataForIndexRoot.get( indexClass );
 				List<String> fields = metadata.getIdFieldNamesForType().get( entityClass );
 				for ( String field : fields ) {
 					DocumentFieldMetadata metaDataForIdField = metadata.getDocumentFieldMetadataForIdFieldName().get( field );
