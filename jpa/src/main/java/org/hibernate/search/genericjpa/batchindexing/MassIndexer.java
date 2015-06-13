@@ -31,6 +31,8 @@ public interface MassIndexer {
 	
 	public MassIndexer executorService(ExecutorService executorService);
 	
+	public MassIndexer createNewIdEntityManagerAfter(int createNewIdEntityManagerAfter);
+	
 	public Future<?> start();
 	
 	public void startAndWait() throws InterruptedException;

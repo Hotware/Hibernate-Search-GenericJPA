@@ -17,12 +17,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
-
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.hibernate.search.genericjpa.Setup;
 import org.hibernate.search.genericjpa.batchindexing.impl.IdProducerTask;
@@ -31,6 +29,7 @@ import org.hibernate.search.genericjpa.batchindexing.impl.ObjectHandlerTaskImpl;
 import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.IndexUpdater;
 import org.hibernate.search.genericjpa.db.events.MySQLTriggerSQLStringSource;
+import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchFactory;
@@ -89,32 +88,22 @@ public class IntegrationTest {
 	}
 
 	private void testIdProducerTask(int batchSizeToLoadIds, int batchSizeToLoadObjects, int createNewEntityManagerCount) {
-		ObjectHandlerTask objHandlerTask = new ObjectHandlerTask() {
-
-			private boolean hadOne = false;
-			private List<UpdateInfo> batch;
-
-			@Override
-			public void run() {
-				if ( !hadOne ) {
-					assertEquals( "Helm's Deep", IntegrationTest.this.em.find( Place.class, this.batch.get( 0 ).getId() ).getName() );
-					hadOne = true;
-				}
-				else {
-					assertEquals( "Valinor", IntegrationTest.this.em.find( Place.class, this.batch.get( 0 ).getId() ).getName() );
-				}
-			}
-
-			@Override
-			public ObjectHandlerTask batch(List<UpdateInfo> batch) {
-				this.batch = batch;
-				return this;
-			}
-
-		};
 		IdProducerTask idProducer = new IdProducerTask( Place.class, "id", this.emf, false, batchSizeToLoadIds, batchSizeToLoadObjects,
-				createNewEntityManagerCount, null, (clazz) -> {
-					return objHandlerTask;
+				createNewEntityManagerCount, new UpdateConsumer() {
+
+					private boolean hadOne = false;
+
+					@Override
+					public void updateEvent(List<UpdateInfo> batch) {
+						if ( !hadOne ) {
+							assertEquals( "Helm's Deep", IntegrationTest.this.em.find( Place.class, batch.get( 0 ).getId() ).getName() );
+							hadOne = true;
+						}
+						else {
+							assertEquals( "Valinor", IntegrationTest.this.em.find( Place.class, batch.get( 0 ).getId() ).getName() );
+						}
+					}
+
 				} );
 		idProducer.run();
 	}
@@ -126,12 +115,10 @@ public class IntegrationTest {
 		fem.purgeAll( Place.class );
 		fem.commitSearchTransaction();
 
-		assertEquals( 0, fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class ).getResultList().size() );
-
 		Map<Class<?>, String> idProperties = new HashMap<>();
 		idProperties.put( Place.class, "id" );
 		IndexUpdater indexUpdater = this.searchFactory.getIndexUpdater();
-		ObjectHandlerTask handler = new ObjectHandlerTaskImpl( indexUpdater, Place.class, this.em, false, 1, idProperties, (em) -> {
+		ObjectHandlerTask handler = new ObjectHandlerTaskImpl( indexUpdater, Place.class, this.em, false, idProperties, (em) -> {
 
 		}, this.emf.getPersistenceUnitUtil() );
 

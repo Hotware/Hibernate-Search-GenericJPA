@@ -8,9 +8,6 @@ package org.hibernate.search.genericjpa.batchindexing.impl;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.function.Function;
-
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
@@ -18,6 +15,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 
 import org.hibernate.search.genericjpa.db.events.EventType;
+import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
@@ -34,13 +32,11 @@ public class IdProducerTask implements Runnable {
 	private final int batchSizeToLoadIds;
 	private final int batchSizeToLoadObjects;
 	private final int createNewEntityManagerCount;
-	private final ExecutorService executorService;
-	private final Function<Class<?>, ObjectHandlerTask> objectHandlerSupplier;
+	private final UpdateConsumer updateConsumer;
 	private final List<UpdateInfo> updateInfoBatch;
 
 	public IdProducerTask(Class<?> entityClass, String idProperty, EntityManagerFactory emf, boolean useUserTransaction, int batchSizeToLoadIds,
-			int batchSizeToLoadObjects, int createNewEntityManagerCount, ExecutorService executorService,
-			Function<Class<?>, ObjectHandlerTask> objectHandlerSupplier) {
+			int batchSizeToLoadObjects, int createNewEntityManagerCount, UpdateConsumer updateConsumer) {
 		this.entityClass = entityClass;
 		this.idProperty = idProperty;
 		this.emf = emf;
@@ -48,8 +44,7 @@ public class IdProducerTask implements Runnable {
 		this.batchSizeToLoadIds = batchSizeToLoadIds;
 		this.batchSizeToLoadObjects = batchSizeToLoadObjects;
 		this.createNewEntityManagerCount = createNewEntityManagerCount;
-		this.executorService = executorService;
-		this.objectHandlerSupplier = objectHandlerSupplier;
+		this.updateConsumer = updateConsumer;
 		this.updateInfoBatch = new ArrayList<>( batchSizeToLoadObjects );
 	}
 
@@ -98,16 +93,10 @@ public class IdProducerTask implements Runnable {
 			}
 		}
 	}
-	
+
 	private void flushBatch() {
-		if(this.updateInfoBatch.size() > 0) {
-			ObjectHandlerTask task = this.objectHandlerSupplier.apply( this.entityClass ).batch( new ArrayList<>( this.updateInfoBatch ) );
-			if ( this.executorService != null ) {
-				this.executorService.submit( task );
-			}
-			else {
-				task.run();
-			}
+		if ( this.updateInfoBatch.size() > 0 ) {
+			this.updateConsumer.updateEvent( new ArrayList<>( updateInfoBatch ) );
 			this.updateInfoBatch.clear();
 		}
 	}

@@ -15,11 +15,11 @@ import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceUnitUtil;
 
-import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.db.events.IndexUpdater;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
 import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
+import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 
 /**
@@ -38,8 +38,7 @@ public class ObjectHandlerTaskImpl implements ObjectHandlerTask {
 	private List<UpdateInfo> batch;
 
 	public ObjectHandlerTaskImpl(IndexUpdater indexUpdater, Class<?> entityClass, EntityManager em, boolean useUserTransaction,
-			int createNewEntityManagerCount, Map<Class<?>, String> idProperties, Consumer<EntityManager> entityManagerDisposer,
-			PersistenceUnitUtil peristenceUnitUtil) {
+			Map<Class<?>, String> idProperties, Consumer<EntityManager> entityManagerDisposer, PersistenceUnitUtil peristenceUnitUtil) {
 		this.indexUpdater = indexUpdater;
 		this.entityClass = entityClass;
 		this.em = em;
@@ -48,7 +47,6 @@ public class ObjectHandlerTaskImpl implements ObjectHandlerTask {
 		this.entityManagerDisposer = entityManagerDisposer;
 		this.peristenceUnitUtil = peristenceUnitUtil;
 	}
-
 	@Override
 	public ObjectHandlerTaskImpl batch(List<UpdateInfo> batch) {
 		this.batch = batch;
@@ -62,7 +60,7 @@ public class ObjectHandlerTaskImpl implements ObjectHandlerTask {
 		try {
 			@SuppressWarnings("resource")
 			// this shouldn't be closed in here as the EntityManager will be reused
-			EntityManagerEntityProvider providerForBatch = new EntityManagerEntityProvider( this.em, idProperties );
+			EntityManagerEntityProvider providerForBatch = new EntityManagerEntityProvider( this.em, this.idProperties );
 			List<Object> ids = this.batch.stream().map( (updateInfo) -> {
 				return updateInfo.getId();
 			} ).collect( Collectors.toList() );

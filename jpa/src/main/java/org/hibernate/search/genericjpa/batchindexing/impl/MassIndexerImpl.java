@@ -6,34 +6,38 @@
  */
 package org.hibernate.search.genericjpa.batchindexing.impl;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
+import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.metamodel.EntityType;
 import javax.persistence.metamodel.Metamodel;
 import javax.persistence.metamodel.SingularAttribute;
 
-import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
+import org.h2.mvstore.ConcurrentArrayList;
 import org.hibernate.search.genericjpa.batchindexing.MassIndexer;
+import org.hibernate.search.genericjpa.db.events.IndexUpdater;
+import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
+import org.hibernate.search.genericjpa.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.exception.SearchException;
-import org.hibernate.search.genericjpa.metadata.RehashedTypeMetadata;
 
 /**
  * @author Martin Braun
  */
-public class MassIndexerImpl implements MassIndexer {
+public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
-	private final Map<Class<?>, RehashedTypeMetadata> metadataForIndexRoot;
-	private final Map<Class<?>, List<Class<?>>> containedInIndexOf;
-	private final ExtendedSearchIntegrator searchIntegrator;
+	private final IndexUpdater indexUpdater;
 	private final List<Class<?>> rootEntities;
 	private final boolean useUserTransaction;
 	private final EntityManagerFactory emf;
@@ -44,17 +48,23 @@ public class MassIndexerImpl implements MassIndexer {
 	private boolean purgeAllOnStart = true;
 	private boolean optimizeAfterPurge = true;
 	private boolean optimizeOnFinish = true;
+
 	private int batchSizeToLoadIds = 100;
 	private int batchSizeToLoadObjects = 10;
 	private int threadsToLoadIds = 2;
 	private int threadsToLoadObjects = 4;
+	private int createNewIdEntityManagerAfter = 1000;
 
-	public MassIndexerImpl(EntityManagerFactory emf, Map<Class<?>, RehashedTypeMetadata> metadataForIndexRoot,
-			Map<Class<?>, List<Class<?>>> containedInIndexOf, ExtendedSearchIntegrator searchIntegrator, List<Class<?>> rootEntities, boolean useUserTransaction) {
+	private boolean started = false;
+	private Map<Class<?>, String> idProperties;
+
+	private ConcurrentLinkedQueue<EntityManager> entityManagers = new ConcurrentLinkedQueue<>();
+
+	private final ConcurrentArrayList<Future<?>> futures = new ConcurrentArrayList<>();
+
+	public MassIndexerImpl(EntityManagerFactory emf, IndexUpdater indexUpdater, List<Class<?>> rootEntities, boolean useUserTransaction) {
 		this.emf = emf;
-		this.metadataForIndexRoot = metadataForIndexRoot;
-		this.containedInIndexOf = containedInIndexOf;
-		this.searchIntegrator = searchIntegrator;
+		this.indexUpdater = indexUpdater;
 		this.rootEntities = rootEntities;
 		this.useUserTransaction = useUserTransaction;
 	}
@@ -79,12 +89,18 @@ public class MassIndexerImpl implements MassIndexer {
 
 	@Override
 	public MassIndexer batchSizeToLoadIds(int batchSizeToLoadIds) {
+		if ( batchSizeToLoadIds <= 0 ) {
+			throw new IllegalArgumentException( "batchSizeToLoadIds may not be null!" );
+		}
 		this.batchSizeToLoadIds = batchSizeToLoadIds;
 		return this;
 	}
 
 	@Override
 	public MassIndexer batchSizeToLoadObjects(int batchSizeToLoadObjects) {
+		if ( batchSizeToLoadObjects <= 0 ) {
+			throw new IllegalArgumentException( "batchSizeToLoadObjects may not be null!" );
+		}
 		this.batchSizeToLoadObjects = batchSizeToLoadObjects;
 		return this;
 	}
@@ -112,16 +128,107 @@ public class MassIndexerImpl implements MassIndexer {
 	}
 
 	@Override
+	public MassIndexer createNewIdEntityManagerAfter(int createNewIdEntityManagerAfter) {
+		this.createNewIdEntityManagerAfter = createNewIdEntityManagerAfter;
+		return this;
+	}
+
+	@Override
 	public Future<?> start() {
+		if ( this.started ) {
+			throw new AssertionFailure( "already started this instance of MassIndexer once!" );
+		}
+		this.started = true;
 		if ( this.executorServiceForIds != null ) {
 			this.executorServiceForIds = Executors.newFixedThreadPool( this.threadsToLoadIds );
 		}
 		if ( this.executorServiceForObjects != null ) {
 			this.executorServiceForObjects = Executors.newFixedThreadPool( this.threadsToLoadObjects );
 		}
-		Map<Class<?>, String> idProperties = this.getIdProperties( this.rootEntities );
-		
-		return null;
+		this.idProperties = this.getIdProperties( this.rootEntities );
+		for ( Class<?> rootClass : this.rootEntities ) {
+			IdProducerTask idProducer = new IdProducerTask( rootClass, this.idProperties.get( rootClass ), emf, useUserTransaction, batchSizeToLoadIds,
+					batchSizeToLoadObjects, this.createNewIdEntityManagerAfter, this );
+			this.executorServiceForIds.submit( idProducer );
+		}
+		return new Future<Void>() {
+
+			@Override
+			public boolean cancel(boolean mayInterruptIfRunning) {
+				boolean ret = false;
+				Iterator<Future<?>> it = MassIndexerImpl.this.futures.iterator();
+				while ( it.hasNext() ) {
+					ret |= it.next().cancel( mayInterruptIfRunning );
+				}
+				return ret;
+			}
+
+			@Override
+			public boolean isCancelled() {
+				boolean ret = false;
+				Iterator<Future<?>> it = MassIndexerImpl.this.futures.iterator();
+				while ( it.hasNext() ) {
+					ret |= it.next().isCancelled();
+				}
+				return ret;
+			}
+
+			@Override
+			public boolean isDone() {
+				boolean ret = false;
+				Iterator<Future<?>> it = MassIndexerImpl.this.futures.iterator();
+				while ( it.hasNext() ) {
+					ret |= it.next().isDone();
+				}
+				return ret;
+			}
+
+			@Override
+			public Void get() throws InterruptedException, ExecutionException {
+				Iterator<Future<?>> it = MassIndexerImpl.this.futures.iterator();
+				while ( it.hasNext() ) {
+					it.next().get();
+				}
+				return null;
+			}
+
+			@Override
+			public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+				Iterator<Future<?>> it = MassIndexerImpl.this.futures.iterator();
+				while ( it.hasNext() ) {
+					it.next().get( timeout, unit );
+				}
+				return null;
+			}
+
+		};
+	}
+
+	@Override
+	public void updateEvent(List<UpdateInfo> updateInfo) {
+		Class<?> entityClass = updateInfo.get( 0 ).getEntityClass();
+		ObjectHandlerTask task = new ObjectHandlerTaskImpl( this.indexUpdater, entityClass, this.getEntityManager(), this.useUserTransaction,
+				this.idProperties, this::disposeEntityManager, this.emf.getPersistenceUnitUtil() );
+		task.batch( updateInfo );
+		this.executorServiceForObjects.submit( task );
+	}
+
+	private EntityManager getEntityManager() {
+		EntityManager em = this.entityManagers.poll();
+		if ( em == null ) {
+			this.emf.createEntityManager();
+		}
+		return em;
+	}
+
+	private void disposeEntityManager(EntityManager em) {
+		this.entityManagers.add( em );
+	}
+
+	private void closeAllOpenEntityManagers() {
+		while ( this.entityManagers.size() > 0 ) {
+			this.entityManagers.remove().close();
+		}
 	}
 
 	@Override
