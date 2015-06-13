@@ -28,6 +28,8 @@ import org.apache.lucene.search.Query;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.metadata.impl.MetadataProvider;
 import org.hibernate.search.genericjpa.JPASearchFactory;
+import org.hibernate.search.genericjpa.batchindexing.MassIndexer;
+import org.hibernate.search.genericjpa.batchindexing.impl.MassIndexerImpl;
 import org.hibernate.search.genericjpa.db.events.IndexUpdater;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateSource;
@@ -74,12 +76,16 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 
 	private int updateDelay = 500;
 	private int batchSizeForUpdates = 5;
-	
+
 	private IndexUpdater indexUpdater;
+	private Map<Class<?>, RehashedTypeMetadata> rehashedTypeMetadataForIndexRoot;
+	private Map<Class<?>, List<Class<?>>> containedInIndexOf;
+	private ExtendedSearchIntegrator searchIntegrator;
 
 	@SuppressWarnings("unchecked")
-	public JPASearchFactoryAdapter(String name, EntityManagerFactory emf, boolean useUserTransaction, List<Class<?>> indexRootTypes, @SuppressWarnings("rawtypes") Map properties,
-			UpdateConsumer updateConsumer, ScheduledExecutorService exec, UpdateSourceProvider updateSourceProvider) {
+	public JPASearchFactoryAdapter(String name, EntityManagerFactory emf, boolean useUserTransaction, List<Class<?>> indexRootTypes,
+			@SuppressWarnings("rawtypes") Map properties, UpdateConsumer updateConsumer, ScheduledExecutorService exec,
+			UpdateSourceProvider updateSourceProvider) {
 		this.name = name;
 		this.emf = emf;
 		this.useUserTransaction = useUserTransaction;
@@ -120,11 +126,11 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 		MetadataRehasher rehasher = new MetadataRehasher();
 
 		List<RehashedTypeMetadata> rehashedTypeMetadatas = new ArrayList<>();
-		Map<Class<?>, RehashedTypeMetadata> rehashedTypeMetadataPerIndexRoot = new HashMap<>();
+		this.rehashedTypeMetadataForIndexRoot = new HashMap<>();
 		for ( Class<?> indexRootType : this.getIndexRootTypes() ) {
 			RehashedTypeMetadata rehashed = rehasher.rehash( metadataProvider.getTypeMetadataFor( indexRootType ) );
 			rehashedTypeMetadatas.add( rehashed );
-			rehashedTypeMetadataPerIndexRoot.put( indexRootType, rehashed );
+			rehashedTypeMetadataForIndexRoot.put( indexRootType, rehashed );
 		}
 
 		this.indexRelevantEntities = Collections.unmodifiableSet( MetadataUtil.calculateIndexRelevantEntities( rehashedTypeMetadatas ) );
@@ -137,14 +143,15 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 			builder.addClass( clazz );
 		} );
 		SearchIntegrator impl = builder.buildSearchIntegrator();
-		this.searchFactory = new StandaloneSearchFactoryImpl( impl.unwrap( ExtendedSearchIntegrator.class ) );
+		this.searchIntegrator = impl.unwrap( ExtendedSearchIntegrator.class );
+		this.searchFactory = new StandaloneSearchFactoryImpl( this.searchIntegrator );
 
 		this.updateSource = this.createUpdateSource();
 		if ( this.updateSource != null ) {
-			Map<Class<?>, List<Class<?>>> containedInIndexOf = MetadataUtil.calculateInIndexOf( rehashedTypeMetadatas );
+			this.containedInIndexOf = MetadataUtil.calculateInIndexOf( rehashedTypeMetadatas );
 
 			JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider( this.getEmf(), this.idProperties, this.isUseUserTransaction() );
-			this.indexUpdater = new IndexUpdater( rehashedTypeMetadataPerIndexRoot, containedInIndexOf, entityProvider,
+			this.indexUpdater = new IndexUpdater( rehashedTypeMetadataForIndexRoot, containedInIndexOf, entityProvider,
 					impl.unwrap( ExtendedSearchIntegrator.class ) );
 			this.updateSource.setUpdateConsumers( Arrays.asList( indexUpdater, this ) );
 			this.updateSource.start();
@@ -164,6 +171,11 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 		catch (IOException e) {
 			throw new SearchException( e );
 		}
+	}
+
+	public MassIndexer createMassInderxer() {
+		return new MassIndexerImpl( this.emf, this.rehashedTypeMetadataForIndexRoot, this.containedInIndexOf, this.searchIntegrator, this.getIndexRootTypes(),
+				this.isUseUserTransaction() );
 	}
 
 	@Override
@@ -306,7 +318,7 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 	public void setBatchSizeForUpdates(int batchSizeForUpdates) {
 		this.batchSizeForUpdates = batchSizeForUpdates;
 	}
-	
+
 	public IndexUpdater getIndexUpdater() {
 		return this.indexUpdater;
 	}

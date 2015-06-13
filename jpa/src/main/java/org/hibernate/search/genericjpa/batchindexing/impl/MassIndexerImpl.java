@@ -31,7 +31,7 @@ import org.hibernate.search.genericjpa.metadata.RehashedTypeMetadata;
  */
 public class MassIndexerImpl implements MassIndexer {
 
-	private final Map<Class<?>, RehashedTypeMetadata> metadataPerForIndexRoot;
+	private final Map<Class<?>, RehashedTypeMetadata> metadataForIndexRoot;
 	private final Map<Class<?>, List<Class<?>>> containedInIndexOf;
 	private final ExtendedSearchIntegrator searchIntegrator;
 	private final List<Class<?>> rootEntities;
@@ -49,10 +49,10 @@ public class MassIndexerImpl implements MassIndexer {
 	private int threadsToLoadIds = 2;
 	private int threadsToLoadObjects = 4;
 
-	public MassIndexerImpl(EntityManagerFactory emf, Map<Class<?>, RehashedTypeMetadata> metadataPerForIndexRoot,
+	public MassIndexerImpl(EntityManagerFactory emf, Map<Class<?>, RehashedTypeMetadata> metadataForIndexRoot,
 			Map<Class<?>, List<Class<?>>> containedInIndexOf, ExtendedSearchIntegrator searchIntegrator, List<Class<?>> rootEntities, boolean useUserTransaction) {
 		this.emf = emf;
-		this.metadataPerForIndexRoot = metadataPerForIndexRoot;
+		this.metadataForIndexRoot = metadataForIndexRoot;
 		this.containedInIndexOf = containedInIndexOf;
 		this.searchIntegrator = searchIntegrator;
 		this.rootEntities = rootEntities;
