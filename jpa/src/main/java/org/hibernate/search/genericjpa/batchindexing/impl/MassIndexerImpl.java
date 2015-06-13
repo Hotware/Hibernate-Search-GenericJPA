@@ -203,11 +203,22 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
 		};
 	}
+	
+
+	@Override
+	public void startAndWait() throws InterruptedException {
+		try {
+			this.start().get();
+		}
+		catch (ExecutionException e) {
+			throw new SearchException( e );
+		}
+	}
 
 	@Override
 	public void updateEvent(List<UpdateInfo> updateInfo) {
 		Class<?> entityClass = updateInfo.get( 0 ).getEntityClass();
-		ObjectHandlerTask task = new ObjectHandlerTaskImpl( this.indexUpdater, entityClass, this.getEntityManager(), this.useUserTransaction,
+		ObjectHandlerTask task = new ObjectHandlerTask( this.indexUpdater, entityClass, this.getEntityManager(), this.useUserTransaction,
 				this.idProperties, this::disposeEntityManager, this.emf.getPersistenceUnitUtil() );
 		task.batch( updateInfo );
 		this.executorServiceForObjects.submit( task );
@@ -228,16 +239,6 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 	private void closeAllOpenEntityManagers() {
 		while ( this.entityManagers.size() > 0 ) {
 			this.entityManagers.remove().close();
-		}
-	}
-
-	@Override
-	public void startAndWait() throws InterruptedException {
-		try {
-			this.start().get();
-		}
-		catch (ExecutionException e) {
-			throw new SearchException( e );
 		}
 	}
 

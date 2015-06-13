@@ -25,7 +25,6 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.hibernate.search.genericjpa.Setup;
 import org.hibernate.search.genericjpa.batchindexing.impl.IdProducerTask;
 import org.hibernate.search.genericjpa.batchindexing.impl.ObjectHandlerTask;
-import org.hibernate.search.genericjpa.batchindexing.impl.ObjectHandlerTaskImpl;
 import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.IndexUpdater;
 import org.hibernate.search.genericjpa.db.events.MySQLTriggerSQLStringSource;
@@ -118,7 +117,7 @@ public class IntegrationTest {
 		Map<Class<?>, String> idProperties = new HashMap<>();
 		idProperties.put( Place.class, "id" );
 		IndexUpdater indexUpdater = this.searchFactory.getIndexUpdater();
-		ObjectHandlerTask handler = new ObjectHandlerTaskImpl( indexUpdater, Place.class, this.em, false, idProperties, (em) -> {
+		ObjectHandlerTask handler = new ObjectHandlerTask( indexUpdater, Place.class, this.em, false, idProperties, (em) -> {
 
 		}, this.emf.getPersistenceUnitUtil() );
 
