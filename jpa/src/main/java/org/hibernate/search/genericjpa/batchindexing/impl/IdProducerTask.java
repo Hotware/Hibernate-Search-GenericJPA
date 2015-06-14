@@ -8,6 +8,7 @@ package org.hibernate.search.genericjpa.batchindexing.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
@@ -18,6 +19,7 @@ import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
 import org.hibernate.search.genericjpa.exception.SearchException;
+import org.hibernate.search.genericjpa.factory.StandaloneSearchFactory;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 
 /**
@@ -27,6 +29,7 @@ public class IdProducerTask implements Runnable {
 
 	private final Class<?> entityClass;
 	private final String idProperty;
+	private final StandaloneSearchFactory searchFactory;
 	private final EntityManagerFactory emf;
 	private final boolean useUserTransaction;
 	private final int batchSizeToLoadIds;
@@ -35,21 +38,35 @@ public class IdProducerTask implements Runnable {
 	private final UpdateConsumer updateConsumer;
 	private final List<UpdateInfo> updateInfoBatch;
 
-	public IdProducerTask(Class<?> entityClass, String idProperty, EntityManagerFactory emf, boolean useUserTransaction, int batchSizeToLoadIds,
-			int batchSizeToLoadObjects, int createNewEntityManagerCount, UpdateConsumer updateConsumer) {
+	// yeah, we this is no real IdProducerTask anymore if we do this here, but whatever
+	private final boolean purgeAllOnStart;
+	private final boolean optimizeAfterPurge;
+
+	public IdProducerTask(Class<?> entityClass, String idProperty, StandaloneSearchFactory searchFactory, EntityManagerFactory emf, boolean useUserTransaction,
+			int batchSizeToLoadIds, int batchSizeToLoadObjects, int createNewEntityManagerCount, UpdateConsumer updateConsumer, boolean purgeAllOnStart,
+			boolean optimizeAfterPurge) {
 		this.entityClass = entityClass;
 		this.idProperty = idProperty;
+		this.searchFactory = searchFactory;
 		this.emf = emf;
 		this.useUserTransaction = useUserTransaction;
 		this.batchSizeToLoadIds = batchSizeToLoadIds;
 		this.batchSizeToLoadObjects = batchSizeToLoadObjects;
 		this.createNewEntityManagerCount = createNewEntityManagerCount;
 		this.updateConsumer = updateConsumer;
+		this.purgeAllOnStart = purgeAllOnStart;
+		this.optimizeAfterPurge = optimizeAfterPurge;
 		this.updateInfoBatch = new ArrayList<>( batchSizeToLoadObjects );
 	}
 
 	@Override
 	public void run() {
+		if ( this.purgeAllOnStart ) {
+			this.searchFactory.purgeAll( this.entityClass );
+			if ( this.optimizeAfterPurge ) {
+				this.searchFactory.optimize( this.entityClass );
+			}
+		}
 		long count = this.getTotalCount();
 		long processed = 0;
 		EntityManager em = null;

@@ -87,7 +87,7 @@ public class IntegrationTest {
 	}
 
 	private void testIdProducerTask(int batchSizeToLoadIds, int batchSizeToLoadObjects, int createNewEntityManagerCount) {
-		IdProducerTask idProducer = new IdProducerTask( Place.class, "id", this.emf, false, batchSizeToLoadIds, batchSizeToLoadObjects,
+		IdProducerTask idProducer = new IdProducerTask( Place.class, "id", this.searchFactory, this.emf, false, batchSizeToLoadIds, batchSizeToLoadObjects,
 				createNewEntityManagerCount, new UpdateConsumer() {
 
 					private boolean hadOne = false;
@@ -103,7 +103,7 @@ public class IntegrationTest {
 						}
 					}
 
-				} );
+				}, true, false );
 		idProducer.run();
 	}
 
@@ -207,8 +207,8 @@ public class IntegrationTest {
 
 			em.createQuery( "DELETE FROM Place" ).executeUpdate();
 			em.flush();
-			
-			em.createQuery( "DELETE FROM Sorcerer").executeUpdate();
+
+			em.createQuery( "DELETE FROM Sorcerer" ).executeUpdate();
 			em.flush();
 
 			Sorcerer gandalf = new Sorcerer();

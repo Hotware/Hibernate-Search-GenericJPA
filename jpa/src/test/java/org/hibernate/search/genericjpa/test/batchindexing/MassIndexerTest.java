@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.Future;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -42,16 +43,18 @@ public class MassIndexerTest {
 	private EntityManagerFactory emf;
 	private EntityManager em;
 	private JPASearchFactoryAdapter searchFactory;
+	private MassIndexer massIndexer;
 
-	private static final int COUNT = 5_000;
+	private static final int COUNT = 200;
 
 	@Test
 	public void test() {
 		System.out.println( "starting MassIndexer test!" );
-		MassIndexer massIndexer = new MassIndexerImpl( this.emf, this.searchFactory.getIndexUpdater(), Arrays.asList( Place.class ), false );
+
+		this.massIndexer.createNewIdEntityManagerAfter( 100 );
 		long pre = System.currentTimeMillis();
 		try {
-			massIndexer.startAndWait();
+			this.massIndexer.startAndWait();
 		}
 		catch (InterruptedException e) {
 			throw new SearchException( e );
@@ -61,6 +64,12 @@ public class MassIndexerTest {
 
 		FullTextEntityManager fem = Search.getFullTextEntityManager( this.em, "test" );
 		assertEquals( COUNT, fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class ).getResultSize() );
+	}
+
+	@Test
+	public void testCancel() {
+		Future<?> future = this.massIndexer.start();
+		future.cancel( true );
 	}
 
 	@Before
@@ -108,6 +117,7 @@ public class MassIndexerTest {
 			}
 		}
 		this.em = this.emf.createEntityManager();
+		this.massIndexer = new MassIndexerImpl( this.emf, this.searchFactory, this.searchFactory.getIndexUpdater(), Arrays.asList( Place.class ), false );
 	}
 
 	@After

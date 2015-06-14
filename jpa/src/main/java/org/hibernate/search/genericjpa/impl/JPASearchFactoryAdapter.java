@@ -103,7 +103,7 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 			this.updateConsumer.updateEvent( updateInfo );
 		}
 	}
-	
+
 	public StandaloneSearchFactory getSearchFactory() {
 		return this.searchFactory;
 	}
@@ -178,8 +178,7 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 	}
 
 	public MassIndexer createMassInderxer() {
-		return new MassIndexerImpl( this.emf, this.indexUpdater, this.getIndexRootTypes(),
-				this.isUseUserTransaction() );
+		return new MassIndexerImpl( this.emf, this, this.indexUpdater, this.getIndexRootTypes(), this.isUseUserTransaction() );
 	}
 
 	@Override

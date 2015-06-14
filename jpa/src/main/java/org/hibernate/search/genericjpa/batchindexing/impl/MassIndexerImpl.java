@@ -31,6 +31,7 @@ import org.hibernate.search.genericjpa.db.events.IndexUpdater;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.exception.SearchException;
+import org.hibernate.search.genericjpa.factory.StandaloneSearchFactory;
 
 /**
  * @author Martin Braun
@@ -38,7 +39,7 @@ import org.hibernate.search.genericjpa.exception.SearchException;
 public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
 	private final IndexUpdater indexUpdater;
-	private final List<Class<?>> rootEntities;
+	private final List<Class<?>> rootTypes;
 	private final boolean useUserTransaction;
 	private final EntityManagerFactory emf;
 
@@ -67,11 +68,16 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
 	private final Map<Class<?>, CountDownLatch> latches = new HashMap<>();
 	private final ConcurrentLinkedQueue<Future<?>> idProducerFutures = new ConcurrentLinkedQueue<>();
+	private CountDownLatch cleanUpLatch;
 
-	public MassIndexerImpl(EntityManagerFactory emf, IndexUpdater indexUpdater, List<Class<?>> rootEntities, boolean useUserTransaction) {
+	private final StandaloneSearchFactory searchFactory;
+
+	public MassIndexerImpl(EntityManagerFactory emf, StandaloneSearchFactory searchFactory, IndexUpdater indexUpdater, List<Class<?>> rootTypes,
+			boolean useUserTransaction) {
 		this.emf = emf;
+		this.searchFactory = searchFactory;
 		this.indexUpdater = indexUpdater;
-		this.rootEntities = rootEntities;
+		this.rootTypes = rootTypes;
 		this.useUserTransaction = useUserTransaction;
 	}
 
@@ -163,6 +169,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 			throw new AssertionFailure( "already started this instance of MassIndexer once!" );
 		}
 		this.started = true;
+		this.cleanUpLatch = new CountDownLatch( this.optimizeOnFinish ? 2 : 1 );
 		if ( this.executorServiceForIds == null ) {
 			if ( this.useUserTransaction ) {
 				throw new SearchException( "MassIndexer cannot create own threads if it has to use a UserTransaction!" );
@@ -177,31 +184,39 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 			this.executorServiceForObjects = Executors.newFixedThreadPool( this.threadsToLoadObjects );
 			this.createdOwnExecutorServiceForObjects = true;
 		}
-		this.idProperties = this.getIdProperties( this.rootEntities );
-		for ( Class<?> rootClass : this.rootEntities ) {
-			IdProducerTask idProducer = new IdProducerTask( rootClass, this.idProperties.get( rootClass ), emf, useUserTransaction, batchSizeToLoadIds,
-					batchSizeToLoadObjects, this.createNewIdEntityManagerAfter, this );
+		this.idProperties = this.getIdProperties( this.rootTypes );
+		for ( Class<?> rootClass : this.rootTypes ) {
+			IdProducerTask idProducer = new IdProducerTask( rootClass, this.idProperties.get( rootClass ), this.searchFactory, this.emf,
+					this.useUserTransaction, this.batchSizeToLoadIds, this.batchSizeToLoadObjects, this.createNewIdEntityManagerAfter, this,
+					this.purgeAllOnStart, this.optimizeAfterPurge );
 			// FIXME: hacky casts...
 			this.latches.put( rootClass, new CountDownLatch( (int) idProducer.getTotalCount() ) );
 			this.idProducerFutures.add( this.executorServiceForIds.submit( idProducer ) );
 		}
 		this.future = this.getFuture();
-		new Thread( "MassIndexer cleanup thread" ) {
+		new Thread( "MassIndexer cleanup/finisher thread" ) {
 
 			@Override
 			public void run() {
 				try {
-					MassIndexerImpl.this.future.get();
+					MassIndexerImpl.this.awaitJobsFinish();
+					if ( MassIndexerImpl.this.optimizeOnFinish ) {
+						for ( Class<?> rootEntity : MassIndexerImpl.this.rootTypes ) {
+							MassIndexerImpl.this.searchFactory.optimize( rootEntity );
+						}
+						MassIndexerImpl.this.cleanUpLatch.countDown();
+					}
 					MassIndexerImpl.this.closeExecutorServices();
 					MassIndexerImpl.this.closeAllOpenEntityManagers();
+					MassIndexerImpl.this.cleanUpLatch.countDown();
 				}
-				catch (InterruptedException | ExecutionException e) {
+				catch (InterruptedException e) {
 					throw new SearchException( "Error during massindexing!", e );
 				}
 			}
 
 		}.start();
-		return future;
+		return this.future;
 	}
 
 	@Override
@@ -230,6 +245,13 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 						latch.countDown();
 					}
 				}
+				// but we have to wait for the cleanup thread to finish up
+				try {
+					MassIndexerImpl.this.cleanUpLatch.await();
+				}
+				catch (InterruptedException e) {
+					throw new SearchException( "couldn't wait for optimizeOnFinish", e );
+				}
 				return ret;
 			}
 
@@ -255,9 +277,8 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
 			@Override
 			public Void get() throws InterruptedException, ExecutionException {
-				for ( CountDownLatch latch : MassIndexerImpl.this.latches.values() ) {
-					latch.await();
-				}
+				MassIndexerImpl.this.awaitJobsFinish();
+				MassIndexerImpl.this.cleanUpLatch.await();
 				return null;
 			}
 
@@ -269,10 +290,18 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 						throw new TimeoutException();
 					}
 				}
+				// FIXME: not quite right...
+				MassIndexerImpl.this.cleanUpLatch.await( timeout, unit );
 				return null;
 			}
 
 		};
+	}
+
+	private void awaitJobsFinish() throws InterruptedException {
+		for ( CountDownLatch latch : MassIndexerImpl.this.latches.values() ) {
+			latch.await();
+		}
 	}
 
 	@Override
