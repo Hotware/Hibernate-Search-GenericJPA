@@ -9,6 +9,7 @@ package org.hibernate.search.genericjpa.batchindexing.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -34,11 +35,18 @@ public class ObjectHandlerTask implements Runnable {
 	private final Map<Class<?>, String> idProperties;
 	private final Consumer<EntityManager> entityManagerDisposer;
 	private final PersistenceUnitUtil peristenceUnitUtil;
+	private final CountDownLatch latch;
+	private final Consumer<Exception> exceptionConsumer;
 
 	private List<UpdateInfo> batch;
 
 	public ObjectHandlerTask(IndexUpdater indexUpdater, Class<?> entityClass, EntityManager em, boolean useUserTransaction, Map<Class<?>, String> idProperties,
 			Consumer<EntityManager> entityManagerDisposer, PersistenceUnitUtil peristenceUnitUtil) {
+		this( indexUpdater, entityClass, em, useUserTransaction, idProperties, entityManagerDisposer, peristenceUnitUtil, null, null );
+	}
+
+	public ObjectHandlerTask(IndexUpdater indexUpdater, Class<?> entityClass, EntityManager em, boolean useUserTransaction, Map<Class<?>, String> idProperties,
+			Consumer<EntityManager> entityManagerDisposer, PersistenceUnitUtil peristenceUnitUtil, CountDownLatch latch, Consumer<Exception> exceptionConsumer) {
 		this.indexUpdater = indexUpdater;
 		this.entityClass = entityClass;
 		this.em = em;
@@ -46,6 +54,8 @@ public class ObjectHandlerTask implements Runnable {
 		this.idProperties = idProperties;
 		this.entityManagerDisposer = entityManagerDisposer;
 		this.peristenceUnitUtil = peristenceUnitUtil;
+		this.latch = latch;
+		this.exceptionConsumer = exceptionConsumer;
 	}
 
 	public ObjectHandlerTask batch(List<UpdateInfo> batch) {
@@ -55,54 +65,65 @@ public class ObjectHandlerTask implements Runnable {
 
 	@Override
 	public void run() {
-		JPATransactionWrapper tx = JPATransactionWrapper.get( this.em, this.useUserTransaction );
-		tx.begin();
 		try {
-			@SuppressWarnings("resource")
-			// this shouldn't be closed in here as the EntityManager will be reused
-			EntityManagerEntityProvider providerForBatch = new EntityManagerEntityProvider( this.em, this.idProperties );
-			List<Object> ids = this.batch.stream().map( (updateInfo) -> {
-				return updateInfo.getId();
-			} ).collect( Collectors.toList() );
-			@SuppressWarnings("unchecked")
-			Map<Object, Object> idsToEntities = (Map<Object, Object>) providerForBatch.getBatch( this.entityClass, ids ).stream()
-					.collect( Collectors.toMap( (entity) -> {
-						return this.peristenceUnitUtil.getIdentifier( entity );
-					}, (entity) -> {
-						return entity;
-					} ) );
-			this.indexUpdater.updateEvent( this.batch, new ReusableEntityProvider() {
+			JPATransactionWrapper tx = JPATransactionWrapper.get( this.em, this.useUserTransaction );
+			tx.begin();
+			try {
+				@SuppressWarnings("resource")
+				// this shouldn't be closed in here as the EntityManager will be reused
+				EntityManagerEntityProvider providerForBatch = new EntityManagerEntityProvider( this.em, this.idProperties );
+				List<Object> ids = this.batch.stream().map( (updateInfo) -> {
+					return updateInfo.getId();
+				} ).collect( Collectors.toList() );
+				@SuppressWarnings("unchecked")
+				Map<Object, Object> idsToEntities = (Map<Object, Object>) providerForBatch.getBatch( this.entityClass, ids ).stream()
+						.collect( Collectors.toMap( (entity) -> {
+							return this.peristenceUnitUtil.getIdentifier( entity );
+						}, (entity) -> {
+							return entity;
+						} ) );
+				this.indexUpdater.updateEvent( this.batch, new ReusableEntityProvider() {
 
-				@Override
-				public List getBatch(Class<?> entityClass, List<Object> ids) {
-					List<Object> ret = new ArrayList<Object>();
-					for ( Object id : ids ) {
-						ret.add( idsToEntities.get( id ) );
+					@Override
+					public List getBatch(Class<?> entityClass, List<Object> ids) {
+						List<Object> ret = new ArrayList<Object>();
+						for ( Object id : ids ) {
+							ret.add( idsToEntities.get( id ) );
+						}
+						return ret;
 					}
-					return ret;
-				}
 
-				@Override
-				public Object get(Class<?> entityClass, Object id) {
-					return idsToEntities.get( id );
-				}
+					@Override
+					public Object get(Class<?> entityClass, Object id) {
+						return idsToEntities.get( id );
+					}
 
-				@Override
-				public void open() {
-					// no-op
-				}
+					@Override
+					public void open() {
+						// no-op
+					}
 
-				@Override
-				public void close() {
-					// no-op
+					@Override
+					public void close() {
+						// no-op
+					}
+				} );
+				tx.commit();
+				for ( int i = 0; i < this.batch.size(); ++i ) {
+					this.latch.countDown();
 				}
-			} );
-			tx.commit();
-			this.entityManagerDisposer.accept( this.em );
+				this.entityManagerDisposer.accept( this.em );
+			}
+			catch (Exception e) {
+				tx.rollback();
+				throw new SearchException( e );
+			}
 		}
 		catch (Exception e) {
-			tx.rollback();
-			throw new SearchException( e );
+			if(this.exceptionConsumer != null) {
+				this.exceptionConsumer.accept( e );
+			}
+			//TODO: should throw this?
 		}
 	}
 }

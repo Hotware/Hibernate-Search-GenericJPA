@@ -103,6 +103,10 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 			this.updateConsumer.updateEvent( updateInfo );
 		}
 	}
+	
+	public StandaloneSearchFactory getSearchFactory() {
+		return this.searchFactory;
+	}
 
 	private UpdateSource createUpdateSource() {
 		return this.updateSourceProvider.getUpdateSource( this.updateDelay, TimeUnit.MILLISECONDS, this.batchSizeForUpdates, this.exec );

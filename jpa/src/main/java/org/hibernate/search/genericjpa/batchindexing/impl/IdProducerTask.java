@@ -54,7 +54,7 @@ public class IdProducerTask implements Runnable {
 		long processed = 0;
 		EntityManager em = null;
 		JPATransactionWrapper tx = null;
-		while ( processed < count ) {
+		while ( processed < count && !Thread.currentThread().isInterrupted() ) {
 			if ( em == null ) {
 				em = this.emf.createEntityManager();
 				tx = JPATransactionWrapper.get( em, this.useUserTransaction );
@@ -101,7 +101,7 @@ public class IdProducerTask implements Runnable {
 		}
 	}
 
-	private long getTotalCount() {
+	public long getTotalCount() {
 		long count = 0;
 		EntityManager em = null;
 		try {

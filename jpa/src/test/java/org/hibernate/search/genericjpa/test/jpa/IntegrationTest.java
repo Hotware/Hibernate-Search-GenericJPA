@@ -205,11 +205,10 @@ public class IntegrationTest {
 			EntityTransaction tx = em.getTransaction();
 			tx.begin();
 
-			@SuppressWarnings("unchecked")
-			List<Place> toDelete = new ArrayList<>( em.createQuery( "SELECT a FROM Place a" ).getResultList() );
-			for ( Place place : toDelete ) {
-				em.remove( place );
-			}
+			em.createQuery( "DELETE FROM Place" ).executeUpdate();
+			em.flush();
+			
+			em.createQuery( "DELETE FROM Sorcerer").executeUpdate();
 			em.flush();
 
 			Sorcerer gandalf = new Sorcerer();

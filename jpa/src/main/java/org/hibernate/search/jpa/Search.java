@@ -9,6 +9,7 @@ package org.hibernate.search.jpa;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 
+import org.hibernate.search.SearchFactory;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.impl.ImplementationFactory;
 import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
@@ -24,6 +25,7 @@ import org.hibernate.search.genericjpa.impl.SearchFactoryRegistry;
 public final class Search {
 
 	private Search() {
+		// can't touch this!
 	}
 
 	public static void pauseUpdating(EntityManager em, boolean pause) {
@@ -32,9 +34,20 @@ public final class Search {
 
 	public static void pauseUpdating(EntityManagerFactory emf, boolean pause) {
 		String name = SearchFactoryRegistry.getNameProperty( emf.getProperties() );
+		Search.pauseUpdating( name, pause );
+	}
+
+	public static void pauseUpdating(String name, boolean pause) {
 		if ( SearchFactoryRegistry.getSearchFactory( name ) != null ) {
 			SearchFactoryRegistry.getSearchFactory( name ).pauseUpdateSource( pause );
 		}
+	}
+
+	public static SearchFactory getSearchFactory(String name) {
+		if ( SearchFactoryRegistry.getSearchFactory( name ) != null ) {
+			return SearchFactoryRegistry.getSearchFactory( name ).getSearchFactory();
+		}
+		return null;
 	}
 
 	/**
@@ -59,4 +72,5 @@ public final class Search {
 			return ImplementationFactory.createFullTextEntityManager( em, adapter );
 		}
 	}
+
 }

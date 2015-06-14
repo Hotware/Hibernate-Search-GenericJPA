@@ -31,7 +31,7 @@ public class Constants {
 
 	public static final String TRIGGER_SOURCE_KEY = "org.hibernate.search.genericjpa.searchfactory.triggerSource";
 
-	public static final String NAME_KEY = SearchFactoryRegistry.NAME_PROPERTY;
-	public static final String NAME_DEFAULT_VALUE = SearchFactoryRegistry.DEFAULT_NAME;
+	public static final String SEARCH_FACTORY_NAME_KEY = SearchFactoryRegistry.NAME_PROPERTY;
+	public static final String SEARCH_FACTORY_NAME_DEFAULT_VALUE = SearchFactoryRegistry.DEFAULT_NAME;
 
 }
