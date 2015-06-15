@@ -8,19 +8,17 @@ package org.hibernate.search.genericjpa.batchindexing.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
 
 import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
 import org.hibernate.search.genericjpa.exception.AssertionFailure;
-import org.hibernate.search.genericjpa.exception.SearchException;
-import org.hibernate.search.genericjpa.factory.StandaloneSearchFactory;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 
 /**
@@ -30,7 +28,6 @@ public class IdProducerTask implements Runnable {
 
 	private final Class<?> entityClass;
 	private final String idProperty;
-	private final StandaloneSearchFactory searchFactory;
 	private final EntityManagerFactory emf;
 	private final boolean useUserTransaction;
 	private final int batchSizeToLoadIds;
@@ -38,68 +35,80 @@ public class IdProducerTask implements Runnable {
 	private final UpdateConsumer updateConsumer;
 	private final List<UpdateInfo> updateInfoBatch;
 
-	// yeah, we this is no real IdProducerTask anymore if we do this here, but whatever
-	private final boolean purgeAllOnStart;
-	private final boolean optimizeAfterPurge;
-
 	private long startingPosition;
 	private long count;
 	private long totalCount;
 
-	public IdProducerTask(Class<?> entityClass, String idProperty, StandaloneSearchFactory searchFactory, EntityManagerFactory emf, boolean useUserTransaction,
-			int batchSizeToLoadIds, int batchSizeToLoadObjects, UpdateConsumer updateConsumer, boolean purgeAllOnStart, boolean optimizeAfterPurge) {
+	private BiConsumer<Class<?>, Integer> progressMonitor;
+
+	private final Consumer<Exception> exceptionConsumer;
+
+	private Runnable finishConsumer;
+
+	public IdProducerTask(Class<?> entityClass, String idProperty, EntityManagerFactory emf, boolean useUserTransaction, int batchSizeToLoadIds,
+			int batchSizeToLoadObjects, UpdateConsumer updateConsumer, boolean purgeAllOnStart, boolean optimizeAfterPurge,
+			Consumer<Exception> exceptionConsumer) {
 		this.entityClass = entityClass;
 		this.idProperty = idProperty;
-		this.searchFactory = searchFactory;
 		this.emf = emf;
 		this.useUserTransaction = useUserTransaction;
 		this.batchSizeToLoadIds = batchSizeToLoadIds;
 		this.batchSizeToLoadObjects = batchSizeToLoadObjects;
 		this.updateConsumer = updateConsumer;
-		this.purgeAllOnStart = purgeAllOnStart;
-		this.optimizeAfterPurge = optimizeAfterPurge;
-		this.updateInfoBatch = new ArrayList<>( batchSizeToLoadObjects );
+		this.updateInfoBatch = new ArrayList<>( (int) Math.min( this.batchSizeToLoadIds, this.count ) );
+		this.exceptionConsumer = exceptionConsumer;
 	}
 
 	@Override
 	public void run() {
-		if ( this.purgeAllOnStart ) {
-			this.searchFactory.purgeAll( this.entityClass );
-			if ( this.optimizeAfterPurge ) {
-				this.searchFactory.optimize( this.entityClass );
-			}
-		}
-		if ( this.count == 0 ) {
-			throw new AssertionFailure( "count can not be equal to 0" );
-		}
-		if ( this.totalCount == 0 ) {
-			throw new AssertionFailure( "totalCount can not be equal to 0" );
-		}
-		long position = this.startingPosition;
-		EntityManager em = this.emf.createEntityManager();
 		try {
-		JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useUserTransaction );
-		while ( position < this.startingPosition + this.count && position <= this.totalCount && !Thread.currentThread().isInterrupted() ) {
-			tx.begin();
-			try {
-				Query query = em.createQuery( new StringBuilder().append( "SELECT obj." ).append( this.idProperty ).append( " FROM " )
-						.append( em.getMetamodel().entity( this.entityClass ).getName() ).append( " obj ORDER BY obj." ).append( this.idProperty ).toString() );
-				query.setFirstResult( (int) position ).setMaxResults( this.batchSizeToLoadIds ).getResultList();
-
-				this.enlistToBatch( query.getResultList() );
-
-				position += this.batchSizeToLoadIds;
-				tx.commit();
+			if ( this.count == 0 ) {
+				throw new AssertionFailure( "count can not be equal to 0" );
 			}
-			catch (Exception e) {
-				tx.rollback();
-				throw new SearchException( e );
+			if ( this.totalCount == 0 ) {
+				throw new AssertionFailure( "totalCount can not be equal to 0" );
+			}
+			long position = this.startingPosition;
+			long processed = 0;
+			EntityManager em = this.emf.createEntityManager();
+			try {
+				JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useUserTransaction );
+				while ( processed < this.count && position < this.totalCount && !Thread.currentThread().isInterrupted() ) {
+					tx.begin();
+					try {
+						Query query = em.createQuery( new StringBuilder().append( "SELECT obj." ).append( this.idProperty ).append( " FROM " )
+								.append( em.getMetamodel().entity( this.entityClass ).getName() ).append( " obj ORDER BY obj." ).append( this.idProperty )
+								.toString() );
+						query.setFirstResult( (int) position ).setMaxResults( (int) Math.min( this.batchSizeToLoadIds, this.count ) ).getResultList();
+
+						@SuppressWarnings("rawtypes")
+						List ids = query.getResultList();
+						this.enlistToBatch( ids );
+
+						if ( this.progressMonitor != null ) {
+							this.progressMonitor.accept( this.entityClass, ids.size() );
+						}
+
+						processed += ids.size();
+						position += ids.size();
+						tx.commit();
+					}
+					catch (Exception e) {
+						tx.rollback();
+						this.exceptionConsumer.accept( e );
+					}
+				}
+				this.flushBatch();
+			}
+			finally {
+				if ( em != null ) {
+					em.close();
+				}
 			}
 		}
-		this.flushBatch();
-		} finally {
-			if ( em != null ) {
-				em.close();
+		finally {
+			if(this.finishConsumer != null) {
+				this.finishConsumer.run();
 			}
 		}
 	}
@@ -120,8 +129,16 @@ public class IdProducerTask implements Runnable {
 		}
 	}
 
+	public void finishConsumer(Runnable finishConsumer) {
+		this.finishConsumer = finishConsumer;
+	}
+
 	public void startingPosition(long startingPosition) {
 		this.startingPosition = startingPosition;
+	}
+
+	public void progressMonitor(BiConsumer<Class<?>, Integer> progressMonitor) {
+		this.progressMonitor = progressMonitor;
 	}
 
 	public void count(long count) {

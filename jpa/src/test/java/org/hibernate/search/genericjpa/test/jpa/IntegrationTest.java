@@ -86,22 +86,22 @@ public class IntegrationTest {
 	}
 
 	private void testIdProducerTask(int batchSizeToLoadIds, int batchSizeToLoadObjects) {
-		IdProducerTask idProducer = new IdProducerTask( Place.class, "id", this.searchFactory, this.emf, false, batchSizeToLoadIds, batchSizeToLoadObjects, new UpdateConsumer() {
+		IdProducerTask idProducer = new IdProducerTask( Place.class, "id", this.emf, false, batchSizeToLoadIds, batchSizeToLoadObjects, new UpdateConsumer() {
 
-					private boolean hadOne = false;
+			private boolean hadOne = false;
 
-					@Override
-					public void updateEvent(List<UpdateInfo> batch) {
-						if ( !hadOne ) {
-							assertEquals( "Helm's Deep", IntegrationTest.this.em.find( Place.class, batch.get( 0 ).getId() ).getName() );
-							hadOne = true;
-						}
-						else {
-							assertEquals( "Valinor", IntegrationTest.this.em.find( Place.class, batch.get( 0 ).getId() ).getName() );
-						}
-					}
+			@Override
+			public void updateEvent(List<UpdateInfo> batch) {
+				if ( !hadOne ) {
+					assertEquals( "Helm's Deep", IntegrationTest.this.em.find( Place.class, batch.get( 0 ).getId() ).getName() );
+					hadOne = true;
+				}
+				else {
+					assertEquals( "Valinor", IntegrationTest.this.em.find( Place.class, batch.get( 0 ).getId() ).getName() );
+				}
+			}
 
-				}, true, false );
+		}, true, false, null );
 		idProducer.count( 2 );
 		idProducer.totalCount( 2 );
 		idProducer.startingPosition( 0 );

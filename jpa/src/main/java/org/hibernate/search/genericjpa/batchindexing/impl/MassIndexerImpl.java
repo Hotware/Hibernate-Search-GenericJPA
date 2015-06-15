@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -19,6 +20,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -29,6 +36,7 @@ import javax.persistence.metamodel.Metamodel;
 import javax.persistence.metamodel.SingularAttribute;
 
 import org.hibernate.search.genericjpa.batchindexing.MassIndexer;
+import org.hibernate.search.genericjpa.batchindexing.MassIndexerProgressMonitor;
 import org.hibernate.search.genericjpa.db.events.IndexUpdater;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.exception.AssertionFailure;
@@ -40,6 +48,8 @@ import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
  * @author Martin Braun
  */
 public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
+
+	private static final Logger LOGGER = Logger.getLogger( MassIndexerImpl.class.getName() );
 
 	private final IndexUpdater indexUpdater;
 	private final List<Class<?>> rootTypes;
@@ -69,9 +79,17 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
 	private ConcurrentLinkedQueue<EntityManager> entityManagers = new ConcurrentLinkedQueue<>();
 
+	private MassIndexerProgressMonitor progressMonitor;
+	private ConcurrentHashMap<Class<?>, AtomicInteger> idProgress = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<Class<?>, AtomicInteger> objectLoadedProgress = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<Class<?>, AtomicInteger> indexedProgress = new ConcurrentHashMap<>();
+
 	private final Map<Class<?>, CountDownLatch> latches = new HashMap<>();
 	private final ConcurrentLinkedQueue<Future<?>> idProducerFutures = new ConcurrentLinkedQueue<>();
 	private CountDownLatch cleanUpLatch;
+
+	private final ReadWriteLock cancelGuard = new ReentrantReadWriteLock();
+	private boolean cancelled = false;
 
 	private final StandaloneSearchFactory searchFactory;
 
@@ -189,18 +207,24 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 		}
 		this.idProperties = this.getIdProperties( this.rootTypes );
 		for ( Class<?> rootClass : this.rootTypes ) {
-			long totalCount = this.getTotalCount(rootClass);
+			if ( this.purgeAllOnStart ) {
+				this.searchFactory.purgeAll( rootClass );
+				if ( this.optimizeAfterPurge ) {
+					this.searchFactory.optimize( rootClass );
+				}
+			}
+			long totalCount = this.getTotalCount( rootClass );
 			// FIXME: hacky casts...
 			this.latches.put( rootClass, new CountDownLatch( (int) totalCount ) );
 			long perTask = this.createNewIdEntityManagerAfter;
 			long startingPosition = 0;
 			while ( startingPosition < totalCount ) {
-				IdProducerTask idProducer = new IdProducerTask( rootClass, this.idProperties.get( rootClass ), this.searchFactory, this.emf,
-						this.useUserTransaction, this.batchSizeToLoadIds, this.batchSizeToLoadObjects, this, this.purgeAllOnStart, this.optimizeAfterPurge );
+				IdProducerTask idProducer = new IdProducerTask( rootClass, this.idProperties.get( rootClass ), this.emf, this.useUserTransaction,
+						this.batchSizeToLoadIds, this.batchSizeToLoadObjects, this, this.purgeAllOnStart, this.optimizeAfterPurge, this::onException );
 				idProducer.count( perTask );
 				idProducer.totalCount( totalCount );
 				idProducer.startingPosition( startingPosition );
-				// split this up!
+				idProducer.progressMonitor( this::idProgress );
 				this.idProducerFutures.add( this.executorServiceForIds.submit( idProducer ) );
 				startingPosition += perTask;
 			}
@@ -251,12 +275,24 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 				while ( it.hasNext() ) {
 					ret |= it.next().cancel( mayInterruptIfRunning );
 				}
+				Lock lock = MassIndexerImpl.this.cancelGuard.writeLock();
+				lock.lock();
+				try {
+					MassIndexerImpl.this.cancelled = true;
+				}
+				finally {
+					lock.unlock();
+				}
+				
+				//FIXME: wait for all the running threads to finish up.
+
 				// blow the signal to stop everything
 				for ( CountDownLatch latch : MassIndexerImpl.this.latches.values() ) {
 					while ( latch.getCount() > 0 ) {
 						latch.countDown();
 					}
 				}
+
 				// but we have to wait for the cleanup thread to finish up
 				try {
 					MassIndexerImpl.this.cleanUpLatch.await();
@@ -265,6 +301,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 					throw new SearchException( "couldn't wait for optimizeOnFinish", e );
 				}
 				return ret;
+
 			}
 
 			@Override
@@ -318,11 +355,56 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
 	@Override
 	public void updateEvent(List<UpdateInfo> updateInfo) {
-		Class<?> entityClass = updateInfo.get( 0 ).getEntityClass();
-		ObjectHandlerTask task = new ObjectHandlerTask( this.indexUpdater, entityClass, this::getEntityManager, this.useUserTransaction, this.idProperties,
-				this::disposeEntityManager, this.emf.getPersistenceUnitUtil(), this.latches.get( entityClass ), this::onException );
-		task.batch( updateInfo );
-		this.executorServiceForObjects.submit( task );
+		Lock lock = MassIndexerImpl.this.cancelGuard.readLock();
+		lock.lock();
+		try {
+			if ( this.cancelled ) {
+				return;
+			}
+			Class<?> entityClass = updateInfo.get( 0 ).getEntityClass();
+			ObjectHandlerTask task = new ObjectHandlerTask( this.indexUpdater, entityClass, this::getEntityManager, this.useUserTransaction, this.idProperties,
+					this::disposeEntityManager, this.emf.getPersistenceUnitUtil(), this.latches.get( entityClass ), this::onException );
+			task.batch( updateInfo );
+			task.indexProgressMonitor( this::indexedProgress );
+			task.objectLoadedProgressMonitor( this::objectLoadedProgress );
+			this.executorServiceForObjects.submit( task );
+		}
+		finally {
+			lock.unlock();
+		}
+	}
+
+	@Override
+	public MassIndexer progressMonitor(MassIndexerProgressMonitor progressMonitor) {
+		this.progressMonitor = progressMonitor;
+		return this;
+	}
+
+	private void idProgress(Class<?> entityType, Integer count) {
+		int newCount = this.idProgress.computeIfAbsent( entityType, (type) -> {
+			return new AtomicInteger( 0 );
+		} ).addAndGet( count );
+		if ( this.progressMonitor != null ) {
+			this.progressMonitor.idsLoaded( entityType, newCount );
+		}
+	}
+
+	private void objectLoadedProgress(Class<?> entityType, Integer count) {
+		int newCount = this.objectLoadedProgress.computeIfAbsent( entityType, (type) -> {
+			return new AtomicInteger( 0 );
+		} ).addAndGet( count );
+		if ( this.progressMonitor != null ) {
+			this.progressMonitor.objectsLoaded( entityType, newCount );
+		}
+	}
+
+	private void indexedProgress(Class<?> entityType, Integer count) {
+		int newCount = this.indexedProgress.computeIfAbsent( entityType, (type) -> {
+			return new AtomicInteger( 0 );
+		} ).addAndGet( count );
+		if ( this.progressMonitor != null ) {
+			this.progressMonitor.indexed( entityType, newCount );
+		}
 	}
 
 	private boolean isFinished() {
@@ -352,6 +434,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 	}
 
 	private void onException(Exception e) {
+		LOGGER.log( Level.WARNING, "Exception during indexing", e );
 		this.future.cancel( true );
 	}
 
@@ -370,7 +453,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 		}
 	}
 
-	public Map<Class<?>, String> getIdProperties(List<Class<?>> entityClasses) {
+	private Map<Class<?>, String> getIdProperties(List<Class<?>> entityClasses) {
 		Map<Class<?>, String> ret = new HashMap<>( entityClasses.size() );
 		for ( Class<?> entityClass : entityClasses ) {
 			ret.put( entityClass, this.getIdProperty( entityClass ) );
@@ -379,7 +462,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public String getIdProperty(Class<?> entityClass) {
+	private String getIdProperty(Class<?> entityClass) {
 		String idProperty = null;
 		Metamodel metamodel = this.emf.getMetamodel();
 		EntityType entity = metamodel.entity( entityClass );
@@ -395,7 +478,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 		}
 		return idProperty;
 	}
-	
+
 	public long getTotalCount(Class<?> entityClass) {
 		long count = 0;
 		EntityManager em = null;
