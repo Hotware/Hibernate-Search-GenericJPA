@@ -18,6 +18,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
+import org.hibernate.search.genericjpa.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchFactory;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
@@ -34,7 +35,6 @@ public class IdProducerTask implements Runnable {
 	private final boolean useUserTransaction;
 	private final int batchSizeToLoadIds;
 	private final int batchSizeToLoadObjects;
-	private final int createNewEntityManagerCount;
 	private final UpdateConsumer updateConsumer;
 	private final List<UpdateInfo> updateInfoBatch;
 
@@ -42,9 +42,12 @@ public class IdProducerTask implements Runnable {
 	private final boolean purgeAllOnStart;
 	private final boolean optimizeAfterPurge;
 
+	private long startingPosition;
+	private long count;
+	private long totalCount;
+
 	public IdProducerTask(Class<?> entityClass, String idProperty, StandaloneSearchFactory searchFactory, EntityManagerFactory emf, boolean useUserTransaction,
-			int batchSizeToLoadIds, int batchSizeToLoadObjects, int createNewEntityManagerCount, UpdateConsumer updateConsumer, boolean purgeAllOnStart,
-			boolean optimizeAfterPurge) {
+			int batchSizeToLoadIds, int batchSizeToLoadObjects, UpdateConsumer updateConsumer, boolean purgeAllOnStart, boolean optimizeAfterPurge) {
 		this.entityClass = entityClass;
 		this.idProperty = idProperty;
 		this.searchFactory = searchFactory;
@@ -52,7 +55,6 @@ public class IdProducerTask implements Runnable {
 		this.useUserTransaction = useUserTransaction;
 		this.batchSizeToLoadIds = batchSizeToLoadIds;
 		this.batchSizeToLoadObjects = batchSizeToLoadObjects;
-		this.createNewEntityManagerCount = createNewEntityManagerCount;
 		this.updateConsumer = updateConsumer;
 		this.purgeAllOnStart = purgeAllOnStart;
 		this.optimizeAfterPurge = optimizeAfterPurge;
@@ -67,38 +69,38 @@ public class IdProducerTask implements Runnable {
 				this.searchFactory.optimize( this.entityClass );
 			}
 		}
-		long count = this.getTotalCount();
-		long processed = 0;
-		EntityManager em = null;
-		JPATransactionWrapper tx = null;
-		while ( processed < count && !Thread.currentThread().isInterrupted() ) {
-			if ( em == null ) {
-				em = this.emf.createEntityManager();
-				tx = JPATransactionWrapper.get( em, this.useUserTransaction );
-			}
+		if ( this.count == 0 ) {
+			throw new AssertionFailure( "count can not be equal to 0" );
+		}
+		if ( this.totalCount == 0 ) {
+			throw new AssertionFailure( "totalCount can not be equal to 0" );
+		}
+		long position = this.startingPosition;
+		EntityManager em = this.emf.createEntityManager();
+		try {
+		JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useUserTransaction );
+		while ( position < this.startingPosition + this.count && position <= this.totalCount && !Thread.currentThread().isInterrupted() ) {
 			tx.begin();
 			try {
 				Query query = em.createQuery( new StringBuilder().append( "SELECT obj." ).append( this.idProperty ).append( " FROM " )
 						.append( em.getMetamodel().entity( this.entityClass ).getName() ).append( " obj ORDER BY obj." ).append( this.idProperty ).toString() );
-				query.setFirstResult( (int) processed ).setMaxResults( this.batchSizeToLoadIds ).getResultList();
+				query.setFirstResult( (int) position ).setMaxResults( this.batchSizeToLoadIds ).getResultList();
 
 				this.enlistToBatch( query.getResultList() );
 
-				processed += this.batchSizeToLoadIds;
+				position += this.batchSizeToLoadIds;
 				tx.commit();
 			}
 			catch (Exception e) {
 				tx.rollback();
 				throw new SearchException( e );
 			}
-			if ( processed % this.createNewEntityManagerCount == 0 ) {
-				em.close();
-				em = null;
-			}
 		}
 		this.flushBatch();
-		if ( em != null ) {
-			em.close();
+		} finally {
+			if ( em != null ) {
+				em.close();
+			}
 		}
 	}
 
@@ -118,30 +120,16 @@ public class IdProducerTask implements Runnable {
 		}
 	}
 
-	public long getTotalCount() {
-		long count = 0;
-		EntityManager em = null;
-		try {
-			em = this.emf.createEntityManager();
-			JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useUserTransaction );
-			tx.begin();
-			try {
-				CriteriaBuilder cb = em.getCriteriaBuilder();
-				CriteriaQuery<Long> countQuery = cb.createQuery( Long.class );
-				countQuery.select( cb.count( countQuery.from( this.entityClass ) ) );
-				count = em.createQuery( countQuery ).getSingleResult();
-				tx.commit();
-			}
-			catch (Exception e) {
-				tx.rollback();
-				throw new SearchException( e );
-			}
-		}
-		finally {
-			if ( em != null ) {
-				em.close();
-			}
-		}
-		return count;
+	public void startingPosition(long startingPosition) {
+		this.startingPosition = startingPosition;
 	}
+
+	public void count(long count) {
+		this.count = count;
+	}
+
+	public void totalCount(long totalCount) {
+		this.totalCount = totalCount;
+	}
+
 }

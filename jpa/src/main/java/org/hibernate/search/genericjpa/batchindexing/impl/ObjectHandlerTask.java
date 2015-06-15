@@ -115,6 +115,7 @@ public class ObjectHandlerTask implements Runnable {
 				for ( int i = 0; i < this.batch.size(); ++i ) {
 					this.latch.countDown();
 				}
+				System.out.println( this.latch.getCount() );
 			}
 			catch (Exception e) {
 				tx.rollback();

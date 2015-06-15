@@ -80,14 +80,13 @@ public class IntegrationTest {
 	// TODO: different test class?
 	@Test
 	public void testIdProducerTask() {
-		this.testIdProducerTask( 2, 1, 1 );
-		this.testIdProducerTask( 1, 1, 5 );
-		this.testIdProducerTask( 1, 2, 5 );
+		this.testIdProducerTask( 2, 1 );
+		this.testIdProducerTask( 1, 1 );
+		this.testIdProducerTask( 1, 2 );
 	}
 
-	private void testIdProducerTask(int batchSizeToLoadIds, int batchSizeToLoadObjects, int createNewEntityManagerCount) {
-		IdProducerTask idProducer = new IdProducerTask( Place.class, "id", this.searchFactory, this.emf, false, batchSizeToLoadIds, batchSizeToLoadObjects,
-				createNewEntityManagerCount, new UpdateConsumer() {
+	private void testIdProducerTask(int batchSizeToLoadIds, int batchSizeToLoadObjects) {
+		IdProducerTask idProducer = new IdProducerTask( Place.class, "id", this.searchFactory, this.emf, false, batchSizeToLoadIds, batchSizeToLoadObjects, new UpdateConsumer() {
 
 					private boolean hadOne = false;
 
@@ -103,9 +102,12 @@ public class IntegrationTest {
 					}
 
 				}, true, false );
+		idProducer.count( 2 );
+		idProducer.totalCount( 2 );
+		idProducer.startingPosition( 0 );
 		idProducer.run();
 	}
-	
+
 	private EntityManager getEm() {
 		return this.em;
 	}

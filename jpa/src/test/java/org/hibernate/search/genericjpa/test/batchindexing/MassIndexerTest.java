@@ -70,7 +70,7 @@ public class MassIndexerTest {
 		Future<?> future = this.massIndexer.start();
 		future.cancel( true );
 	}
-	
+
 	@Test
 	public void testFromSearchFactory() {
 		try {

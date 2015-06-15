@@ -22,6 +22,8 @@ import java.util.concurrent.TimeoutException;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.metamodel.EntityType;
 import javax.persistence.metamodel.Metamodel;
 import javax.persistence.metamodel.SingularAttribute;
@@ -32,6 +34,7 @@ import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchFactory;
+import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 
 /**
  * @author Martin Braun
@@ -186,12 +189,21 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 		}
 		this.idProperties = this.getIdProperties( this.rootTypes );
 		for ( Class<?> rootClass : this.rootTypes ) {
-			IdProducerTask idProducer = new IdProducerTask( rootClass, this.idProperties.get( rootClass ), this.searchFactory, this.emf,
-					this.useUserTransaction, this.batchSizeToLoadIds, this.batchSizeToLoadObjects, this.createNewIdEntityManagerAfter, this,
-					this.purgeAllOnStart, this.optimizeAfterPurge );
+			long totalCount = this.getTotalCount(rootClass);
 			// FIXME: hacky casts...
-			this.latches.put( rootClass, new CountDownLatch( (int) idProducer.getTotalCount() ) );
-			this.idProducerFutures.add( this.executorServiceForIds.submit( idProducer ) );
+			this.latches.put( rootClass, new CountDownLatch( (int) totalCount ) );
+			long perTask = this.createNewIdEntityManagerAfter;
+			long startingPosition = 0;
+			while ( startingPosition < totalCount ) {
+				IdProducerTask idProducer = new IdProducerTask( rootClass, this.idProperties.get( rootClass ), this.searchFactory, this.emf,
+						this.useUserTransaction, this.batchSizeToLoadIds, this.batchSizeToLoadObjects, this, this.purgeAllOnStart, this.optimizeAfterPurge );
+				idProducer.count( perTask );
+				idProducer.totalCount( totalCount );
+				idProducer.startingPosition( startingPosition );
+				// split this up!
+				this.idProducerFutures.add( this.executorServiceForIds.submit( idProducer ) );
+				startingPosition += perTask;
+			}
 		}
 		this.future = this.getFuture();
 		new Thread( "MassIndexer cleanup/finisher thread" ) {
@@ -381,6 +393,33 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 			throw new SearchException( "id field not found for: " + entityClass );
 		}
 		return idProperty;
+	}
+	
+	public long getTotalCount(Class<?> entityClass) {
+		long count = 0;
+		EntityManager em = null;
+		try {
+			em = this.emf.createEntityManager();
+			JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useUserTransaction );
+			tx.begin();
+			try {
+				CriteriaBuilder cb = em.getCriteriaBuilder();
+				CriteriaQuery<Long> countQuery = cb.createQuery( Long.class );
+				countQuery.select( cb.count( countQuery.from( entityClass ) ) );
+				count = em.createQuery( countQuery ).getSingleResult();
+				tx.commit();
+			}
+			catch (Exception e) {
+				tx.rollback();
+				throw new SearchException( e );
+			}
+		}
+		finally {
+			if ( em != null ) {
+				em.close();
+			}
+		}
+		return count;
 	}
 
 }
