@@ -50,6 +50,7 @@ public class MassIndexerTest {
 	public void test() {
 		System.out.println( "starting MassIndexer test!" );
 
+		//FIXME: e.g. 23 doesnt work
 		this.massIndexer.createNewIdEntityManagerAfter( 100 );
 		long pre = System.currentTimeMillis();
 		try {
