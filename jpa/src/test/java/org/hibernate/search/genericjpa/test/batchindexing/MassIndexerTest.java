@@ -45,7 +45,7 @@ public class MassIndexerTest {
 	private JPASearchFactoryAdapter searchFactory;
 	private MassIndexer massIndexer;
 
-	private static final int COUNT = 5000;
+	private static final int COUNT = 2153;
 
 	@Test
 	public void test() throws InterruptedException {
@@ -70,7 +70,6 @@ public class MassIndexerTest {
 
 		} );
 
-		// FIXME: e.g. 23 doesnt work
 		this.massIndexer.threadsToLoadObjects( 15 );
 		this.massIndexer.batchSizeToLoadObjects( 100 );
 		this.massIndexer.createNewIdEntityManagerAfter( 100 );
