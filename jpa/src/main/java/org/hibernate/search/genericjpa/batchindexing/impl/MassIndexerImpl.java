@@ -347,6 +347,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 	}
 
 	private void disposeEntityManager(EntityManager em) {
+		em.clear();
 		this.entityManagers.add( em );
 	}
 
