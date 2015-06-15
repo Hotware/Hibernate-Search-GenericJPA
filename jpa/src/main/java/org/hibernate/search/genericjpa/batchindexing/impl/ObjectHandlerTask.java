@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
@@ -30,7 +31,7 @@ public class ObjectHandlerTask implements Runnable {
 
 	private final IndexUpdater indexUpdater;
 	private final Class<?> entityClass;
-	private final EntityManager em;
+	private final Supplier<EntityManager> emProvider;
 	private final boolean useUserTransaction;
 	private final Map<Class<?>, String> idProperties;
 	private final Consumer<EntityManager> entityManagerDisposer;
@@ -40,16 +41,17 @@ public class ObjectHandlerTask implements Runnable {
 
 	private List<UpdateInfo> batch;
 
-	public ObjectHandlerTask(IndexUpdater indexUpdater, Class<?> entityClass, EntityManager em, boolean useUserTransaction, Map<Class<?>, String> idProperties,
-			Consumer<EntityManager> entityManagerDisposer, PersistenceUnitUtil peristenceUnitUtil) {
-		this( indexUpdater, entityClass, em, useUserTransaction, idProperties, entityManagerDisposer, peristenceUnitUtil, null, null );
+	public ObjectHandlerTask(IndexUpdater indexUpdater, Class<?> entityClass, Supplier<EntityManager> emProvider, boolean useUserTransaction,
+			Map<Class<?>, String> idProperties, Consumer<EntityManager> entityManagerDisposer, PersistenceUnitUtil peristenceUnitUtil) {
+		this( indexUpdater, entityClass, emProvider, useUserTransaction, idProperties, entityManagerDisposer, peristenceUnitUtil, null, null );
 	}
 
-	public ObjectHandlerTask(IndexUpdater indexUpdater, Class<?> entityClass, EntityManager em, boolean useUserTransaction, Map<Class<?>, String> idProperties,
-			Consumer<EntityManager> entityManagerDisposer, PersistenceUnitUtil peristenceUnitUtil, CountDownLatch latch, Consumer<Exception> exceptionConsumer) {
+	public ObjectHandlerTask(IndexUpdater indexUpdater, Class<?> entityClass, Supplier<EntityManager> emProvider, boolean useUserTransaction,
+			Map<Class<?>, String> idProperties, Consumer<EntityManager> entityManagerDisposer, PersistenceUnitUtil peristenceUnitUtil, CountDownLatch latch,
+			Consumer<Exception> exceptionConsumer) {
 		this.indexUpdater = indexUpdater;
 		this.entityClass = entityClass;
-		this.em = em;
+		this.emProvider = emProvider;
 		this.useUserTransaction = useUserTransaction;
 		this.idProperties = idProperties;
 		this.entityManagerDisposer = entityManagerDisposer;
@@ -65,13 +67,14 @@ public class ObjectHandlerTask implements Runnable {
 
 	@Override
 	public void run() {
+		EntityManager em = this.emProvider.get();
 		try {
-			JPATransactionWrapper tx = JPATransactionWrapper.get( this.em, this.useUserTransaction );
+			JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useUserTransaction );
 			tx.begin();
 			try {
 				@SuppressWarnings("resource")
 				// this shouldn't be closed in here as the EntityManager will be reused
-				EntityManagerEntityProvider providerForBatch = new EntityManagerEntityProvider( this.em, this.idProperties );
+				EntityManagerEntityProvider providerForBatch = new EntityManagerEntityProvider( em, this.idProperties );
 				List<Object> ids = this.batch.stream().map( (updateInfo) -> {
 					return updateInfo.getId();
 				} ).collect( Collectors.toList() );
@@ -112,7 +115,6 @@ public class ObjectHandlerTask implements Runnable {
 				for ( int i = 0; i < this.batch.size(); ++i ) {
 					this.latch.countDown();
 				}
-				this.entityManagerDisposer.accept( this.em );
 			}
 			catch (Exception e) {
 				tx.rollback();
@@ -120,10 +122,15 @@ public class ObjectHandlerTask implements Runnable {
 			}
 		}
 		catch (Exception e) {
-			if(this.exceptionConsumer != null) {
+			if ( this.exceptionConsumer != null ) {
 				this.exceptionConsumer.accept( e );
 			}
-			//TODO: should throw this?
+			// TODO: should throw this?
+		}
+		finally {
+			if ( em != null ) {
+				this.entityManagerDisposer.accept( em );
+			}
 		}
 	}
 }

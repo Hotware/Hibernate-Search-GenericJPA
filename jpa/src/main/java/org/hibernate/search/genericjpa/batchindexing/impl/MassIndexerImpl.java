@@ -307,7 +307,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 	@Override
 	public void updateEvent(List<UpdateInfo> updateInfo) {
 		Class<?> entityClass = updateInfo.get( 0 ).getEntityClass();
-		ObjectHandlerTask task = new ObjectHandlerTask( this.indexUpdater, entityClass, this.getEntityManager(), this.useUserTransaction, this.idProperties,
+		ObjectHandlerTask task = new ObjectHandlerTask( this.indexUpdater, entityClass, this::getEntityManager, this.useUserTransaction, this.idProperties,
 				this::disposeEntityManager, this.emf.getPersistenceUnitUtil(), this.latches.get( entityClass ), this::onException );
 		task.batch( updateInfo );
 		this.executorServiceForObjects.submit( task );

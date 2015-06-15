@@ -105,6 +105,10 @@ public class IntegrationTest {
 				}, true, false );
 		idProducer.run();
 	}
+	
+	private EntityManager getEm() {
+		return this.em;
+	}
 
 	@Test
 	public void testObjectHandlerTask() {
@@ -116,7 +120,7 @@ public class IntegrationTest {
 		Map<Class<?>, String> idProperties = new HashMap<>();
 		idProperties.put( Place.class, "id" );
 		IndexUpdater indexUpdater = this.searchFactory.getIndexUpdater();
-		ObjectHandlerTask handler = new ObjectHandlerTask( indexUpdater, Place.class, this.em, false, idProperties, (em) -> {
+		ObjectHandlerTask handler = new ObjectHandlerTask( indexUpdater, Place.class, this::getEm, false, idProperties, (em) -> {
 
 		}, this.emf.getPersistenceUnitUtil() );
 

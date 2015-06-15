@@ -113,7 +113,7 @@ public class IdProducerTask implements Runnable {
 
 	private void flushBatch() {
 		if ( this.updateInfoBatch.size() > 0 ) {
-			this.updateConsumer.updateEvent( new ArrayList<>( updateInfoBatch ) );
+			this.updateConsumer.updateEvent( new ArrayList<>( this.updateInfoBatch ) );
 			this.updateInfoBatch.clear();
 		}
 	}
