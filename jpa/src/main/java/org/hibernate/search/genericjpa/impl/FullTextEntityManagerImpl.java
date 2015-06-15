@@ -7,6 +7,7 @@
 package org.hibernate.search.genericjpa.impl;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -25,6 +26,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaUpdate;
 
+import org.hibernate.search.genericjpa.batchindexing.MassIndexer;
 import org.hibernate.search.genericjpa.factory.Transaction;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.FullTextQuery;
@@ -124,6 +126,15 @@ final class FullTextEntityManagerImpl implements FullTextEntityManager, Serializ
 	@Override
 	public SearchFactory getSearchFactory() {
 		return this.searchFactory;
+	}
+
+	@Override
+	public MassIndexer createIndexer(Class<?>... types) {
+		if(types == null || types.length == 0) {
+			return this.searchFactory.createMassIndexer();
+		} else {
+			return this.searchFactory.createMassIndexer( Arrays.asList(types) );
+		}
 	}
 
 	@SuppressWarnings("unchecked")

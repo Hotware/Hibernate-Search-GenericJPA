@@ -30,7 +30,6 @@ import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
 import org.hibernate.search.genericjpa.test.jpa.entities.Place;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
 import org.hibernate.search.jpa.FullTextEntityManager;
-import org.hibernate.search.jpa.Search;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -62,7 +61,7 @@ public class MassIndexerTest {
 		long after = System.currentTimeMillis();
 		System.out.println( "indexed " + COUNT + " root entities (3 sub each) in " + ( after - pre ) + "ms." );
 
-		FullTextEntityManager fem = Search.getFullTextEntityManager( this.em, "test" );
+		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
 		assertEquals( COUNT, fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class ).getResultSize() );
 	}
 
@@ -70,6 +69,16 @@ public class MassIndexerTest {
 	public void testCancel() {
 		Future<?> future = this.massIndexer.start();
 		future.cancel( true );
+	}
+	
+	@Test
+	public void testFromSearchFactory() {
+		try {
+			this.searchFactory.createMassIndexer().startAndWait();
+		}
+		catch (InterruptedException e) {
+			throw new SearchException( e );
+		}
 	}
 
 	@Before
@@ -80,7 +89,7 @@ public class MassIndexerTest {
 		properties.setProperty( Constants.TRIGGER_SOURCE_KEY, MySQLTriggerSQLStringSource.class.getName() );
 		properties.setProperty( Constants.SEARCH_FACTORY_TYPE_KEY, "sql" );
 		this.searchFactory = (JPASearchFactoryAdapter) Setup.createUnmanagedSearchFactory( emf, properties, null );
-		this.searchFactory.pauseUpdateSource( true );
+		this.searchFactory.pauseUpdating( true );
 		EntityManager em = emf.createEntityManager();
 		try {
 			EntityTransaction tx = em.getTransaction();

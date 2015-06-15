@@ -34,25 +34,25 @@ public final class Setup {
 		// can't touch this!
 	}
 
-	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf) {
+	public static JPASearchFactoryController createUnmanagedSearchFactory(EntityManagerFactory emf) {
 		return createSearchFactory( emf, emf.getProperties(), null, null );
 	}
 
-	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, @SuppressWarnings("rawtypes") Map properties) {
+	public static JPASearchFactoryController createUnmanagedSearchFactory(EntityManagerFactory emf, @SuppressWarnings("rawtypes") Map properties) {
 		return createSearchFactory( emf, properties, null, null );
 	}
 
-	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, UpdateConsumer updateConsumer) {
+	public static JPASearchFactoryController createUnmanagedSearchFactory(EntityManagerFactory emf, UpdateConsumer updateConsumer) {
 		return createSearchFactory( emf, emf.getProperties(), updateConsumer, null );
 	}
 
-	public static JPASearchFactory createUnmanagedSearchFactory(EntityManagerFactory emf, @SuppressWarnings("rawtypes") Map properties,
+	public static JPASearchFactoryController createUnmanagedSearchFactory(EntityManagerFactory emf, @SuppressWarnings("rawtypes") Map properties,
 			UpdateConsumer updateConsumer) {
 		return createSearchFactory( emf, properties, updateConsumer, null );
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public static JPASearchFactory createSearchFactory(EntityManagerFactory emf, Map properties, UpdateConsumer updateConsumer, ScheduledExecutorService exec) {
+	public static JPASearchFactoryController createSearchFactory(EntityManagerFactory emf, Map properties, UpdateConsumer updateConsumer, ScheduledExecutorService exec) {
 		boolean useUserTransactions = Boolean.parseBoolean( (String) properties.getOrDefault( USE_USER_TRANSACTIONS_KEY, USE_USER_TRANSACTIONS_DEFAULT_VALUE ) );
 		if ( useUserTransactions ) {
 			if ( exec == null ) {

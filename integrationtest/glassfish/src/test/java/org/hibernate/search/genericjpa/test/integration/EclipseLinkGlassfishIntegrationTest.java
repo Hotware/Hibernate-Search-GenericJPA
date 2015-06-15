@@ -23,11 +23,11 @@ import javax.transaction.UserTransaction;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.TermQuery;
+import org.hibernate.search.genericjpa.JPASearchFactoryController;
 import org.hibernate.search.genericjpa.test.entities.Game;
 import org.hibernate.search.genericjpa.util.Sleep;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.FullTextQuery;
-import org.hibernate.search.jpa.Search;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -55,6 +55,9 @@ public class EclipseLinkGlassfishIntegrationTest {
 	@Inject
 	public UserTransaction utx;
 
+	@Inject
+	private JPASearchFactoryController searchFactory;
+
 	@Before
 	public void setup() throws Exception {
 		this.clearData();
@@ -74,7 +77,7 @@ public class EclipseLinkGlassfishIntegrationTest {
 		em.createQuery( "delete from Game" ).executeUpdate();
 		utx.commit();
 
-		FullTextEntityManager fem = Search.getFullTextEntityManager( this.em );
+		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
 		fem.beginSearchTransaction();
 		fem.purgeAll( Game.class );
 		fem.commitSearchTransaction();
@@ -98,7 +101,7 @@ public class EclipseLinkGlassfishIntegrationTest {
 	public void shouldFindAllGamesInIndex() throws Exception {
 		Sleep.sleep( 5000, () -> {
 			List<Game> games = new ArrayList<>();
-			FullTextEntityManager fem = Search.getFullTextEntityManager( this.em );
+			FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
 			for ( String title : GAME_TITLES ) {
 				FullTextQuery query = fem.createFullTextQuery( new TermQuery( new Term( "title", title ) ), Game.class );
 				games.addAll( query.getResultList() );
@@ -112,7 +115,7 @@ public class EclipseLinkGlassfishIntegrationTest {
 	@Test
 	public void testManualIndexing() throws Exception {
 		this.shouldFindAllGamesInIndex();
-		FullTextEntityManager fem = Search.getFullTextEntityManager( this.em );
+		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
 		fem.beginSearchTransaction();
 		Game newGame = new Game( "Legend of Zelda" );
 		fem.index( newGame );
@@ -131,7 +134,7 @@ public class EclipseLinkGlassfishIntegrationTest {
 	public void testRollback() throws Exception {
 		this.shouldFindAllGamesInIndex();
 
-		FullTextEntityManager fem = Search.getFullTextEntityManager( this.em );
+		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
 		fem.beginSearchTransaction();
 		Game newGame = new Game( "Pong" );
 		fem.index( newGame );
@@ -148,7 +151,7 @@ public class EclipseLinkGlassfishIntegrationTest {
 
 	@Test
 	public void testUnwrap() {
-		FullTextEntityManager fem = Search.getFullTextEntityManager( this.em );
+		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
 		assertEquals( fem, fem.unwrap( FullTextEntityManager.class ) );
 
 		FullTextQuery query = fem.createFullTextQuery( new MatchAllDocsQuery(), Game.class );

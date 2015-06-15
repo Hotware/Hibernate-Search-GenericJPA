@@ -38,7 +38,6 @@ import org.hibernate.search.genericjpa.test.jpa.entities.Place;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
 import org.hibernate.search.genericjpa.util.Sleep;
 import org.hibernate.search.jpa.FullTextEntityManager;
-import org.hibernate.search.jpa.Search;
 import org.hibernate.search.query.DatabaseRetrievalMethod;
 import org.hibernate.search.query.ObjectLookupMethod;
 import org.junit.After;
@@ -109,7 +108,7 @@ public class IntegrationTest {
 
 	@Test
 	public void testObjectHandlerTask() {
-		FullTextEntityManager fem = Search.getFullTextEntityManager( em, "test" );
+		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( em );
 		fem.beginSearchTransaction();
 		fem.purgeAll( Place.class );
 		fem.commitSearchTransaction();
@@ -133,7 +132,7 @@ public class IntegrationTest {
 
 	@Test
 	public void testJPAInterfaces() throws InterruptedException {
-		FullTextEntityManager fem = Search.getFullTextEntityManager( em, "test" );
+		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( em );
 		fem.beginSearchTransaction();
 
 		Sleep.sleep(

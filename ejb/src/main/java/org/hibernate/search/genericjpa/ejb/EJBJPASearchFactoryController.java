@@ -9,7 +9,6 @@ package org.hibernate.search.genericjpa.ejb;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
@@ -23,19 +22,22 @@ import javax.annotation.Resource;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.enterprise.concurrent.ManagedScheduledExecutorService;
+import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
 
-import org.hibernate.search.genericjpa.JPASearchFactory;
+import org.hibernate.search.SearchFactory;
+import org.hibernate.search.genericjpa.JPASearchFactoryController;
 import org.hibernate.search.genericjpa.Setup;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.exception.SearchException;
+import org.hibernate.search.jpa.FullTextEntityManager;
 
 @Startup
 @Singleton
-public class EJBSearchFactory implements UpdateConsumer {
+public class EJBJPASearchFactoryController implements JPASearchFactoryController {
 
-	private static final Logger LOGGER = Logger.getLogger( EJBSearchFactory.class.getName() );
+	private static final Logger LOGGER = Logger.getLogger( EJBJPASearchFactoryController.class.getName() );
 
 	private static final String PROPERTIES_PATH = "/META-INF/hsearch.properties";
 
@@ -45,7 +47,7 @@ public class EJBSearchFactory implements UpdateConsumer {
 	@PersistenceUnit
 	private EntityManagerFactory emf;
 
-	private JPASearchFactory jpaSearchFactory;
+	private JPASearchFactoryController jpaSearchFactoryController;
 
 	private Set<UpdateConsumer> updateConsumers = new HashSet<>();
 
@@ -54,19 +56,34 @@ public class EJBSearchFactory implements UpdateConsumer {
 	@PostConstruct
 	public void start() {
 		Properties properties = new Properties();
-		try (InputStream is = EJBSearchFactory.class.getResource( PROPERTIES_PATH ).openStream()) {
+		try (InputStream is = EJBJPASearchFactoryController.class.getResource( PROPERTIES_PATH ).openStream()) {
 			properties.load( is );
 		}
 		catch (IOException e) {
 			throw new SearchException( "couldn't load hibernate-search specific properties from: " + PROPERTIES_PATH );
 		}
-		this.jpaSearchFactory = Setup.createSearchFactory( this.emf, properties, this, this.exec );
+		this.jpaSearchFactoryController = Setup.createSearchFactory( this.emf, properties, (updateInfos) -> {
+			this.lock.lock();
+			try {
+				for ( UpdateConsumer consumer : this.updateConsumers ) {
+					try {
+						consumer.updateEvent( updateInfos );
+					}
+					catch (Exception e) {
+						LOGGER.log( Level.WARNING, "Exception in user-provided UpdateConsumer", e );
+					}
+				}
+			}
+			finally {
+				this.lock.unlock();
+			}
+		}, this.exec );
 	}
 
 	@PreDestroy
 	public void stop() {
 		try {
-			this.jpaSearchFactory.close();
+			this.jpaSearchFactoryController.close();
 		}
 		catch (IOException e) {
 			throw new SearchException( e );
@@ -94,21 +111,31 @@ public class EJBSearchFactory implements UpdateConsumer {
 	}
 
 	@Override
-	public void updateEvent(List<UpdateInfo> updateInfos) {
-		this.lock.lock();
-		try {
-			for ( UpdateConsumer consumer : this.updateConsumers ) {
-				try {
-					consumer.updateEvent( updateInfos );
-				}
-				catch (Exception e) {
-					LOGGER.log( Level.WARNING, "Exception in user-provided UpdateConsumer", e );
-				}
-			}
+	public void close() throws IOException {
+		// no-op
+	}
+
+	@Override
+	public SearchFactory getSearchFactory() {
+		if ( this.jpaSearchFactoryController != null ) {
+			return this.jpaSearchFactoryController.getSearchFactory();
 		}
-		finally {
-			this.lock.unlock();
+		return null;
+	}
+
+	@Override
+	public void pauseUpdating(boolean pause) {
+		if ( this.jpaSearchFactoryController != null ) {
+			this.jpaSearchFactoryController.pauseUpdating( pause );
 		}
+	}
+
+	@Override
+	public FullTextEntityManager getFullTextEntityManager(EntityManager em) {
+		if ( this.jpaSearchFactoryController != null ) {
+			return this.jpaSearchFactoryController.getFullTextEntityManager( em );
+		}
+		return null;
 	}
 
 }

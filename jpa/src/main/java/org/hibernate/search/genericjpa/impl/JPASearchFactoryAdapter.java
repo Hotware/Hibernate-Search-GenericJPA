@@ -27,7 +27,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.metadata.impl.MetadataProvider;
-import org.hibernate.search.genericjpa.JPASearchFactory;
+import org.hibernate.search.genericjpa.JPASearchFactoryController;
 import org.hibernate.search.genericjpa.batchindexing.MassIndexer;
 import org.hibernate.search.genericjpa.batchindexing.impl.MassIndexerImpl;
 import org.hibernate.search.genericjpa.db.events.IndexUpdater;
@@ -46,6 +46,7 @@ import org.hibernate.search.genericjpa.metadata.RehashedTypeMetadata;
 import org.hibernate.search.genericjpa.query.HSearchQuery;
 import org.hibernate.search.genericjpa.transaction.TransactionContext;
 import org.hibernate.search.indexes.IndexReaderAccessor;
+import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.metadata.IndexedTypeDescriptor;
 import org.hibernate.search.query.dsl.QueryContextBuilder;
 import org.hibernate.search.spi.SearchIntegrator;
@@ -57,7 +58,7 @@ import org.hibernate.search.stat.Statistics;
  * 
  * @author Martin Braun
  */
-public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, UpdateConsumer, JPASearchFactory {
+public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, UpdateConsumer, JPASearchFactoryController {
 
 	private final Logger LOGGER = Logger.getLogger( JPASearchFactoryAdapter.class.getName() );
 	private StandaloneSearchFactory searchFactory;
@@ -162,9 +163,20 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 		}
 	}
 
-	public void pauseUpdateSource(boolean pause) {
+	@Override
+	public void pauseUpdating(boolean pause) {
 		if ( this.updateSource != null ) {
 			this.updateSource.pause( pause );
+		}
+	}
+
+	@Override
+	public FullTextEntityManager getFullTextEntityManager(EntityManager em) {
+		if ( em instanceof FullTextEntityManager ) {
+			return (FullTextEntityManager) em;
+		}
+		else {
+			return ImplementationFactory.createFullTextEntityManager( em, this );
 		}
 	}
 
@@ -177,8 +189,12 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 		}
 	}
 
-	public MassIndexer createMassInderxer() {
-		return new MassIndexerImpl( this.emf, this, this.indexUpdater, this.getIndexRootTypes(), this.isUseUserTransaction() );
+	public MassIndexer createMassIndexer(List<Class<?>> indexRootTypes) {
+		return new MassIndexerImpl( this.emf, this, this.indexUpdater, indexRootTypes, this.isUseUserTransaction() );
+	}
+
+	public MassIndexer createMassIndexer() {
+		return this.createMassIndexer( this.indexRootTypes );
 	}
 
 	@Override

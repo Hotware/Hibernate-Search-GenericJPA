@@ -11,6 +11,7 @@ import java.io.Serializable;
 import javax.persistence.EntityManager;
 
 import org.hibernate.search.SearchFactory;
+import org.hibernate.search.genericjpa.batchindexing.MassIndexer;
 
 /**
  * Extends an EntityManager with Full-Text operations
@@ -111,5 +112,17 @@ public interface FullTextEntityManager extends EntityManager {
 	 * closed.
 	 */
 	void close();
+
+	/**
+	 * Creates a MassIndexer to rebuild the indexes of some or all indexed entity types. Instances cannot be reused. Any
+	 * {@link org.hibernate.search.indexes.interceptor.EntityIndexingInterceptor} registered on the entity types are
+	 * applied: each instance will trigger an
+	 * {@link org.hibernate.search.indexes.interceptor.EntityIndexingInterceptor#onAdd(Object)} event from where you can
+	 * customize the indexing operation.
+	 *
+	 * @param types optionally restrict the operation to selected types
+	 * @return a new MassIndexer
+	 */
+	MassIndexer createIndexer(Class<?>... types);
 
 }
