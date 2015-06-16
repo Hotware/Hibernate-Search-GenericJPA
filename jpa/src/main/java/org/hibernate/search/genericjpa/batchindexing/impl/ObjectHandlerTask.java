@@ -15,15 +15,13 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import javax.persistence.EntityManager;
 import javax.persistence.PersistenceUnitUtil;
 
 import org.hibernate.search.genericjpa.db.events.IndexUpdater;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
-import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
+import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
 import org.hibernate.search.genericjpa.exception.SearchException;
-import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 
 /**
  * @author Martin Braun
@@ -32,10 +30,8 @@ public class ObjectHandlerTask implements Runnable {
 
 	private final IndexUpdater indexUpdater;
 	private final Class<?> entityClass;
-	private final Supplier<EntityManager> emProvider;
-	private final boolean useUserTransaction;
-	private final Map<Class<?>, String> idProperties;
-	private final Consumer<EntityManager> entityManagerDisposer;
+	private final Supplier<EntityProvider> emProvider;
+	private final Consumer<EntityProvider> entityManagerDisposer;
 	private final PersistenceUnitUtil peristenceUnitUtil;
 	private final CountDownLatch latch;
 	private final Consumer<Exception> exceptionConsumer;
@@ -47,19 +43,16 @@ public class ObjectHandlerTask implements Runnable {
 
 	private Runnable finishConsumer;
 
-	public ObjectHandlerTask(IndexUpdater indexUpdater, Class<?> entityClass, Supplier<EntityManager> emProvider, boolean useUserTransaction,
-			Map<Class<?>, String> idProperties, Consumer<EntityManager> entityManagerDisposer, PersistenceUnitUtil peristenceUnitUtil) {
-		this( indexUpdater, entityClass, emProvider, useUserTransaction, idProperties, entityManagerDisposer, peristenceUnitUtil, null, null );
+	public ObjectHandlerTask(IndexUpdater indexUpdater, Class<?> entityClass, Supplier<EntityProvider> emProvider,
+			Consumer<EntityProvider> entityManagerDisposer, PersistenceUnitUtil peristenceUnitUtil) {
+		this( indexUpdater, entityClass, emProvider, entityManagerDisposer, peristenceUnitUtil, null, null );
 	}
 
-	public ObjectHandlerTask(IndexUpdater indexUpdater, Class<?> entityClass, Supplier<EntityManager> emProvider, boolean useUserTransaction,
-			Map<Class<?>, String> idProperties, Consumer<EntityManager> entityManagerDisposer, PersistenceUnitUtil peristenceUnitUtil, CountDownLatch latch,
-			Consumer<Exception> exceptionConsumer) {
+	public ObjectHandlerTask(IndexUpdater indexUpdater, Class<?> entityClass, Supplier<EntityProvider> emProvider,
+			Consumer<EntityProvider> entityManagerDisposer, PersistenceUnitUtil peristenceUnitUtil, CountDownLatch latch, Consumer<Exception> exceptionConsumer) {
 		this.indexUpdater = indexUpdater;
 		this.entityClass = entityClass;
 		this.emProvider = emProvider;
-		this.useUserTransaction = useUserTransaction;
-		this.idProperties = idProperties;
 		this.entityManagerDisposer = entityManagerDisposer;
 		this.peristenceUnitUtil = peristenceUnitUtil;
 		this.latch = latch;
@@ -74,21 +67,15 @@ public class ObjectHandlerTask implements Runnable {
 	@Override
 	public void run() {
 		try {
-			EntityManager em = this.emProvider.get();
+			EntityProvider entityProvider = this.emProvider.get();
 			try {
-				JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useUserTransaction );
-				tx.begin();
 				try {
-
-					// get all the entities we need
-					@SuppressWarnings("resource")
-					// this shouldn't be closed in here as the EntityManager will be reused
-					EntityManagerEntityProvider providerForBatch = new EntityManagerEntityProvider( em, this.idProperties );
 					List<Object> ids = this.batch.stream().map( (updateInfo) -> {
 						return updateInfo.getId();
 					} ).collect( Collectors.toList() );
+
 					@SuppressWarnings("unchecked")
-					Map<Object, Object> idsToEntities = (Map<Object, Object>) providerForBatch.getBatch( this.entityClass, ids ).stream()
+					Map<Object, Object> idsToEntities = (Map<Object, Object>) entityProvider.getBatch( this.entityClass, ids ).stream()
 							.collect( Collectors.toMap( (entity) -> {
 								return this.peristenceUnitUtil.getIdentifier( entity );
 							}, (entity) -> {
@@ -129,8 +116,6 @@ public class ObjectHandlerTask implements Runnable {
 						}
 
 					} );
-					tx.commit();
-
 					// monitor our progress
 					if ( this.indexProgressMonitor != null ) {
 						this.indexProgressMonitor.accept( this.entityClass, this.batch.size() );
@@ -141,7 +126,6 @@ public class ObjectHandlerTask implements Runnable {
 					}
 				}
 				catch (Exception e) {
-					tx.rollback();
 					throw new SearchException( e );
 				}
 			}
@@ -152,8 +136,8 @@ public class ObjectHandlerTask implements Runnable {
 				// TODO: should throw this?
 			}
 			finally {
-				if ( em != null ) {
-					this.entityManagerDisposer.accept( em );
+				if ( entityProvider != null ) {
+					this.entityManagerDisposer.accept( entityProvider );
 				}
 			}
 		}

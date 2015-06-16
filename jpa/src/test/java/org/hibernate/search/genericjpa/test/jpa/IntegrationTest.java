@@ -17,10 +17,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
+
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.hibernate.search.genericjpa.Setup;
 import org.hibernate.search.genericjpa.batchindexing.impl.IdProducerTask;
@@ -30,6 +32,7 @@ import org.hibernate.search.genericjpa.db.events.IndexUpdater;
 import org.hibernate.search.genericjpa.db.events.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
+import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchFactory;
 import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
@@ -108,10 +111,6 @@ public class IntegrationTest {
 		idProducer.run();
 	}
 
-	private EntityManager getEm() {
-		return this.em;
-	}
-
 	@Test
 	public void testObjectHandlerTask() {
 		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( em );
@@ -122,7 +121,9 @@ public class IntegrationTest {
 		Map<Class<?>, String> idProperties = new HashMap<>();
 		idProperties.put( Place.class, "id" );
 		IndexUpdater indexUpdater = this.searchFactory.getIndexUpdater();
-		ObjectHandlerTask handler = new ObjectHandlerTask( indexUpdater, Place.class, this::getEm, false, idProperties, (em) -> {
+		ObjectHandlerTask handler = new ObjectHandlerTask( indexUpdater, Place.class, () -> {
+			return new EntityManagerEntityProvider( this.em, idProperties );
+		}, (em) -> {
 
 		}, this.emf.getPersistenceUnitUtil() );
 

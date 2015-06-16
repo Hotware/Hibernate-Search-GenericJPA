@@ -9,6 +9,8 @@ package org.hibernate.search.genericjpa.batchindexing;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
+import org.hibernate.search.genericjpa.entity.EntityProvider;
+
 /**
  * @author Martin Braun
  */
@@ -35,8 +37,10 @@ public interface MassIndexer {
 	MassIndexer executorServiceForObjects(ExecutorService executorServiceForObjects);
 
 	MassIndexer createNewIdEntityManagerAfter(int createNewIdEntityManagerAfter);
-	
+
 	MassIndexer progressMonitor(MassIndexerProgressMonitor progressMonitor);
+
+	MassIndexer entityProvider(EntityProvider entityProvider);
 
 	Future<?> start();
 
