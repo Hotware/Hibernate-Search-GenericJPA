@@ -10,6 +10,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,11 +25,12 @@ import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.hibernate.search.backend.impl.batch.DefaultBatchBackend;
+import org.hibernate.search.backend.spi.BatchBackend;
 import org.hibernate.search.genericjpa.Setup;
 import org.hibernate.search.genericjpa.batchindexing.impl.IdProducerTask;
 import org.hibernate.search.genericjpa.batchindexing.impl.ObjectHandlerTask;
 import org.hibernate.search.genericjpa.db.events.EventType;
-import org.hibernate.search.genericjpa.db.events.IndexUpdater;
 import org.hibernate.search.genericjpa.db.events.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
@@ -120,12 +122,13 @@ public class IntegrationTest {
 
 		Map<Class<?>, String> idProperties = new HashMap<>();
 		idProperties.put( Place.class, "id" );
-		IndexUpdater indexUpdater = this.searchFactory.getIndexUpdater();
-		ObjectHandlerTask handler = new ObjectHandlerTask( indexUpdater, Place.class, () -> {
-			return new EntityManagerEntityProvider( this.em, idProperties );
-		}, (em) -> {
+		BatchBackend batchBackend = new DefaultBatchBackend( this.searchFactory.getSearchIntegrator(), null );
+		ObjectHandlerTask handler = new ObjectHandlerTask( batchBackend, Place.class, this.searchFactory.getSearchIntegrator().getIndexBinding( Place.class ),
+				() -> {
+					return new EntityManagerEntityProvider( this.em, idProperties );
+				}, (em) -> {
 
-		}, this.emf.getPersistenceUnitUtil() );
+				}, this.emf.getPersistenceUnitUtil() );
 
 		List<UpdateInfo> batch = new ArrayList<>();
 		batch.add( new UpdateInfo( Place.class, this.valinorId, EventType.INSERT ) );
@@ -133,6 +136,8 @@ public class IntegrationTest {
 
 		handler.batch( batch );
 		handler.run();
+
+		batchBackend.flush( new HashSet<>( Arrays.asList( Place.class ) ) );
 
 		assertEquals( 2, fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class ).getResultList().size() );
 	}

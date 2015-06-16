@@ -97,6 +97,10 @@ public class JPAReusableEntityProvider implements ReusableEntityProvider {
 		}
 	}
 
+	public void clearEm() {
+		this.em.clear();
+	}
+
 	// TODO: fix the hacky stuff here
 
 	private void beginTransaction() {

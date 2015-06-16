@@ -59,13 +59,18 @@ public class MassIndexerTest {
 			}
 
 			@Override
-			public void indexed(Class<?> entityType, int count) {
-				System.out.println( "indexed: " + count );
+			public void documentsBuilt(Class<?> entityType, int count) {
+				System.out.println( "documents built: " + count );
 			}
 
 			@Override
 			public void idsLoaded(Class<?> entityType, int count) {
 				System.out.println( "loaded ids: " + count );
+			}
+
+			@Override
+			public void documentsAdded(int count) {
+				System.out.println( "documents added: " + count );
 			}
 
 		} );
@@ -151,7 +156,7 @@ public class MassIndexerTest {
 			}
 		}
 		this.em = this.emf.createEntityManager();
-		this.massIndexer = new MassIndexerImpl( this.emf, this.searchFactory, this.searchFactory.getIndexUpdater(), Arrays.asList( Place.class ), false );
+		this.massIndexer = new MassIndexerImpl( this.emf, this.searchFactory.getSearchIntegrator(), Arrays.asList( Place.class ), false );
 	}
 
 	@After

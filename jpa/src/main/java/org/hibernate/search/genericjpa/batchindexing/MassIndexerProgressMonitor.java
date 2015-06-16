@@ -10,11 +10,13 @@ package org.hibernate.search.genericjpa.batchindexing;
  * @author Martin Braun
  */
 public interface MassIndexerProgressMonitor {
-	
+
 	void idsLoaded(Class<?> entityType, int count);
-	
+
 	void objectsLoaded(Class<?> entityType, int count);
-	
-	void indexed(Class<?> entityType, int count);
+
+	void documentsBuilt(Class<?> entityType, int count);
+
+	void documentsAdded(int count);
 
 }

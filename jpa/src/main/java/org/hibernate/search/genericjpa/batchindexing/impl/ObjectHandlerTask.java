@@ -6,7 +6,7 @@
  */
 package org.hibernate.search.genericjpa.batchindexing.impl;
 
-import java.util.ArrayList;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -17,19 +17,30 @@ import java.util.stream.Collectors;
 
 import javax.persistence.PersistenceUnitUtil;
 
-import org.hibernate.search.genericjpa.db.events.IndexUpdater;
+import org.hibernate.search.backend.AddLuceneWork;
+import org.hibernate.search.backend.spi.BatchBackend;
+import org.hibernate.search.bridge.TwoWayFieldBridge;
+import org.hibernate.search.bridge.spi.ConversionContext;
+import org.hibernate.search.bridge.util.impl.ContextualExceptionBridgeHelper;
+import org.hibernate.search.engine.spi.DocumentBuilderIndexedEntity;
+import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
-import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
 import org.hibernate.search.genericjpa.exception.SearchException;
+import org.hibernate.search.genericjpa.factory.SubClassSupportInstanceInitializer;
+import org.hibernate.search.indexes.interceptor.EntityIndexingInterceptor;
+import org.hibernate.search.indexes.interceptor.IndexingOverride;
+import org.hibernate.search.spi.InstanceInitializer;
 
 /**
  * @author Martin Braun
  */
 public class ObjectHandlerTask implements Runnable {
 
-	private final IndexUpdater indexUpdater;
+	private final BatchBackend batchBackend;
+
 	private final Class<?> entityClass;
+	private final EntityIndexBinding entityIndexBinding;
 	private final Supplier<EntityProvider> emProvider;
 	private final Consumer<EntityProvider> entityManagerDisposer;
 	private final PersistenceUnitUtil peristenceUnitUtil;
@@ -37,21 +48,24 @@ public class ObjectHandlerTask implements Runnable {
 	private final Consumer<Exception> exceptionConsumer;
 
 	private BiConsumer<Class<?>, Integer> objectLoadedProgressMonitor;
-	private BiConsumer<Class<?>, Integer> indexProgressMonitor;
+	private BiConsumer<Class<?>, Integer> documentBuiltProgressMonitor;
 
 	private List<UpdateInfo> batch;
 
 	private Runnable finishConsumer;
 
-	public ObjectHandlerTask(IndexUpdater indexUpdater, Class<?> entityClass, Supplier<EntityProvider> emProvider,
+	private static final InstanceInitializer INITIALIZER = SubClassSupportInstanceInitializer.INSTANCE;
+
+	public ObjectHandlerTask(BatchBackend batchBackend, Class<?> entityClass, EntityIndexBinding entityIndexBinding, Supplier<EntityProvider> emProvider,
 			Consumer<EntityProvider> entityManagerDisposer, PersistenceUnitUtil peristenceUnitUtil) {
-		this( indexUpdater, entityClass, emProvider, entityManagerDisposer, peristenceUnitUtil, null, null );
+		this( batchBackend, entityClass, entityIndexBinding, emProvider, entityManagerDisposer, peristenceUnitUtil, null, null );
 	}
 
-	public ObjectHandlerTask(IndexUpdater indexUpdater, Class<?> entityClass, Supplier<EntityProvider> emProvider,
+	public ObjectHandlerTask(BatchBackend batchBackend, Class<?> entityClass, EntityIndexBinding entityIndexBinding, Supplier<EntityProvider> emProvider,
 			Consumer<EntityProvider> entityManagerDisposer, PersistenceUnitUtil peristenceUnitUtil, CountDownLatch latch, Consumer<Exception> exceptionConsumer) {
-		this.indexUpdater = indexUpdater;
+		this.batchBackend = batchBackend;
 		this.entityClass = entityClass;
+		this.entityIndexBinding = entityIndexBinding;
 		this.emProvider = emProvider;
 		this.entityManagerDisposer = entityManagerDisposer;
 		this.peristenceUnitUtil = peristenceUnitUtil;
@@ -87,38 +101,14 @@ public class ObjectHandlerTask implements Runnable {
 						this.objectLoadedProgressMonitor.accept( this.entityClass, this.batch.size() );
 					}
 
-					// signal the updater to update
-					// and give it a EntityProvider that already has all the data available
-					this.indexUpdater.updateEvent( this.batch, new ReusableEntityProvider() {
+					ContextualExceptionBridgeHelper conversionContext = new ContextualExceptionBridgeHelper();
+					for ( Object id : ids ) {
+						this.index( idsToEntities.get( id ), INITIALIZER, conversionContext );
+					}
 
-						@Override
-						public List getBatch(Class<?> entityClass, List<Object> ids) {
-							List<Object> ret = new ArrayList<Object>();
-							for ( Object id : ids ) {
-								ret.add( idsToEntities.get( id ) );
-							}
-							return ret;
-						}
-
-						@Override
-						public Object get(Class<?> entityClass, Object id) {
-							return idsToEntities.get( id );
-						}
-
-						@Override
-						public void open() {
-							// no-op
-						}
-
-						@Override
-						public void close() {
-							// no-op
-						}
-
-					} );
 					// monitor our progress
-					if ( this.indexProgressMonitor != null ) {
-						this.indexProgressMonitor.accept( this.entityClass, this.batch.size() );
+					if ( this.documentBuiltProgressMonitor != null ) {
+						this.documentBuiltProgressMonitor.accept( this.entityClass, this.batch.size() );
 					}
 
 					for ( int i = 0; i < this.batch.size(); ++i ) {
@@ -152,12 +142,53 @@ public class ObjectHandlerTask implements Runnable {
 		this.objectLoadedProgressMonitor = objectLoadedProgressMonitor;
 	}
 
-	public void indexProgressMonitor(BiConsumer<Class<?>, Integer> indexProgressMonitor) {
-		this.indexProgressMonitor = indexProgressMonitor;
+	public void documentBuiltProgressMonitor(BiConsumer<Class<?>, Integer> indexProgressMonitor) {
+		this.documentBuiltProgressMonitor = indexProgressMonitor;
 	}
 
 	public void finishConsumer(Runnable finishConsumer) {
 		this.finishConsumer = finishConsumer;
+	}
+
+	@SuppressWarnings("unchecked")
+	private void index(Object entity, InstanceInitializer sessionInitializer, ConversionContext conversionContext) throws InterruptedException {
+		Serializable id = (Serializable) this.peristenceUnitUtil.getIdentifier( entity );
+
+		if ( entityIndexBinding == null ) {
+			// it might be possible to receive not-indexes subclasses of the currently indexed type;
+			// being not-indexed, we skip them.
+			// FIXME for improved performance: avoid loading them in an early phase.
+			return;
+		}
+
+		@SuppressWarnings("rawtypes")
+		EntityIndexingInterceptor interceptor = this.entityIndexBinding.getEntityIndexingInterceptor();
+		if ( interceptor != null ) {
+			IndexingOverride onAdd = interceptor.onAdd( entity );
+			switch ( onAdd ) {
+				case REMOVE:
+				case SKIP:
+					return;
+				default:
+					break;
+			}
+			// default: continue indexing this instance
+		}
+
+		DocumentBuilderIndexedEntity docBuilder = this.entityIndexBinding.getDocumentBuilder();
+		TwoWayFieldBridge idBridge = docBuilder.getIdBridge();
+		conversionContext.pushProperty( docBuilder.getIdKeywordName() );
+		String idInString = null;
+		try {
+			idInString = conversionContext.setClass( this.entityClass ).twoWayConversionContext( idBridge ).objectToString( id );
+		}
+		finally {
+			conversionContext.popProperty();
+		}
+		// depending on the complexity of the object graph going to be indexed it's possible
+		// that we hit the database several times during work construction.
+		AddLuceneWork addWork = docBuilder.createAddWork( null, this.entityClass, entity, id, idInString, sessionInitializer, conversionContext );
+		this.batchBackend.enqueueAsyncWork( addWork );
 	}
 
 }

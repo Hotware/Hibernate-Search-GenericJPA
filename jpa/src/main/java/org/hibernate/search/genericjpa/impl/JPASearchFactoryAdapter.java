@@ -190,11 +190,15 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 	}
 
 	public MassIndexer createMassIndexer(List<Class<?>> indexRootTypes) {
-		return new MassIndexerImpl( this.emf, this, this.indexUpdater, indexRootTypes, this.isUseUserTransaction() );
+		return new MassIndexerImpl( this.emf, this.searchIntegrator, this.indexRootTypes, this.isUseUserTransaction() );
 	}
 
 	public MassIndexer createMassIndexer() {
 		return this.createMassIndexer( this.indexRootTypes );
+	}
+	
+	public ExtendedSearchIntegrator getSearchIntegrator() {
+		return this.searchIntegrator;
 	}
 
 	@Override

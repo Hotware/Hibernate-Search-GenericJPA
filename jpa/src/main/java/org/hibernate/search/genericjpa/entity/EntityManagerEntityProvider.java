@@ -55,8 +55,4 @@ public class EntityManagerEntityProvider implements EntityProvider {
 		return ret;
 	}
 	
-	public void clearEm() {
-		this.em.clear();
-	}
-	
 }

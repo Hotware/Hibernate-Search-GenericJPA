@@ -7,6 +7,7 @@
 package org.hibernate.search.genericjpa.batchindexing.impl;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -35,15 +36,18 @@ import javax.persistence.metamodel.EntityType;
 import javax.persistence.metamodel.Metamodel;
 import javax.persistence.metamodel.SingularAttribute;
 
+import org.hibernate.search.backend.OptimizeLuceneWork;
+import org.hibernate.search.backend.PurgeAllLuceneWork;
+import org.hibernate.search.backend.impl.batch.DefaultBatchBackend;
+import org.hibernate.search.backend.spi.BatchBackend;
+import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.genericjpa.batchindexing.MassIndexer;
 import org.hibernate.search.genericjpa.batchindexing.MassIndexerProgressMonitor;
-import org.hibernate.search.genericjpa.db.events.IndexUpdater;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.entity.JPAReusableEntityProvider;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.exception.SearchException;
-import org.hibernate.search.genericjpa.factory.StandaloneSearchFactory;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 
 /**
@@ -53,7 +57,9 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
 	private static final Logger LOGGER = Logger.getLogger( MassIndexerImpl.class.getName() );
 
-	private final IndexUpdater indexUpdater;
+	private BatchBackend batchBackend;
+	private final ExtendedSearchIntegrator searchIntegrator;
+
 	private final List<Class<?>> rootTypes;
 	private final boolean useUserTransaction;
 	private final EntityManagerFactory emf;
@@ -82,9 +88,10 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 	private ConcurrentLinkedQueue<JPAReusableEntityProvider> entityProviders = new ConcurrentLinkedQueue<>();
 
 	private MassIndexerProgressMonitor progressMonitor;
-	private ConcurrentHashMap<Class<?>, AtomicInteger> idProgress = new ConcurrentHashMap<>();
-	private ConcurrentHashMap<Class<?>, AtomicInteger> objectLoadedProgress = new ConcurrentHashMap<>();
-	private ConcurrentHashMap<Class<?>, AtomicInteger> indexedProgress = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<Class<?>, AtomicInteger> idProgress = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<Class<?>, AtomicInteger> objectLoadedProgress = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<Class<?>, AtomicInteger> documentBuiltProgress = new ConcurrentHashMap<>();
+	private final AtomicInteger documentsAdded = new AtomicInteger();
 
 	private final Map<Class<?>, CountDownLatch> latches = new HashMap<>();
 	private final ConcurrentLinkedQueue<Future<?>> idProducerFutures = new ConcurrentLinkedQueue<>();
@@ -93,15 +100,11 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 	private final ReadWriteLock cancelGuard = new ReentrantReadWriteLock();
 	private boolean cancelled = false;
 
-	private final StandaloneSearchFactory searchFactory;
-
 	private EntityProvider userSpecifiedEntityProvider;
 
-	public MassIndexerImpl(EntityManagerFactory emf, StandaloneSearchFactory searchFactory, IndexUpdater indexUpdater, List<Class<?>> rootTypes,
-			boolean useUserTransaction) {
+	public MassIndexerImpl(EntityManagerFactory emf, ExtendedSearchIntegrator searchIntegrator, List<Class<?>> rootTypes, boolean useUserTransaction) {
 		this.emf = emf;
-		this.searchFactory = searchFactory;
-		this.indexUpdater = indexUpdater;
+		this.searchIntegrator = searchIntegrator;
 		this.rootTypes = rootTypes;
 		this.useUserTransaction = useUserTransaction;
 	}
@@ -193,6 +196,38 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 		if ( this.started ) {
 			throw new AssertionFailure( "already started this instance of MassIndexer once!" );
 		}
+		this.batchBackend = new DefaultBatchBackend( this.searchIntegrator, new org.hibernate.search.batchindexing.MassIndexerProgressMonitor() {
+
+			@Override
+			public void documentsAdded(long increment) {
+				// hacky: whatever...
+				int count = MassIndexerImpl.this.documentsAdded.addAndGet( (int) increment );
+				if ( MassIndexerImpl.this.progressMonitor != null ) {
+					MassIndexerImpl.this.progressMonitor.documentsAdded( count );
+				}
+			}
+
+			@Override
+			public void indexingCompleted() {
+
+			}
+
+			@Override
+			public void entitiesLoaded(int size) {
+
+			}
+
+			@Override
+			public void documentsBuilt(int number) {
+
+			}
+
+			@Override
+			public void addToTotalCount(long count) {
+
+			}
+
+		} );
 		this.started = true;
 		this.cleanUpLatch = new CountDownLatch( this.optimizeOnFinish ? 2 : 1 );
 		if ( this.executorServiceForIds == null ) {
@@ -211,11 +246,17 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 		}
 		this.idProperties = this.getIdProperties( this.rootTypes );
 		for ( Class<?> rootClass : this.rootTypes ) {
-			if ( this.purgeAllOnStart ) {
-				this.searchFactory.purgeAll( rootClass );
-				if ( this.optimizeAfterPurge ) {
-					this.searchFactory.optimize( rootClass );
+			try {
+				if ( this.purgeAllOnStart ) {
+					this.batchBackend.enqueueAsyncWork( new PurgeAllLuceneWork( rootClass ) );
+					if ( this.optimizeAfterPurge ) {
+						this.batchBackend.enqueueAsyncWork( new OptimizeLuceneWork( rootClass ) );
+					}
+					this.batchBackend.flush( new HashSet<>( this.rootTypes ) );
 				}
+			}
+			catch (Exception e) {
+				throw new SearchException( e );
 			}
 			long totalCount = this.getTotalCount( rootClass );
 			// FIXME: hacky casts...
@@ -242,10 +283,19 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 					MassIndexerImpl.this.awaitJobsFinish();
 					if ( MassIndexerImpl.this.optimizeOnFinish ) {
 						for ( Class<?> rootEntity : MassIndexerImpl.this.rootTypes ) {
-							MassIndexerImpl.this.searchFactory.optimize( rootEntity );
+							try {
+								MassIndexerImpl.this.batchBackend.enqueueAsyncWork( new OptimizeLuceneWork( rootEntity ) );
+							}
+							catch (InterruptedException e) {
+								LOGGER.log( Level.WARNING, "interrupted while optimizing on finish!", e );
+							}
 						}
 						MassIndexerImpl.this.cleanUpLatch.countDown();
 					}
+
+					// flush all the works that are left in the queue
+					MassIndexerImpl.this.batchBackend.flush( new HashSet<>( MassIndexerImpl.this.rootTypes ) );
+
 					MassIndexerImpl.this.closeExecutorServices();
 					MassIndexerImpl.this.closeAllOpenEntityManagers();
 					MassIndexerImpl.this.cleanUpLatch.countDown();
@@ -366,10 +416,10 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 				return;
 			}
 			Class<?> entityClass = updateInfo.get( 0 ).getEntityClass();
-			ObjectHandlerTask task = new ObjectHandlerTask( this.indexUpdater, entityClass, this::getEntityManager, this::disposeEntityManager,
-					this.emf.getPersistenceUnitUtil(), this.latches.get( entityClass ), this::onException );
+			ObjectHandlerTask task = new ObjectHandlerTask( this.batchBackend, entityClass, this.searchIntegrator.getIndexBinding( entityClass ),
+					this::getEntityManager, this::disposeEntityManager, this.emf.getPersistenceUnitUtil(), this.latches.get( entityClass ), this::onException );
 			task.batch( updateInfo );
-			task.indexProgressMonitor( this::indexedProgress );
+			task.documentBuiltProgressMonitor( this::documentBuiltProgress );
 			task.objectLoadedProgressMonitor( this::objectLoadedProgress );
 			this.executorServiceForObjects.submit( task );
 		}
@@ -408,12 +458,12 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 		}
 	}
 
-	private void indexedProgress(Class<?> entityType, Integer count) {
-		int newCount = this.indexedProgress.computeIfAbsent( entityType, (type) -> {
+	private void documentBuiltProgress(Class<?> entityType, Integer count) {
+		int newCount = this.documentBuiltProgress.computeIfAbsent( entityType, (type) -> {
 			return new AtomicInteger( 0 );
 		} ).addAndGet( count );
 		if ( this.progressMonitor != null ) {
-			this.progressMonitor.indexed( entityType, newCount );
+			this.progressMonitor.documentsBuilt( entityType, newCount );
 		}
 	}
 
@@ -444,6 +494,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
 	private void disposeEntityManager(EntityProvider provider) {
 		if ( this.userSpecifiedEntityProvider == null ) {
+			((JPAReusableEntityProvider) provider).clearEm();
 			this.entityProviders.add( (JPAReusableEntityProvider) provider );
 		}
 	}
