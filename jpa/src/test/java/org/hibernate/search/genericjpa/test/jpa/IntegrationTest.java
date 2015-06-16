@@ -126,7 +126,7 @@ public class IntegrationTest {
 		ObjectHandlerTask handler = new ObjectHandlerTask( batchBackend, Place.class, this.searchFactory.getSearchIntegrator().getIndexBinding( Place.class ),
 				() -> {
 					return new EntityManagerEntityProvider( this.em, idProperties );
-				}, (em) -> {
+				}, (x, y) -> {
 
 				}, this.emf.getPersistenceUnitUtil() );
 

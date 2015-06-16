@@ -97,6 +97,8 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 	private final ConcurrentLinkedQueue<Future<?>> idProducerFutures = new ConcurrentLinkedQueue<>();
 	private CountDownLatch cleanUpLatch;
 
+	private final NumberCondition objectHandlerTaskCondition = new NumberCondition( 1000 );
+
 	private final ReadWriteLock cancelGuard = new ReentrantReadWriteLock();
 	private boolean cancelled = false;
 
@@ -329,6 +331,9 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 				while ( it.hasNext() ) {
 					ret |= it.next().cancel( mayInterruptIfRunning );
 				}
+
+				MassIndexerImpl.this.objectHandlerTaskCondition.disable();
+
 				Lock lock = MassIndexerImpl.this.cancelGuard.writeLock();
 				lock.lock();
 				try {
@@ -415,12 +420,19 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 			if ( this.cancelled ) {
 				return;
 			}
+			try {
+				this.objectHandlerTaskCondition.check();
+			}
+			catch (InterruptedException e) {
+				this.onException( e );
+			}
 			Class<?> entityClass = updateInfo.get( 0 ).getEntityClass();
 			ObjectHandlerTask task = new ObjectHandlerTask( this.batchBackend, entityClass, this.searchIntegrator.getIndexBinding( entityClass ),
-					this::getEntityManager, this::disposeEntityManager, this.emf.getPersistenceUnitUtil(), this.latches.get( entityClass ), this::onException );
+					this::getEntityProvider, this::disposeEntityManager, this.emf.getPersistenceUnitUtil(), this.latches.get( entityClass ), this::onException );
 			task.batch( updateInfo );
 			task.documentBuiltProgressMonitor( this::documentBuiltProgress );
 			task.objectLoadedProgressMonitor( this::objectLoadedProgress );
+			this.objectHandlerTaskCondition.up( updateInfo.size() );
 			this.executorServiceForObjects.submit( task );
 		}
 		finally {
@@ -480,7 +492,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 		return ret;
 	}
 
-	private EntityProvider getEntityManager() {
+	private EntityProvider getEntityProvider() {
 		if ( this.userSpecifiedEntityProvider == null ) {
 			JPAReusableEntityProvider em = this.entityProviders.poll();
 			if ( em == null ) {
@@ -492,11 +504,12 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 		return this.userSpecifiedEntityProvider;
 	}
 
-	private void disposeEntityManager(EntityProvider provider) {
+	private void disposeEntityManager(ObjectHandlerTask task, EntityProvider provider) {
 		if ( this.userSpecifiedEntityProvider == null ) {
-			((JPAReusableEntityProvider) provider).clearEm();
+			( (JPAReusableEntityProvider) provider ).clearEm();
 			this.entityProviders.add( (JPAReusableEntityProvider) provider );
 		}
+		this.objectHandlerTaskCondition.down( task.batch.size() );
 	}
 
 	private void onException(Exception e) {

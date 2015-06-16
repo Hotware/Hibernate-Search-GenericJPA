@@ -42,7 +42,7 @@ public class ObjectHandlerTask implements Runnable {
 	private final Class<?> entityClass;
 	private final EntityIndexBinding entityIndexBinding;
 	private final Supplier<EntityProvider> emProvider;
-	private final Consumer<EntityProvider> entityManagerDisposer;
+	private final BiConsumer<ObjectHandlerTask, EntityProvider> entityManagerDisposer;
 	private final PersistenceUnitUtil peristenceUnitUtil;
 	private final CountDownLatch latch;
 	private final Consumer<Exception> exceptionConsumer;
@@ -50,19 +50,20 @@ public class ObjectHandlerTask implements Runnable {
 	private BiConsumer<Class<?>, Integer> objectLoadedProgressMonitor;
 	private BiConsumer<Class<?>, Integer> documentBuiltProgressMonitor;
 
-	private List<UpdateInfo> batch;
+	List<UpdateInfo> batch;
 
 	private Runnable finishConsumer;
 
 	private static final InstanceInitializer INITIALIZER = SubClassSupportInstanceInitializer.INSTANCE;
 
 	public ObjectHandlerTask(BatchBackend batchBackend, Class<?> entityClass, EntityIndexBinding entityIndexBinding, Supplier<EntityProvider> emProvider,
-			Consumer<EntityProvider> entityManagerDisposer, PersistenceUnitUtil peristenceUnitUtil) {
+			BiConsumer<ObjectHandlerTask, EntityProvider> entityManagerDisposer, PersistenceUnitUtil peristenceUnitUtil) {
 		this( batchBackend, entityClass, entityIndexBinding, emProvider, entityManagerDisposer, peristenceUnitUtil, null, null );
 	}
 
 	public ObjectHandlerTask(BatchBackend batchBackend, Class<?> entityClass, EntityIndexBinding entityIndexBinding, Supplier<EntityProvider> emProvider,
-			Consumer<EntityProvider> entityManagerDisposer, PersistenceUnitUtil peristenceUnitUtil, CountDownLatch latch, Consumer<Exception> exceptionConsumer) {
+			BiConsumer<ObjectHandlerTask, EntityProvider> entityManagerDisposer, PersistenceUnitUtil peristenceUnitUtil, CountDownLatch latch,
+			Consumer<Exception> exceptionConsumer) {
 		this.batchBackend = batchBackend;
 		this.entityClass = entityClass;
 		this.entityIndexBinding = entityIndexBinding;
@@ -127,7 +128,7 @@ public class ObjectHandlerTask implements Runnable {
 			}
 			finally {
 				if ( entityProvider != null ) {
-					this.entityManagerDisposer.accept( entityProvider );
+					this.entityManagerDisposer.accept( this, entityProvider );
 				}
 			}
 		}
