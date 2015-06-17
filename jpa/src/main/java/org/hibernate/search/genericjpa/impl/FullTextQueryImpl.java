@@ -121,6 +121,7 @@ final class FullTextQueryImpl implements FullTextQuery {
 		this.hsearchQuery.disableFullTextFilter( name );
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public List getResultList() {
 		try {
@@ -151,7 +152,6 @@ final class FullTextQueryImpl implements FullTextQuery {
 		return this.hsearchQuery.toString();
 	}
 
-	@SuppressWarnings({ "ThrowableInstanceNeverThrown" })
 	private void throwPersistenceException(Exception e) {
 		throwPersistenceException( new PersistenceException( e ) );
 	}
@@ -167,6 +167,7 @@ final class FullTextQueryImpl implements FullTextQuery {
 	@SuppressWarnings({ "unchecked" })
 	public Object getSingleResult() {
 		try {
+			@SuppressWarnings("rawtypes")
 			List result;
 			if ( this.projection == null ) {
 				result = this.hsearchQuery.query( this.entityProvider, this.getFetch() );
@@ -178,6 +179,7 @@ final class FullTextQueryImpl implements FullTextQuery {
 				throwPersistenceException( new NoResultException( "No entity found for query" ) );
 			}
 			else if ( result.size() > 1 ) {
+				@SuppressWarnings("rawtypes")
 				Set uniqueResult = new HashSet( result );
 				if ( uniqueResult.size() > 1 ) {
 					throwPersistenceException( new NonUniqueResultException( "result returns " + uniqueResult.size() + " elements" ) );
@@ -185,7 +187,6 @@ final class FullTextQueryImpl implements FullTextQuery {
 				else {
 					return uniqueResult.iterator().next();
 				}
-
 			}
 			else {
 				return result.get( 0 );

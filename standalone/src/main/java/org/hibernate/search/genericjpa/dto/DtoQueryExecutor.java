@@ -7,9 +7,9 @@
 package org.hibernate.search.genericjpa.dto;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.hibernate.search.genericjpa.dto.DtoDescriptor.DtoDescription;
@@ -28,7 +28,7 @@ public class DtoQueryExecutor {
 	private final DtoDescriptor dtoDescriptor;
 
 	public DtoQueryExecutor() {
-		this.dtoDescriptions = new HashMap<>();
+		this.dtoDescriptions = new ConcurrentHashMap<>();
 		this.dtoDescriptor = new DtoDescriptorImpl();
 	}
 
@@ -37,7 +37,6 @@ public class DtoQueryExecutor {
 	}
 
 	public <T> List<T> executeHSQuery(HSQuery hsQuery, Class<T> returnedType, String profile) {
-
 		DtoDescription desc = this.dtoDescriptions.computeIfAbsent( returnedType, (clazz_) -> {
 			return this.dtoDescriptor.getDtoDescription( clazz_ );
 		} );

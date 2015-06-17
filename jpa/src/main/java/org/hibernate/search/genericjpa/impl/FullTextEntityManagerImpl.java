@@ -173,7 +173,7 @@ final class FullTextEntityManagerImpl implements FullTextEntityManager, Serializ
 		return this.em.createNamedStoredProcedureQuery( arg0 );
 	}
 
-	public Query createNativeQuery(String arg0, Class arg1) {
+	public Query createNativeQuery(String arg0, @SuppressWarnings("rawtypes") Class arg1) {
 		return this.em.createNativeQuery( arg0, arg1 );
 	}
 
@@ -185,7 +185,7 @@ final class FullTextEntityManagerImpl implements FullTextEntityManager, Serializ
 		return this.em.createNativeQuery( arg0 );
 	}
 
-	public Query createQuery(CriteriaDelete arg0) {
+	public Query createQuery(@SuppressWarnings("rawtypes") CriteriaDelete arg0) {
 		return this.em.createQuery( arg0 );
 	}
 
@@ -193,7 +193,7 @@ final class FullTextEntityManagerImpl implements FullTextEntityManager, Serializ
 		return this.em.createQuery( arg0 );
 	}
 
-	public Query createQuery(CriteriaUpdate arg0) {
+	public Query createQuery(@SuppressWarnings("rawtypes") CriteriaUpdate arg0) {
 		return this.em.createQuery( arg0 );
 	}
 
@@ -205,7 +205,7 @@ final class FullTextEntityManagerImpl implements FullTextEntityManager, Serializ
 		return this.em.createQuery( arg0 );
 	}
 
-	public StoredProcedureQuery createStoredProcedureQuery(String arg0, Class... arg1) {
+	public StoredProcedureQuery createStoredProcedureQuery(String arg0, @SuppressWarnings("rawtypes") Class... arg1) {
 		return this.em.createStoredProcedureQuery( arg0, arg1 );
 	}
 

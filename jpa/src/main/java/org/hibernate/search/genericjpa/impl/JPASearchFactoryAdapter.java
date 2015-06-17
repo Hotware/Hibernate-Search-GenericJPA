@@ -315,6 +315,7 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 		this.searchFactory.purgeByTerm( entityClass, val, tc );
 	}
 
+	@Deprecated
 	@Override
 	public void purge(Class<?> entityClass, Query query, TransactionContext tc) {
 		this.searchFactory.purge( entityClass, query, tc );
