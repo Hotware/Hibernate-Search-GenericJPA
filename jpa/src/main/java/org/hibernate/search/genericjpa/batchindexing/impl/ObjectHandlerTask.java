@@ -104,7 +104,10 @@ public class ObjectHandlerTask implements Runnable {
 
 					ContextualExceptionBridgeHelper conversionContext = new ContextualExceptionBridgeHelper();
 					for ( Object id : ids ) {
-						this.index( idsToEntities.get( id ), INITIALIZER, conversionContext );
+						Object obj = idsToEntities.get( id );
+						if(obj != null) {
+							this.index( obj, INITIALIZER, conversionContext );
+						}
 					}
 
 					// monitor our progress

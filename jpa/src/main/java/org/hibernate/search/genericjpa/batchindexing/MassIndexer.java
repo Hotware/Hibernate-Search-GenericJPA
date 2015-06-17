@@ -36,8 +36,6 @@ public interface MassIndexer {
 
 	MassIndexer executorServiceForObjects(ExecutorService executorServiceForObjects);
 
-	MassIndexer createNewIdEntityManagerAfter(int createNewIdEntityManagerAfter);
-
 	MassIndexer progressMonitor(MassIndexerProgressMonitor progressMonitor);
 
 	MassIndexer entityProvider(EntityProvider entityProvider);

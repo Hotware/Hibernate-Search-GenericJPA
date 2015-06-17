@@ -62,18 +62,14 @@ public class IdProducerTask implements Runnable {
 	@Override
 	public void run() {
 		try {
-			if ( this.count == 0 ) {
-				throw new AssertionFailure( "count can not be equal to 0" );
-			}
 			if ( this.totalCount == 0 ) {
 				throw new AssertionFailure( "totalCount can not be equal to 0" );
 			}
 			long position = this.startingPosition;
-			long processed = 0;
 			EntityManager em = this.emf.createEntityManager();
 			try {
 				JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useUserTransaction );
-				while ( processed < this.count && position < this.totalCount && !Thread.currentThread().isInterrupted() ) {
+				while ( position < this.totalCount && !Thread.currentThread().isInterrupted() ) {
 					tx.begin();
 					try {
 						Query query = em.createQuery( new StringBuilder().append( "SELECT obj." ).append( this.idProperty ).append( " FROM " )
@@ -89,7 +85,6 @@ public class IdProducerTask implements Runnable {
 							this.progressMonitor.accept( this.entityClass, ids.size() );
 						}
 
-						processed += ids.size();
 						position += ids.size();
 						tx.commit();
 					}

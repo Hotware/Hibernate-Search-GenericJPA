@@ -77,7 +77,6 @@ public class MassIndexerTest {
 
 		this.massIndexer.threadsToLoadObjects( 15 );
 		this.massIndexer.batchSizeToLoadObjects( 100 );
-		this.massIndexer.createNewIdEntityManagerAfter( 100 );
 		long pre = System.currentTimeMillis();
 		try {
 			this.massIndexer.startAndWait();
@@ -102,7 +101,7 @@ public class MassIndexerTest {
 	@Test
 	public void testFromSearchFactory() {
 		try {
-			this.searchFactory.createMassIndexer().threadsToLoadObjects( 15 ).batchSizeToLoadObjects( 100 ).createNewIdEntityManagerAfter( 100 ).startAndWait();
+			this.searchFactory.createMassIndexer().threadsToLoadObjects( 15 ).batchSizeToLoadObjects( 100 ).startAndWait();
 		}
 		catch (InterruptedException e) {
 			throw new SearchException( e );

@@ -75,7 +75,6 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 	private int batchSizeToLoadObjects = 10;
 	private int threadsToLoadIds = 2;
 	private int threadsToLoadObjects = 4;
-	private int createNewIdEntityManagerAfter = 1000;
 
 	private boolean createdOwnExecutorServiceForIds = false;
 	private boolean createdOwnExecutorServiceForObjects = false;
@@ -188,12 +187,6 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 	}
 
 	@Override
-	public MassIndexer createNewIdEntityManagerAfter(int createNewIdEntityManagerAfter) {
-		this.createNewIdEntityManagerAfter = createNewIdEntityManagerAfter;
-		return this;
-	}
-
-	@Override
 	public Future<?> start() {
 		if ( this.started ) {
 			throw new AssertionFailure( "already started this instance of MassIndexer once!" );
@@ -263,18 +256,13 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 			long totalCount = this.getTotalCount( rootClass );
 			// FIXME: hacky casts...
 			this.latches.put( rootClass, new CountDownLatch( (int) totalCount ) );
-			long perTask = this.createNewIdEntityManagerAfter;
 			long startingPosition = 0;
-			while ( startingPosition < totalCount ) {
-				IdProducerTask idProducer = new IdProducerTask( rootClass, this.idProperties.get( rootClass ), this.emf, this.useUserTransaction,
-						this.batchSizeToLoadIds, this.batchSizeToLoadObjects, this, this.purgeAllOnStart, this.optimizeAfterPurge, this::onException );
-				idProducer.count( perTask );
-				idProducer.totalCount( totalCount );
-				idProducer.startingPosition( startingPosition );
-				idProducer.progressMonitor( this::idProgress );
-				this.idProducerFutures.add( this.executorServiceForIds.submit( idProducer ) );
-				startingPosition += perTask;
-			}
+			IdProducerTask idProducer = new IdProducerTask( rootClass, this.idProperties.get( rootClass ), this.emf, this.useUserTransaction,
+					this.batchSizeToLoadIds, this.batchSizeToLoadObjects, this, this.purgeAllOnStart, this.optimizeAfterPurge, this::onException );
+			idProducer.totalCount( totalCount );
+			idProducer.startingPosition( startingPosition );
+			idProducer.progressMonitor( this::idProgress );
+			this.idProducerFutures.add( this.executorServiceForIds.submit( idProducer ) );
 		}
 		this.future = this.getFuture();
 		new Thread( "MassIndexer cleanup/finisher thread" ) {
@@ -421,6 +409,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 				return;
 			}
 			try {
+				// check if we should wait with submitting
 				this.objectHandlerTaskCondition.check();
 			}
 			catch (InterruptedException e) {
