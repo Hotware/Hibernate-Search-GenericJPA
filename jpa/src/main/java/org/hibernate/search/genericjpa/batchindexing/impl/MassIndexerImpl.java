@@ -6,6 +6,7 @@
  */
 package org.hibernate.search.genericjpa.batchindexing.impl;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -44,8 +45,9 @@ import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.genericjpa.batchindexing.MassIndexer;
 import org.hibernate.search.genericjpa.batchindexing.MassIndexerProgressMonitor;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
-import org.hibernate.search.genericjpa.entity.JPAReusableEntityProvider;
+import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
+import org.hibernate.search.genericjpa.entity.TransactionWrappedEntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
@@ -84,7 +86,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
 	private Future<Void> future;
 
-	private ConcurrentLinkedQueue<JPAReusableEntityProvider> entityProviders = new ConcurrentLinkedQueue<>();
+	private ConcurrentLinkedQueue<EntityManagerEntityProvider> entityProviders = new ConcurrentLinkedQueue<>();
 
 	private MassIndexerProgressMonitor progressMonitor;
 	private final ConcurrentHashMap<Class<?>, AtomicInteger> idProgress = new ConcurrentHashMap<>();
@@ -483,10 +485,9 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
 	private EntityProvider getEntityProvider() {
 		if ( this.userSpecifiedEntityProvider == null ) {
-			JPAReusableEntityProvider em = this.entityProviders.poll();
+			EntityManagerEntityProvider em = this.entityProviders.poll();
 			if ( em == null ) {
-				em = new JPAReusableEntityProvider( this.emf, this.idProperties, this.useUserTransaction );
-				em.open();
+				em = new TransactionWrappedEntityManagerEntityProvider( this.emf.createEntityManager(), this.idProperties, this.useUserTransaction );
 			}
 			return em;
 		}
@@ -495,8 +496,8 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
 	private void disposeEntityManager(ObjectHandlerTask task, EntityProvider provider) {
 		if ( this.userSpecifiedEntityProvider == null ) {
-			( (JPAReusableEntityProvider) provider ).clearEm();
-			this.entityProviders.add( (JPAReusableEntityProvider) provider );
+			( (TransactionWrappedEntityManagerEntityProvider) provider ).clearEm();
+			this.entityProviders.add( (EntityManagerEntityProvider) provider );
 		}
 		this.objectHandlerTaskCondition.down( task.batch.size() );
 	}
@@ -517,7 +518,12 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
 	private void closeAllOpenEntityManagers() {
 		while ( this.entityProviders.size() > 0 ) {
-			this.entityProviders.remove().close();
+			try {
+				this.entityProviders.remove().close();
+			}
+			catch (IOException e) {
+				LOGGER.log( Level.WARNING, "Exception while closing EntityManagers", e );
+			}
 		}
 	}
 

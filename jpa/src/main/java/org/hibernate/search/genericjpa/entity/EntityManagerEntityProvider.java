@@ -21,8 +21,7 @@ public class EntityManagerEntityProvider implements EntityProvider {
 	private final EntityManager em;
 	private final Map<Class<?>, String> idProperties;
 
-	private static final String QUERY_FORMAT = "SELECT obj FROM %s obj "
-			+ "WHERE obj.%s IN :ids";
+	private static final String QUERY_FORMAT = "SELECT obj FROM %s obj " + "WHERE obj.%s IN :ids";
 
 	// TODO: add support for fetch profiles?
 
@@ -47,12 +46,20 @@ public class EntityManagerEntityProvider implements EntityProvider {
 		List<Object> ret = new ArrayList<>( ids.size() );
 		if ( ids.size() > 0 ) {
 			String idProperty = this.idProperties.get( entityClass );
-			String queryString = String.format(QUERY_FORMAT, this.em.getMetamodel().entity( entityClass ).getName(), idProperty);
-			Query query = this.em.createQuery( queryString );	
+			String queryString = String.format( QUERY_FORMAT, this.em.getMetamodel().entity( entityClass ).getName(), idProperty );
+			Query query = this.em.createQuery( queryString );
 			query.setParameter( "ids", ids );
 			ret.addAll( query.getResultList() );
 		}
 		return ret;
 	}
+
+	public void clearEm() {
+		this.em.clear();
+	}
 	
+	public EntityManager getEm() {
+		return this.em;
+	}
+
 }

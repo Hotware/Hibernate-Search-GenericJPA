@@ -56,14 +56,15 @@ public class ObjectHandlerTask implements Runnable {
 
 	private static final InstanceInitializer INITIALIZER = SubClassSupportInstanceInitializer.INSTANCE;
 
-	public ObjectHandlerTask(BatchBackend batchBackend, Class<?> entityClass, EntityIndexBinding entityIndexBinding, Supplier<EntityProvider> emProvider,
-			BiConsumer<ObjectHandlerTask, EntityProvider> entityManagerDisposer, PersistenceUnitUtil peristenceUnitUtil) {
+	public ObjectHandlerTask(BatchBackend batchBackend, Class<?> entityClass, EntityIndexBinding entityIndexBinding,
+			Supplier<EntityProvider> emProvider, BiConsumer<ObjectHandlerTask, EntityProvider> entityManagerDisposer,
+			PersistenceUnitUtil peristenceUnitUtil) {
 		this( batchBackend, entityClass, entityIndexBinding, emProvider, entityManagerDisposer, peristenceUnitUtil, null, null );
 	}
 
-	public ObjectHandlerTask(BatchBackend batchBackend, Class<?> entityClass, EntityIndexBinding entityIndexBinding, Supplier<EntityProvider> emProvider,
-			BiConsumer<ObjectHandlerTask, EntityProvider> entityManagerDisposer, PersistenceUnitUtil peristenceUnitUtil, CountDownLatch latch,
-			Consumer<Exception> exceptionConsumer) {
+	public ObjectHandlerTask(BatchBackend batchBackend, Class<?> entityClass, EntityIndexBinding entityIndexBinding,
+			Supplier<EntityProvider> emProvider, BiConsumer<ObjectHandlerTask, EntityProvider> entityManagerDisposer,
+			PersistenceUnitUtil peristenceUnitUtil, CountDownLatch latch, Consumer<Exception> exceptionConsumer) {
 		this.batchBackend = batchBackend;
 		this.entityClass = entityClass;
 		this.entityIndexBinding = entityIndexBinding;
