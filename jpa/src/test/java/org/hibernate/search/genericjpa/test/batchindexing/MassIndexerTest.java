@@ -77,6 +77,7 @@ public class MassIndexerTest {
 
 		this.massIndexer.threadsToLoadObjects( 15 );
 		this.massIndexer.batchSizeToLoadObjects( 100 );
+		this.massIndexer.batchSizeToLoadIds( 500 );
 		long pre = System.currentTimeMillis();
 		try {
 			this.massIndexer.startAndWait();

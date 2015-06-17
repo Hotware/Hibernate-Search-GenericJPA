@@ -20,9 +20,12 @@ public class NumberCondition {
 
 	private final int lockCount;
 	private int count = 0;
-	
+
 	private boolean disable;
 
+	/**
+	 * @param lockCount the value that has to be met (or higher) for the check method to block
+	 */
 	public NumberCondition(int lockCount) {
 		this.lockCount = lockCount;
 	}
@@ -40,7 +43,7 @@ public class NumberCondition {
 	public void down(int down) {
 		this.lock.lock();
 		try {
-			while(--down >= 0) {
+			while ( --down >= 0 ) {
 				if ( --this.count < this.lockCount ) {
 					this.condition.signal();
 				}
@@ -62,7 +65,7 @@ public class NumberCondition {
 			this.lock.unlock();
 		}
 	}
-	
+
 	public void disable() {
 		this.lock.lock();
 		try {
