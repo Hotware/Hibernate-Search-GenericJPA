@@ -172,7 +172,8 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 
 	@Override
 	public FullTextEntityManager getFullTextEntityManager(EntityManager em) {
-		if ( em instanceof FullTextEntityManager ) {
+		// em may be null for when we don't need an EntityManager
+		if ( em != null && em instanceof FullTextEntityManager ) {
 			return (FullTextEntityManager) em;
 		}
 		else {
@@ -196,7 +197,7 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 	public MassIndexer createMassIndexer() {
 		return this.createMassIndexer( this.indexRootTypes );
 	}
-	
+
 	public ExtendedSearchIntegrator getSearchIntegrator() {
 		return this.searchIntegrator;
 	}
@@ -287,6 +288,31 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 	@Override
 	public void purge(Iterable<?> entities, TransactionContext tc) {
 		this.searchFactory.purge( entities, tc );
+	}
+
+	@Override
+	public void purgeByTerm(Class<?> entityClass, Integer val, TransactionContext tc) {
+		this.searchFactory.purgeByTerm( entityClass, val, tc );
+	}
+
+	@Override
+	public void purgeByTerm(Class<?> entityClass, Long val, TransactionContext tc) {
+		this.searchFactory.purgeByTerm( entityClass, val, tc );
+	}
+
+	@Override
+	public void purgeByTerm(Class<?> entityClass, Float val, TransactionContext tc) {
+		this.searchFactory.purgeByTerm( entityClass, val, tc );
+	}
+
+	@Override
+	public void purgeByTerm(Class<?> entityClass, Double val, TransactionContext tc) {
+		this.searchFactory.purgeByTerm( entityClass, val, tc );
+	}
+
+	@Override
+	public void purgeByTerm(Class<?> entityClass, String val, TransactionContext tc) {
+		this.searchFactory.purgeByTerm( entityClass, val, tc );
 	}
 
 	@Override

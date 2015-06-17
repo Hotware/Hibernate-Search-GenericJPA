@@ -15,6 +15,7 @@ import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
+import org.hibernate.search.backend.spi.SingularTermDeletionQuery;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.backend.spi.Worker;
@@ -169,6 +170,42 @@ public class StandaloneSearchFactoryImpl implements StandaloneSearchFactory {
 	@Override
 	public void flushToIndexes(TransactionContext tc) {
 		this.searchIntegrator.getWorker().flushWorks( tc );
+	}
+	
+	//FIXME: implement this!
+
+	@Override
+	public void purgeByTerm(Class<?> entityClass, Integer val, TransactionContext tc) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void purgeByTerm(Class<?> entityClass, Long val, TransactionContext tc) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void purgeByTerm(Class<?> entityClass, Float val, TransactionContext tc) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void purgeByTerm(Class<?> entityClass, Double val, TransactionContext tc) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void purgeByTerm(Class<?> entityClass, String val, TransactionContext tc) {
+		// TODO Auto-generated method stub
+
+	}
+
+	private void purgeByTerm(Class<?> entityClass, Object val, SingularTermDeletionQuery.Type type) {
+
 	}
 
 }

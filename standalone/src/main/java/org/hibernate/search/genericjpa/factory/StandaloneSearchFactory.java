@@ -90,6 +90,18 @@ public interface StandaloneSearchFactory extends org.hibernate.search.SearchFact
 	 */
 	@Deprecated
 	void purge(Class<?> entityClass, Query query, TransactionContext tc);
+	
+	//FIXME: defaults!!
+
+	void purgeByTerm(Class<?> entityClass, Integer val, TransactionContext tc);
+
+	void purgeByTerm(Class<?> entityClass, Long val, TransactionContext tc);
+
+	void purgeByTerm(Class<?> entityClass, Float val, TransactionContext tc);
+
+	void purgeByTerm(Class<?> entityClass, Double val, TransactionContext tc);
+
+	void purgeByTerm(Class<?> entityClass, String val, TransactionContext tc);
 
 	// same names
 
