@@ -109,6 +109,46 @@ final class FullTextEntityManagerImpl implements FullTextEntityManager, Serializ
 	}
 
 	@Override
+	public <T> void purgeByTerm(Class<T> entityType, String field, Integer val) {
+		if ( !this.isTransactionInProgress() ) {
+			throw new IllegalStateException( "no search transaction is in progress!" );
+		}
+		this.searchFactory.purgeByTerm( entityType, field, val );
+	}
+
+	@Override
+	public <T> void purgeByTerm(Class<T> entityType, String field, Long val) {
+		if ( !this.isTransactionInProgress() ) {
+			throw new IllegalStateException( "no search transaction is in progress!" );
+		}
+		this.searchFactory.purgeByTerm( entityType, field, val );
+	}
+
+	@Override
+	public <T> void purgeByTerm(Class<T> entityType, String field, Float val) {
+		if ( !this.isTransactionInProgress() ) {
+			throw new IllegalStateException( "no search transaction is in progress!" );
+		}
+		this.searchFactory.purgeByTerm( entityType, field, val );
+	}
+
+	@Override
+	public <T> void purgeByTerm(Class<T> entityType, String field, Double val) {
+		if ( !this.isTransactionInProgress() ) {
+			throw new IllegalStateException( "no search transaction is in progress!" );
+		}
+		this.searchFactory.purgeByTerm( entityType, field, val );
+	}
+
+	@Override
+	public <T> void purgeByTerm(Class<T> entityType, String field, String val) {
+		if ( !this.isTransactionInProgress() ) {
+			throw new IllegalStateException( "no search transaction is in progress!" );
+		}
+		this.searchFactory.purgeByTerm( entityType, field, val );
+	}
+
+	@Override
 	public void flushToIndexes() {
 		if ( !this.isTransactionInProgress() ) {
 			throw new IllegalStateException( "no search transaction is in progress!" );
@@ -130,10 +170,11 @@ final class FullTextEntityManagerImpl implements FullTextEntityManager, Serializ
 
 	@Override
 	public MassIndexer createIndexer(Class<?>... types) {
-		if(types == null || types.length == 0) {
+		if ( types == null || types.length == 0 ) {
 			return this.searchFactory.createMassIndexer();
-		} else {
-			return this.searchFactory.createMassIndexer( Arrays.asList(types) );
+		}
+		else {
+			return this.searchFactory.createMassIndexer( Arrays.asList( types ) );
 		}
 	}
 

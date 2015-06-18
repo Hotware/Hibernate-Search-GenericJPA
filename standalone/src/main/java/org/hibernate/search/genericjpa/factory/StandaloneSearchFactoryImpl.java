@@ -15,6 +15,7 @@ import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
+import org.hibernate.search.backend.spi.DeleteByQueryWork;
 import org.hibernate.search.backend.spi.SingularTermDeletionQuery;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
@@ -171,41 +172,35 @@ public class StandaloneSearchFactoryImpl implements StandaloneSearchFactory {
 	public void flushToIndexes(TransactionContext tc) {
 		this.searchIntegrator.getWorker().flushWorks( tc );
 	}
-	
-	//FIXME: implement this!
 
+	// FIXME: implement this!
 	@Override
-	public void purgeByTerm(Class<?> entityClass, Integer val, TransactionContext tc) {
-		// TODO Auto-generated method stub
-
+	public void purgeByTerm(Class<?> entityClass, String field, Integer val, TransactionContext tc) {
+		this.purgeByTerm( entityClass, field, val, SingularTermDeletionQuery.Type.INT, tc );
 	}
 
 	@Override
-	public void purgeByTerm(Class<?> entityClass, Long val, TransactionContext tc) {
-		// TODO Auto-generated method stub
-
+	public void purgeByTerm(Class<?> entityClass, String field, Long val, TransactionContext tc) {
+		this.purgeByTerm( entityClass, field, val, SingularTermDeletionQuery.Type.LONG, tc );
 	}
 
 	@Override
-	public void purgeByTerm(Class<?> entityClass, Float val, TransactionContext tc) {
-		// TODO Auto-generated method stub
-
+	public void purgeByTerm(Class<?> entityClass, String field, Float val, TransactionContext tc) {
+		this.purgeByTerm( entityClass, field, val, SingularTermDeletionQuery.Type.FLOAT, tc );
 	}
 
 	@Override
-	public void purgeByTerm(Class<?> entityClass, Double val, TransactionContext tc) {
-		// TODO Auto-generated method stub
-
+	public void purgeByTerm(Class<?> entityClass, String field, Double val, TransactionContext tc) {
+		this.purgeByTerm( entityClass, field, val, SingularTermDeletionQuery.Type.DOUBLE, tc );
 	}
 
 	@Override
-	public void purgeByTerm(Class<?> entityClass, String val, TransactionContext tc) {
-		// TODO Auto-generated method stub
-
+	public void purgeByTerm(Class<?> entityClass, String field, String val, TransactionContext tc) {
+		this.purgeByTerm( entityClass, field, val, SingularTermDeletionQuery.Type.STRING, tc );
 	}
 
-	private void purgeByTerm(Class<?> entityClass, Object val, SingularTermDeletionQuery.Type type) {
-
+	private void purgeByTerm(Class<?> entityClass, String field, Object val, SingularTermDeletionQuery.Type type, TransactionContext tc) {
+		this.searchIntegrator.getWorker().performWork( new DeleteByQueryWork( entityClass, new SingularTermDeletionQuery( field, val, type ) ), tc );
 	}
 
 }

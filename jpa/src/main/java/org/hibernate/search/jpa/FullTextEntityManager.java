@@ -72,6 +72,16 @@ public interface FullTextEntityManager extends EntityManager {
 	 */
 	<T> void purgeAll(Class<T> entityType);
 
+	<T> void purgeByTerm(Class<T> entityType, String field, Integer val);
+
+	<T> void purgeByTerm(Class<T> entityType, String field, Long val);
+
+	<T> void purgeByTerm(Class<T> entityType, String field, Float val);
+
+	<T> void purgeByTerm(Class<T> entityType, String field, Double val);
+
+	<T> void purgeByTerm(Class<T> entityType, String field, String val);
+
 	/**
 	 * Flush all index changes forcing Hibernate Search to apply all changes to the index not waiting for the batch
 	 * limit.

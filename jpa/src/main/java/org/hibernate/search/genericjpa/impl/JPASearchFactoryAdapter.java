@@ -291,28 +291,28 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 	}
 
 	@Override
-	public void purgeByTerm(Class<?> entityClass, Integer val, TransactionContext tc) {
-		this.searchFactory.purgeByTerm( entityClass, val, tc );
+	public void purgeByTerm(Class<?> entityClass, String field, Integer val, TransactionContext tc) {
+		searchFactory.purgeByTerm( entityClass, field, val, tc );
 	}
 
 	@Override
-	public void purgeByTerm(Class<?> entityClass, Long val, TransactionContext tc) {
-		this.searchFactory.purgeByTerm( entityClass, val, tc );
+	public void purgeByTerm(Class<?> entityClass, String field, Long val, TransactionContext tc) {
+		searchFactory.purgeByTerm( entityClass, field, val, tc );
 	}
 
 	@Override
-	public void purgeByTerm(Class<?> entityClass, Float val, TransactionContext tc) {
-		this.searchFactory.purgeByTerm( entityClass, val, tc );
+	public void purgeByTerm(Class<?> entityClass, String field, Float val, TransactionContext tc) {
+		searchFactory.purgeByTerm( entityClass, field, val, tc );
 	}
 
 	@Override
-	public void purgeByTerm(Class<?> entityClass, Double val, TransactionContext tc) {
-		this.searchFactory.purgeByTerm( entityClass, val, tc );
+	public void purgeByTerm(Class<?> entityClass, String field, Double val, TransactionContext tc) {
+		searchFactory.purgeByTerm( entityClass, field, val, tc );
 	}
 
 	@Override
-	public void purgeByTerm(Class<?> entityClass, String val, TransactionContext tc) {
-		this.searchFactory.purgeByTerm( entityClass, val, tc );
+	public void purgeByTerm(Class<?> entityClass, String field, String val, TransactionContext tc) {
+		searchFactory.purgeByTerm( entityClass, field, val, tc );
 	}
 
 	@Deprecated

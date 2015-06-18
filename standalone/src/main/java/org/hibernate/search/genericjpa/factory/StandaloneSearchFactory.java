@@ -73,6 +73,7 @@ public interface StandaloneSearchFactory extends org.hibernate.search.SearchFact
 	/**
 	 * this first queries for all matching documents and then deletes them by their id
 	 */
+	@Deprecated
 	default void purge(Class<?> entityClass, Query query) {
 		Transaction tc = new Transaction();
 		try {
@@ -90,18 +91,76 @@ public interface StandaloneSearchFactory extends org.hibernate.search.SearchFact
 	 */
 	@Deprecated
 	void purge(Class<?> entityClass, Query query, TransactionContext tc);
-	
-	//FIXME: defaults!!
 
-	void purgeByTerm(Class<?> entityClass, Integer val, TransactionContext tc);
+	void purgeByTerm(Class<?> entityClass, String field, Integer val, TransactionContext tc);
 
-	void purgeByTerm(Class<?> entityClass, Long val, TransactionContext tc);
+	default void purgeByTerm(Class<?> entityClass, String field, Integer val) {
+		Transaction tc = new Transaction();
+		try {
+			this.purgeByTerm( entityClass, field, val, tc );
+			tc.commit();
+		}
+		catch (Exception e) {
+			tc.rollback();
+			throw e;
+		}
+	}
 
-	void purgeByTerm(Class<?> entityClass, Float val, TransactionContext tc);
+	void purgeByTerm(Class<?> entityClass, String field, Long val, TransactionContext tc);
 
-	void purgeByTerm(Class<?> entityClass, Double val, TransactionContext tc);
+	default void purgeByTerm(Class<?> entityClass, String field, Long val) {
+		Transaction tc = new Transaction();
+		try {
+			this.purgeByTerm( entityClass, field, val, tc );
+			tc.commit();
+		}
+		catch (Exception e) {
+			tc.rollback();
+			throw e;
+		}
+	}
 
-	void purgeByTerm(Class<?> entityClass, String val, TransactionContext tc);
+	void purgeByTerm(Class<?> entityClass, String field, Float val, TransactionContext tc);
+
+	default void purgeByTerm(Class<?> entityClass, String field, Float val) {
+		Transaction tc = new Transaction();
+		try {
+			this.purgeByTerm( entityClass, field, val, tc );
+			tc.commit();
+		}
+		catch (Exception e) {
+			tc.rollback();
+			throw e;
+		}
+	}
+
+	void purgeByTerm(Class<?> entityClass, String field, Double val, TransactionContext tc);
+
+	default void purgeByTerm(Class<?> entityClass, String field, Double val) {
+		Transaction tc = new Transaction();
+		try {
+			this.purgeByTerm( entityClass, field, val, tc );
+			tc.commit();
+		}
+		catch (Exception e) {
+			tc.rollback();
+			throw e;
+		}
+	}
+
+	void purgeByTerm(Class<?> entityClass, String field, String val, TransactionContext tc);
+
+	default void purgeByTerm(Class<?> entityClass, String field, String val) {
+		Transaction tc = new Transaction();
+		try {
+			this.purgeByTerm( entityClass, field, val, tc );
+			tc.commit();
+		}
+		catch (Exception e) {
+			tc.rollback();
+			throw e;
+		}
+	}
 
 	// same names
 
