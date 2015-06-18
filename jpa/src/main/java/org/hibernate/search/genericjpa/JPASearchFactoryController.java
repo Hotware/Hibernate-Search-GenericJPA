@@ -11,6 +11,7 @@ import java.io.Closeable;
 import javax.persistence.EntityManager;
 
 import org.hibernate.search.SearchFactory;
+import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.jpa.FullTextEntityManager;
 
 /**
@@ -25,5 +26,9 @@ public interface JPASearchFactoryController extends Closeable {
 	void pauseUpdating(boolean pause);
 
 	FullTextEntityManager getFullTextEntityManager(EntityManager em);
+
+	void addUpdateConsumer(UpdateConsumer updateConsumer);
+
+	void removeUpdateConsumer(UpdateConsumer updateConsumer);
 
 }

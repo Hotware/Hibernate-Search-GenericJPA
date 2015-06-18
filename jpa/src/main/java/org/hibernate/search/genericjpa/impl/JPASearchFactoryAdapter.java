@@ -12,12 +12,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.persistence.EntityManager;
@@ -69,7 +73,6 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 	private final String name;
 	private final EntityManagerFactory emf;
 	private final Properties properties;
-	private final UpdateConsumer updateConsumer;
 	private final ScheduledExecutorService exec;
 	private final UpdateSourceProvider updateSourceProvider;
 	private final List<Class<?>> indexRootTypes;
@@ -83,25 +86,37 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 	private Map<Class<?>, List<Class<?>>> containedInIndexOf;
 	private ExtendedSearchIntegrator searchIntegrator;
 
+	private final Set<UpdateConsumer> updateConsumers = new HashSet<>();
+	private final Lock lock = new ReentrantLock();
+
 	@SuppressWarnings("unchecked")
 	public JPASearchFactoryAdapter(String name, EntityManagerFactory emf, boolean useUserTransaction, List<Class<?>> indexRootTypes,
-			@SuppressWarnings("rawtypes") Map properties, UpdateConsumer updateConsumer, ScheduledExecutorService exec,
-			UpdateSourceProvider updateSourceProvider) {
+			@SuppressWarnings("rawtypes") Map properties, ScheduledExecutorService exec, UpdateSourceProvider updateSourceProvider) {
 		this.name = name;
 		this.emf = emf;
 		this.useUserTransaction = useUserTransaction;
 		this.indexRootTypes = indexRootTypes;
 		this.properties = new Properties();
 		this.properties.putAll( properties );
-		this.updateConsumer = updateConsumer;
 		this.exec = exec;
 		this.updateSourceProvider = updateSourceProvider;
 	}
 
 	@Override
 	public void updateEvent(List<UpdateInfo> updateInfo) {
-		if ( this.updateConsumer != null ) {
-			this.updateConsumer.updateEvent( updateInfo );
+		this.lock.lock();
+		try {
+			for ( UpdateConsumer updateConsumer : this.updateConsumers ) {
+				try {
+					updateConsumer.updateEvent( updateInfo );
+				}
+				catch (Exception e) {
+					LOGGER.log(Level.WARNING, "Exception during notification of UpdateConsumers", e);
+				}
+			}
+		}
+		finally {
+			this.lock.unlock();
 		}
 	}
 
@@ -387,6 +402,28 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 
 	private boolean isUseUserTransaction() {
 		return this.useUserTransaction;
+	}
+
+	@Override
+	public void addUpdateConsumer(UpdateConsumer updateConsumer) {
+		this.lock.lock();
+		try {
+			this.updateConsumers.add( updateConsumer );
+		}
+		finally {
+			this.lock.unlock();
+		}
+	}
+
+	@Override
+	public void removeUpdateConsumer(UpdateConsumer updateConsumer) {
+		this.lock.lock();
+		try {
+			this.updateConsumers.remove( updateConsumer );
+		}
+		finally {
+			this.lock.unlock();
+		}
 	}
 
 }

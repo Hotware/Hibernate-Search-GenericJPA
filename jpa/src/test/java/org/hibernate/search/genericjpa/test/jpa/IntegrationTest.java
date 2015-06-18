@@ -210,7 +210,7 @@ public class IntegrationTest {
 		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.name", "test" );
 		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.triggerSource", MySQLTriggerSQLStringSource.class.getName() );
 		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.type", "manual-updates" );
-		this.searchFactory = (JPASearchFactoryAdapter) Setup.createUnmanagedSearchFactory( this.emf, properties, null );
+		this.searchFactory = (JPASearchFactoryAdapter) Setup.createUnmanagedSearchFactory( this.emf, properties );
 		EntityManager em = emf.createEntityManager();
 		try {
 			EntityTransaction tx = em.getTransaction();

@@ -8,14 +8,7 @@ package org.hibernate.search.genericjpa.ejb;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashSet;
 import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
@@ -40,8 +33,6 @@ import org.hibernate.search.jpa.FullTextEntityManager;
 @TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class EJBJPASearchFactoryController implements JPASearchFactoryController {
 
-	private static final Logger LOGGER = Logger.getLogger( EJBJPASearchFactoryController.class.getName() );
-
 	private static final String PROPERTIES_PATH = "/META-INF/hsearch.properties";
 
 	@Resource
@@ -52,41 +43,24 @@ public class EJBJPASearchFactoryController implements JPASearchFactoryController
 
 	private JPASearchFactoryController jpaSearchFactoryController;
 
-	private Set<UpdateConsumer> updateConsumers = new HashSet<>();
-
-	private final Lock lock = new ReentrantLock();
-
 	@PostConstruct
 	public void start() {
 		Properties properties = new Properties();
 		try (InputStream is = EJBJPASearchFactoryController.class.getResource( PROPERTIES_PATH ).openStream()) {
 			properties.load( is );
 		}
-		catch (IOException e) {
-			throw new SearchException( "couldn't load hibernate-search specific properties from: " + PROPERTIES_PATH );
+		catch (NullPointerException | IOException e) {
+			throw new SearchException( "couldn't load hibernate-search specific properties from: " + PROPERTIES_PATH, e );
 		}
-		this.jpaSearchFactoryController = Setup.createSearchFactory( this.emf, properties, (updateInfos) -> {
-			this.lock.lock();
-			try {
-				for ( UpdateConsumer consumer : this.updateConsumers ) {
-					try {
-						consumer.updateEvent( updateInfos );
-					}
-					catch (Exception e) {
-						LOGGER.log( Level.WARNING, "Exception in user-provided UpdateConsumer", e );
-					}
-				}
-			}
-			finally {
-				this.lock.unlock();
-			}
-		}, this.exec );
+		this.jpaSearchFactoryController = Setup.createSearchFactory( this.emf, properties, this.exec );
 	}
 
 	@PreDestroy
 	public void stop() {
 		try {
-			this.jpaSearchFactoryController.close();
+			if ( this.jpaSearchFactoryController != null ) {
+				this.jpaSearchFactoryController.close();
+			}
 		}
 		catch (IOException e) {
 			throw new SearchException( e );
@@ -94,22 +68,14 @@ public class EJBJPASearchFactoryController implements JPASearchFactoryController
 	}
 
 	public void addUpdateConsumer(UpdateConsumer updateConsumer) {
-		this.lock.lock();
-		try {
-			this.updateConsumers.add( updateConsumer );
-		}
-		finally {
-			this.lock.unlock();
+		if ( this.jpaSearchFactoryController != null ) {
+			this.jpaSearchFactoryController.addUpdateConsumer( updateConsumer );
 		}
 	}
 
 	public void removeUpdateConsumer(UpdateConsumer updateConsumer) {
-		this.lock.lock();
-		try {
-			this.updateConsumers.remove( updateConsumer );
-		}
-		finally {
-			this.lock.unlock();
+		if ( this.jpaSearchFactoryController != null ) {
+			this.jpaSearchFactoryController.removeUpdateConsumer( updateConsumer );
 		}
 	}
 

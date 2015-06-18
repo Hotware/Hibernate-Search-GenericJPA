@@ -18,7 +18,6 @@ import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.genericjpa.annotations.InIndex;
 import org.hibernate.search.genericjpa.annotations.Updates;
 import org.hibernate.search.genericjpa.db.events.TriggerSQLStringSource;
-import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
 import org.hibernate.search.genericjpa.impl.SQLJPAUpdateSourceProvider;
@@ -36,25 +35,15 @@ public final class Setup {
 	}
 
 	public static JPASearchFactoryController createUnmanagedSearchFactory(EntityManagerFactory emf) {
-		return createSearchFactory( emf, emf.getProperties(), null, null );
+		return createSearchFactory( emf, emf.getProperties(), null );
 	}
 
 	public static JPASearchFactoryController createUnmanagedSearchFactory(EntityManagerFactory emf, @SuppressWarnings("rawtypes") Map properties) {
-		return createSearchFactory( emf, properties, null, null );
-	}
-
-	public static JPASearchFactoryController createUnmanagedSearchFactory(EntityManagerFactory emf, UpdateConsumer updateConsumer) {
-		return createSearchFactory( emf, emf.getProperties(), updateConsumer, null );
-	}
-
-	public static JPASearchFactoryController createUnmanagedSearchFactory(EntityManagerFactory emf, @SuppressWarnings("rawtypes") Map properties,
-			UpdateConsumer updateConsumer) {
-		return createSearchFactory( emf, properties, updateConsumer, null );
+		return createSearchFactory( emf, properties, null );
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public static JPASearchFactoryController createSearchFactory(EntityManagerFactory emf, Map properties, UpdateConsumer updateConsumer,
-			ScheduledExecutorService exec) {
+	public static JPASearchFactoryController createSearchFactory(EntityManagerFactory emf, Map properties, ScheduledExecutorService exec) {
 		boolean useUserTransactions = Boolean.parseBoolean( (String) properties.getOrDefault( USE_USER_TRANSACTIONS_KEY, USE_USER_TRANSACTIONS_DEFAULT_VALUE ) );
 		if ( useUserTransactions ) {
 			if ( exec == null ) {
@@ -124,8 +113,7 @@ public final class Setup {
 			if ( useUserTransactions ) {
 				LOGGER.info( "using userTransactions" );
 			}
-			JPASearchFactoryAdapter ret = new JPASearchFactoryAdapter( name, emf, useUserTransactions, indexRootTypes, properties, updateConsumer, exec,
-					updateSourceProvider );
+			JPASearchFactoryAdapter ret = new JPASearchFactoryAdapter( name, emf, useUserTransactions, indexRootTypes, properties, exec, updateSourceProvider );
 			ret.setBatchSizeForUpdates( batchSizeForUpdates );
 			ret.setUpdateDelay( updateDelay );
 			ret.init();
