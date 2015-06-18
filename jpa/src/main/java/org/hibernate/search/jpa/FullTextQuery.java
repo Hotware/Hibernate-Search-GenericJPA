@@ -6,6 +6,7 @@
  */
 package org.hibernate.search.jpa;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.persistence.Query;
@@ -169,5 +170,7 @@ public interface FullTextQuery extends Query, ProjectionConstants {
 	FullTextQuery initializeObjectsWith(ObjectLookupMethod lookupMethod, DatabaseRetrievalMethod retrievalMethod);
 	
 	FullTextQuery entityProvider(EntityProvider entityProvider);
+	
+	<T> List<T> queryDto(Class<T> returnedType);
 
 }
