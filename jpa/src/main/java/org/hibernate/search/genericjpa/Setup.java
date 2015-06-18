@@ -23,6 +23,7 @@ import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
 import org.hibernate.search.genericjpa.impl.SQLJPAUpdateSourceProvider;
 import org.hibernate.search.genericjpa.impl.SearchFactoryRegistry;
+import org.hibernate.search.genericjpa.impl.UpdateSourceProvider;
 
 import static org.hibernate.search.genericjpa.Constants.*;
 
@@ -52,7 +53,8 @@ public final class Setup {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public static JPASearchFactoryController createSearchFactory(EntityManagerFactory emf, Map properties, UpdateConsumer updateConsumer, ScheduledExecutorService exec) {
+	public static JPASearchFactoryController createSearchFactory(EntityManagerFactory emf, Map properties, UpdateConsumer updateConsumer,
+			ScheduledExecutorService exec) {
 		boolean useUserTransactions = Boolean.parseBoolean( (String) properties.getOrDefault( USE_USER_TRANSACTIONS_KEY, USE_USER_TRANSACTIONS_DEFAULT_VALUE ) );
 		if ( useUserTransactions ) {
 			if ( exec == null ) {
@@ -100,25 +102,34 @@ public final class Setup {
 				throw new SearchException( "there is already a searchfactory running for name: " + name + ". close it first!" );
 			}
 
-			JPASearchFactoryAdapter ret = null;
+			UpdateSourceProvider updateSourceProvider;
 			if ( "sql".equals( type ) ) {
 				String triggerSource = (String) properties.get( TRIGGER_SOURCE_KEY );
 				Class<?> triggerSourceClass;
 				if ( triggerSource == null || ( triggerSourceClass = Class.forName( triggerSource ) ) == null ) {
 					throw new SearchException( "class specified in org.hibernate.search.genericjpa.searchfactory.triggerSource could not be found." );
 				}
-				if ( useUserTransactions ) {
-					LOGGER.info( "using userTransactions" );
-				}
-				ret = new JPASearchFactoryAdapter( name, emf, useUserTransactions, indexRootTypes, properties, updateConsumer, exec,
-						new SQLJPAUpdateSourceProvider( emf, useUserTransactions, (TriggerSQLStringSource) triggerSourceClass.newInstance(), updateClasses ) );
-				ret.setBatchSizeForUpdates( batchSizeForUpdates );
-				ret.setUpdateDelay( updateDelay );
-				ret.init();
+				updateSourceProvider = new SQLJPAUpdateSourceProvider( emf, useUserTransactions, (TriggerSQLStringSource) triggerSourceClass.newInstance(),
+						updateClasses );
+			}
+			else if ( "manual-updates".equals( type ) ) {
+				updateSourceProvider = (a, b, c, d) -> {
+					return null;
+				};
 			}
 			else {
 				throw new SearchException( "unrecognized type : " + type );
 			}
+
+			if ( useUserTransactions ) {
+				LOGGER.info( "using userTransactions" );
+			}
+			JPASearchFactoryAdapter ret = new JPASearchFactoryAdapter( name, emf, useUserTransactions, indexRootTypes, properties, updateConsumer, exec,
+					updateSourceProvider );
+			ret.setBatchSizeForUpdates( batchSizeForUpdates );
+			ret.setUpdateDelay( updateDelay );
+			ret.init();
+
 			SearchFactoryRegistry.setup( name, ret );
 			return ret;
 		}

@@ -209,8 +209,8 @@ public class IntegrationTest {
 		Properties properties = new Properties();
 		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.name", "test" );
 		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.triggerSource", MySQLTriggerSQLStringSource.class.getName() );
-		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.type", "sql" );
-		this.searchFactory = (JPASearchFactoryAdapter) Setup.createUnmanagedSearchFactory( emf, properties, null );
+		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.type", "manual-updates" );
+		this.searchFactory = (JPASearchFactoryAdapter) Setup.createUnmanagedSearchFactory( this.emf, properties, null );
 		EntityManager em = emf.createEntityManager();
 		try {
 			EntityTransaction tx = em.getTransaction();
@@ -263,6 +263,13 @@ public class IntegrationTest {
 			this.helmsDeepId = helmsDeep.getId();
 
 			em.flush();
+
+			FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( em );
+			fem.beginSearchTransaction();
+			fem.index( valinor );
+			fem.index( helmsDeep );
+			fem.commitSearchTransaction();
+
 			tx.commit();
 		}
 		finally {

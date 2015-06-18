@@ -59,8 +59,8 @@ public class EJBJPASearchFactoryController implements JPASearchFactoryController
 		try (InputStream is = EJBJPASearchFactoryController.class.getResource( PROPERTIES_PATH ).openStream()) {
 			properties.load( is );
 		}
-		catch (IOException e) {
-			throw new SearchException( "couldn't load hibernate-search specific properties from: " + PROPERTIES_PATH );
+		catch (NullPointerException | IOException e) {
+			throw new SearchException( "couldn't load hibernate-search specific properties from: " + PROPERTIES_PATH, e );
 		}
 		this.jpaSearchFactoryController = Setup.createSearchFactory( this.emf, properties, (updateInfos) -> {
 			this.lock.lock();
