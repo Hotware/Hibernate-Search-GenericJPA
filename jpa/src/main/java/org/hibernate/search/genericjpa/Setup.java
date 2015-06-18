@@ -6,6 +6,7 @@
  */
 package org.hibernate.search.genericjpa;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
@@ -26,6 +27,9 @@ import org.hibernate.search.genericjpa.impl.UpdateSourceProvider;
 
 import static org.hibernate.search.genericjpa.Constants.*;
 
+/**
+ * @author Martin Braun
+ */
 public final class Setup {
 
 	private static final Logger LOGGER = Logger.getLogger( Setup.class.getName() );
@@ -73,11 +77,25 @@ public final class Setup {
 			} ).collect( Collectors.toList() );
 
 			// get all the root types maked by an @InIndex and @Indexed (@Indexed isn't sufficient here!)
-			List<Class<?>> indexRootTypes = emf.getMetamodel().getEntities().stream().map( (entityType) -> {
+			List<Class<?>> indexRootTypes = new ArrayList<>();
+
+			emf.getMetamodel().getEntities().stream().map( (entityType) -> {
 				return entityType.getBindableJavaType();
 			} ).filter( (entityClass) -> {
 				return entityClass.isAnnotationPresent( InIndex.class ) && entityClass.isAnnotationPresent( Indexed.class );
-			} ).collect( Collectors.toList() );
+			} ).forEach( (clazz) -> {
+				indexRootTypes.add( clazz );
+			} );
+
+			// user specified types are supported. even those that are no JPA entities!
+			String additionalIndexedTypesValue = (String) properties.get( ADDITIONAL_INDEXED_TYPES_KEY );
+			if ( additionalIndexedTypesValue != null ) {
+				for ( String entityClassName : additionalIndexedTypesValue.split( "," ) ) {
+					LOGGER.info( "using additional indexed type: " + entityClassName );
+					Class<?> entityClass = Class.forName( entityClassName );
+					indexRootTypes.add( entityClass );
+				}
+			}
 
 			LOGGER.info( "using hibernate-search properties: " + properties );
 			// get the basic properties
