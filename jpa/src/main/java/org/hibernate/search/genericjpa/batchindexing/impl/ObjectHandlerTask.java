@@ -9,7 +9,6 @@ package org.hibernate.search.genericjpa.batchindexing.impl;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -44,7 +43,7 @@ public class ObjectHandlerTask implements Runnable {
 	private final Supplier<EntityProvider> emProvider;
 	private final BiConsumer<ObjectHandlerTask, EntityProvider> entityManagerDisposer;
 	private final PersistenceUnitUtil peristenceUnitUtil;
-	private final CountDownLatch latch;
+	private final NumberCondition condition;
 	private final Consumer<Exception> exceptionConsumer;
 
 	private BiConsumer<Class<?>, Integer> objectLoadedProgressMonitor;
@@ -64,14 +63,14 @@ public class ObjectHandlerTask implements Runnable {
 
 	public ObjectHandlerTask(BatchBackend batchBackend, Class<?> entityClass, EntityIndexBinding entityIndexBinding,
 			Supplier<EntityProvider> emProvider, BiConsumer<ObjectHandlerTask, EntityProvider> entityManagerDisposer,
-			PersistenceUnitUtil peristenceUnitUtil, CountDownLatch latch, Consumer<Exception> exceptionConsumer) {
+			PersistenceUnitUtil peristenceUnitUtil, NumberCondition condition, Consumer<Exception> exceptionConsumer) {
 		this.batchBackend = batchBackend;
 		this.entityClass = entityClass;
 		this.entityIndexBinding = entityIndexBinding;
 		this.emProvider = emProvider;
 		this.entityManagerDisposer = entityManagerDisposer;
 		this.peristenceUnitUtil = peristenceUnitUtil;
-		this.latch = latch;
+		this.condition = condition;
 		this.exceptionConsumer = exceptionConsumer;
 	}
 
@@ -116,9 +115,7 @@ public class ObjectHandlerTask implements Runnable {
 						this.documentBuiltProgressMonitor.accept( this.entityClass, this.batch.size() );
 					}
 
-					for ( int i = 0; i < this.batch.size(); ++i ) {
-						this.latch.countDown();
-					}
+					this.condition.down( this.batch.size() );
 				}
 				catch (Exception e) {
 					throw new SearchException( e );

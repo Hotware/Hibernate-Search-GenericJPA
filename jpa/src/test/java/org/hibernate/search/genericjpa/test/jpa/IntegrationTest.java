@@ -106,10 +106,7 @@ public class IntegrationTest {
 				}
 			}
 
-		}, true, false, null );
-		idProducer.count( 2 );
-		idProducer.totalCount( 2 );
-		idProducer.startingPosition( 0 );
+		}, true, false, null, null );
 		idProducer.run();
 	}
 

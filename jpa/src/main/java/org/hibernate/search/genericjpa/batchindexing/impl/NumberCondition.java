@@ -6,6 +6,7 @@
  */
 package org.hibernate.search.genericjpa.batchindexing.impl;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -19,15 +20,36 @@ public class NumberCondition {
 	private final Condition condition = this.lock.newCondition();
 
 	private final int lockCount;
-	private int count = 0;
+	private int count;
 
 	private boolean disable;
+	private boolean initialSetupDone;
 
 	/**
-	 * @param lockCount the value that has to be met (or higher) for the check method to block
+	 * @param lockCount every value bigger than this will block
 	 */
 	public NumberCondition(int lockCount) {
+		this( lockCount, 0, true );
+	}
+
+	/**
+	 * @param lockCount every value bigger than this will block
+	 */
+	public NumberCondition(int lockCount, int count, boolean initialSetupDone) {
 		this.lockCount = lockCount;
+		this.count = count;
+		this.initialSetupDone = initialSetupDone;
+	}
+
+	public void initialSetup() {
+		this.lock.lock();
+		try {
+			this.initialSetupDone = true;
+			this.condition.signalAll();
+		}
+		finally {
+			this.lock.unlock();
+		}
 	}
 
 	public void up(int count) {
@@ -44,8 +66,8 @@ public class NumberCondition {
 		this.lock.lock();
 		try {
 			while ( --down >= 0 ) {
-				if ( --this.count < this.lockCount ) {
-					this.condition.signal();
+				if ( --this.count <= this.lockCount ) {
+					this.condition.signalAll();
 				}
 			}
 		}
@@ -57,9 +79,22 @@ public class NumberCondition {
 	public void check() throws InterruptedException {
 		this.lock.lock();
 		try {
-			if ( this.count == this.lockCount && !this.disable ) {
+			while ( ( !this.initialSetupDone || this.count > this.lockCount ) && !this.disable ) {
 				this.condition.await();
 			}
+		}
+		finally {
+			this.lock.unlock();
+		}
+	}
+
+	public boolean check(long time, TimeUnit timeUnit) throws InterruptedException {
+		this.lock.lock();
+		try {
+			while ( ( !this.initialSetupDone || this.count > this.lockCount ) && !this.disable ) {
+				return this.condition.await( time, timeUnit );
+			}
+			return true;
 		}
 		finally {
 			this.lock.unlock();

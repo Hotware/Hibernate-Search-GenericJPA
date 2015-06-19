@@ -51,30 +51,6 @@ public class MassIndexerTest {
 	public void test() throws InterruptedException {
 		System.out.println( "starting MassIndexer test!" );
 
-		this.massIndexer.progressMonitor( new MassIndexerProgressMonitor() {
-
-			@Override
-			public void objectsLoaded(Class<?> entityType, int count) {
-				System.out.println( "objects loaded: " + count );
-			}
-
-			@Override
-			public void documentsBuilt(Class<?> entityType, int count) {
-				System.out.println( "documents built: " + count );
-			}
-
-			@Override
-			public void idsLoaded(Class<?> entityType, int count) {
-				System.out.println( "loaded ids: " + count );
-			}
-
-			@Override
-			public void documentsAdded(int count) {
-				System.out.println( "documents added: " + count );
-			}
-
-		} );
-
 		this.massIndexer.threadsToLoadObjects( 15 );
 		this.massIndexer.batchSizeToLoadObjects( 100 );
 		this.massIndexer.batchSizeToLoadIds( 500 );
@@ -102,7 +78,7 @@ public class MassIndexerTest {
 	@Test
 	public void testFromSearchFactory() {
 		try {
-			this.searchFactory.createMassIndexer().threadsToLoadObjects( 15 ).batchSizeToLoadObjects( 100 ).startAndWait();
+			this.searchFactory.createMassIndexer().threadsToLoadObjects( 15 ).batchSizeToLoadObjects( 100 ).progressMonitor( this.progress() ).startAndWait();
 		}
 		catch (InterruptedException e) {
 			throw new SearchException( e );
@@ -157,6 +133,33 @@ public class MassIndexerTest {
 		}
 		this.em = this.emf.createEntityManager();
 		this.massIndexer = new MassIndexerImpl( this.emf, this.searchFactory.getSearchIntegrator(), Arrays.asList( Place.class ), false );
+		this.massIndexer.progressMonitor( this.progress() );
+	}
+
+	private MassIndexerProgressMonitor progress() {
+		return new MassIndexerProgressMonitor() {
+
+			@Override
+			public void objectsLoaded(Class<?> entityType, int count) {
+				System.out.println( "objects loaded: " + count );
+			}
+
+			@Override
+			public void documentsBuilt(Class<?> entityType, int count) {
+				System.out.println( "documents built: " + count );
+			}
+
+			@Override
+			public void idsLoaded(Class<?> entityType, int count) {
+				System.out.println( "loaded ids: " + count );
+			}
+
+			@Override
+			public void documentsAdded(int count) {
+				System.out.println( "documents added: " + count );
+			}
+
+		};
 	}
 
 	@After

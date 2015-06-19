@@ -14,11 +14,13 @@ import java.util.function.Consumer;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
 
 import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
-import org.hibernate.search.genericjpa.exception.AssertionFailure;
+import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 
 /**
@@ -34,10 +36,7 @@ public class IdProducerTask implements Runnable {
 	private final int batchSizeToLoadObjects;
 	private final UpdateConsumer updateConsumer;
 	private final List<UpdateInfo> updateInfoBatch;
-
-	private long startingPosition;
-	private long count;
-	private long totalCount;
+	private final NumberCondition numberCondition;
 
 	private BiConsumer<Class<?>, Integer> progressMonitor;
 
@@ -47,7 +46,7 @@ public class IdProducerTask implements Runnable {
 
 	public IdProducerTask(Class<?> entityClass, String idProperty, EntityManagerFactory emf, boolean useUserTransaction, int batchSizeToLoadIds,
 			int batchSizeToLoadObjects, UpdateConsumer updateConsumer, boolean purgeAllOnStart, boolean optimizeAfterPurge,
-			Consumer<Exception> exceptionConsumer) {
+			Consumer<Exception> exceptionConsumer, NumberCondition numberCondition) {
 		this.entityClass = entityClass;
 		this.idProperty = idProperty;
 		this.emf = emf;
@@ -55,27 +54,31 @@ public class IdProducerTask implements Runnable {
 		this.batchSizeToLoadIds = batchSizeToLoadIds;
 		this.batchSizeToLoadObjects = batchSizeToLoadObjects;
 		this.updateConsumer = updateConsumer;
-		this.updateInfoBatch = new ArrayList<>( (int) Math.min( this.batchSizeToLoadIds, this.count ) );
+		this.updateInfoBatch = new ArrayList<>( this.batchSizeToLoadIds );
 		this.exceptionConsumer = exceptionConsumer;
+		this.numberCondition = numberCondition;
 	}
 
 	@Override
 	public void run() {
 		try {
-			if ( this.totalCount == 0 ) {
-				throw new AssertionFailure( "totalCount can not be equal to 0" );
-			}
-			long position = this.startingPosition;
 			EntityManager em = this.emf.createEntityManager();
 			try {
 				JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useUserTransaction );
-				while ( position < this.totalCount && !Thread.currentThread().isInterrupted() ) {
+				long position = 0;
+				long totalCount = this.getTotalCount( entityClass );
+				if ( this.numberCondition != null ) {
+					// hack...
+					this.numberCondition.up( (int) totalCount );
+					this.numberCondition.initialSetup();
+				}
+				while ( position < totalCount && !Thread.currentThread().isInterrupted() ) {
 					tx.begin();
 					try {
 						Query query = em.createQuery( new StringBuilder().append( "SELECT obj." ).append( this.idProperty ).append( " FROM " )
 								.append( em.getMetamodel().entity( this.entityClass ).getName() ).append( " obj ORDER BY obj." ).append( this.idProperty )
 								.toString() );
-						query.setFirstResult( (int) position ).setMaxResults( (int) Math.min( this.batchSizeToLoadIds, this.count ) ).getResultList();
+						query.setFirstResult( (int) position ).setMaxResults( this.batchSizeToLoadIds ).getResultList();
 
 						@SuppressWarnings("rawtypes")
 						List ids = query.getResultList();
@@ -102,7 +105,7 @@ public class IdProducerTask implements Runnable {
 			}
 		}
 		finally {
-			if(this.finishConsumer != null) {
+			if ( this.finishConsumer != null ) {
 				this.finishConsumer.run();
 			}
 		}
@@ -128,20 +131,35 @@ public class IdProducerTask implements Runnable {
 		this.finishConsumer = finishConsumer;
 	}
 
-	public void startingPosition(long startingPosition) {
-		this.startingPosition = startingPosition;
-	}
-
 	public void progressMonitor(BiConsumer<Class<?>, Integer> progressMonitor) {
 		this.progressMonitor = progressMonitor;
 	}
 
-	public void count(long count) {
-		this.count = count;
-	}
-
-	public void totalCount(long totalCount) {
-		this.totalCount = totalCount;
+	public long getTotalCount(Class<?> entityClass) {
+		long count = 0;
+		EntityManager em = null;
+		try {
+			em = this.emf.createEntityManager();
+			JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useUserTransaction );
+			tx.begin();
+			try {
+				CriteriaBuilder cb = em.getCriteriaBuilder();
+				CriteriaQuery<Long> countQuery = cb.createQuery( Long.class );
+				countQuery.select( cb.count( countQuery.from( entityClass ) ) );
+				count = em.createQuery( countQuery ).getSingleResult();
+				tx.commit();
+			}
+			catch (Exception e) {
+				tx.rollback();
+				throw new SearchException( e );
+			}
+		}
+		finally {
+			if ( em != null ) {
+				em.close();
+			}
+		}
+		return count;
 	}
 
 }

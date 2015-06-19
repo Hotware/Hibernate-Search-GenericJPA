@@ -206,7 +206,7 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 	}
 
 	public MassIndexer createMassIndexer(List<Class<?>> indexRootTypes) {
-		return new MassIndexerImpl( this.emf, this.searchIntegrator, this.indexRootTypes, this.isUseUserTransaction() );
+		return new MassIndexerImpl( this.emf, this.searchIntegrator, indexRootTypes, this.isUseUserTransaction() );
 	}
 
 	public MassIndexer createMassIndexer() {

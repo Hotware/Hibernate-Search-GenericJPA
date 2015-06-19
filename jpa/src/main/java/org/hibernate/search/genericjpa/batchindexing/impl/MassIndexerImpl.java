@@ -29,10 +29,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.metamodel.EntityType;
 import javax.persistence.metamodel.Metamodel;
 import javax.persistence.metamodel.SingularAttribute;
@@ -50,7 +47,6 @@ import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.entity.TransactionWrappedEntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.exception.SearchException;
-import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 
 /**
  * @author Martin Braun
@@ -94,7 +90,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 	private final ConcurrentHashMap<Class<?>, AtomicInteger> documentBuiltProgress = new ConcurrentHashMap<>();
 	private final AtomicInteger documentsAdded = new AtomicInteger();
 
-	private final Map<Class<?>, CountDownLatch> latches = new HashMap<>();
+	private final Map<Class<?>, NumberCondition> finishConditions = new HashMap<>();
 	private final ConcurrentLinkedQueue<Future<?>> idProducerFutures = new ConcurrentLinkedQueue<>();
 	private CountDownLatch cleanUpLatch;
 
@@ -255,14 +251,11 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 			catch (Exception e) {
 				throw new SearchException( e );
 			}
-			long totalCount = this.getTotalCount( rootClass );
-			// FIXME: hacky casts...
-			this.latches.put( rootClass, new CountDownLatch( (int) totalCount ) );
-			long startingPosition = 0;
+
+			this.finishConditions.put( rootClass, new NumberCondition( 0, 0, false ) );
 			IdProducerTask idProducer = new IdProducerTask( rootClass, this.idProperties.get( rootClass ), this.emf, this.useUserTransaction,
-					this.batchSizeToLoadIds, this.batchSizeToLoadObjects, this, this.purgeAllOnStart, this.optimizeAfterPurge, this::onException );
-			idProducer.totalCount( totalCount );
-			idProducer.startingPosition( startingPosition );
+					this.batchSizeToLoadIds, this.batchSizeToLoadObjects, this, this.purgeAllOnStart, this.optimizeAfterPurge, this::onException,
+					this.finishConditions.get( rootClass ) );
 			idProducer.progressMonitor( this::idProgress );
 			this.idProducerFutures.add( this.executorServiceForIds.submit( idProducer ) );
 		}
@@ -336,10 +329,8 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 				// FIXME: wait for all the running threads to finish up.
 
 				// blow the signal to stop everything
-				for ( CountDownLatch latch : MassIndexerImpl.this.latches.values() ) {
-					while ( latch.getCount() > 0 ) {
-						latch.countDown();
-					}
+				for ( NumberCondition condition : MassIndexerImpl.this.finishConditions.values() ) {
+					condition.disable();
 				}
 
 				// but we have to wait for the cleanup thread to finish up
@@ -382,9 +373,9 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
 			@Override
 			public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-				for ( CountDownLatch latch : MassIndexerImpl.this.latches.values() ) {
+				for ( NumberCondition condition : MassIndexerImpl.this.finishConditions.values() ) {
 					// FIXME: not quite right...
-					if ( !latch.await( timeout, unit ) ) {
+					if ( !condition.check( timeout, unit ) ) {
 						throw new TimeoutException();
 					}
 				}
@@ -397,8 +388,8 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 	}
 
 	private void awaitJobsFinish() throws InterruptedException {
-		for ( CountDownLatch latch : MassIndexerImpl.this.latches.values() ) {
-			latch.await();
+		for ( NumberCondition condition : MassIndexerImpl.this.finishConditions.values() ) {
+			condition.check();
 		}
 	}
 
@@ -419,7 +410,8 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 			}
 			Class<?> entityClass = updateInfo.get( 0 ).getEntityClass();
 			ObjectHandlerTask task = new ObjectHandlerTask( this.batchBackend, entityClass, this.searchIntegrator.getIndexBinding( entityClass ),
-					this::getEntityProvider, this::disposeEntityManager, this.emf.getPersistenceUnitUtil(), this.latches.get( entityClass ), this::onException );
+					this::getEntityProvider, this::disposeEntityManager, this.emf.getPersistenceUnitUtil(), this.finishConditions.get( entityClass ),
+					this::onException );
 			task.batch( updateInfo );
 			task.documentBuiltProgressMonitor( this::documentBuiltProgress );
 			task.objectLoadedProgressMonitor( this::objectLoadedProgress );
@@ -472,9 +464,9 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
 	private boolean isFinished() {
 		boolean ret = true;
-		for ( CountDownLatch latch : this.latches.values() ) {
+		for ( NumberCondition numberCondition : this.finishConditions.values() ) {
 			try {
-				ret &= latch.await( 1, TimeUnit.NANOSECONDS );
+				ret &= numberCondition.check( 1, TimeUnit.NANOSECONDS );
 			}
 			catch (InterruptedException e) {
 				throw new SearchException( e );
@@ -551,33 +543,6 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 			throw new SearchException( "id field not found for: " + entityClass );
 		}
 		return idProperty;
-	}
-
-	public long getTotalCount(Class<?> entityClass) {
-		long count = 0;
-		EntityManager em = null;
-		try {
-			em = this.emf.createEntityManager();
-			JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useUserTransaction );
-			tx.begin();
-			try {
-				CriteriaBuilder cb = em.getCriteriaBuilder();
-				CriteriaQuery<Long> countQuery = cb.createQuery( Long.class );
-				countQuery.select( cb.count( countQuery.from( entityClass ) ) );
-				count = em.createQuery( countQuery ).getSingleResult();
-				tx.commit();
-			}
-			catch (Exception e) {
-				tx.rollback();
-				throw new SearchException( e );
-			}
-		}
-		finally {
-			if ( em != null ) {
-				em.close();
-			}
-		}
-		return count;
 	}
 
 }
