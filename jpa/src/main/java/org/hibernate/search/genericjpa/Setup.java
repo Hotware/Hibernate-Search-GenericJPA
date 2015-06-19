@@ -91,6 +91,7 @@ public final class Setup {
 			String additionalIndexedTypesValue = (String) properties.get( ADDITIONAL_INDEXED_TYPES_KEY );
 			if ( additionalIndexedTypesValue != null ) {
 				for ( String entityClassName : additionalIndexedTypesValue.split( "," ) ) {
+					entityClassName = entityClassName.trim();
 					LOGGER.info( "using additional indexed type: " + entityClassName );
 					Class<?> entityClass = Class.forName( entityClassName );
 					indexRootTypes.add( entityClass );
