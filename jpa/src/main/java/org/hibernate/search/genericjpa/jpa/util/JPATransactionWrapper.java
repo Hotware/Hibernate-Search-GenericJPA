@@ -12,6 +12,8 @@ import javax.persistence.EntityTransaction;
 import org.hibernate.search.genericjpa.exception.SearchException;
 
 /**
+ * <b>internal, don't use this across different threads!</b>
+ * 
  * @author Martin Braun
  */
 public class JPATransactionWrapper {
