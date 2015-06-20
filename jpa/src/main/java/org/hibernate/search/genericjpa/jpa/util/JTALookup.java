@@ -13,6 +13,12 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 
+/**
+ * Utility class to get a hold of a {@link javax.transaction.TransactionManager}. This currently heavily relies on
+ * Infinispan for this lookup.
+ * 
+ * @author Martin Braun
+ */
 public class JTALookup {
 
 	private JTALookup() {
