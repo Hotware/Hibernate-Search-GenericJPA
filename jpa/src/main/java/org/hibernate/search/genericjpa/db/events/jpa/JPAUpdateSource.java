@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
@@ -34,6 +35,7 @@ import org.hibernate.search.genericjpa.db.events.EventModelInfo.IdInfo;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess;
+import org.hibernate.search.genericjpa.jpa.util.NamingThreadFactory;
 import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess.ObjectClassWrapper;
 
 /**
@@ -59,44 +61,38 @@ public class JPAUpdateSource implements UpdateSource {
 
 	private List<UpdateConsumer> updateConsumers;
 	private final ScheduledExecutorService exec;
-	private boolean createdOwnExecutorService = false;
-	private final boolean useUserTransaction;
+	private final boolean useJTATransaction;
 
 	private ScheduledFuture<?> job;
 	private final ReentrantLock lock = new ReentrantLock();
 	private boolean cancelled = false;
 	private boolean pause = false;
 
+	private static ThreadFactory tf() {
+		return new NamingThreadFactory( "Index Update Thread" );
+	}
+
 	/**
 	 * this doesn't do real batching for the databasequeries
 	 */
-	public JPAUpdateSource(List<EventModelInfo> eventModelInfos, EntityManagerFactory emf, boolean useUserTransaction, long timeOut, TimeUnit timeUnit,
+	public JPAUpdateSource(List<EventModelInfo> eventModelInfos, EntityManagerFactory emf, boolean useJTATransaction, long timeOut, TimeUnit timeUnit,
 			int batchSizeForUpdates) {
-		this( eventModelInfos, emf, useUserTransaction, timeOut, timeUnit, batchSizeForUpdates, Executors.newSingleThreadScheduledExecutor() );
-		this.createdOwnExecutorService = true;
-	}
-
-	/**
-	 * this doesn't do real batching for the databasequeries
-	 */
-	public JPAUpdateSource(List<EventModelInfo> eventModelInfos, EntityManagerFactory emf, boolean useUserTransaction, long timeOut, TimeUnit timeUnit,
-			int batchSizeForUpdates, ScheduledExecutorService exec) {
-		this( eventModelInfos, emf, useUserTransaction, timeOut, timeUnit, batchSizeForUpdates, 1, exec );
+		this( eventModelInfos, emf, useJTATransaction, timeOut, timeUnit, batchSizeForUpdates, 1, Executors.newSingleThreadScheduledExecutor( tf() ) );
 	}
 
 	/**
 	 * this does batching for databaseQueries according to what you set
 	 */
-	public JPAUpdateSource(List<EventModelInfo> eventModelInfos, EntityManagerFactory emf, boolean useUserTransaction, long timeOut, TimeUnit timeUnit,
+	public JPAUpdateSource(List<EventModelInfo> eventModelInfos, EntityManagerFactory emf, boolean useJTATransaction, long timeOut, TimeUnit timeUnit,
 			int batchSizeForUpdates, int batchSizeForDatabaseQueries) {
-		this( eventModelInfos, emf, useUserTransaction, timeOut, timeUnit, batchSizeForUpdates, batchSizeForDatabaseQueries, Executors.newSingleThreadScheduledExecutor() );
-		this.createdOwnExecutorService = true;
+		this( eventModelInfos, emf, useJTATransaction, timeOut, timeUnit, batchSizeForUpdates, batchSizeForDatabaseQueries, Executors
+				.newSingleThreadScheduledExecutor( tf() ) );
 	}
 
 	/**
 	 * this does batching for databaseQueries according to what you set
 	 */
-	public JPAUpdateSource(List<EventModelInfo> eventModelInfos, EntityManagerFactory emf, boolean useUserTransaction, long timeOut, TimeUnit timeUnit,
+	public JPAUpdateSource(List<EventModelInfo> eventModelInfos, EntityManagerFactory emf, boolean useJTATransaction, long timeOut, TimeUnit timeUnit,
 			int batchSizeForUpdates, int batchSizeForDatabaseQueries, ScheduledExecutorService exec) {
 		this.eventModelInfos = eventModelInfos;
 		this.emf = emf;
@@ -138,7 +134,7 @@ public class JPAUpdateSource implements UpdateSource {
 			throw new IllegalArgumentException( "the ScheduledExecutorService may not be null!" );
 		}
 		this.exec = exec;
-		this.useUserTransaction = useUserTransaction;
+		this.useJTATransaction = useJTATransaction;
 	}
 
 	@Override
@@ -167,7 +163,7 @@ public class JPAUpdateSource implements UpdateSource {
 				EntityManager em = null;
 				try {
 					em = this.emf.createEntityManager();
-					JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useUserTransaction );
+					JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useJTATransaction );
 					tx.begin();
 					try {
 						MultiQueryAccess query = query( this, em );
@@ -216,9 +212,9 @@ public class JPAUpdateSource implements UpdateSource {
 				toRemove.clear();
 				updateInfos.clear();
 			}
-			
-			if(processed > 0) {
-				LOGGER.info( "processed " + processed + " updates");
+
+			if ( processed > 0 ) {
+				LOGGER.info( "processed " + processed + " updates" );
 			}
 
 			em.flush();
@@ -285,7 +281,7 @@ finally {
 
 	@Override
 	public void stop() {
-		//first cancel the update job and wait for it to be done.
+		// first cancel the update job and wait for it to be done.
 		if ( this.job != null ) {
 			this.lock.lock();
 			try {
@@ -296,8 +292,8 @@ finally {
 				this.lock.unlock();
 			}
 		}
-		//and shutdown the executorservice if we created our own.
-		if ( this.createdOwnExecutorService && this.exec != null ) {
+		// and shutdown the executorservice
+		if ( this.exec != null ) {
 			this.exec.shutdown();
 		}
 	}

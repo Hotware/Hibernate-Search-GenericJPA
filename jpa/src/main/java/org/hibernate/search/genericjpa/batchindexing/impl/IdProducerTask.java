@@ -31,7 +31,7 @@ public class IdProducerTask implements Runnable {
 	private final Class<?> entityClass;
 	private final String idProperty;
 	private final EntityManagerFactory emf;
-	private final boolean useUserTransaction;
+	private final boolean useJTATransaction;
 	private final int batchSizeToLoadIds;
 	private final int batchSizeToLoadObjects;
 	private final UpdateConsumer updateConsumer;
@@ -44,13 +44,13 @@ public class IdProducerTask implements Runnable {
 
 	private Runnable finishConsumer;
 
-	public IdProducerTask(Class<?> entityClass, String idProperty, EntityManagerFactory emf, boolean useUserTransaction, int batchSizeToLoadIds,
+	public IdProducerTask(Class<?> entityClass, String idProperty, EntityManagerFactory emf, boolean useJTATransaction, int batchSizeToLoadIds,
 			int batchSizeToLoadObjects, UpdateConsumer updateConsumer, boolean purgeAllOnStart, boolean optimizeAfterPurge,
 			Consumer<Exception> exceptionConsumer, NumberCondition numberCondition) {
 		this.entityClass = entityClass;
 		this.idProperty = idProperty;
 		this.emf = emf;
-		this.useUserTransaction = useUserTransaction;
+		this.useJTATransaction = useJTATransaction;
 		this.batchSizeToLoadIds = batchSizeToLoadIds;
 		this.batchSizeToLoadObjects = batchSizeToLoadObjects;
 		this.updateConsumer = updateConsumer;
@@ -64,7 +64,7 @@ public class IdProducerTask implements Runnable {
 		try {
 			EntityManager em = this.emf.createEntityManager();
 			try {
-				JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useUserTransaction );
+				JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useJTATransaction );
 				long position = 0;
 				long totalCount = this.getTotalCount( entityClass );
 				if ( this.numberCondition != null ) {
@@ -140,7 +140,7 @@ public class IdProducerTask implements Runnable {
 		EntityManager em = null;
 		try {
 			em = this.emf.createEntityManager();
-			JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useUserTransaction );
+			JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useJTATransaction );
 			tx.begin();
 			try {
 				CriteriaBuilder cb = em.getCriteriaBuilder();

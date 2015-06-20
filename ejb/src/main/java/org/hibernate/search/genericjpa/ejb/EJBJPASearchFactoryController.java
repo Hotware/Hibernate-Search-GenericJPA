@@ -9,12 +9,13 @@ package org.hibernate.search.genericjpa.ejb;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import javax.annotation.Resource;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
-import javax.enterprise.concurrent.ManagedScheduledExecutorService;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
@@ -24,16 +25,15 @@ import org.hibernate.search.genericjpa.JPASearchFactoryController;
 import org.hibernate.search.genericjpa.Setup;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.exception.SearchException;
+import org.hibernate.search.genericjpa.jpa.util.JTALookup;
 import org.hibernate.search.jpa.FullTextEntityManager;
 
 @Startup
 @Singleton
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class EJBJPASearchFactoryController implements JPASearchFactoryController {
 
 	private static final String PROPERTIES_PATH = "/META-INF/hsearch.properties";
-
-	@Resource
-	private ManagedScheduledExecutorService exec;
 
 	@PersistenceUnit
 	private EntityManagerFactory emf;
@@ -42,6 +42,7 @@ public class EJBJPASearchFactoryController implements JPASearchFactoryController
 
 	@PostConstruct
 	public void start() {
+		JTALookup.lookup();
 		Properties properties = new Properties();
 		try (InputStream is = EJBJPASearchFactoryController.class.getResource( PROPERTIES_PATH ).openStream()) {
 			properties.load( is );
@@ -49,7 +50,7 @@ public class EJBJPASearchFactoryController implements JPASearchFactoryController
 		catch (NullPointerException | IOException e) {
 			throw new SearchException( "couldn't load hibernate-search specific properties from: " + PROPERTIES_PATH, e );
 		}
-		this.jpaSearchFactoryController = Setup.createSearchFactory( this.emf, properties, this.exec );
+		this.jpaSearchFactoryController = Setup.createSearchFactory( this.emf, properties );
 	}
 
 	@PreDestroy

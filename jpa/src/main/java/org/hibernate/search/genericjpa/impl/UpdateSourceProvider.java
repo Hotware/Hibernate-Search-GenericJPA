@@ -6,7 +6,6 @@
  */
 package org.hibernate.search.genericjpa.impl;
 
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.hibernate.search.genericjpa.db.events.UpdateSource;
@@ -17,6 +16,6 @@ import org.hibernate.search.genericjpa.db.events.UpdateSource;
  */
 public interface UpdateSourceProvider {
 	
-	UpdateSource getUpdateSource(long delay, TimeUnit timeUnit, int batchSizeForUpdates, ScheduledExecutorService exec);
+	UpdateSource getUpdateSource(long delay, TimeUnit timeUnit, int batchSizeForUpdates);
 
 }

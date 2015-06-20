@@ -17,8 +17,8 @@ public class Constants {
 		// can't touch this!
 	}
 
-	public static final String USE_USER_TRANSACTIONS_KEY = "org.hibernate.search.genericjpa.searchfactory.useUserTransactions";
-	public static final String USE_USER_TRANSACTIONS_DEFAULT_VALUE = "false";
+	public static final String USE_JTA_TRANSACTIONS_KEY = "org.hibernate.search.genericjpa.searchfactory.useJTATransactions";
+	public static final String USE_JTA_TRANSACTIONS_DEFAULT_VALUE = "false";
 
 	public static final String SEARCH_FACTORY_TYPE_KEY = "org.hibernate.search.genericjpa.searchfactory.type";
 	public static final String SEARCH_FACTORY_TYPE_DEFAULT_VALUE = "sql";

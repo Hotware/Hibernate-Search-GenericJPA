@@ -72,7 +72,7 @@
 
 		<dependency>
 			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-search-ejb-openejb</artifactId>
+			<artifactId>hibernate-search-ejb</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 

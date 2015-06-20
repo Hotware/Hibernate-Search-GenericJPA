@@ -14,7 +14,6 @@
 		<module>db</module>
 		<module>jpa</module>
 		<module>ejb</module>
-		<module>ejb-openejb</module>
 		<module>integrationtest/glassfish</module>
 		<module>integrationtest/tomee</module>
 		<module>integrationtest/wildfly</module>

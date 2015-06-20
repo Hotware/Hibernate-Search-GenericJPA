@@ -6,10 +6,20 @@
  */
 package org.hibernate.search.genericjpa;
 
+import static org.hibernate.search.genericjpa.Constants.ADDITIONAL_INDEXED_TYPES_KEY;
+import static org.hibernate.search.genericjpa.Constants.BATCH_SIZE_FOR_UPDATES_DEFAULT_VALUE;
+import static org.hibernate.search.genericjpa.Constants.BATCH_SIZE_FOR_UPDATES_KEY;
+import static org.hibernate.search.genericjpa.Constants.SEARCH_FACTORY_TYPE_DEFAULT_VALUE;
+import static org.hibernate.search.genericjpa.Constants.SEARCH_FACTORY_TYPE_KEY;
+import static org.hibernate.search.genericjpa.Constants.TRIGGER_SOURCE_KEY;
+import static org.hibernate.search.genericjpa.Constants.UPDATE_DELAY_DEFAULT_VALUE;
+import static org.hibernate.search.genericjpa.Constants.UPDATE_DELAY_KEY;
+import static org.hibernate.search.genericjpa.Constants.USE_JTA_TRANSACTIONS_DEFAULT_VALUE;
+import static org.hibernate.search.genericjpa.Constants.USE_JTA_TRANSACTIONS_KEY;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -25,8 +35,6 @@ import org.hibernate.search.genericjpa.impl.SQLJPAUpdateSourceProvider;
 import org.hibernate.search.genericjpa.impl.SearchFactoryRegistry;
 import org.hibernate.search.genericjpa.impl.UpdateSourceProvider;
 
-import static org.hibernate.search.genericjpa.Constants.*;
-
 /**
  * @author Martin Braun
  */
@@ -39,32 +47,16 @@ public final class Setup {
 	}
 
 	public static JPASearchFactoryController createUnmanagedSearchFactory(EntityManagerFactory emf) {
-		return createSearchFactory( emf, emf.getProperties(), null );
+		return createSearchFactory( emf, emf.getProperties() );
 	}
 
 	public static JPASearchFactoryController createUnmanagedSearchFactory(EntityManagerFactory emf, @SuppressWarnings("rawtypes") Map properties) {
-		return createSearchFactory( emf, properties, null );
+		return createSearchFactory( emf, properties );
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public static JPASearchFactoryController createSearchFactory(EntityManagerFactory emf, Map properties, ScheduledExecutorService exec) {
-		boolean useUserTransactions = Boolean.parseBoolean( (String) properties.getOrDefault( USE_USER_TRANSACTIONS_KEY, USE_USER_TRANSACTIONS_DEFAULT_VALUE ) );
-		if ( useUserTransactions ) {
-			if ( exec == null ) {
-				throw new IllegalArgumentException( "must specify a javax.enterprise.concurrent.ManagedScheduledExecutorService if using userTransactions" );
-			}
-			try {
-				if ( !Class.forName( "javax.enterprise.concurrent.ManagedScheduledExecutorService" ).isAssignableFrom( exec.getClass() ) ) {
-					throw new IllegalArgumentException( "an instance of" + " javax.enterprise.concurrent.ManagedScheduledExecutorService"
-							+ "has to be used for scheduling when using JTA transactions!" );
-				}
-			}
-			catch (ClassNotFoundException e) {
-				throw new SearchException( "coudln't load class javax.enterprise.concurrent.ManagedScheduledExecutorService "
-						+ "even though JTA transaction is to be used!" );
-			}
-		}
-
+	public static JPASearchFactoryController createSearchFactory(EntityManagerFactory emf, Map properties) {
+		boolean useJTATransactions = Boolean.parseBoolean( (String) properties.getOrDefault( USE_JTA_TRANSACTIONS_KEY, USE_JTA_TRANSACTIONS_DEFAULT_VALUE ) );
 		try {
 			// hack... but OpenJPA wants this so it can enhance the classes.
 			emf.createEntityManager().close();
@@ -117,11 +109,11 @@ public final class Setup {
 				if ( triggerSource == null || ( triggerSourceClass = Class.forName( triggerSource ) ) == null ) {
 					throw new SearchException( "class specified in org.hibernate.search.genericjpa.searchfactory.triggerSource could not be found." );
 				}
-				updateSourceProvider = new SQLJPAUpdateSourceProvider( emf, useUserTransactions, (TriggerSQLStringSource) triggerSourceClass.newInstance(),
+				updateSourceProvider = new SQLJPAUpdateSourceProvider( emf, useJTATransactions, (TriggerSQLStringSource) triggerSourceClass.newInstance(),
 						updateClasses );
 			}
 			else if ( "manual-updates".equals( type ) ) {
-				updateSourceProvider = (a, b, c, d) -> {
+				updateSourceProvider = (a, b, c) -> {
 					return null;
 				};
 			}
@@ -129,10 +121,10 @@ public final class Setup {
 				throw new SearchException( "unrecognized type : " + type );
 			}
 
-			if ( useUserTransactions ) {
-				LOGGER.info( "using userTransactions" );
+			if ( useJTATransactions ) {
+				LOGGER.info( "using JTA Transactions" );
 			}
-			JPASearchFactoryAdapter ret = new JPASearchFactoryAdapter( name, emf, useUserTransactions, indexRootTypes, properties, exec, updateSourceProvider );
+			JPASearchFactoryAdapter ret = new JPASearchFactoryAdapter( name, emf, useJTATransactions, indexRootTypes, properties, updateSourceProvider );
 			ret.setBatchSizeForUpdates( batchSizeForUpdates );
 			ret.setUpdateDelay( updateDelay );
 			ret.init();

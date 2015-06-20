@@ -47,6 +47,7 @@ import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.entity.TransactionWrappedEntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.exception.SearchException;
+import org.hibernate.search.genericjpa.jpa.util.NamingThreadFactory;
 
 /**
  * @author Martin Braun
@@ -59,7 +60,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 	private final ExtendedSearchIntegrator searchIntegrator;
 
 	private final List<Class<?>> rootTypes;
-	private final boolean useUserTransaction;
+	private final boolean useJTATransaction;
 	private final EntityManagerFactory emf;
 
 	private ExecutorService executorServiceForIds;
@@ -73,9 +74,6 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 	private int batchSizeToLoadObjects = 10;
 	private int threadsToLoadIds = 2;
 	private int threadsToLoadObjects = 4;
-
-	private boolean createdOwnExecutorServiceForIds = false;
-	private boolean createdOwnExecutorServiceForObjects = false;
 
 	private boolean started = false;
 	private Map<Class<?>, String> idProperties;
@@ -116,11 +114,11 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
 	private EntityProvider userSpecifiedEntityProvider;
 
-	public MassIndexerImpl(EntityManagerFactory emf, ExtendedSearchIntegrator searchIntegrator, List<Class<?>> rootTypes, boolean useUserTransaction) {
+	public MassIndexerImpl(EntityManagerFactory emf, ExtendedSearchIntegrator searchIntegrator, List<Class<?>> rootTypes, boolean useJTATransaction) {
 		this.emf = emf;
 		this.searchIntegrator = searchIntegrator;
 		this.rootTypes = rootTypes;
-		this.useUserTransaction = useUserTransaction;
+		this.useJTATransaction = useJTATransaction;
 	}
 
 	@Override
@@ -172,34 +170,6 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 	}
 
 	@Override
-	public MassIndexer executorService(ExecutorService executorService) {
-		if ( this.future != null ) {
-			throw new IllegalStateException( "already started!" );
-		}
-		this.executorServiceForIds = executorService;
-		this.executorServiceForObjects = executorService;
-		return this;
-	}
-
-	@Override
-	public MassIndexer executorServiceForIds(ExecutorService executorServiceForIds) {
-		if ( this.future != null ) {
-			throw new IllegalStateException( "already started!" );
-		}
-		this.executorServiceForIds = executorServiceForIds;
-		return this;
-	}
-
-	@Override
-	public MassIndexer executorServiceForObjects(ExecutorService executorServiceForObjects) {
-		if ( this.future != null ) {
-			throw new IllegalStateException( "already started!" );
-		}
-		this.executorServiceForObjects = executorServiceForObjects;
-		return this;
-	}
-
-	@Override
 	public Future<?> start() {
 		if ( this.started ) {
 			throw new AssertionFailure( "already started this instance of MassIndexer once!" );
@@ -238,27 +208,13 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 		} );
 		this.started = true;
 		this.cleanUpLatch = new CountDownLatch( this.optimizeOnFinish ? 2 : 1 );
-		if ( this.executorServiceForIds == null ) {
-			if ( this.useUserTransaction ) {
-				throw new SearchException( "MassIndexer cannot create own threads if it has to use a UserTransaction!" );
-			}
-			this.executorServiceForIds = Executors.newFixedThreadPool( this.threadsToLoadIds, new NamingThreadFactory( "MassIndexer Id Loader Thread" ) );
-			this.createdOwnExecutorServiceForIds = true;
-		}
-		if ( this.executorServiceForObjects == null ) {
-			if ( this.useUserTransaction ) {
-				throw new SearchException( "MassIndexer cannot create own threads if it has to use a UserTransaction!" );
-			}
-			this.executorServiceForObjects = Executors.newFixedThreadPool( this.threadsToLoadObjects, new NamingThreadFactory(
-					"MassIndexer Object Loader Thread" ) );
-			this.createdOwnExecutorServiceForObjects = true;
-		}
-		if ( this.threadsToLoadObjects > 0 ) {
-			this.objectHandlerTaskCondition = new NumberCondition( this.threadsToLoadObjects * 4 );
-		}
-		else {
-			this.objectHandlerTaskCondition = new NumberCondition( 1000 );
-		}
+
+		this.executorServiceForIds = Executors.newFixedThreadPool( this.threadsToLoadIds, new NamingThreadFactory( "MassIndexer Id Loader Thread" ) );
+		this.executorServiceForObjects = Executors
+				.newFixedThreadPool( this.threadsToLoadObjects, new NamingThreadFactory( "MassIndexer Object Loader Thread" ) );
+
+		this.objectHandlerTaskCondition = new NumberCondition( this.threadsToLoadObjects * 4 );
+
 		this.idProperties = this.getIdProperties( this.rootTypes );
 		for ( Class<?> rootClass : this.rootTypes ) {
 			try {
@@ -275,7 +231,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 			}
 
 			this.finishConditions.put( rootClass, new NumberCondition( 0, 0, false ) );
-			IdProducerTask idProducer = new IdProducerTask( rootClass, this.idProperties.get( rootClass ), this.emf, this.useUserTransaction,
+			IdProducerTask idProducer = new IdProducerTask( rootClass, this.idProperties.get( rootClass ), this.emf, this.useJTATransaction,
 					this.batchSizeToLoadIds, this.batchSizeToLoadObjects, this, this.purgeAllOnStart, this.optimizeAfterPurge, this::onException,
 					this.finishConditions.get( rootClass ) );
 			idProducer.progressMonitor( this::idProgress );
@@ -501,7 +457,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 		if ( this.userSpecifiedEntityProvider == null ) {
 			EntityManagerEntityProvider em = this.entityProviders.poll();
 			if ( em == null ) {
-				em = new TransactionWrappedEntityManagerEntityProvider( this.emf.createEntityManager(), this.idProperties, this.useUserTransaction );
+				em = new TransactionWrappedEntityManagerEntityProvider( this.emf.createEntityManager(), this.idProperties, this.useJTATransaction );
 			}
 			return em;
 		}
@@ -522,12 +478,8 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 	}
 
 	private void closeExecutorServices() {
-		if ( this.createdOwnExecutorServiceForIds ) {
-			this.executorServiceForIds.shutdown();
-		}
-		if ( this.createdOwnExecutorServiceForObjects ) {
-			this.executorServiceForObjects.shutdown();
-		}
+		this.executorServiceForIds.shutdown();
+		this.executorServiceForObjects.shutdown();
 	}
 
 	private void closeAllOpenEntityManagers() {

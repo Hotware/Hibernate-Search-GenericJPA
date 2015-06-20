@@ -8,7 +8,6 @@ package org.hibernate.search.genericjpa.impl;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -35,38 +34,30 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 	private final TriggerSQLStringSource triggerSource;
 	private final List<Class<?>> updateClasses;
 	private final EntityManagerFactory emf;
-	private final boolean useUserTransaction;
+	private final boolean useJTATransaction;
 
-	public SQLJPAUpdateSourceProvider(EntityManagerFactory emf, boolean useUserTransaction, TriggerSQLStringSource triggerSource, List<Class<?>> updateClasses) {
+	public SQLJPAUpdateSourceProvider(EntityManagerFactory emf, boolean useJTATransaction, TriggerSQLStringSource triggerSource, List<Class<?>> updateClasses) {
 		this.triggerSource = triggerSource;
 		this.updateClasses = updateClasses;
 		this.emf = emf;
-		this.useUserTransaction = useUserTransaction;
+		this.useJTATransaction = useJTATransaction;
 	}
 
 	@Override
-	public UpdateSource getUpdateSource(long delay, TimeUnit timeUnit, int batchSizeForUpdates, ScheduledExecutorService exec) {
+	public UpdateSource getUpdateSource(long delay, TimeUnit timeUnit, int batchSizeForUpdates) {
 		EventModelParser eventModelParser = new EventModelParser();
 		List<EventModelInfo> eventModelInfos = eventModelParser.parse( new ArrayList<>( this.updateClasses ) );
 		this.setupTriggers( eventModelInfos );
-		if ( exec == null ) {
-			return new JPAUpdateSource( eventModelInfos, this.emf, this.useUserTransaction, delay, timeUnit, batchSizeForUpdates );
-		}
-		else {
-			return new JPAUpdateSource( eventModelInfos, this.emf, this.useUserTransaction, delay, timeUnit, batchSizeForUpdates, exec );
-		}
-
+		return new JPAUpdateSource( eventModelInfos, this.emf, this.useJTATransaction, delay, timeUnit, batchSizeForUpdates );
 	}
 
 	private void setupTriggers(List<EventModelInfo> eventModelInfos) {
 		EntityManager em = null;
 		try {
 			em = this.emf.createEntityManager();
-			// tx is null if we cannot get a UserTransaction. This could be because we are
-			// a container managed bean
-			JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useUserTransaction, true );
+			JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useJTATransaction );
 			if ( tx != null ) {
-				tx.setIgnoreExceptionsForUserTransaction( true );
+				tx.setIgnoreExceptionsForJTATransaction( true );
 				tx.begin();
 			}
 

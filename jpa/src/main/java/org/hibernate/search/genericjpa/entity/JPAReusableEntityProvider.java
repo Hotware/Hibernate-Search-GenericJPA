@@ -9,8 +9,6 @@ package org.hibernate.search.genericjpa.entity;
 import java.util.List;
 import java.util.Map;
 
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.transaction.HeuristicMixedException;
@@ -19,11 +17,10 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
-import javax.transaction.TransactionSynchronizationRegistry;
-import javax.transaction.UserTransaction;
 
 import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
 import org.hibernate.search.genericjpa.exception.SearchException;
+import org.hibernate.search.genericjpa.jpa.util.JTALookup;
 
 /**
  * @author Martin Braun
@@ -35,7 +32,7 @@ public class JPAReusableEntityProvider implements ReusableEntityProvider {
 	private final boolean useJTATransaction;
 	private EntityManager em;
 	private EntityManagerEntityProvider provider;
-	private UserTransaction utx;
+	private boolean startedJTA = false;
 
 	public JPAReusableEntityProvider(EntityManagerFactory emf, Map<Class<?>, String> idProperties, boolean useJTATransaction) {
 		this.emf = emf;
@@ -70,7 +67,6 @@ public class JPAReusableEntityProvider implements ReusableEntityProvider {
 			this.em.close();
 		}
 		finally {
-			this.utx = null;
 			this.em = null;
 			this.provider = null;
 		}
@@ -90,7 +86,6 @@ public class JPAReusableEntityProvider implements ReusableEntityProvider {
 			if ( this.em != null ) {
 				this.em.close();
 			}
-			this.utx = null;
 			this.em = null;
 			this.provider = null;
 			throw e;
@@ -101,27 +96,19 @@ public class JPAReusableEntityProvider implements ReusableEntityProvider {
 		this.em.clear();
 	}
 
-	// TODO: fix the hacky stuff here
-
 	private void beginTransaction() {
 		if ( !this.useJTATransaction ) {
 			this.em.getTransaction().begin();
 		}
 		else {
 			try {
-				TransactionSynchronizationRegistry registry = InitialContext.doLookup( "java:comp/TransactionSynchronizationRegistry" );
-				if ( registry.getTransactionStatus() == Status.STATUS_NO_TRANSACTION ) {
-					this.utx = InitialContext.doLookup( "java:comp/UserTransaction" );
-					this.utx.begin();
-					this.em.joinTransaction();
-				}
-				else {
-					// we didn't start the currently active transaction, so we don't have to handle it here
-					this.utx = null;
+				if(JTALookup.lookup().getStatus() == Status.STATUS_NO_TRANSACTION) {
+					JTALookup.lookup().begin();
+					this.startedJTA = true;
 				}
 			}
-			catch (NamingException | NotSupportedException | SystemException e1) {
-				throw new SearchException( "couldn't start a JTA UserTransaction", e1 );
+			catch (NotSupportedException | SystemException e) {
+				throw new SearchException( "couldn't start a JTA Transaction", e );
 			}
 		}
 	}
@@ -132,13 +119,13 @@ public class JPAReusableEntityProvider implements ReusableEntityProvider {
 		}
 		else {
 			try {
-				if ( this.utx != null ) {
-					// only commit this transaction if it was
-					this.utx.commit();
+				if(this.startedJTA) {
+					this.startedJTA = false;
+					JTALookup.lookup().commit();
 				}
 			}
-			catch (SecurityException | IllegalStateException | RollbackException | HeuristicMixedException | HeuristicRollbackException | SystemException e1) {
-				throw new SearchException( "couldn't commit a JTA UserTransaction", e1 );
+			catch (SecurityException | IllegalStateException | RollbackException | HeuristicMixedException | HeuristicRollbackException | SystemException e) {
+				throw new SearchException( "couldn't commit a JTA Transaction", e );
 			}
 		}
 	}

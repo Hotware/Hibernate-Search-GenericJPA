@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -73,10 +72,9 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 	private final String name;
 	private final EntityManagerFactory emf;
 	private final Properties properties;
-	private final ScheduledExecutorService exec;
 	private final UpdateSourceProvider updateSourceProvider;
 	private final List<Class<?>> indexRootTypes;
-	private final boolean useUserTransaction;
+	private final boolean useJTATransaction;
 
 	private int updateDelay = 500;
 	private int batchSizeForUpdates = 5;
@@ -90,15 +88,14 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 	private final Lock lock = new ReentrantLock();
 
 	@SuppressWarnings("unchecked")
-	public JPASearchFactoryAdapter(String name, EntityManagerFactory emf, boolean useUserTransaction, List<Class<?>> indexRootTypes,
-			@SuppressWarnings("rawtypes") Map properties, ScheduledExecutorService exec, UpdateSourceProvider updateSourceProvider) {
+	public JPASearchFactoryAdapter(String name, EntityManagerFactory emf, boolean useJTATransaction, List<Class<?>> indexRootTypes,
+			@SuppressWarnings("rawtypes") Map properties, UpdateSourceProvider updateSourceProvider) {
 		this.name = name;
 		this.emf = emf;
-		this.useUserTransaction = useUserTransaction;
+		this.useJTATransaction = useJTATransaction;
 		this.indexRootTypes = indexRootTypes;
 		this.properties = new Properties();
 		this.properties.putAll( properties );
-		this.exec = exec;
 		this.updateSourceProvider = updateSourceProvider;
 	}
 
@@ -125,7 +122,7 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 	}
 
 	private UpdateSource createUpdateSource() {
-		return this.updateSourceProvider.getUpdateSource( this.updateDelay, TimeUnit.MILLISECONDS, this.batchSizeForUpdates, this.exec );
+		return this.updateSourceProvider.getUpdateSource( this.updateDelay, TimeUnit.MILLISECONDS, this.batchSizeForUpdates );
 	}
 
 	public EntityProvider entityProvider(EntityManager em) {
@@ -170,7 +167,7 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 		if ( this.updateSource != null ) {
 			this.containedInIndexOf = MetadataUtil.calculateInIndexOf( rehashedTypeMetadatas );
 
-			JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider( this.getEmf(), this.idProperties, this.isUseUserTransaction() );
+			JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider( this.getEmf(), this.idProperties, this.isUseJTATransaction() );
 			this.indexUpdater = new IndexUpdater( rehashedTypeMetadataForIndexRoot, containedInIndexOf, entityProvider,
 					impl.unwrap( ExtendedSearchIntegrator.class ) );
 			this.updateSource.setUpdateConsumers( Arrays.asList( indexUpdater, this ) );
@@ -206,7 +203,7 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 	}
 
 	public MassIndexer createMassIndexer(List<Class<?>> indexRootTypes) {
-		return new MassIndexerImpl( this.emf, this.searchIntegrator, indexRootTypes, this.isUseUserTransaction() );
+		return new MassIndexerImpl( this.emf, this.searchIntegrator, indexRootTypes, this.isUseJTATransaction() );
 	}
 
 	public MassIndexer createMassIndexer() {
@@ -400,8 +397,8 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 		return this.indexRootTypes;
 	}
 
-	private boolean isUseUserTransaction() {
-		return this.useUserTransaction;
+	private boolean isUseJTATransaction() {
+		return this.useJTATransaction;
 	}
 
 	@Override

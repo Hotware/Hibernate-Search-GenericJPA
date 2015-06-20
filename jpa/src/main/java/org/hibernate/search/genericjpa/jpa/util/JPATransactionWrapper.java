@@ -6,11 +6,8 @@
  */
 package org.hibernate.search.genericjpa.jpa.util;
 
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
-import javax.transaction.UserTransaction;
 
 import org.hibernate.search.genericjpa.exception.SearchException;
 
@@ -20,18 +17,16 @@ import org.hibernate.search.genericjpa.exception.SearchException;
 public class JPATransactionWrapper {
 
 	private final EntityTransaction tx;
-	private final UserTransaction utx;
 	private final EntityManager em;
-	private boolean ignoreExceptionsForUserTransaction;
+	private boolean ignoreExceptionsForJTATransaction;
 
-	public JPATransactionWrapper(EntityTransaction tx, UserTransaction utx, EntityManager em) {
+	public JPATransactionWrapper(EntityTransaction tx, EntityManager em) {
 		this.tx = tx;
-		this.utx = utx;
 		this.em = em;
 	}
 
-	public void setIgnoreExceptionsForUserTransaction(boolean ignoreExceptionsForUserTransaction) {
-		this.ignoreExceptionsForUserTransaction = ignoreExceptionsForUserTransaction;
+	public void setIgnoreExceptionsForJTATransaction(boolean ignoreExceptionsForJTATransaction) {
+		this.ignoreExceptionsForJTATransaction = ignoreExceptionsForJTATransaction;
 	}
 
 	public void begin() {
@@ -40,11 +35,11 @@ public class JPATransactionWrapper {
 		}
 		else {
 			try {
-				this.utx.begin();
+				JTALookup.lookup().begin();
 				this.em.joinTransaction();
 			}
 			catch (Exception e) {
-				if ( !this.ignoreExceptionsForUserTransaction ) {
+				if ( !this.ignoreExceptionsForJTATransaction ) {
 					throw new SearchException( e );
 				}
 			}
@@ -57,10 +52,10 @@ public class JPATransactionWrapper {
 		}
 		else {
 			try {
-				this.utx.commit();
+				JTALookup.lookup().commit();
 			}
 			catch (Exception e) {
-				if ( !this.ignoreExceptionsForUserTransaction ) {
+				if ( !this.ignoreExceptionsForJTATransaction ) {
 					throw new SearchException( e );
 				}
 			}
@@ -73,42 +68,24 @@ public class JPATransactionWrapper {
 		}
 		else {
 			try {
-				this.utx.rollback();
+				JTALookup.lookup().rollback();
 			}
 			catch (Exception e) {
-				if ( !this.ignoreExceptionsForUserTransaction ) {
+				if ( !this.ignoreExceptionsForJTATransaction ) {
 					throw new SearchException( e );
 				}
 			}
 		}
 	}
 
-	public static JPATransactionWrapper get(EntityManager em, boolean useUserTransaction) {
-		return get( em, useUserTransaction, false );
-	}
-
-	public static JPATransactionWrapper get(EntityManager em, boolean useUserTransaction, boolean nullInsteadExceptionUtx) {
+	public static JPATransactionWrapper get(EntityManager em, boolean useJTATransaction) {
 		EntityTransaction tx;
-		UserTransaction utx;
-		if ( !useUserTransaction ) {
+		if ( !useJTATransaction ) {
 			tx = em.getTransaction();
-			utx = null;
-		}
-		else {
-			try {
-				utx = (UserTransaction) InitialContext.doLookup( "java:comp/UserTransaction" );
-			}
-			catch (NamingException e) {
-				if ( !nullInsteadExceptionUtx ) {
-					throw new SearchException( e );
-				}
-				else {
-					return null;
-				}
-			}
+		} else {
 			tx = null;
 		}
-		return new JPATransactionWrapper( tx, utx, em );
+		return new JPATransactionWrapper( tx, em );
 	}
 
 }
