@@ -5,6 +5,8 @@
 
     <container default="true" qualifier="glassfish">
         <configuration>
+        	<!-- we don't want this on the default port -->
+        	<property name="bindHttpPort">60335</property>
             <property name="resourcesXml">src/test/resources/glassfish-embedded/glassfish-resources.xml</property>
         </configuration>
     </container>

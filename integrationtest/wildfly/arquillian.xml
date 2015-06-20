@@ -1,14 +1,16 @@
-<arquillian xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemalocation="http://jboss.org/schema/arquillian http://jboss.org/schema/arquillian/arquillian-1.0.xsd">
-    <engine>
-        <property name="deploymentExportPath">target/arquillian</property>
-    </engine>
+<arquillian xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemalocation="http://jboss.org/schema/arquillian http://jboss.org/schema/arquillian/arquillian-1.0.xsd">
+	<engine>
+		<property name="deploymentExportPath">target/arquillian</property>
+	</engine>
 
-    <container qualifier="wildfly" default="true">
-        <configuration>
-            <property name="serverConfig">standalone-full-hsearch-jpa.xml</property>
-            <!-- uncomment below for debugging
-            <property name="javaVmArguments">-Xmx512m -XX:MaxPermSize=128m -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=8787</property>
-            -->
-        </configuration>
-    </container>
+	<container qualifier="wildfly" default="true">
+		<configuration>
+			<property name="serverConfig">standalone-full-hsearch-jpa.xml</property>
+			<property name="javaVmArguments">-Djboss.socket.binding.port-offset=10000
+				-Xmx512m -XX:MaxPermSize=196m -Djava.net.preferIPv4Stack=true
+				-Djgroups.bind_addr=127.0.0.1 -XX:+IgnoreUnrecognizedVMOptions</property>
+			<property name="managementPort">19990</property>
+		</configuration>
+	</container>
 </arquillian>

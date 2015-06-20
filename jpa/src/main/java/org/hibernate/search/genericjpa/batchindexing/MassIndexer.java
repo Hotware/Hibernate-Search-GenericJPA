@@ -55,20 +55,20 @@ public interface MassIndexer {
 	MassIndexer threadsToLoadObjects(int threadsToLoadObjects);
 
 	/**
-	 * set all executorServices to the same instance. <b>This is needed in a UserTransaction environment and ignores
-	 * manually thread counts</b>
+	 * set all executorServices to the same instance. <b>This is needed in a UserTransaction environment and the
+	 * manually set threadcount is just used as a hint</b>
 	 */
 	MassIndexer executorService(ExecutorService executorService);
 
 	/**
-	 * set the executorService used for fetching the ids. <b>This is needed in a UserTransaction environment and ignores
-	 * manually thread counts</b>
+	 * set the executorService used for fetching the ids. <b>This is needed in a UserTransaction environment and the
+	 * manually set threadcount is just used as a hint</b>
 	 */
 	MassIndexer executorServiceForIds(ExecutorService executorServiceForIds);
 
 	/**
-	 * set the executorService used for fetching the objects. <b>This is needed in a UserTransaction environment and
-	 * ignores manually thread counts</b>
+	 * set the executorService used for fetching the objects. <b>This is needed in a UserTransaction environment and the
+	 * manually set threadcount is just used as a hint</b>
 	 */
 	MassIndexer executorServiceForObjects(ExecutorService executorServiceForObjects);
 

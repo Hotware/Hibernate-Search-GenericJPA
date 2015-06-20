@@ -90,12 +90,27 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 	private final ConcurrentHashMap<Class<?>, AtomicInteger> documentBuiltProgress = new ConcurrentHashMap<>();
 	private final AtomicInteger documentsAdded = new AtomicInteger();
 
+	/**
+	 * used to wait for finishing the indexing process
+	 */
 	private final Map<Class<?>, NumberCondition> finishConditions = new HashMap<>();
 	private final ConcurrentLinkedQueue<Future<?>> idProducerFutures = new ConcurrentLinkedQueue<>();
+
+	/**
+	 * this latch is used to wait for the cleanup thread to finish.
+	 */
 	private CountDownLatch cleanUpLatch;
 
-	private final NumberCondition objectHandlerTaskCondition = new NumberCondition( 1000 );
+	/**
+	 * this is needed so we don't flood the executors for object handling. we store the amount of currently submitted
+	 * ObjectHandlerTasks in here
+	 */
+	private NumberCondition objectHandlerTaskCondition;
 
+	/**
+	 * lock to guard the cancelled variable. the cancel method of our future has the write lock while all the others are
+	 * "readers". -> cancel is is more important.
+	 */
 	private final ReadWriteLock cancelGuard = new ReentrantReadWriteLock();
 	private boolean cancelled = false;
 
@@ -227,15 +242,22 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 			if ( this.useUserTransaction ) {
 				throw new SearchException( "MassIndexer cannot create own threads if it has to use a UserTransaction!" );
 			}
-			this.executorServiceForIds = Executors.newFixedThreadPool( this.threadsToLoadIds );
+			this.executorServiceForIds = Executors.newFixedThreadPool( this.threadsToLoadIds, new NamingThreadFactory( "MassIndexer Id Loader Thread" ) );
 			this.createdOwnExecutorServiceForIds = true;
 		}
 		if ( this.executorServiceForObjects == null ) {
 			if ( this.useUserTransaction ) {
 				throw new SearchException( "MassIndexer cannot create own threads if it has to use a UserTransaction!" );
 			}
-			this.executorServiceForObjects = Executors.newFixedThreadPool( this.threadsToLoadObjects );
+			this.executorServiceForObjects = Executors.newFixedThreadPool( this.threadsToLoadObjects, new NamingThreadFactory(
+					"MassIndexer Object Loader Thread" ) );
 			this.createdOwnExecutorServiceForObjects = true;
+		}
+		if ( this.threadsToLoadObjects > 0 ) {
+			this.objectHandlerTaskCondition = new NumberCondition( this.threadsToLoadObjects * 4 );
+		}
+		else {
+			this.objectHandlerTaskCondition = new NumberCondition( 1000 );
 		}
 		this.idProperties = this.getIdProperties( this.rootTypes );
 		for ( Class<?> rootClass : this.rootTypes ) {
@@ -260,7 +282,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 			this.idProducerFutures.add( this.executorServiceForIds.submit( idProducer ) );
 		}
 		this.future = this.getFuture();
-		new Thread( "MassIndexer cleanup/finisher thread" ) {
+		new Thread( "MassIndexer Cleanup/Finisher Thread" ) {
 
 			@Override
 			public void run() {
@@ -415,7 +437,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 			task.batch( updateInfo );
 			task.documentBuiltProgressMonitor( this::documentBuiltProgress );
 			task.objectLoadedProgressMonitor( this::objectLoadedProgress );
-			this.objectHandlerTaskCondition.up( updateInfo.size() );
+			this.objectHandlerTaskCondition.up( 1 );
 			this.executorServiceForObjects.submit( task );
 		}
 		finally {
@@ -491,7 +513,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 			( (TransactionWrappedEntityManagerEntityProvider) provider ).clearEm();
 			this.entityProviders.add( (EntityManagerEntityProvider) provider );
 		}
-		this.objectHandlerTaskCondition.down( task.batch.size() );
+		this.objectHandlerTaskCondition.down( 1 );
 	}
 
 	private void onException(Exception e) {
