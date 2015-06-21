@@ -211,18 +211,68 @@ public class SearchFactoryTest {
 		}
 	}
 
+	@Test
+	public void testNullInIndexNotReturned() throws IOException {
+		try (StandaloneSearchFactory factory = StandaloneSearchFactoryFactory.createSearchFactory(
+				new SearchConfigurationImpl(),
+				Arrays.asList( TopLevel.class, Embedded.class, Embedded2.class )
+		)) {
+			//both have the same id
+			//this is important for the multi-entity query
+			TopLevel tl = new TopLevel();
+			tl.setId( null );
+			Embedded eb = new Embedded( null );
+
+			tl.setEmbedded( eb );
+			eb.setTopLevel( tl );
+
+			//this indexes both
+			factory.index( eb );
+
+			final EntityProvider dummyProvider = new EntityProvider() {
+
+				@Override
+				public Object get(Class<?> entityClass, Object id) {
+					throw new AssertionError( "shoudn't try to load anything if the ids are null in the index" );
+				}
+
+				@Override
+				public List getBatch(Class<?> entityClass, List<Object> id) {
+					throw new AssertionError( "shoudn't try to load anything if the ids are null in the index" );
+				}
+
+				@Override
+				public void close() throws IOException {
+
+				}
+			};
+
+			//we should find everything with the dummies
+			assertEquals(
+					0, factory.createQuery( new MatchAllDocsQuery(), TopLevel.class, Embedded.class ).query(
+							dummyProvider, HSearchQuery.Fetch.BATCH
+					).size()
+			);
+			assertEquals(
+					0, factory.createQuery( new MatchAllDocsQuery(), TopLevel.class, Embedded.class ).query(
+							dummyProvider, HSearchQuery.Fetch.FIND_BY_ID
+					).size()
+			);
+		}
+	}
+
 	@Indexed
 	public static class TopLevel {
 
-		private int id;
+		private Integer id;
 		private Embedded embedded;
 
 		@DocumentId
-		public int getId() {
+		public Integer getId() {
 			return this.id;
 		}
 
-		public void setId(int id) {
+		public void setId(Integer id) {
 			this.id = id;
 		}
 
@@ -240,16 +290,20 @@ public class SearchFactoryTest {
 	@Indexed
 	public static class Embedded {
 
-		@DocumentId
-		private final int id;
+		private final Integer id;
 
-		public Embedded(int id) {
+		public Embedded(Integer id) {
 			this.id = id;
 		}
 
 		private String test;
 		private TopLevel topLevel;
 		private List<Embedded2> embedded2;
+
+		@DocumentId
+		public Integer getId() {
+			return this.id;
+		}
 
 		@Field(store = Store.YES)
 		public String getTest() {
