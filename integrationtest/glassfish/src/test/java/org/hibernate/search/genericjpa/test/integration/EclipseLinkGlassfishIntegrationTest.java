@@ -9,6 +9,11 @@ package org.hibernate.search.genericjpa.test.integration;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,6 +34,8 @@ import org.hibernate.search.genericjpa.test.entities.Game;
 import org.hibernate.search.genericjpa.util.Sleep;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.FullTextQuery;
+import org.hibernate.search.query.DatabaseRetrievalMethod;
+import org.hibernate.search.query.ObjectLookupMethod;
 
 import org.junit.After;
 import org.junit.Before;
@@ -41,9 +48,18 @@ import static org.junit.Assert.assertEquals;
  * @author Martin Braun
  */
 @RunWith(Arquillian.class)
-public class EclipseLinkGlassfishIntegrationTest {
+public class EclipseLinkGlassFishIntegrationTest {
 
-	private static final String[] GAME_TITLES = {"Super Mario Brothers", "Mario Kart", "F-Zero"};
+	private static final String[] GAME_TITLES = {
+			"Super Mario Brothers",
+			"Mario Kart",
+			"F-Zero",
+			"Wario Land",
+			"Yoshi's Island",
+			"Age of Empires II",
+			"Warcraft III",
+			"Dota 2"
+	};
 	@PersistenceContext
 	public EntityManager em;
 	@Inject
@@ -57,7 +73,7 @@ public class EclipseLinkGlassfishIntegrationTest {
 	}
 
 	private static boolean assertContainsAllGames(Collection<Game> retrievedGames) {
-		final Set<String> retrievedGameTitles = new HashSet<String>();
+		final Set<String> retrievedGameTitles = new HashSet<>();
 		for ( Game game : retrievedGames ) {
 			System.out.println( "* " + game );
 			retrievedGameTitles.add( game.getTitle() );
@@ -82,10 +98,10 @@ public class EclipseLinkGlassfishIntegrationTest {
 	}
 
 	private void clearData() throws Exception {
-		utx.begin();
-		em.joinTransaction();
+		this.utx.begin();
+		this.em.joinTransaction();
 		System.out.println( "Dumping old records..." );
-		em.createQuery( "delete from Game" ).executeUpdate();
+		this.em.createQuery( "delete from Game" ).executeUpdate();
 		utx.commit();
 
 		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
@@ -107,11 +123,76 @@ public class EclipseLinkGlassfishIntegrationTest {
 		em.clear();
 	}
 
+	@Test
+	public void testMassIndexer()
+			throws InterruptedException, SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException, RollbackException {
+		//all the minimum stuff, so we can test with our little amount of entities
+		//the beefy tests are done in the jpa module anyways
+		//we just want to test whether we can do the indexing
+		//in a EJB context :)
+		this.searchFactory.pauseUpdating( true );
+		try {
+			this.searchFactory.getFullTextEntityManager( this.em )
+					.createIndexer( Game.class )
+					.batchSizeToLoadIds( 1 )
+					.batchSizeToLoadObjects( 1 )
+					.threadsToLoadIds( 1 )
+					.threadsToLoadObjects( 1 ).startAndWait();
+			assertEquals(
+					GAME_TITLES.length, this.searchFactory.getFullTextEntityManager( this.em ).createFullTextQuery(
+							new MatchAllDocsQuery(),
+							Game.class
+					).getResultList().size()
+			);
+		}
+		finally {
+			this.searchFactory.pauseUpdating( false );
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void shouldFindAllGamesInIndexBatchQuery() throws Exception {
+		Sleep.sleep(
+				10000, () -> {
+					List<Game> games = new ArrayList<>();
+					FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
+					games.addAll(
+							fem.createFullTextQuery( new MatchAllDocsQuery(), Game.class ).initializeObjectsWith(
+									ObjectLookupMethod.SKIP, DatabaseRetrievalMethod.QUERY
+							).getResultList()
+					);
+
+					System.out.println( "Found " + games.size() + " games (using Hibernate-Search):" );
+					return assertContainsAllGames( games );
+				}, 100, "coudln't find all games!"
+		);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void shouldFindAllGamesInIndexFindByIdQuery() throws Exception {
+		Sleep.sleep(
+				10000, () -> {
+					List<Game> games = new ArrayList<>();
+					FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
+					games.addAll(
+							fem.createFullTextQuery( new MatchAllDocsQuery(), Game.class ).initializeObjectsWith(
+									ObjectLookupMethod.SKIP, DatabaseRetrievalMethod.FIND_BY_ID
+							).getResultList()
+					);
+
+					System.out.println( "Found " + games.size() + " games (using Hibernate-Search):" );
+					return assertContainsAllGames( games );
+				}, 100, "coudln't find all games!"
+		);
+	}
+
 	@SuppressWarnings("unchecked")
 	@Test
 	public void shouldFindAllGamesInIndex() throws Exception {
 		Sleep.sleep(
-				5000, () -> {
+				10000, () -> {
 					List<Game> games = new ArrayList<>();
 					FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
 					for ( String title : GAME_TITLES ) {
@@ -137,7 +218,7 @@ public class EclipseLinkGlassfishIntegrationTest {
 		fem.index( newGame );
 		fem.commitSearchTransaction();
 		Sleep.sleep(
-				5000, () -> {
+				10000, () -> {
 					FullTextQuery fullTextQuery = fem.createFullTextQuery(
 							new TermQuery(
 									new Term(
@@ -165,7 +246,7 @@ public class EclipseLinkGlassfishIntegrationTest {
 		fem.index( newGame );
 		fem.rollbackSearchTransaction();
 		Sleep.sleep(
-				5000, () -> {
+				10000, () -> {
 					FullTextQuery fullTextQuery = fem.createFullTextQuery(
 							new TermQuery( new Term( "title", "Pong" ) ),
 							Game.class

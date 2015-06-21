@@ -9,7 +9,6 @@ package org.hibernate.search.genericjpa.batchindexing.impl;
 import javax.persistence.PersistenceUnitUtil;
 import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -91,20 +90,13 @@ public class ObjectHandlerTask implements Runnable {
 			try {
 				try {
 					List<Object> ids = this.batch.stream().map(
-							(updateInfo) -> updateInfo.getId()
+							UpdateInfo::getId
 					).collect( Collectors.toList() );
 
-					@SuppressWarnings("unchecked")
-					Map<Object, Object> idsToEntities = (Map<Object, Object>) entityProvider.getBatch(
+					List<?> entities = entityProvider.getBatch(
 							this.entityClass,
 							ids
-					).stream()
-							.collect(
-									Collectors.toMap(
-											this.peristenceUnitUtil::getIdentifier
-											, (entity) -> entity
-									)
-							);
+					);
 
 					// monitor our progress
 					if ( this.objectLoadedProgressMonitor != null ) {
@@ -112,10 +104,9 @@ public class ObjectHandlerTask implements Runnable {
 					}
 
 					ContextualExceptionBridgeHelper conversionContext = new ContextualExceptionBridgeHelper();
-					for ( Object id : ids ) {
-						Object obj = idsToEntities.get( id );
-						if ( obj != null ) {
-							this.index( obj, INITIALIZER, conversionContext );
+					for ( Object entity : entities ) {
+						if ( entity != null ) {
+							this.index( entity, INITIALIZER, conversionContext );
 						}
 					}
 
