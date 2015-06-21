@@ -9,9 +9,11 @@ package org.hibernate.search.genericjpa.test.factory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.TermQuery;
 
 import org.hibernate.search.annotations.ContainedIn;
@@ -54,7 +56,7 @@ public class SearchFactoryTest {
 
 		TopLevel tl = new TopLevel();
 		tl.setId( 123 );
-		Embedded eb = new Embedded();
+		Embedded eb = new Embedded( 1 );
 
 		List<Embedded2> embedded2 = new ArrayList<>();
 		{
@@ -72,6 +74,14 @@ public class SearchFactoryTest {
 		Transaction tc = new Transaction();
 
 		impl.getWorker().performWork( new Work( tl, WorkType.ADD ), tc );
+
+		tc.commit();
+
+		assertEquals(1, impl.createHSQuery().luceneQuery( new MatchAllDocsQuery() ).targetedEntities(
+				Collections.singletonList(
+						TopLevel.class
+				)
+		).queryResultSize());
 	}
 
 	@Test
@@ -81,9 +91,11 @@ public class SearchFactoryTest {
 				Arrays.asList( TopLevel.class, Embedded.class, Embedded2.class )
 		)) {
 
+			//both have the same id
+			//this is important for the multi-entity query
 			TopLevel tl = new TopLevel();
-			tl.setId( 123 );
-			Embedded eb = new Embedded();
+			tl.setId( 1 );
+			Embedded eb = new Embedded( 1 );
 
 			List<Embedded2> embedded2 = new ArrayList<>();
 			{
@@ -104,9 +116,16 @@ public class SearchFactoryTest {
 			// :)
 			factory.index( embedded2.get( 0 ) );
 
-			assertEquals( 1, factory.getStatistics().getNumberOfIndexedEntities( TopLevel.class.getName() ) );
+			assertEquals( 1, factory.createQuery( new MatchAllDocsQuery(), TopLevel.class ).queryResultSize() );
+			assertEquals( 1, factory.createQuery( new MatchAllDocsQuery(), Embedded.class ).queryResultSize() );
 
-			factory.purge( TopLevel.class, new TermQuery( new Term( "id", "123" ) ) );
+			//we should find both in the index
+			assertEquals(
+					2, factory.createQuery( new MatchAllDocsQuery(), TopLevel.class, Embedded.class )
+							.queryResultSize()
+			);
+
+			factory.purge( TopLevel.class, new TermQuery( new Term( "id", "1" ) ) );
 			HSearchQuery query = factory.createQuery(
 					factory.buildQueryBuilder()
 							.forEntity( TopLevel.class )
@@ -144,7 +163,15 @@ public class SearchFactoryTest {
 
 	}
 
+	@Indexed
 	public static class Embedded {
+
+		@DocumentId
+		private final int id;
+
+		public Embedded(int id) {
+			this.id = id;
+		}
 
 		private String test;
 		private TopLevel topLevel;

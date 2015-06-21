@@ -177,7 +177,6 @@ public class StandaloneSearchFactoryImpl implements StandaloneSearchFactory {
 		this.searchIntegrator.getWorker().flushWorks( tc );
 	}
 
-	// FIXME: implement this!
 	@Override
 	public void purgeByTerm(Class<?> entityClass, String field, Integer val, TransactionContext tc) {
 		this.purgeByTerm( entityClass, field, val, SingularTermDeletionQuery.Type.INT, tc );
