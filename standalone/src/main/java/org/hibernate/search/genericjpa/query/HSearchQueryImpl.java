@@ -126,8 +126,8 @@ public class HSearchQueryImpl implements HSearchQuery {
 		else {
 			ret = new ArrayList<>( projected.size() );
 			Map<Class<?>, List<Object>> idsForClass = new HashMap<>();
-			List<Object> originalOrder = new ArrayList<>();
-			Map<Object, Object> idToObject = new HashMap<>();
+			List<Object[]> originalOrder = new ArrayList<>();
+			Map<Class<?>, Map<Object, Object>> classToIdToObject = new HashMap<>();
 			// split the ids for each class (and also make sure the original
 			// order is saved. this is needed even for only one class)
 			projected.stream().forEach(
@@ -136,10 +136,13 @@ public class HSearchQueryImpl implements HSearchQuery {
 							LOGGER.info( "null id ommited" );
 							return;
 						}
-						originalOrder.add( arr[1] );
+						originalOrder.add( arr );
 						idsForClass.computeIfAbsent(
 								(Class<?>) arr[0], (clazz) -> new ArrayList<>()
 						).add( arr[1] );
+						// just make sure the map is already created,
+						// we do this here to not clutter the following code
+						classToIdToObject.computeIfAbsent( (Class<?>) arr[0], (clz) -> new HashMap<>() );
 					}
 			);
 			// get all entities of the same type in one batch
@@ -147,22 +150,26 @@ public class HSearchQueryImpl implements HSearchQuery {
 					(entry) ->
 							entityProvider.getBatch( entry.getKey(), entry.getValue() ).stream().forEach(
 									(object) -> {
-										Object id = this.searchIntegrator.getIndexBinding( entry.getKey() )
+										Class<?> entityClass = entry.getKey();
+										Object id = this.searchIntegrator.getIndexBinding( entityClass )
 												.getDocumentBuilder()
 												.getId( object );
-										idToObject.put( id, object );
+										classToIdToObject.get( entityClass ).put(
+												id,
+												object
+										);
 									}
 							)
 			);
 			// and put everything back into order
 			originalOrder.stream().forEach(
-					(id) -> {
-						Object value = idToObject.get( id );
+					(arr) -> {
+						Object value = classToIdToObject.get( arr[0] ).get( arr[1] );
 						if ( value == null ) {
-							LOGGER.info( "ommiting object of id " + id + " which was found in the index but not in the database!" );
+							LOGGER.info( "ommiting object of class " + arr[0] + "and id " + arr[1] + " which was found in the index but not in the database!" );
 						}
 						else {
-							ret.add( idToObject.get( id ) );
+							ret.add( classToIdToObject.get( arr[0] ).get( arr[1] ) );
 						}
 					}
 			);

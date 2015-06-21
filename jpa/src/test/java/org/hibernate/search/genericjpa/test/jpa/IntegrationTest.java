@@ -21,7 +21,11 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.TermQuery;
 
 import org.hibernate.search.backend.impl.batch.DefaultBatchBackend;
 import org.hibernate.search.backend.spi.BatchBackend;
@@ -41,6 +45,7 @@ import org.hibernate.search.genericjpa.test.jpa.entities.Place;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
 import org.hibernate.search.genericjpa.util.Sleep;
 import org.hibernate.search.jpa.FullTextEntityManager;
+import org.hibernate.search.jpa.FullTextQuery;
 import org.hibernate.search.query.DatabaseRetrievalMethod;
 import org.hibernate.search.query.ObjectLookupMethod;
 
@@ -51,6 +56,7 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class IntegrationTest {
@@ -151,7 +157,7 @@ public class IntegrationTest {
 	}
 
 	@Test
-	public void testJPAInterfaces() throws InterruptedException {
+	public void testJPAQueryInterfaces() throws InterruptedException {
 		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( em );
 		fem.beginSearchTransaction();
 
@@ -224,6 +230,74 @@ public class IntegrationTest {
 		fem.commitSearchTransaction();
 	}
 
+	@Test
+	public void testDeleteByQuery() {
+		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
+
+		fem.beginSearchTransaction();
+		fem.purgeByTerm( Place.class, "id", this.valinorId );
+		fem.commitSearchTransaction();
+
+		//TODO: test this for the other query types
+
+		assertEquals(
+				0, fem.createFullTextQuery( new TermQuery( new Term( "name", "Valinor" ) ), Place.class )
+						.getResultList()
+						.size()
+		);
+	}
+
+	@Test
+	public void testMultipleEntityQuery() {
+		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
+
+		BooleanQuery query = new BooleanQuery();
+
+		query.add(
+				fem.getSearchFactory()
+						.buildQueryBuilder()
+						.forEntity( Place.class )
+						.get()
+						.keyword()
+						.onField( "name" )
+						.matching( "Valinor" ).createQuery(), BooleanClause.Occur.SHOULD
+		);
+		query.add(
+				fem.getSearchFactory().buildQueryBuilder().forEntity( Sorcerer.class ).get().keyword().onField(
+						"name"
+				).matching( "Saruman" ).createQuery(), BooleanClause.Occur.SHOULD
+		);
+
+		FullTextQuery ftQuery = fem.createFullTextQuery( query, Place.class, Sorcerer.class );
+		assertEquals( 2, ftQuery.getResultSize() );
+
+		this.testFoundSorcererAndPlace( ftQuery );
+
+		//test this for FIND_BY_ID as well
+		ftQuery.initializeObjectsWith( ObjectLookupMethod.SKIP, DatabaseRetrievalMethod.FIND_BY_ID );
+		this.testFoundSorcererAndPlace( ftQuery );
+	}
+
+	private void testFoundSorcererAndPlace(FullTextQuery ftQuery) {
+		boolean[] found = new boolean[2];
+		ftQuery.getResultList().stream().forEach(
+				(ent) -> {
+					if ( ent instanceof Place ) {
+						found[0] = true;
+					}
+					else if ( ent instanceof Sorcerer ) {
+						found[1] = true;
+					}
+					else {
+						throw new AssertionError();
+					}
+				}
+		);
+		for ( boolean fd : found ) {
+			assertTrue( "did not find Sorcerer AND Place in Query", fd );
+		}
+	}
+
 	@Before
 	public void setup() {
 		this.emf = Persistence.createEntityManagerFactory( "EclipseLink_MySQL" );
@@ -290,6 +364,7 @@ public class IntegrationTest {
 
 			FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( em );
 			fem.beginSearchTransaction();
+			//this will index the Sorcerers as well
 			fem.index( valinor );
 			fem.index( helmsDeep );
 			fem.commitSearchTransaction();

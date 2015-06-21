@@ -16,6 +16,7 @@ import javax.persistence.Table;
 import org.hibernate.search.annotations.ContainedIn;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Index;
+import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.genericjpa.annotations.InIndex;
@@ -23,6 +24,7 @@ import org.hibernate.search.genericjpa.annotations.InIndex;
 @Entity
 @Table(name = "SORCERER")
 @InIndex
+@Indexed
 public class Sorcerer {
 
 	private Integer id;

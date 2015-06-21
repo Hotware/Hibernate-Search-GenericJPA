@@ -57,9 +57,7 @@ public class JPAReusableEntityManagerTest extends DatabaseIntegrationTest {
 		assertEquals( 2, batch.size() );
 		// order is not preserved in getBatch!
 		Set<String> names = batch.stream().map(
-				(place) -> {
-					return place.getName();
-				}
+				Place::getName
 		).collect( Collectors.toSet() );
 		assertTrue( "didn't contain Valinor!", names.contains( "Valinor" ) );
 		assertTrue( "didn't contain Helm's Deep", names.contains( "Helm's Deep" ) );

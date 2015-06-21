@@ -42,14 +42,25 @@ import static org.junit.Assert.assertEquals;
 public class MassIndexerTest {
 
 	private static final int COUNT = 2153;
+	private static final int SORCERER_COUNT_EACH = 3;
 	private EntityManagerFactory emf;
 	private EntityManager em;
 	private JPASearchFactoryAdapter searchFactory;
+
+	//this one is only for Place entities
 	private MassIndexer massIndexer;
 
 	@Test
 	public void test() throws InterruptedException {
 		System.out.println( "starting MassIndexer test!" );
+
+		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
+		fem.beginSearchTransaction();
+		fem.purgeAll( Sorcerer.class );
+		fem.commitSearchTransaction();
+
+		//make sure every Sorcerer is deleted
+		assertEquals( 0, fem.createFullTextQuery( new MatchAllDocsQuery(), Sorcerer.class ).getResultSize() );
 
 		this.massIndexer.threadsToLoadObjects( 15 );
 		this.massIndexer.batchSizeToLoadObjects( 100 );
@@ -64,7 +75,8 @@ public class MassIndexerTest {
 		long after = System.currentTimeMillis();
 		System.out.println( "indexed " + COUNT + " root entities (3 sub each) in " + (after - pre) + "ms." );
 
-		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
+		//make sure no Sorcerer was added
+		assertEquals( 0, fem.createFullTextQuery( new MatchAllDocsQuery(), Sorcerer.class ).getResultSize() );
 
 		assertEquals( COUNT, fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class ).getResultSize() );
 	}
@@ -78,11 +90,21 @@ public class MassIndexerTest {
 	@Test
 	public void testFromSearchFactory() {
 		try {
+			//well, testing for all Entity types is kinda convenient here
 			this.searchFactory.createMassIndexer()
 					.threadsToLoadObjects( 15 )
 					.batchSizeToLoadObjects( 100 )
 					.progressMonitor( this.progress() )
 					.startAndWait();
+
+			FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
+			assertEquals( COUNT, fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class ).getResultSize() );
+			assertEquals(
+					COUNT * SORCERER_COUNT_EACH, fem.createFullTextQuery(
+							new MatchAllDocsQuery(),
+							Sorcerer.class
+					).getResultSize()
+			);
 		}
 		catch (InterruptedException e) {
 			throw new SearchException( e );
@@ -117,7 +139,7 @@ public class MassIndexerTest {
 				place.setName( "Place" + i );
 
 				Set<Sorcerer> sorcs = new HashSet<>();
-				for ( int j = 0; j < 3; ++j ) {
+				for ( int j = 0; j < SORCERER_COUNT_EACH; ++j ) {
 					Sorcerer sorc = new Sorcerer();
 					sorc.setName( "Sorcerer" + sorcCount++ );
 					sorcs.add( sorc );
@@ -150,17 +172,17 @@ public class MassIndexerTest {
 
 			@Override
 			public void objectsLoaded(Class<?> entityType, int count) {
-				System.out.println( "objects loaded: " + count );
+				System.out.println( entityType + " objects loaded: " + count );
 			}
 
 			@Override
 			public void documentsBuilt(Class<?> entityType, int count) {
-				System.out.println( "documents built: " + count );
+				System.out.println( entityType + " documents built: " + count );
 			}
 
 			@Override
 			public void idsLoaded(Class<?> entityType, int count) {
-				System.out.println( "loaded ids: " + count );
+				System.out.println( entityType + " loaded ids: " + count );
 			}
 
 			@Override
