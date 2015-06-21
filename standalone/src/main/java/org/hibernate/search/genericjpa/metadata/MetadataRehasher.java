@@ -8,6 +8,7 @@ package org.hibernate.search.genericjpa.metadata;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.hibernate.search.backend.spi.SingularTermDeletionQuery;
 import org.hibernate.search.backend.spi.SingularTermDeletionQuery.Type;
@@ -24,11 +25,7 @@ import org.hibernate.search.metadata.NumericFieldSettingsDescriptor.NumericEncod
 public final class MetadataRehasher {
 
 	public List<RehashedTypeMetadata> rehash(List<TypeMetadata> originals) {
-		List<RehashedTypeMetadata> rehashed = new ArrayList<>();
-		for ( TypeMetadata original : originals ) {
-			rehashed.add( this.rehash( original ) );
-		}
-		return rehashed;
+		return originals.stream().map( this::rehash ).collect( Collectors.toList() );
 	}
 
 	public RehashedTypeMetadata rehash(TypeMetadata original) {
@@ -36,8 +33,10 @@ public final class MetadataRehasher {
 		rehashed.originalTypeMetadata = original;
 
 		if ( !this.handlePropertyMetadata( original, rehashed, original.getIdPropertyMetadata() ) ) {
-			throw new IllegalArgumentException( "couldn't find any id field for: " + original.getType()
-					+ "! This is required in order to use Hibernate Search with JPA!" );
+			throw new IllegalArgumentException(
+					"couldn't find any id field for: " + original.getType()
+							+ "! This is required in order to use Hibernate Search with JPA!"
+			);
 		}
 
 		for ( EmbeddedTypeMetadata embedded : original.getEmbeddedTypeMetadata() ) {
@@ -61,23 +60,31 @@ public final class MetadataRehasher {
 				return;
 			}
 		}
-		throw new IllegalArgumentException( "couldn't find any id field for: " + original.getType()
-				+ "! This is required in order to use Hibernate Search with JPA!" );
+		throw new IllegalArgumentException(
+				"couldn't find any id field for: " + original.getType()
+						+ "! This is required in order to use Hibernate Search with JPA!"
+		);
 	}
 
-	private boolean handlePropertyMetadata(TypeMetadata original, RehashedTypeMetadata rehashed, PropertyMetadata propertyMetadata) {
+	private boolean handlePropertyMetadata(
+			TypeMetadata original,
+			RehashedTypeMetadata rehashed,
+			PropertyMetadata propertyMetadata) {
 		for ( DocumentFieldMetadata documentFieldMetadata : propertyMetadata.getFieldMetadata() ) {
 			// this must either be id or id of an embedded object
 			if ( documentFieldMetadata.isIdInEmbedded() || documentFieldMetadata.isId() ) {
 				Class<?> type = original.getType();
-				rehashed.idFieldNamesForType.computeIfAbsent( type, (key) -> {
-					return new ArrayList<>();
-				} ).add( documentFieldMetadata.getName() );
+				rehashed.idFieldNamesForType.computeIfAbsent( type, (key) -> new ArrayList<>() ).add(
+						documentFieldMetadata.getName()
+				);
 				rehashed.idPropertyNameForType.put( type, propertyMetadata.getPropertyAccessorName() );
 				if ( rehashed.documentFieldMetadataForIdFieldName.containsKey( documentFieldMetadata.getName() ) ) {
 					throw new AssertionFailure( "field handled twice!" );
 				}
-				rehashed.documentFieldMetadataForIdFieldName.put( documentFieldMetadata.getName(), documentFieldMetadata );
+				rehashed.documentFieldMetadataForIdFieldName.put(
+						documentFieldMetadata.getName(),
+						documentFieldMetadata
+				);
 				SingularTermDeletionQuery.Type deletionQueryType;
 				if ( documentFieldMetadata.isNumeric() ) {
 					NumericEncodingType numEncType = documentFieldMetadata.getNumericEncodingType();
@@ -95,14 +102,19 @@ public final class MetadataRehasher {
 							deletionQueryType = Type.FLOAT;
 							break;
 						default:
-							throw new IllegalArgumentException( "unexpected Numeric encoding type for id: " + numEncType
-									+ ". only the standard LONG, INTEGER, DOUBLE, FLOAT are allowed!" );
+							throw new IllegalArgumentException(
+									"unexpected Numeric encoding type for id: " + numEncType
+											+ ". only the standard LONG, INTEGER, DOUBLE, FLOAT are allowed!"
+							);
 					}
 				}
 				else {
 					deletionQueryType = SingularTermDeletionQuery.Type.STRING;
 				}
-				rehashed.singularTermDeletionQueryTypeForIdFieldName.put( documentFieldMetadata.getName(), deletionQueryType );
+				rehashed.singularTermDeletionQueryTypeForIdFieldName.put(
+						documentFieldMetadata.getName(),
+						deletionQueryType
+				);
 				return true;
 			}
 		}

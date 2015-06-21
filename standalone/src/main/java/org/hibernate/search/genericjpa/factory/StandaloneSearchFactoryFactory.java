@@ -20,16 +20,15 @@ public final class StandaloneSearchFactoryFactory {
 		throw new AssertionFailure( "can't touch this!" );
 	}
 
-	public static StandaloneSearchFactory createSearchFactory(SearchConfiguration searchConfiguration, Collection<Class<?>> classes) {
+	public static StandaloneSearchFactory createSearchFactory(
+			SearchConfiguration searchConfiguration,
+			Collection<Class<?>> classes) {
 		SearchIntegratorBuilder builder = new SearchIntegratorBuilder();
 		// we have to build an integrator here (but we don't need it afterwards)
 		builder.configuration( searchConfiguration ).buildSearchIntegrator();
-		classes.forEach( (clazz) -> {
-			builder.addClass( clazz );
-		} );
+		classes.forEach( builder::addClass );
 		SearchIntegrator impl = builder.buildSearchIntegrator();
-		StandaloneSearchFactory factory = new StandaloneSearchFactoryImpl( impl.unwrap( ExtendedSearchIntegrator.class ) );
-		return factory;
+		return new StandaloneSearchFactoryImpl( impl.unwrap( ExtendedSearchIntegrator.class ) );
 	}
 
 }

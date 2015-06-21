@@ -18,6 +18,7 @@ import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
+
 import org.hibernate.search.engine.ProjectionConstants;
 import org.hibernate.search.filter.FullTextFilter;
 import org.hibernate.search.genericjpa.dto.DtoQueryExecutor;
@@ -84,9 +85,9 @@ public class HSearchQueryImpl implements HSearchQuery {
 			this.hsquery.getTimeoutManager().start();
 
 			this.hsquery.projection( projection );
-			ret = this.hsquery.queryEntityInfos().stream().map( (entityInfo) -> {
-				return entityInfo.getProjection();
-			} ).collect( Collectors.toList() );
+			ret = this.hsquery.queryEntityInfos().stream().map(
+					(entityInfo) -> entityInfo.getProjection()
+			).collect( Collectors.toList() );
 
 			this.hsquery.getTimeoutManager().stop();
 		}
@@ -112,15 +113,15 @@ public class HSearchQueryImpl implements HSearchQuery {
 		this.hsquery.disableFullTextFilter( name );
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@SuppressWarnings({"rawtypes", "unchecked"})
 	@Override
 	public List query(EntityProvider entityProvider, Fetch fetchType) {
 		List<Object> ret;
 		List<Object[]> projected = this.queryProjection( ProjectionConstants.OBJECT_CLASS, ProjectionConstants.ID );
 		if ( fetchType == Fetch.FIND_BY_ID ) {
-			ret = projected.stream().map( (arr) -> {
-				return entityProvider.get( (Class<?>) arr[0], arr[1] );
-			} ).collect( Collectors.toList() );
+			ret = projected.stream().map(
+					(arr) -> entityProvider.get( (Class<?>) arr[0], arr[1] )
+			).collect( Collectors.toList() );
 		}
 		else {
 			ret = new ArrayList<>( projected.size() );
@@ -129,34 +130,42 @@ public class HSearchQueryImpl implements HSearchQuery {
 			Map<Object, Object> idToObject = new HashMap<>();
 			// split the ids for each class (and also make sure the original
 			// order is saved. this is needed even for only one class)
-			projected.stream().forEach( (arr) -> {
-				if ( arr[1] == null ) {
-					LOGGER.info( "null id ommited" );
-					return;
-				}
-				originalOrder.add( arr[1] );
-				idsForClass.computeIfAbsent( (Class<?>) arr[0], (clazz) -> {
-					return new ArrayList<>();
-				} ).add( arr[1] );
-			} );
+			projected.stream().forEach(
+					(arr) -> {
+						if ( arr[1] == null ) {
+							LOGGER.info( "null id ommited" );
+							return;
+						}
+						originalOrder.add( arr[1] );
+						idsForClass.computeIfAbsent(
+								(Class<?>) arr[0], (clazz) -> new ArrayList<>()
+						).add( arr[1] );
+					}
+			);
 			// get all entities of the same type in one batch
-			idsForClass.entrySet().forEach( (Map.Entry<Class<?>, List<Object>> entry) -> {
-				entityProvider.getBatch( entry.getKey(), entry.getValue() ).stream().forEach( (object) -> {
-					Object id = this.searchIntegrator.getIndexBinding( entry.getKey() ).getDocumentBuilder().getId( object );
-					Object value = object;
-					idToObject.put( id, value );
-				} );
-			} );
+			idsForClass.entrySet().forEach(
+					(entry) ->
+							entityProvider.getBatch( entry.getKey(), entry.getValue() ).stream().forEach(
+									(object) -> {
+										Object id = this.searchIntegrator.getIndexBinding( entry.getKey() )
+												.getDocumentBuilder()
+												.getId( object );
+										idToObject.put( id, object );
+									}
+							)
+			);
 			// and put everything back into order
-			originalOrder.stream().forEach( (id) -> {
-				Object value = idToObject.get( id );
-				if ( value == null ) {
-					LOGGER.info( "ommiting object of id " + id + " which was found in the index but not in the database!" );
-				}
-				else {
-					ret.add( idToObject.get( id ) );
-				}
-			} );
+			originalOrder.stream().forEach(
+					(id) -> {
+						Object value = idToObject.get( id );
+						if ( value == null ) {
+							LOGGER.info( "ommiting object of id " + id + " which was found in the index but not in the database!" );
+						}
+						else {
+							ret.add( idToObject.get( id ) );
+						}
+					}
+			);
 		}
 		if ( ret.size() != projected.size() ) {
 			LOGGER.info( "returned size was not equal to projected size" );

@@ -45,7 +45,7 @@ public class IdProducerTask implements Runnable {
 	private Runnable finishConsumer;
 
 	public IdProducerTask(Class<?> entityClass, String idProperty, EntityManagerFactory emf, boolean useJTATransaction, int batchSizeToLoadIds,
-			int batchSizeToLoadObjects, UpdateConsumer updateConsumer, boolean purgeAllOnStart, boolean optimizeAfterPurge,
+			int batchSizeToLoadObjects, UpdateConsumer updateConsumer,
 			Consumer<Exception> exceptionConsumer, NumberCondition numberCondition) {
 		this.entityClass = entityClass;
 		this.idProperty = idProperty;

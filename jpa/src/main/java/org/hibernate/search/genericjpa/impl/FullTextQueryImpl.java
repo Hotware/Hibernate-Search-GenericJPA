@@ -58,7 +58,7 @@ final class FullTextQueryImpl implements FullTextQuery {
 	private DatabaseRetrievalMethod databaseRetrievalMethod;
 
 	// initialized at 0 since we don't expect to use hints at this stage
-	private final Map<String, Object> hints = new HashMap<String, Object>( 0 );
+	private final Map<String, Object> hints = new HashMap<>( 0 );
 	private FlushModeType jpaFlushMode = FlushModeType.AUTO;
 
 	public FullTextQueryImpl(HSearchQuery hsearchQuery, EntityProvider entityProvider) {

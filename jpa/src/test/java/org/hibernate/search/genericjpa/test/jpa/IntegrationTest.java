@@ -25,6 +25,7 @@ import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
+
 import org.hibernate.search.backend.impl.batch.DefaultBatchBackend;
 import org.hibernate.search.backend.spi.BatchBackend;
 import org.hibernate.search.genericjpa.Setup;
@@ -45,6 +46,7 @@ import org.hibernate.search.genericjpa.util.Sleep;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.query.DatabaseRetrievalMethod;
 import org.hibernate.search.query.ObjectLookupMethod;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -91,22 +93,30 @@ public class IntegrationTest {
 	}
 
 	private void testIdProducerTask(int batchSizeToLoadIds, int batchSizeToLoadObjects) {
-		IdProducerTask idProducer = new IdProducerTask( Place.class, "id", this.emf, false, batchSizeToLoadIds, batchSizeToLoadObjects, new UpdateConsumer() {
+		IdProducerTask idProducer = new IdProducerTask(
+				Place.class, "id", this.emf, false, batchSizeToLoadIds, batchSizeToLoadObjects, new UpdateConsumer() {
 
 			private boolean hadOne = false;
 
 			@Override
 			public void updateEvent(List<UpdateInfo> batch) {
 				if ( !hadOne ) {
-					assertEquals( "Helm's Deep", IntegrationTest.this.em.find( Place.class, batch.get( 0 ).getId() ).getName() );
+					assertEquals(
+							"Helm's Deep", IntegrationTest.this.em.find( Place.class, batch.get( 0 ).getId() )
+							.getName()
+					);
 					hadOne = true;
 				}
 				else {
-					assertEquals( "Valinor", IntegrationTest.this.em.find( Place.class, batch.get( 0 ).getId() ).getName() );
+					assertEquals(
+							"Valinor", IntegrationTest.this.em.find( Place.class, batch.get( 0 ).getId() )
+							.getName()
+					);
 				}
 			}
 
-		}, true, false, null, null );
+		}, null, null
+		);
 		idProducer.run();
 	}
 
@@ -120,12 +130,14 @@ public class IntegrationTest {
 		Map<Class<?>, String> idProperties = new HashMap<>();
 		idProperties.put( Place.class, "id" );
 		BatchBackend batchBackend = new DefaultBatchBackend( this.searchFactory.getSearchIntegrator(), null );
-		ObjectHandlerTask handler = new ObjectHandlerTask( batchBackend, Place.class, this.searchFactory.getSearchIntegrator().getIndexBinding( Place.class ),
+		ObjectHandlerTask handler = new ObjectHandlerTask(
+				batchBackend, Place.class, this.searchFactory.getSearchIntegrator().getIndexBinding( Place.class ),
 				() -> {
 					return new EntityManagerEntityProvider( this.em, idProperties );
 				}, (x, y) -> {
 
-				}, this.emf.getPersistenceUnitUtil() );
+		}, this.emf.getPersistenceUnitUtil()
+		);
 
 		List<UpdateInfo> batch = new ArrayList<>();
 		batch.add( new UpdateInfo( Place.class, this.valinorId, EventType.INSERT ) );
@@ -148,54 +160,67 @@ public class IntegrationTest {
 				5000,
 				() -> {
 					return 2 == fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class )
-							.initializeObjectsWith( ObjectLookupMethod.SKIP, DatabaseRetrievalMethod.QUERY ).getResultList().size();
-				}, 100, "coudln't find all entities in index!" );
+							.initializeObjectsWith( ObjectLookupMethod.SKIP, DatabaseRetrievalMethod.QUERY )
+							.getResultList()
+							.size();
+				}, 100, "coudln't find all entities in index!"
+		);
 
-		fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class ).initializeObjectsWith( ObjectLookupMethod.SKIP, DatabaseRetrievalMethod.QUERY )
-				.entityProvider( new EntityProvider() {
+		fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class ).initializeObjectsWith(
+				ObjectLookupMethod.SKIP,
+				DatabaseRetrievalMethod.QUERY
+		)
+				.entityProvider(
+						new EntityProvider() {
 
-					@Override
-					public void close() throws IOException {
-						// no-op
-					}
+							@Override
+							public void close() throws IOException {
+								// no-op
+							}
 
-					@Override
-					public List getBatch(Class<?> entityClass, List<Object> id) {
-						// this should happen!
-						return Collections.emptyList();
-					}
+							@Override
+							public List getBatch(Class<?> entityClass, List<Object> id) {
+								// this should happen!
+								return Collections.emptyList();
+							}
 
-					@Override
-					public Object get(Class<?> entityClass, Object id) {
-						throw new AssertionError( "should have used getBatch instead!" );
-					}
+							@Override
+							public Object get(Class<?> entityClass, Object id) {
+								throw new AssertionError( "should have used getBatch instead!" );
+							}
 
-				} ).getResultList();
-
-		fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class ).initializeObjectsWith( ObjectLookupMethod.SKIP, DatabaseRetrievalMethod.FIND_BY_ID )
-				.entityProvider( new EntityProvider() {
-
-					@Override
-					public void close() throws IOException {
-						// no-op
-					}
-
-					@Override
-					public List getBatch(Class<?> entityClass, List<Object> id) {
-						throw new AssertionError( "should have used get instead!" );
-					}
-
-					@Override
-					public Object get(Class<?> entityClass, Object id) {
-						try {
-							return entityClass.newInstance();
 						}
-						catch (InstantiationException | IllegalAccessException e) {
-							throw new RuntimeException( e );
-						}
-					}
+				).getResultList();
 
-				} ).getResultList();
+		fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class ).initializeObjectsWith(
+				ObjectLookupMethod.SKIP,
+				DatabaseRetrievalMethod.FIND_BY_ID
+		)
+				.entityProvider(
+						new EntityProvider() {
+
+							@Override
+							public void close() throws IOException {
+								// no-op
+							}
+
+							@Override
+							public List getBatch(Class<?> entityClass, List<Object> id) {
+								throw new AssertionError( "should have used get instead!" );
+							}
+
+							@Override
+							public Object get(Class<?> entityClass, Object id) {
+								try {
+									return entityClass.newInstance();
+								}
+								catch (InstantiationException | IllegalAccessException e) {
+									throw new RuntimeException( e );
+								}
+							}
+
+						}
+				).getResultList();
 
 		fem.commitSearchTransaction();
 	}
@@ -205,7 +230,10 @@ public class IntegrationTest {
 		this.emf = Persistence.createEntityManagerFactory( "EclipseLink_MySQL" );
 		Properties properties = new Properties();
 		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.name", "test" );
-		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.triggerSource", MySQLTriggerSQLStringSource.class.getName() );
+		properties.setProperty(
+				"org.hibernate.search.genericjpa.searchfactory.triggerSource",
+				MySQLTriggerSQLStringSource.class.getName()
+		);
 		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.type", "manual-updates" );
 		this.searchFactory = (JPASearchFactoryAdapter) Setup.createUnmanagedSearchFactory( this.emf, properties );
 		EntityManager em = emf.createEntityManager();

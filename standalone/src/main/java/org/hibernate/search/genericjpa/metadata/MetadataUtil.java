@@ -39,7 +39,8 @@ public class MetadataUtil {
 	}
 
 	public static MetadataProvider getMetadataProvider(SearchConfiguration searchConfiguration) {
-		ConfigContext configContext = new ConfigContext( searchConfiguration, new BuildContext() {
+		ConfigContext configContext = new ConfigContext(
+				searchConfiguration, new BuildContext() {
 
 			@Override
 			public ExtendedSearchIntegrator getUninitializedSearchIntegrator() {
@@ -71,9 +72,9 @@ public class MetadataUtil {
 				return new LogErrorHandler();
 			}
 
-		} );
-		MetadataProvider metadataProvider = new AnnotationMetadataProvider( new JavaReflectionManager(), configContext );
-		return metadataProvider;
+		}
+		);
+		return new AnnotationMetadataProvider( new JavaReflectionManager(), configContext );
 	}
 
 	public static Map<Class<?>, String> calculateIdProperties(List<RehashedTypeMetadata> rehashedTypeMetadatas) {
@@ -105,9 +106,7 @@ public class MetadataUtil {
 		for ( RehashedTypeMetadata rehashed : rehashedTypeMetadatas ) {
 			Class<?> rootType = rehashed.getOriginalTypeMetadata().getType();
 			for ( Class<?> type : rehashed.getIdPropertyNameForType().keySet() ) {
-				inIndexOf.computeIfAbsent( type, (key) -> {
-					return new ArrayList<>();
-				} ).add( rootType );
+				inIndexOf.computeIfAbsent( type, (key) -> new ArrayList<>() ).add( rootType );
 			}
 		}
 		return inIndexOf;

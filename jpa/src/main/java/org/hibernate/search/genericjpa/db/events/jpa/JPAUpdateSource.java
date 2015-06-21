@@ -31,7 +31,6 @@ import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateSource;
-import org.hibernate.search.genericjpa.db.events.EventModelInfo.IdInfo;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess;
@@ -55,7 +54,6 @@ public class JPAUpdateSource implements UpdateSource {
 	private final int batchSizeForUpdates;
 	private final int batchSizeForDatabaseQueries;
 
-	private final List<Class<?>> updateClasses;
 	private final Map<Class<?>, EventModelInfo> updateClassToEventModelInfo;
 	private final Map<Class<?>, Function<Object, Object>> idAccessorMap;
 
@@ -75,25 +73,61 @@ public class JPAUpdateSource implements UpdateSource {
 	/**
 	 * this doesn't do real batching for the databasequeries
 	 */
-	public JPAUpdateSource(List<EventModelInfo> eventModelInfos, EntityManagerFactory emf, boolean useJTATransaction, long timeOut, TimeUnit timeUnit,
+	public JPAUpdateSource(
+			List<EventModelInfo> eventModelInfos,
+			EntityManagerFactory emf,
+			boolean useJTATransaction,
+			long timeOut,
+			TimeUnit timeUnit,
 			int batchSizeForUpdates) {
-		this( eventModelInfos, emf, useJTATransaction, timeOut, timeUnit, batchSizeForUpdates, 1, Executors.newSingleThreadScheduledExecutor( tf() ) );
+		this(
+				eventModelInfos,
+				emf,
+				useJTATransaction,
+				timeOut,
+				timeUnit,
+				batchSizeForUpdates,
+				1,
+				Executors.newSingleThreadScheduledExecutor( tf() )
+		);
 	}
 
 	/**
 	 * this does batching for databaseQueries according to what you set
 	 */
-	public JPAUpdateSource(List<EventModelInfo> eventModelInfos, EntityManagerFactory emf, boolean useJTATransaction, long timeOut, TimeUnit timeUnit,
-			int batchSizeForUpdates, int batchSizeForDatabaseQueries) {
-		this( eventModelInfos, emf, useJTATransaction, timeOut, timeUnit, batchSizeForUpdates, batchSizeForDatabaseQueries, Executors
-				.newSingleThreadScheduledExecutor( tf() ) );
+	public JPAUpdateSource(
+			List<EventModelInfo> eventModelInfos,
+			EntityManagerFactory emf,
+			boolean useJTATransaction,
+			long timeOut,
+			TimeUnit timeUnit,
+			int batchSizeForUpdates,
+			int batchSizeForDatabaseQueries) {
+		this(
+				eventModelInfos,
+				emf,
+				useJTATransaction,
+				timeOut,
+				timeUnit,
+				batchSizeForUpdates,
+				batchSizeForDatabaseQueries,
+				Executors
+						.newSingleThreadScheduledExecutor( tf() )
+		);
 	}
 
 	/**
 	 * this does batching for databaseQueries according to what you set
 	 */
-	public JPAUpdateSource(List<EventModelInfo> eventModelInfos, EntityManagerFactory emf, boolean useJTATransaction, long timeOut, TimeUnit timeUnit,
-			int batchSizeForUpdates, int batchSizeForDatabaseQueries, ScheduledExecutorService exec) {
+	public JPAUpdateSource(
+			List<EventModelInfo> eventModelInfos,
+			EntityManagerFactory emf,
+			boolean useJTATransaction,
+			long timeOut,
+			TimeUnit timeUnit,
+			int batchSizeForUpdates,
+			int batchSizeForDatabaseQueries,
+			ScheduledExecutorService exec) {
 		this.eventModelInfos = eventModelInfos;
 		this.emf = emf;
 		if ( timeOut <= 0 ) {
@@ -106,10 +140,8 @@ public class JPAUpdateSource implements UpdateSource {
 		}
 		this.batchSizeForUpdates = batchSizeForUpdates;
 		this.batchSizeForDatabaseQueries = batchSizeForDatabaseQueries;
-		this.updateClasses = new ArrayList<>();
 		this.updateClassToEventModelInfo = new HashMap<>();
 		for ( EventModelInfo info : eventModelInfos ) {
-			this.updateClasses.add( info.getUpdateClass() );
 			this.updateClassToEventModelInfo.put( info.getUpdateClass(), info );
 		}
 		this.idAccessorMap = new HashMap<>();
@@ -117,14 +149,16 @@ public class JPAUpdateSource implements UpdateSource {
 			try {
 				Method idMethod = evi.getUpdateClass().getDeclaredMethod( "getId" );
 				idMethod.setAccessible( true );
-				idAccessorMap.put( evi.getUpdateClass(), (obj) -> {
-					try {
-						return idMethod.invoke( obj );
-					}
-					catch (Exception e) {
-						throw new SearchException( e );
-					}
-				} );
+				idAccessorMap.put(
+						evi.getUpdateClass(), (obj) -> {
+							try {
+								return idMethod.invoke( obj );
+							}
+							catch (Exception e) {
+								throw new SearchException( e );
+							}
+						}
+				);
 			}
 			catch (SecurityException | NoSuchMethodException e) {
 				throw new SearchException( "could not access the \"getId()\" method of class: " + evi.getUpdateClass() );
@@ -148,102 +182,113 @@ public class JPAUpdateSource implements UpdateSource {
 			throw new IllegalStateException( "updateConsumers was null!" );
 		}
 		this.cancelled = false;
-		this.job = this.exec.scheduleWithFixedDelay( () -> {
-			this.lock.lock();
-			try {
-				if ( this.pause ) {
-					return;
-				}
-				if ( this.cancelled ) {
-					return;
-				}
-				if ( !this.emf.isOpen() ) {
-					return;
-				}
-				EntityManager em = null;
-				try {
-					em = this.emf.createEntityManager();
-					JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useJTATransaction );
-					tx.begin();
+		this.job = this.exec.scheduleWithFixedDelay(
+				() -> {
+					this.lock.lock();
 					try {
-						MultiQueryAccess query = query( this, em );
-						List<Object[]> toRemove = new ArrayList<>( this.batchSizeForUpdates );
-						List<UpdateInfo> updateInfos = new ArrayList<>( this.batchSizeForUpdates );
-						long processed = 0;
-						while ( query.next() ) {
-							// we have no order problems here since
-							// the query does
-							// the ordering for us
-				Object val = query.get();
-				toRemove.add( new Object[] { query.entityClass(), val } );
-				EventModelInfo evi = this.updateClassToEventModelInfo.get( query.entityClass() );
-				for ( IdInfo info : evi.getIdInfos() ) {
-					updateInfos.add( new UpdateInfo( info.getEntityClass(), info.getIdAccessor().apply( val ), evi.getEventTypeAccessor().apply( val ) ) );
-				}
-				// TODO: maybe move this to a method as
-				// it is getting reused
-				if ( ++processed % this.batchSizeForUpdates == 0 ) {
-					for ( UpdateConsumer consumer : this.updateConsumers ) {
-						consumer.updateEvent( updateInfos );
-						LOGGER.fine( "handled update-event: " + updateInfos );
+						if ( this.pause ) {
+							return;
+						}
+						if ( this.cancelled ) {
+							return;
+						}
+						if ( !this.emf.isOpen() ) {
+							return;
+						}
+						EntityManager em = null;
+						try {
+							em = this.emf.createEntityManager();
+							JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useJTATransaction );
+							tx.begin();
+							try {
+								MultiQueryAccess query = query( this, em );
+								List<Object[]> toRemove = new ArrayList<>( this.batchSizeForUpdates );
+								List<UpdateInfo> updateInfos = new ArrayList<>( this.batchSizeForUpdates );
+								long processed = 0;
+								while ( query.next() ) {
+									// we have no order problems here since
+									// the query does
+									// the ordering for us
+									Object val = query.get();
+									toRemove.add( new Object[] {query.entityClass(), val} );
+									EventModelInfo evi = this.updateClassToEventModelInfo.get( query.entityClass() );
+									evi.getIdInfos()
+											.forEach(
+													(info) -> updateInfos.add(
+															new UpdateInfo(
+																	info.getEntityClass(),
+																	info.getIdAccessor()
+																			.apply( val ),
+																	evi.getEventTypeAccessor()
+																			.apply( val )
+															)
+													)
+											);
+									// TODO: maybe move this to a method as
+									// it is getting reused
+									if ( ++processed % this.batchSizeForUpdates == 0 ) {
+										for ( UpdateConsumer consumer : this.updateConsumers ) {
+											consumer.updateEvent( updateInfos );
+											LOGGER.fine( "handled update-event: " + updateInfos );
+										}
+										for ( Object[] rem : toRemove ) {
+											// the class is in rem[0], the
+											// entity is in
+											// rem[1]
+											query.addToNextValuePosition( (Class<?>) rem[0], -1L );
+											em.remove( rem[1] );
+										}
+										toRemove.clear();
+										updateInfos.clear();
+									}
+								}
+								if ( updateInfos.size() > 0 ) {
+									for ( UpdateConsumer consumer : this.updateConsumers ) {
+										consumer.updateEvent( updateInfos );
+										LOGGER.fine( "handled update-event: " + updateInfos );
+									}
+									for ( Object[] rem : toRemove ) {
+										// the class is in rem[0], the
+										// entity is in rem[1]
+										query.addToNextValuePosition( (Class<?>) rem[0], -1L );
+										em.remove( rem[1] );
+									}
+									toRemove.clear();
+									updateInfos.clear();
+								}
+
+								if ( processed > 0 ) {
+									LOGGER.info( "processed " + processed + " updates" );
+								}
+
+								em.flush();
+								// clear memory :)
+								em.clear();
+
+								tx.commit();
+							}
+							catch (Throwable e) {
+								tx.rollback();
+								throw e;
+							}
+						}
+						catch (Exception e) {
+							throw new SearchException( "Error occured during Update processing!", e );
+						}
+						finally {
+							if ( em != null ) {
+								em.close();
+							}
+						}
 					}
-					for ( Object[] rem : toRemove ) {
-						// the class is in rem[0], the
-						// entity is in
-						// rem[1]
-						query.addToNextValuePosition( (Class<?>) rem[0], -1L );
-						em.remove( rem[1] );
+					catch (Exception e) {
+						LOGGER.log( Level.SEVERE, e.getMessage(), e );
 					}
-					toRemove.clear();
-					updateInfos.clear();
-				}
-			}
-			if ( updateInfos.size() > 0 ) {
-				for ( UpdateConsumer consumer : this.updateConsumers ) {
-					consumer.updateEvent( updateInfos );
-					LOGGER.fine( "handled update-event: " + updateInfos );
-				}
-				for ( Object[] rem : toRemove ) {
-					// the class is in rem[0], the
-					// entity is in rem[1]
-					query.addToNextValuePosition( (Class<?>) rem[0], -1L );
-					em.remove( rem[1] );
-				}
-				toRemove.clear();
-				updateInfos.clear();
-			}
-
-			if ( processed > 0 ) {
-				LOGGER.info( "processed " + processed + " updates" );
-			}
-
-			em.flush();
-			// clear memory :)
-			em.clear();
-
-			tx.commit();
-		}
-		catch (Throwable e) {
-			tx.rollback();
-			throw e;
-		}
-	}
-	catch (Exception e) {
-		throw new SearchException( "Error occured during Update processing!", e );
-	}
-	finally {
-		if ( em != null ) {
-			em.close();
-		}
-	}
-}
-catch (Exception e) {
-	LOGGER.log( Level.SEVERE, e.getMessage(), e );
-}
-finally {
-	this.lock.unlock();
-}
-}, 0, this.timeOut, this.timeUnit );
+					finally {
+						this.lock.unlock();
+					}
+				}, 0, this.timeOut, this.timeUnit
+		);
 	}
 
 	public static MultiQueryAccess query(JPAUpdateSource updateSource, EntityManager em) {
@@ -260,23 +305,28 @@ finally {
 			countMap.put( evi.getUpdateClass(), count );
 
 			{
-				Query query = em.createQuery( new StringBuilder().append( "SELECT obj FROM " )
-						.append( em.getMetamodel().entity( evi.getUpdateClass() ).getName() ).append( " obj ORDER BY obj.id" ).toString() );
+				Query query = em.createQuery(
+						new StringBuilder().append( "SELECT obj FROM " )
+								.append( em.getMetamodel().entity( evi.getUpdateClass() ).getName() ).append(
+								" obj ORDER BY obj.id"
+						).toString()
+				);
 				queryMap.put( evi.getUpdateClass(), query );
 			}
 		}
-		MultiQueryAccess access = new MultiQueryAccess( countMap, queryMap, (first, second) -> {
+		return new MultiQueryAccess(
+				countMap, queryMap, (first, second) -> {
 			int res = Long.compare( updateSource.id( first ), updateSource.id( second ) );
 			if ( res == 0 ) {
 				throw new IllegalStateException( "database contained two update entries with the same id!" );
 			}
 			return res;
-		}, updateSource.batchSizeForDatabaseQueries );
-		return access;
+		}, updateSource.batchSizeForDatabaseQueries
+		);
 	}
 
 	private Long id(ObjectClassWrapper val) {
-		return ( (Number) this.idAccessorMap.get( val.clazz ).apply( val.object ) ).longValue();
+		return ((Number) this.idAccessorMap.get( val.clazz ).apply( val.object )).longValue();
 	}
 
 	@Override

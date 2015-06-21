@@ -9,7 +9,6 @@ package org.hibernate.search.genericjpa.batchindexing.impl;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -114,7 +113,11 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
 	private EntityProvider userSpecifiedEntityProvider;
 
-	public MassIndexerImpl(EntityManagerFactory emf, ExtendedSearchIntegrator searchIntegrator, List<Class<?>> rootTypes, boolean useJTATransaction) {
+	public MassIndexerImpl(
+			EntityManagerFactory emf,
+			ExtendedSearchIntegrator searchIntegrator,
+			List<Class<?>> rootTypes,
+			boolean useJTATransaction) {
 		this.emf = emf;
 		this.searchIntegrator = searchIntegrator;
 		this.rootTypes = rootTypes;
@@ -184,14 +187,22 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
 		this.setupBatchBackend();
 
-		this.executorServiceForIds = Executors.newFixedThreadPool( this.threadsToLoadIds, new NamingThreadFactory( "MassIndexer Id Loader Thread" ) );
+		this.executorServiceForIds = Executors.newFixedThreadPool(
+				this.threadsToLoadIds, new NamingThreadFactory(
+						"MassIndexer Id Loader Thread"
+				)
+		);
 		this.executorServiceForObjects = Executors
-				.newFixedThreadPool( this.threadsToLoadObjects, new NamingThreadFactory( "MassIndexer Object Loader Thread" ) );
+				.newFixedThreadPool(
+						this.threadsToLoadObjects, new NamingThreadFactory(
+								"MassIndexer Object Loader Thread"
+						)
+				);
 
 		this.objectHandlerTaskCondition = new NumberCondition( this.threadsToLoadObjects * 4 );
 
 		this.idProperties = this.getIdProperties( this.rootTypes );
-		
+
 		// start all the IdProducers
 		this.startIdProducers();
 
@@ -229,9 +240,16 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 				this.onException( e );
 			}
 			Class<?> entityClass = updateInfo.get( 0 ).getEntityClass();
-			ObjectHandlerTask task = new ObjectHandlerTask( this.batchBackend, entityClass, this.searchIntegrator.getIndexBinding( entityClass ),
-					this::getEntityProvider, this::disposeEntityManager, this.emf.getPersistenceUnitUtil(), this.finishConditions.get( entityClass ),
-					this::onException );
+			ObjectHandlerTask task = new ObjectHandlerTask(
+					this.batchBackend,
+					entityClass,
+					this.searchIntegrator.getIndexBinding( entityClass ),
+					this::getEntityProvider,
+					this::disposeEntityManager,
+					this.emf.getPersistenceUnitUtil(),
+					this.finishConditions.get( entityClass ),
+					this::onException
+			);
 			task.batch( updateInfo );
 			task.documentBuiltProgressMonitor( this::documentBuiltProgress );
 			task.objectLoadedProgressMonitor( this::objectLoadedProgress );
@@ -271,16 +289,25 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 			}
 
 			this.finishConditions.put( rootClass, new NumberCondition( 0, 0, false ) );
-			IdProducerTask idProducer = new IdProducerTask( rootClass, this.idProperties.get( rootClass ), this.emf, this.useJTATransaction,
-					this.batchSizeToLoadIds, this.batchSizeToLoadObjects, this, this.purgeAllOnStart, this.optimizeAfterPurge, this::onException,
-					this.finishConditions.get( rootClass ) );
+			IdProducerTask idProducer = new IdProducerTask(
+					rootClass,
+					this.idProperties.get( rootClass ),
+					this.emf,
+					this.useJTATransaction,
+					this.batchSizeToLoadIds,
+					this.batchSizeToLoadObjects,
+					this,
+					this::onException,
+					this.finishConditions.get( rootClass )
+			);
 			idProducer.progressMonitor( this::idProgress );
 			this.idProducerFutures.add( this.executorServiceForIds.submit( idProducer ) );
 		}
 	}
 
 	private void setupBatchBackend() {
-		this.batchBackend = new DefaultBatchBackend( this.searchIntegrator, new org.hibernate.search.batchindexing.MassIndexerProgressMonitor() {
+		this.batchBackend = new DefaultBatchBackend(
+				this.searchIntegrator, new org.hibernate.search.batchindexing.MassIndexerProgressMonitor() {
 
 			@Override
 			public void documentsAdded(long increment) {
@@ -311,7 +338,8 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
 			}
 
-		} );
+		}
+		);
 	}
 
 	private void startCleanUpThread() {
@@ -353,9 +381,8 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 			@Override
 			public boolean cancel(boolean mayInterruptIfRunning) {
 				boolean ret = false;
-				Iterator<Future<?>> it = MassIndexerImpl.this.idProducerFutures.iterator();
-				while ( it.hasNext() ) {
-					ret |= it.next().cancel( mayInterruptIfRunning );
+				for ( Future<?> future : MassIndexerImpl.this.idProducerFutures ) {
+					ret |= future.cancel( mayInterruptIfRunning );
 				}
 
 				MassIndexerImpl.this.objectHandlerTaskCondition.disable();
@@ -390,9 +417,8 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 			@Override
 			public boolean isCancelled() {
 				boolean ret = false;
-				Iterator<Future<?>> it = MassIndexerImpl.this.idProducerFutures.iterator();
-				while ( it.hasNext() ) {
-					ret |= it.next().isCancelled();
+				for ( Future<?> future : MassIndexerImpl.this.idProducerFutures ) {
+					ret |= future.isCancelled();
 				}
 				return ret;
 			}
@@ -400,9 +426,8 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 			@Override
 			public boolean isDone() {
 				boolean ret = false;
-				Iterator<Future<?>> it = MassIndexerImpl.this.idProducerFutures.iterator();
-				while ( it.hasNext() ) {
-					ret |= it.next().isDone();
+				for ( Future<?> future : MassIndexerImpl.this.idProducerFutures ) {
+					ret |= future.isDone();
 				}
 				return ret || this.isCancelled() || MassIndexerImpl.this.isFinished();
 			}
@@ -415,7 +440,8 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 			}
 
 			@Override
-			public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+			public Void get(long timeout, TimeUnit unit)
+					throws InterruptedException, ExecutionException, TimeoutException {
 				for ( NumberCondition condition : MassIndexerImpl.this.finishConditions.values() ) {
 					// FIXME: not quite right...
 					if ( !condition.check( timeout, unit ) ) {
@@ -437,27 +463,27 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 	}
 
 	private void idProgress(Class<?> entityType, Integer count) {
-		int newCount = this.idProgress.computeIfAbsent( entityType, (type) -> {
-			return new AtomicInteger( 0 );
-		} ).addAndGet( count );
+		int newCount = this.idProgress.computeIfAbsent(
+				entityType, (type) -> new AtomicInteger( 0 )
+		).addAndGet( count );
 		if ( this.progressMonitor != null ) {
 			this.progressMonitor.idsLoaded( entityType, newCount );
 		}
 	}
 
 	private void objectLoadedProgress(Class<?> entityType, Integer count) {
-		int newCount = this.objectLoadedProgress.computeIfAbsent( entityType, (type) -> {
-			return new AtomicInteger( 0 );
-		} ).addAndGet( count );
+		int newCount = this.objectLoadedProgress.computeIfAbsent(
+				entityType, (type) -> new AtomicInteger( 0 )
+		).addAndGet( count );
 		if ( this.progressMonitor != null ) {
 			this.progressMonitor.objectsLoaded( entityType, newCount );
 		}
 	}
 
 	private void documentBuiltProgress(Class<?> entityType, Integer count) {
-		int newCount = this.documentBuiltProgress.computeIfAbsent( entityType, (type) -> {
-			return new AtomicInteger( 0 );
-		} ).addAndGet( count );
+		int newCount = this.documentBuiltProgress.computeIfAbsent(
+				entityType, (type) -> new AtomicInteger( 0 )
+		).addAndGet( count );
 		if ( this.progressMonitor != null ) {
 			this.progressMonitor.documentsBuilt( entityType, newCount );
 		}
@@ -480,7 +506,11 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 		if ( this.userSpecifiedEntityProvider == null ) {
 			EntityManagerEntityProvider em = this.entityProviders.poll();
 			if ( em == null ) {
-				em = new TransactionWrappedEntityManagerEntityProvider( this.emf.createEntityManager(), this.idProperties, this.useJTATransaction );
+				em = new TransactionWrappedEntityManagerEntityProvider(
+						this.emf.createEntityManager(),
+						this.idProperties,
+						this.useJTATransaction
+				);
 			}
 			return em;
 		}
@@ -489,7 +519,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
 	private void disposeEntityManager(ObjectHandlerTask task, EntityProvider provider) {
 		if ( this.userSpecifiedEntityProvider == null ) {
-			( (TransactionWrappedEntityManagerEntityProvider) provider ).clearEm();
+			((TransactionWrappedEntityManagerEntityProvider) provider).clearEm();
 			this.entityProviders.add( (EntityManagerEntityProvider) provider );
 		}
 		this.objectHandlerTaskCondition.down( 1 );
@@ -524,7 +554,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 		return ret;
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({"unchecked", "rawtypes"})
 	private String getIdProperty(Class<?> entityClass) {
 		String idProperty = null;
 		Metamodel metamodel = this.emf.getMetamodel();

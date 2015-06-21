@@ -18,7 +18,6 @@ import javax.transaction.RollbackException;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 
-import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.jpa.util.JTALookup;
 

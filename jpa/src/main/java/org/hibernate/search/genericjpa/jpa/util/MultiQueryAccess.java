@@ -55,14 +55,21 @@ public class MultiQueryAccess {
 	/**
 	 * this doesn't do real batching as it has a batchSize of 1
 	 */
-	public MultiQueryAccess(Map<Class<?>, Long> countMap, Map<Class<?>, Query> queryMap, Comparator<ObjectClassWrapper> comparator) {
+	public MultiQueryAccess(
+			Map<Class<?>, Long> countMap,
+			Map<Class<?>, Query> queryMap,
+			Comparator<ObjectClassWrapper> comparator) {
 		this( countMap, queryMap, comparator, 1 );
 	}
 
 	/**
 	 * this does batching
 	 */
-	public MultiQueryAccess(Map<Class<?>, Long> countMap, Map<Class<?>, Query> queryMap, Comparator<ObjectClassWrapper> comparator, int batchSize) {
+	public MultiQueryAccess(
+			Map<Class<?>, Long> countMap,
+			Map<Class<?>, Query> queryMap,
+			Comparator<ObjectClassWrapper> comparator,
+			int batchSize) {
 		if ( countMap.size() != queryMap.size() ) {
 			throw new IllegalArgumentException( "countMap.size() must be equal to queryMap.size()" );
 		}
@@ -112,16 +119,14 @@ public class MultiQueryAccess {
 			this.entityClass = arr.clazz;
 			this.values.get( entityClass ).pop();
 			Long processed = this.processed.get( arr.clazz );
-			Long newProcessed = this.processed.computeIfPresent( arr.clazz, (clazz, old) -> {
-				return old + 1;
-			} );
+			Long newProcessed = this.processed.computeIfPresent( arr.clazz, (clazz, old) -> old + 1 );
 			if ( Math.abs( newProcessed - processed ) != 1L ) {
 				throw new AssertionFailure( "the new processed count should be exactly 1 " + "greater than the old one" );
 			}
 			Long count = this.currentCountMap.get( arr.clazz );
-			Long newCount = this.currentCountMap.computeIfPresent( arr.clazz, (clazz, old) -> {
-				return old - 1;
-			} );
+			Long newCount = this.currentCountMap.computeIfPresent(
+					arr.clazz, (clazz, old) -> old - 1
+			);
 			if ( Math.abs( count - newCount ) != 1L ) {
 				throw new AssertionFailure( "the new old remaining count should be exactly 1 " + "greater than the new one" );
 			}

@@ -9,8 +9,10 @@ package org.hibernate.search.genericjpa.factory;
 import java.io.Closeable;
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collections;
 
 import org.apache.lucene.search.Query;
+
 import org.hibernate.search.genericjpa.query.HSearchQuery;
 import org.hibernate.search.genericjpa.transaction.TransactionContext;
 
@@ -51,7 +53,7 @@ public interface StandaloneSearchFactory extends org.hibernate.search.SearchFact
 	void purge(Iterable<?> entities, TransactionContext tc);
 
 	default void purge(Object entity, TransactionContext tc) {
-		this.purge( Arrays.asList( entity ), tc );
+		this.purge( Collections.singletonList( entity ), tc );
 	}
 
 	default void purge(Iterable<?> entities) {
@@ -67,7 +69,7 @@ public interface StandaloneSearchFactory extends org.hibernate.search.SearchFact
 	}
 
 	default void purge(Object entity) {
-		this.purge( Arrays.asList( entity ) );
+		this.purge( Collections.singletonList( entity ) );
 	}
 
 	/**
@@ -167,7 +169,7 @@ public interface StandaloneSearchFactory extends org.hibernate.search.SearchFact
 	void index(Iterable<?> entities, TransactionContext tc);
 
 	default void index(Object entity, TransactionContext tc) {
-		this.index( Arrays.asList( entity ), tc );
+		this.index( Collections.singletonList( entity ), tc );
 	}
 
 	default void index(Iterable<?> entities) {
@@ -183,13 +185,13 @@ public interface StandaloneSearchFactory extends org.hibernate.search.SearchFact
 	}
 
 	default void index(Object entity) {
-		this.index( Arrays.asList( entity ) );
+		this.index( Collections.singletonList( entity ) );
 	}
 
 	void update(Iterable<?> entities, TransactionContext tc);
 
 	default void update(Object entity, TransactionContext tc) {
-		this.update( Arrays.asList( entity ), tc );
+		this.update( Collections.singletonList( entity ), tc );
 	}
 
 	default void update(Iterable<?> entities) {
@@ -205,13 +207,13 @@ public interface StandaloneSearchFactory extends org.hibernate.search.SearchFact
 	}
 
 	default void update(Object entity) {
-		this.update( Arrays.asList( entity ) );
+		this.update( Collections.singletonList( entity ) );
 	}
 
 	void delete(Iterable<?> entities, TransactionContext tc);
 
 	default void delete(Object entity, TransactionContext tc) {
-		this.delete( Arrays.asList( entity ), tc );
+		this.delete( Collections.singletonList( entity ), tc );
 	}
 
 	default void delete(Iterable<?> entities) {
@@ -227,7 +229,7 @@ public interface StandaloneSearchFactory extends org.hibernate.search.SearchFact
 	}
 
 	default void delete(Object entity) {
-		this.delete( Arrays.asList( entity ) );
+		this.delete( Collections.singletonList( entity ) );
 	}
 
 }

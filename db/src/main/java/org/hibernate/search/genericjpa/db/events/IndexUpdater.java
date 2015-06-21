@@ -8,6 +8,7 @@ package org.hibernate.search.genericjpa.db.events;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -25,6 +26,7 @@ import org.hibernate.search.genericjpa.factory.Transaction;
 import org.hibernate.search.genericjpa.metadata.RehashedTypeMetadata;
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.hibernate.search.query.engine.spi.HSQuery;
+
 import org.jboss.logging.Logger;
 
 /**
@@ -50,7 +52,8 @@ public class IndexUpdater implements UpdateConsumer {
 	private final ReusableEntityProvider entityProvider;
 	private IndexWrapper indexWrapper;
 
-	public IndexUpdater(Map<Class<?>, RehashedTypeMetadata> metadataForIndexRoot, Map<Class<?>, List<Class<?>>> containedInIndexOf,
+	public IndexUpdater(
+			Map<Class<?>, RehashedTypeMetadata> metadataForIndexRoot, Map<Class<?>, List<Class<?>>> containedInIndexOf,
 			ReusableEntityProvider entityProvider, IndexWrapper indexWrapper) {
 		this.metadataForIndexRoot = metadataForIndexRoot;
 		this.containedInIndexOf = containedInIndexOf;
@@ -58,8 +61,11 @@ public class IndexUpdater implements UpdateConsumer {
 		this.indexWrapper = indexWrapper;
 	}
 
-	public IndexUpdater(Map<Class<?>, RehashedTypeMetadata> metadataPerForIndexRoot, Map<Class<?>, List<Class<?>>> containedInIndexOf,
-			ReusableEntityProvider entityProvider, ExtendedSearchIntegrator searchIntegrator) {
+	public IndexUpdater(
+			Map<Class<?>, RehashedTypeMetadata> metadataPerForIndexRoot,
+			Map<Class<?>, List<Class<?>>> containedInIndexOf,
+			ReusableEntityProvider entityProvider,
+			ExtendedSearchIntegrator searchIntegrator) {
 		this( metadataPerForIndexRoot, containedInIndexOf, entityProvider, (IndexWrapper) null );
 		this.indexWrapper = new DefaultIndexWrapper( searchIntegrator );
 	}
@@ -139,40 +145,56 @@ public class IndexUpdater implements UpdateConsumer {
 
 		@Override
 		public void delete(Class<?> entityClass, List<Class<?>> inIndexOf, Object id, Transaction tx) {
-			for ( int i = 0; i < inIndexOf.size(); ++i ) {
-				Class<?> indexClass = inIndexOf.get( i );
+			for ( Class<?> indexClass : inIndexOf ) {
 				RehashedTypeMetadata metadata = IndexUpdater.this.metadataForIndexRoot.get( indexClass );
 				List<String> fields = metadata.getIdFieldNamesForType().get( entityClass );
 				for ( String field : fields ) {
-					DocumentFieldMetadata metaDataForIdField = metadata.getDocumentFieldMetadataForIdFieldName().get( field );
-					SingularTermDeletionQuery.Type idType = metadata.getSingularTermDeletionQueryTypeForIdFieldName().get( entityClass );
+					DocumentFieldMetadata metaDataForIdField = metadata.getDocumentFieldMetadataForIdFieldName().get(
+							field
+					);
+					SingularTermDeletionQuery.Type idType = metadata.getSingularTermDeletionQueryTypeForIdFieldName()
+							.get( entityClass );
 					Object idValueForDeletion;
 					if ( idType == SingularTermDeletionQuery.Type.STRING ) {
 						FieldBridge fb = metaDataForIdField.getFieldBridge();
-						if ( !( fb instanceof StringBridge ) ) {
+						if ( !(fb instanceof StringBridge) ) {
 							throw new IllegalArgumentException( "no TwoWayStringBridge found for field: " + field );
 						}
-						idValueForDeletion = ( (StringBridge) fb ).objectToString( id );
+						idValueForDeletion = ((StringBridge) fb).objectToString( id );
 					}
 					else {
 						idValueForDeletion = id;
 					}
 					HSQuery hsQuery = this.searchIntegrator
 							.createHSQuery()
-							.targetedEntities( Arrays.asList( indexClass ) )
+							.targetedEntities( Collections.singletonList( indexClass ) )
 							.luceneQuery(
-									this.searchIntegrator.buildQueryBuilder().forEntity( indexClass ).get().keyword().onField( field )
-											.matching( idValueForDeletion ).createQuery() );
+									this.searchIntegrator.buildQueryBuilder()
+											.forEntity( indexClass )
+											.get()
+											.keyword()
+											.onField( field )
+											.matching( idValueForDeletion )
+											.createQuery()
+							);
 					int count = hsQuery.queryResultSize();
 					int processed = 0;
 					if ( indexClass.equals( entityClass ) ) {
-						this.searchIntegrator.getWorker().performWork( new Work( entityClass, (Serializable) id, WorkType.DELETE ), tx );
+						this.searchIntegrator.getWorker().performWork(
+								new Work(
+										entityClass,
+										(Serializable) id,
+										WorkType.DELETE
+								), tx
+						);
 					}
 					else {
 						// this was just contained somewhere
 						// so we have to update the containing entity
 						while ( processed < count ) {
-							for ( EntityInfo entityInfo : hsQuery.firstResult( processed ).projection( ProjectionConstants.ID ).maxResults( HSQUERY_BATCH )
+							for ( EntityInfo entityInfo : hsQuery.firstResult( processed ).projection(
+									ProjectionConstants.ID
+							).maxResults( HSQUERY_BATCH )
 									.queryEntityInfos() ) {
 								Serializable originalId = (Serializable) entityInfo.getProjection()[0];
 								Object original = IndexUpdater.this.entityProvider.get( indexClass, originalId );

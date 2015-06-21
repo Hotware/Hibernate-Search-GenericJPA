@@ -24,7 +24,7 @@ import org.hibernate.search.genericjpa.annotations.Updates;
 import org.hibernate.search.genericjpa.db.id.ToOriginalIdBridge;
 
 /**
- * This class has means to parse Classes annotated with {@Updates} into their respective representation as a
+ * This class has means to parse Classes annotated with {@link Updates} into their respective representation as a
  * {@link EventModelInfo}. <br>
  * <br>
  * It also checks the classes for the right annotations and does basic integrity checking of this information

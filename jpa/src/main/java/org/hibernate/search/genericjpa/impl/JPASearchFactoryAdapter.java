@@ -28,6 +28,7 @@ import javax.persistence.EntityManagerFactory;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
+
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.metadata.impl.MetadataProvider;
 import org.hibernate.search.genericjpa.JPASearchFactoryController;
@@ -58,10 +59,11 @@ import org.hibernate.search.stat.Statistics;
 
 /**
  * Base class to create SearchFactories in a JPA environment.
- * 
+ *
  * @author Martin Braun
  */
-public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, UpdateConsumer, JPASearchFactoryController {
+public final class JPASearchFactoryAdapter
+		implements StandaloneSearchFactory, UpdateConsumer, JPASearchFactoryController {
 
 	private final Logger LOGGER = Logger.getLogger( JPASearchFactoryAdapter.class.getName() );
 	private StandaloneSearchFactory searchFactory;
@@ -88,7 +90,8 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 	private final Lock lock = new ReentrantLock();
 
 	@SuppressWarnings("unchecked")
-	public JPASearchFactoryAdapter(String name, EntityManagerFactory emf, boolean useJTATransaction, List<Class<?>> indexRootTypes,
+	public JPASearchFactoryAdapter(
+			String name, EntityManagerFactory emf, boolean useJTATransaction, List<Class<?>> indexRootTypes,
 			@SuppressWarnings("rawtypes") Map properties, UpdateSourceProvider updateSourceProvider) {
 		this.name = name;
 		this.emf = emf;
@@ -108,7 +111,7 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 					updateConsumer.updateEvent( updateInfo );
 				}
 				catch (Exception e) {
-					LOGGER.log(Level.WARNING, "Exception during notification of UpdateConsumers", e);
+					LOGGER.log( Level.WARNING, "Exception during notification of UpdateConsumers", e );
 				}
 			}
 		}
@@ -122,7 +125,11 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 	}
 
 	private UpdateSource createUpdateSource() {
-		return this.updateSourceProvider.getUpdateSource( this.updateDelay, TimeUnit.MILLISECONDS, this.batchSizeForUpdates );
+		return this.updateSourceProvider.getUpdateSource(
+				this.updateDelay,
+				TimeUnit.MILLISECONDS,
+				this.batchSizeForUpdates
+		);
 	}
 
 	public EntityProvider entityProvider(EntityManager em) {
@@ -131,7 +138,7 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 
 	public final void init() {
 		SearchConfigurationImpl config;
-		if ( this.getConfigProperties() != null && !this.getConfigProperties().equals( "" ) ) {
+		if ( this.getConfigProperties() != null ) {
 			LOGGER.info( "using config @" + this.getConfigProperties() );
 			config = new SearchConfigurationImpl( this.getConfigProperties() );
 		}
@@ -150,15 +157,19 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 			rehashedTypeMetadataForIndexRoot.put( indexRootType, rehashed );
 		}
 
-		this.indexRelevantEntities = Collections.unmodifiableSet( MetadataUtil.calculateIndexRelevantEntities( rehashedTypeMetadatas ) );
+		this.indexRelevantEntities = Collections.unmodifiableSet(
+				MetadataUtil.calculateIndexRelevantEntities(
+						rehashedTypeMetadatas
+				)
+		);
 		this.idProperties = MetadataUtil.calculateIdProperties( rehashedTypeMetadatas );
 
 		SearchIntegratorBuilder builder = new SearchIntegratorBuilder();
 		// we have to build an integrator here (but we don't need it afterwards)
 		builder.configuration( config ).buildSearchIntegrator();
-		this.indexRelevantEntities.forEach( (clazz) -> {
-			builder.addClass( clazz );
-		} );
+		this.indexRelevantEntities.forEach(
+				builder::addClass
+		);
 		SearchIntegrator impl = builder.buildSearchIntegrator();
 		this.searchIntegrator = impl.unwrap( ExtendedSearchIntegrator.class );
 		this.searchFactory = new StandaloneSearchFactoryImpl( this.searchIntegrator );
@@ -167,9 +178,15 @@ public final class JPASearchFactoryAdapter implements StandaloneSearchFactory, U
 		if ( this.updateSource != null ) {
 			this.containedInIndexOf = MetadataUtil.calculateInIndexOf( rehashedTypeMetadatas );
 
-			JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider( this.getEmf(), this.idProperties, this.isUseJTATransaction() );
-			this.indexUpdater = new IndexUpdater( rehashedTypeMetadataForIndexRoot, containedInIndexOf, entityProvider,
-					impl.unwrap( ExtendedSearchIntegrator.class ) );
+			JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider(
+					this.getEmf(),
+					this.idProperties,
+					this.isUseJTATransaction()
+			);
+			this.indexUpdater = new IndexUpdater(
+					rehashedTypeMetadataForIndexRoot, containedInIndexOf, entityProvider,
+					impl.unwrap( ExtendedSearchIntegrator.class )
+			);
 			this.updateSource.setUpdateConsumers( Arrays.asList( indexUpdater, this ) );
 			this.updateSource.start();
 		}

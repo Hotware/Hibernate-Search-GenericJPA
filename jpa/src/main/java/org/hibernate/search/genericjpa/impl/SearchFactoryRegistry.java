@@ -14,8 +14,8 @@ import java.util.Map;
  */
 public class SearchFactoryRegistry {
 
-	public static String NAME_PROPERTY = "org.hibernate.search.genericjpa.searchfactory.name";
-	public static String DEFAULT_NAME = "default";
+	public static final String NAME_PROPERTY = "org.hibernate.search.genericjpa.searchfactory.name";
+	public static final String DEFAULT_NAME = "default";
 
 	private SearchFactoryRegistry() {
 		// can't touch this!

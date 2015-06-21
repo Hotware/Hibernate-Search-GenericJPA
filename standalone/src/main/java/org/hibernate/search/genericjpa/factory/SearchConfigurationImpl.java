@@ -57,7 +57,7 @@ public class SearchConfigurationImpl extends SearchConfigurationBase implements 
 
 	public SearchConfigurationImpl(InstanceInitializer init, Properties properties) {
 		this.initializer = init;
-		this.classes = new HashMap<String, Class<?>>();
+		this.classes = new HashMap<>();
 		this.properties = properties;
 		// default values if nothing was explicitly set
 		this.properties.computeIfAbsent( "hibernate.search.default.directory_provider", (key) -> {
@@ -69,7 +69,7 @@ public class SearchConfigurationImpl extends SearchConfigurationBase implements 
 			return Version.LUCENE_4_10_4.toString();
 		} );
 		this.reflectionManager = new JavaReflectionManager();
-		this.providedServices = new HashMap<Class<? extends Service>, Object>();
+		this.providedServices = new HashMap<>();
 		this.classLoaderService = new DefaultClassLoaderService();
 	}
 

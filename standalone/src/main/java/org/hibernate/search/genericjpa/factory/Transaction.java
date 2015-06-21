@@ -17,7 +17,7 @@ import org.hibernate.search.genericjpa.transaction.TransactionContext;
 public class Transaction implements TransactionContext {
 
 	private boolean progress = true;
-	private List<Synchronization> syncs = new ArrayList<Synchronization>();
+	private List<Synchronization> syncs = new ArrayList<>();
 
 	@Override
 	public boolean isTransactionInProgress() {
@@ -36,20 +36,16 @@ public class Transaction implements TransactionContext {
 
 	public void commit() {
 		this.progress = false;
-		for ( Synchronization sync : syncs ) {
-			sync.beforeCompletion();
-		}
+		this.syncs.forEach( Synchronization::beforeCompletion );
 
 		for ( Synchronization sync : syncs ) {
 			sync.afterCompletion( Status.STATUS_COMMITTED );
 		}
 	}
-	
+
 	public void rollback() {
 		this.progress = false;
-		for ( Synchronization sync : syncs ) {
-			sync.beforeCompletion();
-		}
+		this.syncs.forEach( Synchronization::beforeCompletion );
 
 		for ( Synchronization sync : syncs ) {
 			sync.afterCompletion( Status.STATUS_ROLLEDBACK );

@@ -55,13 +55,24 @@ public class ObjectHandlerTask implements Runnable {
 
 	private static final InstanceInitializer INITIALIZER = SubClassSupportInstanceInitializer.INSTANCE;
 
-	public ObjectHandlerTask(BatchBackend batchBackend, Class<?> entityClass, EntityIndexBinding entityIndexBinding,
+	public ObjectHandlerTask(
+			BatchBackend batchBackend, Class<?> entityClass, EntityIndexBinding entityIndexBinding,
 			Supplier<EntityProvider> emProvider, BiConsumer<ObjectHandlerTask, EntityProvider> entityManagerDisposer,
 			PersistenceUnitUtil peristenceUnitUtil) {
-		this( batchBackend, entityClass, entityIndexBinding, emProvider, entityManagerDisposer, peristenceUnitUtil, null, null );
+		this(
+				batchBackend,
+				entityClass,
+				entityIndexBinding,
+				emProvider,
+				entityManagerDisposer,
+				peristenceUnitUtil,
+				null,
+				null
+		);
 	}
 
-	public ObjectHandlerTask(BatchBackend batchBackend, Class<?> entityClass, EntityIndexBinding entityIndexBinding,
+	public ObjectHandlerTask(
+			BatchBackend batchBackend, Class<?> entityClass, EntityIndexBinding entityIndexBinding,
 			Supplier<EntityProvider> emProvider, BiConsumer<ObjectHandlerTask, EntityProvider> entityManagerDisposer,
 			PersistenceUnitUtil peristenceUnitUtil, NumberCondition condition, Consumer<Exception> exceptionConsumer) {
 		this.batchBackend = batchBackend;
@@ -85,17 +96,21 @@ public class ObjectHandlerTask implements Runnable {
 			EntityProvider entityProvider = this.emProvider.get();
 			try {
 				try {
-					List<Object> ids = this.batch.stream().map( (updateInfo) -> {
-						return updateInfo.getId();
-					} ).collect( Collectors.toList() );
+					List<Object> ids = this.batch.stream().map(
+							(updateInfo) -> updateInfo.getId()
+					).collect( Collectors.toList() );
 
 					@SuppressWarnings("unchecked")
-					Map<Object, Object> idsToEntities = (Map<Object, Object>) entityProvider.getBatch( this.entityClass, ids ).stream()
-							.collect( Collectors.toMap( (entity) -> {
-								return this.peristenceUnitUtil.getIdentifier( entity );
-							}, (entity) -> {
-								return entity;
-							} ) );
+					Map<Object, Object> idsToEntities = (Map<Object, Object>) entityProvider.getBatch(
+							this.entityClass,
+							ids
+					).stream()
+							.collect(
+									Collectors.toMap(
+											this.peristenceUnitUtil::getIdentifier
+											, (entity) -> entity
+									)
+							);
 
 					// monitor our progress
 					if ( this.objectLoadedProgressMonitor != null ) {
@@ -105,7 +120,7 @@ public class ObjectHandlerTask implements Runnable {
 					ContextualExceptionBridgeHelper conversionContext = new ContextualExceptionBridgeHelper();
 					for ( Object id : ids ) {
 						Object obj = idsToEntities.get( id );
-						if(obj != null) {
+						if ( obj != null ) {
 							this.index( obj, INITIALIZER, conversionContext );
 						}
 					}
@@ -133,11 +148,15 @@ public class ObjectHandlerTask implements Runnable {
 				}
 			}
 		}
-		finally {
+
+		finally
+
+		{
 			if ( this.finishConsumer != null ) {
 				this.finishConsumer.run();
 			}
 		}
+
 	}
 
 	public void objectLoadedProgressMonitor(BiConsumer<Class<?>, Integer> objectLoadedProgressMonitor) {
@@ -153,7 +172,8 @@ public class ObjectHandlerTask implements Runnable {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void index(Object entity, InstanceInitializer sessionInitializer, ConversionContext conversionContext) throws InterruptedException {
+	private void index(Object entity, InstanceInitializer sessionInitializer, ConversionContext conversionContext)
+			throws InterruptedException {
 		Serializable id = (Serializable) this.peristenceUnitUtil.getIdentifier( entity );
 
 		if ( entityIndexBinding == null ) {
@@ -182,14 +202,24 @@ public class ObjectHandlerTask implements Runnable {
 		conversionContext.pushProperty( docBuilder.getIdKeywordName() );
 		String idInString = null;
 		try {
-			idInString = conversionContext.setClass( this.entityClass ).twoWayConversionContext( idBridge ).objectToString( id );
+			idInString = conversionContext.setClass( this.entityClass )
+					.twoWayConversionContext( idBridge )
+					.objectToString( id );
 		}
 		finally {
 			conversionContext.popProperty();
 		}
 		// depending on the complexity of the object graph going to be indexed it's possible
 		// that we hit the database several times during work construction.
-		AddLuceneWork addWork = docBuilder.createAddWork( null, this.entityClass, entity, id, idInString, sessionInitializer, conversionContext );
+		AddLuceneWork addWork = docBuilder.createAddWork(
+				null,
+				this.entityClass,
+				entity,
+				id,
+				idInString,
+				sessionInitializer,
+				conversionContext
+		);
 		this.batchBackend.enqueueAsyncWork( addWork );
 	}
 

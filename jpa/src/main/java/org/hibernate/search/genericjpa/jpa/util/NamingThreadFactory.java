@@ -22,8 +22,10 @@ public final class NamingThreadFactory implements ThreadFactory {
 
 	@Override
 	public Thread newThread(Runnable r) {
-		Thread tr = new Thread( r, new StringBuilder().append( this.name ).append( " " ).append( this.threadCount++ ).toString() );
-		return tr;
+		return new Thread(
+				r,
+				new StringBuilder().append( this.name ).append( " " ).append( this.threadCount++ ).toString()
+		);
 	}
 
 }
