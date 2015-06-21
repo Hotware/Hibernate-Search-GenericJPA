@@ -186,6 +186,8 @@ public class IntegrationTest {
 							@Override
 							public List getBatch(Class<?> entityClass, List<Object> id) {
 								// this should happen!
+								// an empty list is actually quite interesting for the backend.
+								// does it handle not finding anything for a given entityClass right?
 								return Collections.emptyList();
 							}
 
@@ -216,12 +218,7 @@ public class IntegrationTest {
 
 							@Override
 							public Object get(Class<?> entityClass, Object id) {
-								try {
-									return entityClass.newInstance();
-								}
-								catch (InstantiationException | IllegalAccessException e) {
-									throw new RuntimeException( e );
-								}
+								return null;
 							}
 
 						}
