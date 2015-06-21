@@ -6,9 +6,8 @@
  */
 package org.hibernate.search.jpa;
 
-import java.io.Serializable;
-
 import javax.persistence.EntityManager;
+import java.io.Serializable;
 
 import org.hibernate.search.SearchFactory;
 import org.hibernate.search.genericjpa.batchindexing.MassIndexer;
@@ -28,7 +27,9 @@ public interface FullTextEntityManager extends EntityManager {
 	 * @param luceneQuery The native Lucene query to be rn against the Lucene index.
 	 * @param entities List of classes for type filtering. The query result will only return entities of the specified
 	 * types and their respective subtype. If no class is specified no type filtering will take place.
+	 *
 	 * @return A <code>FullTextQuery</code> wrapping around the native Lucene wuery.
+	 *
 	 * @throws IllegalArgumentException if entityType is <code>null</code> or not a class or superclass annotated with
 	 * <code>@Indexed</code>.
 	 */
@@ -37,8 +38,9 @@ public interface FullTextEntityManager extends EntityManager {
 	/**
 	 * Force the (re)indexing of a given <b>managed</b> object. Indexation is batched per search-transaction: if a
 	 * transaction is active, the operation will not affect the index at least until commit.
-	 * 
+	 *
 	 * @param entity The entity to index - must not be <code>null</code>.
+	 *
 	 * @throws IllegalArgumentException if entity is null or not an @Indexed entity
 	 * @throws IllegalStateException if no search-transaction is in progress
 	 */
@@ -56,6 +58,7 @@ public interface FullTextEntityManager extends EntityManager {
 	 *
 	 * @param entityType The type of the entity to delete.
 	 * @param id The id of the entity to delete.
+	 *
 	 * @throws IllegalArgumentException if entityType is <code>null</code> or not a class or superclass annotated with
 	 * <code>@Indexed</code>.
 	 * @throws IllegalStateException if no search-transaction is in progress
@@ -66,6 +69,7 @@ public interface FullTextEntityManager extends EntityManager {
 	 * Remove all entities from of particular class and all its subclasses from the index.
 	 *
 	 * @param entityType The class of the entities to remove.
+	 *
 	 * @throws IllegalArgumentException if entityType is <code>null</code> or not a class or superclass annotated with
 	 * <code>@Indexed</code>.
 	 * @throws IllegalStateException if no search-transaction is in progress
@@ -85,7 +89,7 @@ public interface FullTextEntityManager extends EntityManager {
 	/**
 	 * Flush all index changes forcing Hibernate Search to apply all changes to the index not waiting for the batch
 	 * limit.
-	 * 
+	 *
 	 * @throws IllegalStateException if no search-transaction is in progress
 	 */
 	void flushToIndexes();
@@ -94,7 +98,7 @@ public interface FullTextEntityManager extends EntityManager {
 	 * <b>different from the original Hibernate Search!</b> <br>
 	 * <br>
 	 * this has to be called when you want to change the index manually!
-	 * 
+	 *
 	 * @throws IllegalStateException if a search-transaction is already in progress
 	 */
 	void beginSearchTransaction();
@@ -103,7 +107,7 @@ public interface FullTextEntityManager extends EntityManager {
 	 * <b>different from the original Hibernate Search!</b> <br>
 	 * <br>
 	 * this has to be called when you want to change the index manually!
-	 * 
+	 *
 	 * @throws IllegalStateException if no search-transaction is in progress
 	 */
 	void rollbackSearchTransaction();
@@ -112,7 +116,7 @@ public interface FullTextEntityManager extends EntityManager {
 	 * <b>different from the original Hibernate Search!</b> <br>
 	 * <br>
 	 * this has to be called when you want to change the index manually!
-	 * 
+	 *
 	 * @throws IllegalStateException if no search-transaction is in progress
 	 */
 	void commitSearchTransaction();
@@ -131,6 +135,7 @@ public interface FullTextEntityManager extends EntityManager {
 	 * customize the indexing operation.
 	 *
 	 * @param types optionally restrict the operation to selected types
+	 *
 	 * @return a new MassIndexer
 	 */
 	MassIndexer createIndexer(Class<?>... types);

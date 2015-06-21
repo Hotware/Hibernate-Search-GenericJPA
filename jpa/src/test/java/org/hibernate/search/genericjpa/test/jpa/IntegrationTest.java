@@ -6,8 +6,10 @@
  */
 package org.hibernate.search.genericjpa.test.jpa;
 
-import static org.junit.Assert.assertEquals;
-
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.EntityTransaction;
+import javax.persistence.Persistence;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,11 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.EntityTransaction;
-import javax.persistence.Persistence;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
 
@@ -52,6 +49,8 @@ import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
+
+import static org.junit.Assert.assertEquals;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class IntegrationTest {
@@ -103,14 +102,14 @@ public class IntegrationTest {
 				if ( !hadOne ) {
 					assertEquals(
 							"Helm's Deep", IntegrationTest.this.em.find( Place.class, batch.get( 0 ).getId() )
-							.getName()
+									.getName()
 					);
 					hadOne = true;
 				}
 				else {
 					assertEquals(
 							"Valinor", IntegrationTest.this.em.find( Place.class, batch.get( 0 ).getId() )
-							.getName()
+									.getName()
 					);
 				}
 			}

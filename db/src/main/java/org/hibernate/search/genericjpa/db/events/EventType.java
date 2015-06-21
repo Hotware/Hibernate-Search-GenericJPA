@@ -15,14 +15,13 @@ import org.hibernate.search.exception.AssertionFailure;
  */
 public final class EventType {
 
-	private EventType() {
-		throw new AssertionFailure( "can't touch this!" );
-	}
-
 	public static final int DELETE = -1;
 	public static final int UPDATE = -2;
 	public static final int INSERT = -3;
-	private static final int[] VALUES = { DELETE, UPDATE, INSERT };
+	private static final int[] VALUES = {DELETE, UPDATE, INSERT};
+	private EventType() {
+		throw new AssertionFailure( "can't touch this!" );
+	}
 
 	public static String toString(int eventType) {
 		switch ( eventType ) {

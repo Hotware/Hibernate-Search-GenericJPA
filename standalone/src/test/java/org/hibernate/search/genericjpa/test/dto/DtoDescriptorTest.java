@@ -7,14 +7,48 @@
 package org.hibernate.search.genericjpa.test.dto;
 
 import org.hibernate.search.genericjpa.dto.DtoDescriptor;
-import org.hibernate.search.genericjpa.dto.DtoDescriptorImpl;
 import org.hibernate.search.genericjpa.dto.DtoDescriptor.DtoDescription;
+import org.hibernate.search.genericjpa.dto.DtoDescriptorImpl;
 import org.hibernate.search.genericjpa.dto.annotations.DtoField;
 import org.hibernate.search.genericjpa.dto.annotations.DtoOverEntity;
 
 import junit.framework.TestCase;
 
 public class DtoDescriptorTest extends TestCase {
+
+	public void testDescriptor() {
+		DtoDescriptor descriptor = new DtoDescriptorImpl();
+		DtoDescription description = descriptor.getDtoDescription( A.class );
+		assertEquals( A.class, description.getDtoClass() );
+		assertEquals( B.class, description.getEntityClass() );
+		assertEquals( 1, description.getFieldDescriptionsForProfile( "toast" ).size() );
+		assertEquals(
+				"toastFieldName",
+				description.getFieldDescriptionsForProfile( "toast" ).iterator().next().getFieldName()
+		);
+		assertEquals( 2, description.getFieldDescriptionsForProfile( DtoDescription.DEFAULT_PROFILE ).size() );
+
+		int found = 0;
+		for ( DtoDescription.FieldDescription fDesc : description.getFieldDescriptionsForProfile( DtoDescription.DEFAULT_PROFILE ) ) {
+			if ( "fieldOne".equals( fDesc.getFieldName() ) ) {
+				++found;
+			}
+			else if ( "fieldTwo".equals( fDesc.getFieldName() ) ) {
+				++found;
+			}
+		}
+		if ( found != 2 ) {
+			fail( "the default profile for " + A.class + " should have 2 different FieldDescriptions" );
+		}
+
+		try {
+			descriptor.getDtoDescription( C.class );
+			fail( "invalid description with two fieldnames annotated to one field in the same profile" + " should yield an exception" );
+		}
+		catch (IllegalArgumentException e) {
+
+		}
+	}
 
 	// the value of entityClass isn't that important in this test
 	// but we want to check if it's set properly in the resulting
@@ -44,36 +78,5 @@ public class DtoDescriptorTest extends TestCase {
 		@DtoField
 		String field;
 
-	}
-
-	public void testDescriptor() {
-		DtoDescriptor descriptor = new DtoDescriptorImpl();
-		DtoDescription description = descriptor.getDtoDescription( A.class );
-		assertEquals( A.class, description.getDtoClass() );
-		assertEquals( B.class, description.getEntityClass() );
-		assertEquals( 1, description.getFieldDescriptionsForProfile( "toast" ).size() );
-		assertEquals( "toastFieldName", description.getFieldDescriptionsForProfile( "toast" ).iterator().next().getFieldName() );
-		assertEquals( 2, description.getFieldDescriptionsForProfile( DtoDescription.DEFAULT_PROFILE ).size() );
-
-		int found = 0;
-		for ( DtoDescription.FieldDescription fDesc : description.getFieldDescriptionsForProfile( DtoDescription.DEFAULT_PROFILE ) ) {
-			if ( "fieldOne".equals( fDesc.getFieldName() ) ) {
-				++found;
-			}
-			else if ( "fieldTwo".equals( fDesc.getFieldName() ) ) {
-				++found;
-			}
-		}
-		if ( found != 2 ) {
-			fail( "the default profile for " + A.class + " should have 2 different FieldDescriptions" );
-		}
-
-		try {
-			descriptor.getDtoDescription( C.class );
-			fail( "invalid description with two fieldnames annotated to one field in the same profile" + " should yield an exception" );
-		}
-		catch (IllegalArgumentException e) {
-
-		}
 	}
 }

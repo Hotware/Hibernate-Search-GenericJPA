@@ -6,6 +6,11 @@
  */
 package org.hibernate.search.genericjpa.db.events.jpa;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,21 +26,15 @@ import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Query;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-
-import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
-import org.hibernate.search.genericjpa.db.events.UpdateSource;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
+import org.hibernate.search.genericjpa.db.events.UpdateSource;
+import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess;
-import org.hibernate.search.genericjpa.jpa.util.NamingThreadFactory;
 import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess.ObjectClassWrapper;
+import org.hibernate.search.genericjpa.jpa.util.NamingThreadFactory;
 
 /**
  * a {@link UpdateSource} implementation that uses JPA to retrieve the updates from the database. For this to work the
@@ -56,19 +55,13 @@ public class JPAUpdateSource implements UpdateSource {
 
 	private final Map<Class<?>, EventModelInfo> updateClassToEventModelInfo;
 	private final Map<Class<?>, Function<Object, Object>> idAccessorMap;
-
-	private List<UpdateConsumer> updateConsumers;
 	private final ScheduledExecutorService exec;
 	private final boolean useJTATransaction;
-
-	private ScheduledFuture<?> job;
 	private final ReentrantLock lock = new ReentrantLock();
+	private List<UpdateConsumer> updateConsumers;
+	private ScheduledFuture<?> job;
 	private boolean cancelled = false;
 	private boolean pause = false;
-
-	private static ThreadFactory tf() {
-		return new NamingThreadFactory( "Index Update Thread" );
-	}
 
 	/**
 	 * this doesn't do real batching for the databasequeries
@@ -169,6 +162,44 @@ public class JPAUpdateSource implements UpdateSource {
 		}
 		this.exec = exec;
 		this.useJTATransaction = useJTATransaction;
+	}
+
+	private static ThreadFactory tf() {
+		return new NamingThreadFactory( "Index Update Thread" );
+	}
+
+	public static MultiQueryAccess query(JPAUpdateSource updateSource, EntityManager em) {
+		Map<Class<?>, Long> countMap = new HashMap<>();
+		Map<Class<?>, Query> queryMap = new HashMap<>();
+		for ( EventModelInfo evi : updateSource.eventModelInfos ) {
+			CriteriaBuilder cb = em.getCriteriaBuilder();
+			long count;
+			{
+				CriteriaQuery<Long> countQuery = cb.createQuery( Long.class );
+				countQuery.select( cb.count( countQuery.from( evi.getUpdateClass() ) ) );
+				count = em.createQuery( countQuery ).getSingleResult();
+			}
+			countMap.put( evi.getUpdateClass(), count );
+
+			{
+				Query query = em.createQuery(
+						new StringBuilder().append( "SELECT obj FROM " )
+								.append( em.getMetamodel().entity( evi.getUpdateClass() ).getName() ).append(
+								" obj ORDER BY obj.id"
+						).toString()
+				);
+				queryMap.put( evi.getUpdateClass(), query );
+			}
+		}
+		return new MultiQueryAccess(
+				countMap, queryMap, (first, second) -> {
+			int res = Long.compare( updateSource.id( first ), updateSource.id( second ) );
+			if ( res == 0 ) {
+				throw new IllegalStateException( "database contained two update entries with the same id!" );
+			}
+			return res;
+		}, updateSource.batchSizeForDatabaseQueries
+		);
 	}
 
 	@Override
@@ -288,40 +319,6 @@ public class JPAUpdateSource implements UpdateSource {
 						this.lock.unlock();
 					}
 				}, 0, this.timeOut, this.timeUnit
-		);
-	}
-
-	public static MultiQueryAccess query(JPAUpdateSource updateSource, EntityManager em) {
-		Map<Class<?>, Long> countMap = new HashMap<>();
-		Map<Class<?>, Query> queryMap = new HashMap<>();
-		for ( EventModelInfo evi : updateSource.eventModelInfos ) {
-			CriteriaBuilder cb = em.getCriteriaBuilder();
-			long count;
-			{
-				CriteriaQuery<Long> countQuery = cb.createQuery( Long.class );
-				countQuery.select( cb.count( countQuery.from( evi.getUpdateClass() ) ) );
-				count = em.createQuery( countQuery ).getSingleResult();
-			}
-			countMap.put( evi.getUpdateClass(), count );
-
-			{
-				Query query = em.createQuery(
-						new StringBuilder().append( "SELECT obj FROM " )
-								.append( em.getMetamodel().entity( evi.getUpdateClass() ).getName() ).append(
-								" obj ORDER BY obj.id"
-						).toString()
-				);
-				queryMap.put( evi.getUpdateClass(), query );
-			}
-		}
-		return new MultiQueryAccess(
-				countMap, queryMap, (first, second) -> {
-			int res = Long.compare( updateSource.id( first ), updateSource.id( second ) );
-			if ( res == 0 ) {
-				throw new IllegalStateException( "database contained two update entries with the same id!" );
-			}
-			return res;
-		}, updateSource.batchSizeForDatabaseQueries
 		);
 	}
 

@@ -6,31 +6,30 @@
  */
 package org.hibernate.search.genericjpa.impl;
 
+import javax.persistence.EntityGraph;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.EntityTransaction;
+import javax.persistence.FlushModeType;
+import javax.persistence.LockModeType;
+import javax.persistence.Query;
+import javax.persistence.StoredProcedureQuery;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaDelete;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.CriteriaUpdate;
+import javax.persistence.metamodel.Metamodel;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import javax.persistence.EntityGraph;
-import javax.persistence.EntityManager;
-import javax.persistence.FlushModeType;
-import javax.persistence.LockModeType;
-import javax.persistence.Query;
-import javax.persistence.EntityTransaction;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.StoredProcedureQuery;
-import javax.persistence.TypedQuery;
-import javax.persistence.metamodel.Metamodel;
-import javax.persistence.criteria.CriteriaDelete;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaUpdate;
-
+import org.hibernate.search.SearchFactory;
 import org.hibernate.search.genericjpa.batchindexing.MassIndexer;
 import org.hibernate.search.genericjpa.factory.Transaction;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.FullTextQuery;
-import org.hibernate.search.SearchFactory;
 
 /**
  * @author Emmanuel Bernard
@@ -81,7 +80,10 @@ final class FullTextEntityManagerImpl implements FullTextEntityManager, Serializ
 
 	@Override
 	public FullTextQuery createFullTextQuery(org.apache.lucene.search.Query luceneQuery, Class<?>... entities) {
-		return new FullTextQueryImpl( this.searchFactory.createQuery( luceneQuery, entities ), this.searchFactory.entityProvider( this.em ) );
+		return new FullTextQueryImpl(
+				this.searchFactory.createQuery( luceneQuery, entities ),
+				this.searchFactory.entityProvider( this.em )
+		);
 	}
 
 	@Override
@@ -159,7 +161,9 @@ final class FullTextEntityManagerImpl implements FullTextEntityManager, Serializ
 	public void close() {
 		this.em.close();
 		if ( this.isTransactionInProgress() ) {
-			throw new IllegalStateException( "search transaction is in progress, underlying entity-manager was still closed!" );
+			throw new IllegalStateException(
+					"search transaction is in progress, underlying entity-manager was still closed!"
+			);
 		}
 	}
 
@@ -306,6 +310,10 @@ final class FullTextEntityManagerImpl implements FullTextEntityManager, Serializ
 		return this.em.getFlushMode();
 	}
 
+	public void setFlushMode(FlushModeType arg0) {
+		this.em.setFlushMode( arg0 );
+	}
+
 	public LockModeType getLockMode(Object arg0) {
 		return this.em.getLockMode( arg0 );
 	}
@@ -372,10 +380,6 @@ final class FullTextEntityManagerImpl implements FullTextEntityManager, Serializ
 
 	public void remove(Object arg0) {
 		this.em.remove( arg0 );
-	}
-
-	public void setFlushMode(FlushModeType arg0) {
-		this.em.setFlushMode( arg0 );
 	}
 
 	public void setProperty(String arg0, Object arg1) {

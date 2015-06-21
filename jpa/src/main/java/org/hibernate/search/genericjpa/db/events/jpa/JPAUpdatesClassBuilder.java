@@ -6,25 +6,24 @@
  */
 package org.hibernate.search.genericjpa.db.events.jpa;
 
-import com.squareup.javapoet.AnnotationSpec;
-import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.FieldSpec;
-import com.squareup.javapoet.JavaFile;
-import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeSpec;
-
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 import javax.lang.model.element.Modifier;
 import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
+import com.squareup.javapoet.AnnotationSpec;
+import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.FieldSpec;
+import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeSpec;
 
 import org.hibernate.search.genericjpa.annotations.Event;
 import org.hibernate.search.genericjpa.annotations.IdFor;
@@ -41,6 +40,20 @@ public class JPAUpdatesClassBuilder {
 	private String tableName;
 	private String originalTableName;
 	private Set<IdColumn> idColumns = new HashSet<>();
+
+	private static String arrayStringAnnotationFormat(int size) {
+		if ( size <= 0 ) {
+			throw new IllegalArgumentException( "size must be greater than 0" );
+		}
+		StringBuilder builder = new StringBuilder( "{" );
+		for ( int i = 0; i < size; ++i ) {
+			if ( i > 0 ) {
+				builder.append( ", " );
+			}
+			builder.append( "$S" );
+		}
+		return builder.append( "}" ).toString();
+	}
 
 	public JPAUpdatesClassBuilder tableName(String tableName) {
 		this.tableName = tableName;
@@ -112,53 +125,80 @@ public class JPAUpdatesClassBuilder {
 		TypeSpec.Builder builder = TypeSpec
 				.classBuilder( className )
 				.addModifiers( Modifier.PUBLIC )
-				.addAnnotation( AnnotationSpec.builder( Table.class ).addMember( "name", "$S", this.tableName ).build() )
+				.addAnnotation(
+						AnnotationSpec.builder( Table.class )
+								.addMember( "name", "$S", this.tableName )
+								.build()
+				)
 				.addAnnotation( Entity.class )
 				.addAnnotation(
 						AnnotationSpec.builder( Updates.class ).addMember( "tableName", "$S", this.tableName )
-								.addMember( "originalTableName", "$S", this.originalTableName ).build() )
-				.addField( FieldSpec.builder( Long.class, "id", Modifier.PRIVATE ).addAnnotation( AnnotationSpec.builder( Id.class ).build() ).build() )
+								.addMember( "originalTableName", "$S", this.originalTableName ).build()
+				)
+				.addField(
+						FieldSpec.builder( Long.class, "id", Modifier.PRIVATE )
+								.addAnnotation( AnnotationSpec.builder( Id.class ).build() )
+								.build()
+				)
 				.addField(
 						FieldSpec.builder( Integer.class, "hsearchEventCase", Modifier.PRIVATE )
-								.addAnnotation( AnnotationSpec.builder( Column.class ).addMember( "name", "$S", "hsearchEventCase" ).build() )
-								.addAnnotation( AnnotationSpec.builder( Event.class ).addMember( "column", "$S", "hsearchEventCase" ).build() ).build() )
+								.addAnnotation(
+										AnnotationSpec.builder( Column.class ).addMember(
+												"name",
+												"$S",
+												"hsearchEventCase"
+										).build()
+								)
+								.addAnnotation(
+										AnnotationSpec.builder( Event.class ).addMember(
+												"column",
+												"$S",
+												"hsearchEventCase"
+										).build()
+								).build()
+				)
 				.addMethod(
 						MethodSpec.methodBuilder( "getId" ).returns( Long.class ).addModifiers( Modifier.PUBLIC )
-								.addCode( CodeBlock.builder().addStatement( "return this.id" ).build() ).build() );
+								.addCode( CodeBlock.builder().addStatement( "return this.id" ).build() ).build()
+				);
 		int i = 0;
 		for ( IdColumn idColumn : this.idColumns ) {
-			FieldSpec.Builder fieldBuilder = FieldSpec.builder( idColumn.idClass,
-					String.format( "%s_%s", idColumn.entityClass.getSimpleName().toLowerCase(), i++ ), Modifier.PRIVATE );
+			FieldSpec.Builder fieldBuilder = FieldSpec.builder(
+					idColumn.idClass,
+					String.format( "%s_%s", idColumn.entityClass.getSimpleName().toLowerCase(), i++ ), Modifier.PRIVATE
+			);
 			if ( idColumn.nonEmbeddedType ) {
-				fieldBuilder.addAnnotation( AnnotationSpec.builder( Column.class ).addMember( "name", "$S", idColumn.columns[0] ).build() );
+				fieldBuilder.addAnnotation(
+						AnnotationSpec.builder( Column.class ).addMember(
+								"name",
+								"$S",
+								idColumn.columns[0]
+						).build()
+				);
 			}
 			else {
 				// FIXME: fix this to properly support Embedded stuff
 				// (AttributeOverrides)
 				fieldBuilder.addAnnotation( Embedded.class );
 			}
-			fieldBuilder.addAnnotation( AnnotationSpec.builder( IdFor.class ).addMember( "entityClass", "$T.class", idColumn.entityClass )
-					.addMember( "columns", arrayStringAnnotationFormat( idColumn.columns.length ), (Object[]) idColumn.columns )
-					.addMember( "columnsInOriginal", arrayStringAnnotationFormat( idColumn.columnsInOriginal.length ), (Object[]) idColumn.columnsInOriginal )
-					.addMember( "bridge", "$T.class", idColumn.toOriginalIdBridge ).build() );
+			fieldBuilder.addAnnotation(
+					AnnotationSpec.builder( IdFor.class ).addMember( "entityClass", "$T.class", idColumn.entityClass )
+							.addMember(
+									"columns",
+									arrayStringAnnotationFormat( idColumn.columns.length ),
+									(Object[]) idColumn.columns
+							)
+							.addMember(
+									"columnsInOriginal",
+									arrayStringAnnotationFormat( idColumn.columnsInOriginal.length ),
+									(Object[]) idColumn.columnsInOriginal
+							)
+							.addMember( "bridge", "$T.class", idColumn.toOriginalIdBridge ).build()
+			);
 			builder.addField( fieldBuilder.build() );
 		}
 		JavaFile javaFile = JavaFile.builder( packageName, builder.build() ).build();
 		javaFile.writeTo( out );
-	}
-
-	private static String arrayStringAnnotationFormat(int size) {
-		if ( size <= 0 ) {
-			throw new IllegalArgumentException( "size must be greater than 0" );
-		}
-		StringBuilder builder = new StringBuilder( "{" );
-		for ( int i = 0; i < size; ++i ) {
-			if ( i > 0 ) {
-				builder.append( ", " );
-			}
-			builder.append( "$S" );
-		}
-		return builder.append( "}" ).toString();
 	}
 
 	public static final class IdColumn {
@@ -170,7 +210,12 @@ public class JPAUpdatesClassBuilder {
 		private String[] columnsInOriginal;
 		private Class<? extends ToOriginalIdBridge> toOriginalIdBridge;
 
-		public IdColumn(Class<?> idClass, boolean nonEmbeddedType, Class<?> entityClass, String[] columns, String[] columnsInOriginal,
+		public IdColumn(
+				Class<?> idClass,
+				boolean nonEmbeddedType,
+				Class<?> entityClass,
+				String[] columns,
+				String[] columnsInOriginal,
 				Class<? extends ToOriginalIdBridge> toOriginalIdBridge) {
 			super();
 			if ( nonEmbeddedType ) {
@@ -178,7 +223,9 @@ public class JPAUpdatesClassBuilder {
 					throw new IllegalArgumentException( "if type is nonEmbedded, there has to be exactly one column" );
 				}
 				if ( columnsInOriginal.length != 1 ) {
-					throw new IllegalArgumentException( "if type is nonEmbedded, there has to be exactly one column in the original" );
+					throw new IllegalArgumentException(
+							"if type is nonEmbedded, there has to be exactly one column in the original"
+					);
 				}
 			}
 			this.idClass = idClass;
@@ -189,17 +236,39 @@ public class JPAUpdatesClassBuilder {
 			this.toOriginalIdBridge = toOriginalIdBridge;
 		}
 
-		public IdColumn(Class<?> idClass, boolean nonEmbeddedType, Class<?> entityClass, String[] columns, String[] columnsInOriginal) {
+		public IdColumn(
+				Class<?> idClass,
+				boolean nonEmbeddedType,
+				Class<?> entityClass,
+				String[] columns,
+				String[] columnsInOriginal) {
 			this( idClass, nonEmbeddedType, entityClass, columns, columnsInOriginal, DefaultToOriginalIdBridge.class );
 		}
 
-		public static IdColumn of(Class<?> idClass, boolean nonEmbeddedType, Class<?> entityClass, String[] columns, String[] columnsInOriginal) {
+		public static IdColumn of(
+				Class<?> idClass,
+				boolean nonEmbeddedType,
+				Class<?> entityClass,
+				String[] columns,
+				String[] columnsInOriginal) {
 			return new IdColumn( idClass, nonEmbeddedType, entityClass, columns, columnsInOriginal );
 		}
 
-		public static IdColumn of(Class<?> idClass, boolean nonEmbeddedType, Class<?> entityClass, String[] columns, String[] columnsInOriginal,
+		public static IdColumn of(
+				Class<?> idClass,
+				boolean nonEmbeddedType,
+				Class<?> entityClass,
+				String[] columns,
+				String[] columnsInOriginal,
 				Class<? extends ToOriginalIdBridge> toOriginalIdBridge) {
-			return new IdColumn( idClass, nonEmbeddedType, entityClass, columns, columnsInOriginal, toOriginalIdBridge );
+			return new IdColumn(
+					idClass,
+					nonEmbeddedType,
+					entityClass,
+					columns,
+					columnsInOriginal,
+					toOriginalIdBridge
+			);
 		}
 
 		/**
@@ -296,8 +365,8 @@ public class JPAUpdatesClassBuilder {
 			int result = 1;
 			result = prime * result + Arrays.hashCode( columns );
 			result = prime * result + Arrays.hashCode( columnsInOriginal );
-			result = prime * result + ( ( entityClass == null ) ? 0 : entityClass.hashCode() );
-			result = prime * result + ( ( toOriginalIdBridge == null ) ? 0 : toOriginalIdBridge.hashCode() );
+			result = prime * result + ((entityClass == null) ? 0 : entityClass.hashCode());
+			result = prime * result + ((toOriginalIdBridge == null) ? 0 : toOriginalIdBridge.hashCode());
 			return result;
 		}
 

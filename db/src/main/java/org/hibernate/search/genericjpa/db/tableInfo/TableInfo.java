@@ -39,7 +39,9 @@ public class TableInfo {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append( "TableInfo [updateEventRelevantIdInfos=" ).append( updateEventRelevantIdInfos ).append( ", tableNames=" ).append( tableNames )
+		builder.append( "TableInfo [updateEventRelevantIdInfos=" ).append( updateEventRelevantIdInfos ).append(
+				", tableNames="
+		).append( tableNames )
 				.append( "]" );
 		return builder.toString();
 	}
@@ -81,8 +83,13 @@ public class TableInfo {
 		@Override
 		public String toString() {
 			StringBuilder builder = new StringBuilder();
-			builder.append( "IdInfo [entityClass=" ).append( entityClass ).append( ", idColumns=" ).append( idColumns ).append( ", idColumnTypes=" )
-					.append( idColumnTypes ).append( "]" );
+			builder.append( "IdInfo [entityClass=" )
+					.append( entityClass )
+					.append( ", idColumns=" )
+					.append( idColumns )
+					.append( ", idColumnTypes=" )
+					.append( idColumnTypes )
+					.append( "]" );
 			return builder.toString();
 		}
 

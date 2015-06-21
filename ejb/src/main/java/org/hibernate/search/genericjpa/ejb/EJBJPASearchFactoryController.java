@@ -6,10 +6,6 @@
  */
 package org.hibernate.search.genericjpa.ejb;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.ejb.Singleton;
@@ -19,6 +15,9 @@ import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
 import org.hibernate.search.SearchFactory;
 import org.hibernate.search.genericjpa.JPASearchFactoryController;
@@ -48,7 +47,10 @@ public class EJBJPASearchFactoryController implements JPASearchFactoryController
 			properties.load( is );
 		}
 		catch (NullPointerException | IOException e) {
-			throw new SearchException( "couldn't load hibernate-search specific properties from: " + PROPERTIES_PATH, e );
+			throw new SearchException(
+					"couldn't load hibernate-search specific properties from: " + PROPERTIES_PATH,
+					e
+			);
 		}
 		this.jpaSearchFactoryController = Setup.createSearchFactory( this.emf, properties );
 	}

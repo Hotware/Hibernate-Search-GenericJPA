@@ -6,9 +6,8 @@
  */
 package org.hibernate.search.genericjpa.test.db.events.jpa;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
+import javax.persistence.EntityManager;
+import javax.persistence.EntityTransaction;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,9 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import javax.persistence.EntityManager;
-import javax.persistence.EntityTransaction;
 
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
@@ -42,8 +38,12 @@ import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
 import org.hibernate.search.genericjpa.test.jpa.entities.SorcererUpdates;
 import org.hibernate.search.genericjpa.util.Sleep;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
+
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  * @author Martin Braun
@@ -85,16 +85,40 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 			// we have to build an integrator here (but we don't need it
 			// afterwards)
 			builder.configuration( searchConfiguration ).buildSearchIntegrator();
-			metaModelParser.getIndexRelevantEntites().forEach( (clazz) -> {
-				builder.addClass( clazz );
-			} );
+			metaModelParser.getIndexRelevantEntites().forEach(
+					(clazz) -> {
+						builder.addClass( clazz );
+					}
+			);
 			ExtendedSearchIntegrator impl = (ExtendedSearchIntegrator) builder.buildSearchIntegrator();
-			JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider( this.emf, this.metaModelParser.getIdProperties(), false );
-			IndexUpdater indexUpdater = new IndexUpdater( this.rehashedTypeMetadataPerIndexRoot, this.containedInIndexOf, entityProvider, impl );
+			JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider(
+					this.emf,
+					this.metaModelParser.getIdProperties(),
+					false
+			);
+			IndexUpdater indexUpdater = new IndexUpdater(
+					this.rehashedTypeMetadataPerIndexRoot,
+					this.containedInIndexOf,
+					entityProvider,
+					impl
+			);
 			EventModelParser eventModelParser = new EventModelParser();
-			List<EventModelInfo> eventModelInfos = eventModelParser.parse( new HashSet<>( Arrays.asList( PlaceUpdates.class, SorcererUpdates.class,
-					PlaceSorcererUpdates.class ) ) );
-			JPAUpdateSource updateSource = new JPAUpdateSource( eventModelInfos, this.emf, false, 100, TimeUnit.MILLISECONDS, 10 );
+			List<EventModelInfo> eventModelInfos = eventModelParser.parse(
+					new HashSet<>(
+							Arrays.asList(
+									PlaceUpdates.class, SorcererUpdates.class,
+									PlaceSorcererUpdates.class
+							)
+					)
+			);
+			JPAUpdateSource updateSource = new JPAUpdateSource(
+					eventModelInfos,
+					this.emf,
+					false,
+					100,
+					TimeUnit.MILLISECONDS,
+					10
+			);
 			updateSource.setUpdateConsumers( Arrays.asList( indexUpdater ) );
 			updateSource.start();
 
@@ -108,16 +132,20 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 					}
 					this.deleteAllData( em );
 
-					Sleep.sleep( 5000, () -> {
-						return this.assertCount( impl, 0 );
-					} );
+					Sleep.sleep(
+							5000, () -> {
+								return this.assertCount( impl, 0 );
+							}
+					);
 
 					this.writeAllIntoIndex( em, impl );
 
 					this.deleteAllData( em );
-					Sleep.sleep( 5000, () -> {
-						return this.assertCount( impl, 0 );
-					} );
+					Sleep.sleep(
+							5000, () -> {
+								return this.assertCount( impl, 0 );
+							}
+					);
 
 					this.writeAllIntoIndex( em, impl );
 
@@ -134,9 +162,14 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 							em.persist( valinor );
 							tx.commit();
 						}
-						Sleep.sleep( 5000, () -> {
-							return this.queryPlaceIds( impl, "name", "Valinor" ).size() == 0 && this.assertCount( impl, 2 );
-						}, "shouldn't have found \"Valinor\" in the index anymore, but overall count should have been equal to 2!" );
+						Sleep.sleep(
+								5000,
+								() -> {
+									return this.queryPlaceIds( impl, "name", "Valinor" )
+											.size() == 0 && this.assertCount( impl, 2 );
+								},
+								"shouldn't have found \"Valinor\" in the index anymore, but overall count should have been equal to 2!"
+						);
 						{
 							String oldName;
 							{
@@ -145,14 +178,25 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 								Place valinor = em.find( Place.class, valinorId );
 								Sorcerer someSorcerer = valinor.getSorcerers().iterator().next();
 								oldName = someSorcerer.getName();
-								assertEquals( "should have found \"" + oldName + "\" in the index!", 1, this.queryPlaceIds( impl, "sorcerers.name", oldName )
-										.size() );
+								assertEquals(
+										"should have found \"" + oldName + "\" in the index!", 1, this.queryPlaceIds(
+												impl,
+												"sorcerers.name",
+												oldName
+										)
+												.size()
+								);
 								someSorcerer.setName( "Odalbert" );
 								tx.commit();
 							}
-							Sleep.sleep( 5000, () -> {
-								return this.queryPlaceIds( impl, "sorcerers.name", oldName ).size() == 0 && this.assertCount( impl, 2 );
-							}, "shouldn't have found \"" + oldName + "\" in the index anymore, but overall count should have been equal to 2!" );
+							Sleep.sleep(
+									5000,
+									() -> {
+										return this.queryPlaceIds( impl, "sorcerers.name", oldName ).size() == 0 && this
+												.assertCount( impl, 2 );
+									},
+									"shouldn't have found \"" + oldName + "\" in the index anymore, but overall count should have been equal to 2!"
+							);
 						}
 					}
 				}
@@ -175,22 +219,36 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 		// and write data in the index again
 		this.setupData( em );
 		// wait a bit until the UpdateSource sent the appropriate events
-		Sleep.sleep( 5000, () -> {
-			return this.assertCount( impl, 2 );
-		} );
+		Sleep.sleep(
+				5000, () -> {
+					return this.assertCount( impl, 2 );
+				}
+		);
 	}
 
 	private boolean assertCount(ExtendedSearchIntegrator impl, int count) {
-		return count == impl.createHSQuery().targetedEntities( Arrays.asList( Place.class ) )
-				.luceneQuery( impl.buildQueryBuilder().forEntity( Place.class ).get().all().createQuery() ).queryResultSize();
+		return count == impl.createHSQuery()
+				.targetedEntities( Arrays.asList( Place.class ) )
+				.luceneQuery( impl.buildQueryBuilder().forEntity( Place.class ).get().all().createQuery() )
+				.queryResultSize();
 	}
 
 	private List<Integer> queryPlaceIds(ExtendedSearchIntegrator impl, String field, String value) {
 		return impl.createHSQuery().targetedEntities( Arrays.asList( Place.class ) )
-				.luceneQuery( impl.buildQueryBuilder().forEntity( Place.class ).get().keyword().onField( field ).matching( value ).createQuery() )
-				.queryEntityInfos().stream().map( (entInfo) -> {
-					return (Integer) entInfo.getId();
-				} ).collect( Collectors.toList() );
+				.luceneQuery(
+						impl.buildQueryBuilder()
+								.forEntity( Place.class )
+								.get()
+								.keyword()
+								.onField( field )
+								.matching( value )
+								.createQuery()
+				)
+				.queryEntityInfos().stream().map(
+						(entInfo) -> {
+							return (Integer) entInfo.getId();
+						}
+				).collect( Collectors.toList() );
 	}
 
 }

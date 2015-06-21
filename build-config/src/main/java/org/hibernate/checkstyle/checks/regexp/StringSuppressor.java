@@ -32,12 +32,10 @@ public class StringSuppressor implements MatchSuppressor {
 	 * <p>
 	 * This function is very simple and it works because we are looking for whitespace characters.
 	 *
-	 * @param line
-	 *            the full line of text containing the part that we want to check
-	 * @param aStartColNo
-	 *            position of the first white space
-	 * @param aEndColNo
-	 *            position of the second white space
+	 * @param line the full line of text containing the part that we want to check
+	 * @param aStartColNo position of the first white space
+	 * @param aEndColNo position of the second white space
+	 *
 	 * @return true if the two white spaces are inside a string (between quotes)
 	 */
 	private boolean isInsideString(String line, int aStartColNo, int aEndColNo) {

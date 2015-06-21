@@ -15,7 +15,7 @@ import org.hibernate.search.genericjpa.db.events.UpdateSource;
  * @author Martin Braun
  */
 public interface UpdateSourceProvider {
-	
+
 	UpdateSource getUpdateSource(long delay, TimeUnit timeUnit, int batchSizeForUpdates);
 
 }

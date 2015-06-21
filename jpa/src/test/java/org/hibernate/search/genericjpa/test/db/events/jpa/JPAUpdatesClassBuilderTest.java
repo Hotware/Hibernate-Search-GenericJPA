@@ -6,9 +6,6 @@
  */
 package org.hibernate.search.genericjpa.test.db.events.jpa;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -23,7 +20,11 @@ import org.hibernate.search.genericjpa.db.events.jpa.JPAUpdatesClassBuilder.IdCo
 import org.hibernate.search.genericjpa.db.id.DefaultToOriginalIdBridge;
 import org.hibernate.search.genericjpa.test.jpa.entities.Place;
 import org.hibernate.search.genericjpa.test.util.InMemoryCompiler;
+
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Martin
@@ -67,7 +68,15 @@ public class JPAUpdatesClassBuilderTest {
 		ByteArrayOutputStream bas = new ByteArrayOutputStream( 1000 );
 		PrintStream ps = new PrintStream( bas );
 		builder.tableName( "tableName" ).originalTableName( "originalTableName" )
-				.idColumn( IdColumn.of( Long.class, true, Place.class, new String[] { "placeId" }, new String[] { "Place_ID" } ) )
+				.idColumn(
+						IdColumn.of(
+								Long.class,
+								true,
+								Place.class,
+								new String[] {"placeId"},
+								new String[] {"Place_ID"}
+						)
+				)
 				.build( ps, pack, "MyUpdateClass" );
 		String asString = bas.toString( "UTF-8" );
 		return asString;

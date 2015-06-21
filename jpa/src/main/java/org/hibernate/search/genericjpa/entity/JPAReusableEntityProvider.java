@@ -6,9 +6,6 @@
  */
 package org.hibernate.search.genericjpa.entity;
 
-import java.util.List;
-import java.util.Map;
-
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.transaction.HeuristicMixedException;
@@ -17,6 +14,8 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
+import java.util.List;
+import java.util.Map;
 
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.jpa.util.JTALookup;
@@ -33,7 +32,10 @@ public class JPAReusableEntityProvider implements ReusableEntityProvider {
 	private EntityManagerEntityProvider provider;
 	private boolean startedJTA = false;
 
-	public JPAReusableEntityProvider(EntityManagerFactory emf, Map<Class<?>, String> idProperties, boolean useJTATransaction) {
+	public JPAReusableEntityProvider(
+			EntityManagerFactory emf,
+			Map<Class<?>, String> idProperties,
+			boolean useJTATransaction) {
 		this.emf = emf;
 		this.idProperties = idProperties;
 		this.useJTATransaction = useJTATransaction;
@@ -101,7 +103,7 @@ public class JPAReusableEntityProvider implements ReusableEntityProvider {
 		}
 		else {
 			try {
-				if(JTALookup.lookup().getStatus() == Status.STATUS_NO_TRANSACTION) {
+				if ( JTALookup.lookup().getStatus() == Status.STATUS_NO_TRANSACTION ) {
 					JTALookup.lookup().begin();
 					this.startedJTA = true;
 				}
@@ -118,7 +120,7 @@ public class JPAReusableEntityProvider implements ReusableEntityProvider {
 		}
 		else {
 			try {
-				if(this.startedJTA) {
+				if ( this.startedJTA ) {
 					this.startedJTA = false;
 					JTALookup.lookup().commit();
 				}

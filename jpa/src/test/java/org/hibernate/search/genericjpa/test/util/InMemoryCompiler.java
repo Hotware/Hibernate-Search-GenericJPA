@@ -6,6 +6,14 @@
  */
 package org.hibernate.search.genericjpa.test.util;
 
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticCollector;
+import javax.tools.FileObject;
+import javax.tools.ForwardingJavaFileManager;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.SimpleJavaFileObject;
+import javax.tools.ToolProvider;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -15,15 +23,6 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.tools.Diagnostic;
-import javax.tools.DiagnosticCollector;
-import javax.tools.FileObject;
-import javax.tools.ForwardingJavaFileManager;
-import javax.tools.JavaCompiler;
-import javax.tools.JavaFileObject;
-import javax.tools.SimpleJavaFileObject;
-import javax.tools.ToolProvider;
-
 import org.hibernate.search.exception.AssertionFailure;
 
 /**
@@ -32,11 +31,11 @@ import org.hibernate.search.exception.AssertionFailure;
  *
  * @author Martin Braun
  */
-@SuppressWarnings({ "rawtypes", "unchecked" })
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class InMemoryCompiler {
 
 	private InMemoryCompiler() {
-		throw new AssertionFailure("can't touch this!");
+		throw new AssertionFailure( "can't touch this!" );
 	}
 
 	/* Compiles the provided source code and returns the resulting Class object. */
@@ -61,7 +60,14 @@ public class InMemoryCompiler {
 
 		/* Set up the target file manager and call the compiler. */
 		SingleFileManager singleFileManager = new SingleFileManager( compiler, new ByteCode( className ) );
-		JavaCompiler.CompilationTask compile = compiler.getTask( null, singleFileManager, diagnosticListener, null, null, compilationUnits );
+		JavaCompiler.CompilationTask compile = compiler.getTask(
+				null,
+				singleFileManager,
+				diagnosticListener,
+				null,
+				null,
+				compilationUnits
+		);
 
 		if ( !compile.call() ) {
 			/* Compilation failed: Output the compiler errors to stderr. */
@@ -85,6 +91,8 @@ public class InMemoryCompiler {
 	/* Container for a Java compilation unit (ie Java source) in memory. */
 	private static class CompilationUnit extends SimpleJavaFileObject {
 
+		private final String source_;
+
 		public CompilationUnit(String className, String source) {
 			super( URI.create( "file:///" + className + ".java" ), Kind.SOURCE );
 			source_ = source;
@@ -104,12 +112,12 @@ public class InMemoryCompiler {
 		public InputStream openInputStream() {
 			return new ByteArrayInputStream( source_.getBytes() );
 		}
-
-		private final String source_;
 	}
 
 	/* Container for Java byte code in memory. */
 	private static class ByteCode extends SimpleJavaFileObject {
+
+		private ByteArrayOutputStream byteArrayOutputStream_;
 
 		public ByteCode(String className) {
 			super( URI.create( "byte:///" + className + ".class" ), Kind.CLASS );
@@ -134,12 +142,12 @@ public class InMemoryCompiler {
 		public byte[] getByteCode() {
 			return byteArrayOutputStream_.toByteArray();
 		}
-
-		private ByteArrayOutputStream byteArrayOutputStream_;
 	}
 
 	/* A file manager for a single class. */
 	private static class SingleFileManager extends ForwardingJavaFileManager {
+
+		private final SingleClassLoader singleClassLoader_;
 
 		public SingleFileManager(JavaCompiler compiler, ByteCode byteCode) {
 			super( compiler.getStandardFileManager( null, null, null ) );
@@ -147,7 +155,11 @@ public class InMemoryCompiler {
 		}
 
 		@Override
-		public JavaFileObject getJavaFileForOutput(Location notUsed, String className, JavaFileObject.Kind kind, FileObject sibling) throws IOException {
+		public JavaFileObject getJavaFileForOutput(
+				Location notUsed,
+				String className,
+				JavaFileObject.Kind kind,
+				FileObject sibling) throws IOException {
 			return singleClassLoader_.getFileObject();
 		}
 
@@ -159,12 +171,12 @@ public class InMemoryCompiler {
 		public SingleClassLoader getClassLoader() {
 			return singleClassLoader_;
 		}
-
-		private final SingleClassLoader singleClassLoader_;
 	}
 
 	/* A class loader for a single class. */
 	private static class SingleClassLoader extends ClassLoader {
+
+		private final ByteCode byteCode_;
 
 		public SingleClassLoader(ByteCode byteCode) {
 			byteCode_ = byteCode;
@@ -178,8 +190,6 @@ public class InMemoryCompiler {
 		ByteCode getFileObject() {
 			return byteCode_;
 		}
-
-		private final ByteCode byteCode_;
 	}
 
 }

@@ -6,18 +6,13 @@
  */
 package org.hibernate.search.genericjpa.test.jpa.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
-
+import javax.persistence.EntityManager;
+import javax.persistence.EntityTransaction;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import javax.persistence.EntityManager;
-import javax.persistence.EntityTransaction;
 
 import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess;
@@ -25,9 +20,14 @@ import org.hibernate.search.genericjpa.test.db.events.jpa.DatabaseIntegrationTes
 import org.hibernate.search.genericjpa.test.db.events.jpa.JPAUpdateSourceTest;
 import org.hibernate.search.genericjpa.test.jpa.entities.PlaceSorcererUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.PlaceUpdates;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 
 /**
  * @author Martin
@@ -142,7 +142,13 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 			em = this.emf.createEntityManager();
 			EntityTransaction tx = em.getTransaction();
 
-			List<Integer> eventOrder = new ArrayList<>( Arrays.asList( EventType.INSERT, EventType.DELETE, EventType.UPDATE ) );
+			List<Integer> eventOrder = new ArrayList<>(
+					Arrays.asList(
+							EventType.INSERT,
+							EventType.DELETE,
+							EventType.UPDATE
+					)
+			);
 
 			tx.begin();
 			{
@@ -151,10 +157,10 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 				while ( access.next() ) {
 					Object obj = access.get();
 					if ( obj instanceof PlaceUpdates ) {
-						assertEquals( eventOrder.remove( 0 ), ( (PlaceUpdates) obj ).getEventType() );
+						assertEquals( eventOrder.remove( 0 ), ((PlaceUpdates) obj).getEventType() );
 					}
 					else if ( obj instanceof PlaceSorcererUpdates ) {
-						assertEquals( eventOrder.remove( 0 ), ( (PlaceSorcererUpdates) obj ).getEventType() );
+						assertEquals( eventOrder.remove( 0 ), ((PlaceSorcererUpdates) obj).getEventType() );
 					}
 					++cnt;
 				}

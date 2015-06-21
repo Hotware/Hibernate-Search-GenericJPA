@@ -1,12 +1,11 @@
 package org.hibernate.search.genericjpa.test.batchindexing;
 
-import java.util.Arrays;
-import java.util.Properties;
-
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
+import java.util.Arrays;
+import java.util.Properties;
 
 import org.hibernate.search.genericjpa.Constants;
 import org.hibernate.search.genericjpa.Setup;
@@ -15,6 +14,7 @@ import org.hibernate.search.genericjpa.batchindexing.impl.MassIndexerImpl;
 import org.hibernate.search.genericjpa.db.events.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
 import org.hibernate.search.genericjpa.test.jpa.entities.Place;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -59,7 +59,12 @@ public class MassIndexerTestWithoutEntities {
 				em.close();
 			}
 		}
-		this.massIndexer = new MassIndexerImpl( this.emf, this.searchFactory.getSearchIntegrator(), Arrays.asList( Place.class ), false );
+		this.massIndexer = new MassIndexerImpl(
+				this.emf,
+				this.searchFactory.getSearchIntegrator(),
+				Arrays.asList( Place.class ),
+				false
+		);
 	}
 
 	@After

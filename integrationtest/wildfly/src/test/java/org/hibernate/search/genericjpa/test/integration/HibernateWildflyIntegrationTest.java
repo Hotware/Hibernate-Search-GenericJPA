@@ -6,8 +6,10 @@
  */
 package org.hibernate.search.genericjpa.test.integration;
 
-import static org.junit.Assert.assertEquals;
-
+import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -15,26 +17,25 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.transaction.UserTransaction;
-
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.TermQuery;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.shrinkwrap.api.Archive;
+
 import org.hibernate.search.genericjpa.JPASearchFactoryController;
 import org.hibernate.search.genericjpa.test.entities.Game;
 import org.hibernate.search.genericjpa.util.Sleep;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.FullTextQuery;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.shrinkwrap.api.Archive;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Martin Braun
@@ -42,23 +43,32 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 public class HibernateWildflyIntegrationTest {
 
+	private static final String[] GAME_TITLES = {"Super Mario Brothers", "Mario Kart", "F-Zero"};
+	@PersistenceContext
+	public EntityManager em;
+	@Inject
+	public UserTransaction utx;
+	boolean firstStart = true;
+	@Inject
+	private JPASearchFactoryController searchFactory;
+
 	@Deployment
 	public static Archive<?> createDeployment() {
 		return IntegrationTestUtil.createHibernateMySQLDeployment();
 	}
 
-	private static final String[] GAME_TITLES = { "Super Mario Brothers", "Mario Kart", "F-Zero" };
-
-	@PersistenceContext
-	public EntityManager em;
-
-	@Inject
-	public UserTransaction utx;
-
-	@Inject
-	private JPASearchFactoryController searchFactory;
-
-	boolean firstStart = true;
+	private static boolean assertContainsAllGames(Collection<Game> retrievedGames) {
+		final Set<String> retrievedGameTitles = new HashSet<String>();
+		for ( Game game : retrievedGames ) {
+			System.out.println( "* " + game );
+			retrievedGameTitles.add( game.getTitle() );
+		}
+		return GAME_TITLES.length == retrievedGames.size() && retrievedGameTitles.containsAll(
+				Arrays.asList(
+						GAME_TITLES
+				)
+		);
+	}
 
 	@Before
 	public void setup() throws Exception {
@@ -106,17 +116,22 @@ public class HibernateWildflyIntegrationTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void shouldFindAllGamesInIndex() throws Exception {
-		Sleep.sleep( 5000, () -> {
-			List<Game> games = new ArrayList<>();
-			FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
-			for ( String title : GAME_TITLES ) {
-				FullTextQuery query = fem.createFullTextQuery( new TermQuery( new Term( "title", title ) ), Game.class );
-				games.addAll( query.getResultList() );
-			}
+		Sleep.sleep(
+				5000, () -> {
+					List<Game> games = new ArrayList<>();
+					FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
+					for ( String title : GAME_TITLES ) {
+						FullTextQuery query = fem.createFullTextQuery(
+								new TermQuery( new Term( "title", title ) ),
+								Game.class
+						);
+						games.addAll( query.getResultList() );
+					}
 
-			System.out.println( "Found " + games.size() + " games (using Hibernate-Search):" );
-			return assertContainsAllGames( games );
-		}, 100, "coudln't find all games!" );
+					System.out.println( "Found " + games.size() + " games (using Hibernate-Search):" );
+					return assertContainsAllGames( games );
+				}, 100, "coudln't find all games!"
+		);
 	}
 
 	@Test
@@ -127,14 +142,23 @@ public class HibernateWildflyIntegrationTest {
 		Game newGame = new Game( "Legend of Zelda" );
 		fem.index( newGame );
 		fem.commitSearchTransaction();
-		Sleep.sleep( 5000, () -> {
-			FullTextQuery fullTextQuery = fem.createFullTextQuery( new TermQuery( new Term( "title", "Legend of Zelda" ) ), Game.class );
-			// we can find it in the index even though it is not persisted in the database
-				boolean val1 = 1 == fullTextQuery.getResultSize();
-				// but no result should be returned here:
-				boolean val2 = 0 == fullTextQuery.getResultList().size();
-				return val1 && val2;
-			}, 100, "" );
+		Sleep.sleep(
+				5000, () -> {
+					FullTextQuery fullTextQuery = fem.createFullTextQuery(
+							new TermQuery(
+									new Term(
+											"title",
+											"Legend of Zelda"
+									)
+							), Game.class
+					);
+					// we can find it in the index even though it is not persisted in the database
+					boolean val1 = 1 == fullTextQuery.getResultSize();
+					// but no result should be returned here:
+					boolean val2 = 0 == fullTextQuery.getResultList().size();
+					return val1 && val2;
+				}, 100, ""
+		);
 	}
 
 	@Test
@@ -146,14 +170,19 @@ public class HibernateWildflyIntegrationTest {
 		Game newGame = new Game( "Pong" );
 		fem.index( newGame );
 		fem.rollbackSearchTransaction();
-		Sleep.sleep( 5000, () -> {
-			FullTextQuery fullTextQuery = fem.createFullTextQuery( new TermQuery( new Term( "title", "Pong" ) ), Game.class );
-			// we can find it in the index even though it is not persisted in the database
-				boolean val1 = 0 == fullTextQuery.getResultSize();
-				// no result should be returned here either
-				boolean val2 = 0 == fullTextQuery.getResultList().size();
-				return val1 && val2;
-			}, 100, "" );
+		Sleep.sleep(
+				5000, () -> {
+					FullTextQuery fullTextQuery = fem.createFullTextQuery(
+							new TermQuery( new Term( "title", "Pong" ) ),
+							Game.class
+					);
+					// we can find it in the index even though it is not persisted in the database
+					boolean val1 = 0 == fullTextQuery.getResultSize();
+					// no result should be returned here either
+					boolean val2 = 0 == fullTextQuery.getResultList().size();
+					return val1 && val2;
+				}, 100, ""
+		);
 	}
 
 	@Test
@@ -163,15 +192,6 @@ public class HibernateWildflyIntegrationTest {
 
 		FullTextQuery query = fem.createFullTextQuery( new MatchAllDocsQuery(), Game.class );
 		assertEquals( query, query.unwrap( FullTextQuery.class ) );
-	}
-
-	private static boolean assertContainsAllGames(Collection<Game> retrievedGames) {
-		final Set<String> retrievedGameTitles = new HashSet<String>();
-		for ( Game game : retrievedGames ) {
-			System.out.println( "* " + game );
-			retrievedGameTitles.add( game.getTitle() );
-		}
-		return GAME_TITLES.length == retrievedGames.size() && retrievedGameTitles.containsAll( Arrays.asList( GAME_TITLES ) );
 	}
 
 	private void startTransaction() throws Exception {

@@ -6,20 +6,18 @@
  */
 package org.hibernate.search.genericjpa.entity;
 
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-
 public class EntityManagerEntityProvider implements EntityProvider {
 
+	private static final String QUERY_FORMAT = "SELECT obj FROM %s obj " + "WHERE obj.%s IN :ids";
 	private final EntityManager em;
 	private final Map<Class<?>, String> idProperties;
-
-	private static final String QUERY_FORMAT = "SELECT obj FROM %s obj " + "WHERE obj.%s IN :ids";
 
 	// TODO: add support for fetch profiles?
 
@@ -38,13 +36,17 @@ public class EntityManagerEntityProvider implements EntityProvider {
 		return this.em.find( entityClass, id );
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@SuppressWarnings({"rawtypes", "unchecked"})
 	@Override
 	public List getBatch(Class<?> entityClass, List<Object> ids) {
 		List<Object> ret = new ArrayList<>( ids.size() );
 		if ( ids.size() > 0 ) {
 			String idProperty = this.idProperties.get( entityClass );
-			String queryString = String.format( QUERY_FORMAT, this.em.getMetamodel().entity( entityClass ).getName(), idProperty );
+			String queryString = String.format(
+					QUERY_FORMAT,
+					this.em.getMetamodel().entity( entityClass ).getName(),
+					idProperty
+			);
 			Query query = this.em.createQuery( queryString );
 			query.setParameter( "ids", ids );
 			ret.addAll( query.getResultList() );
@@ -55,7 +57,7 @@ public class EntityManagerEntityProvider implements EntityProvider {
 	public void clearEm() {
 		this.em.clear();
 	}
-	
+
 	public EntityManager getEm() {
 		return this.em;
 	}

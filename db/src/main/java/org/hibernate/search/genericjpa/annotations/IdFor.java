@@ -6,20 +6,20 @@
  */
 package org.hibernate.search.genericjpa.annotations;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 import org.hibernate.search.genericjpa.db.id.DefaultToOriginalIdBridge;
 import org.hibernate.search.genericjpa.db.id.ToOriginalIdBridge;
 
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
 /**
  * @author Martin
  */
-@Target({ FIELD, METHOD })
+@Target({FIELD, METHOD})
 @Retention(RUNTIME)
 public @interface IdFor {
 

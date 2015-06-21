@@ -8,15 +8,16 @@ package org.hibernate.search.genericjpa.jpa.util;
 
 import javax.transaction.TransactionManager;
 
-import org.hibernate.search.genericjpa.exception.SearchException;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 
+import org.hibernate.search.genericjpa.exception.SearchException;
+
 /**
  * Utility class to get a hold of a {@link javax.transaction.TransactionManager}. This currently heavily relies on
  * Infinispan for this lookup.
- * 
+ *
  * @author Martin Braun
  */
 public class JTALookup {
@@ -36,6 +37,7 @@ public class JTALookup {
 	private static class Holder {
 
 		private static final GenericTransactionManagerLookup INSTANCE = new GenericTransactionManagerLookup();
+
 		static {
 			GlobalConfigurationBuilder cfgBuilder = new GlobalConfigurationBuilder();
 			INSTANCE.init( cfgBuilder.build() );

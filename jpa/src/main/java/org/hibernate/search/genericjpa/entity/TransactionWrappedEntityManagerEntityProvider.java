@@ -6,10 +6,9 @@
  */
 package org.hibernate.search.genericjpa.entity;
 
+import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.Map;
-
-import javax.persistence.EntityManager;
 
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 
@@ -17,7 +16,10 @@ public class TransactionWrappedEntityManagerEntityProvider extends EntityManager
 
 	private final boolean useJTATransaction;
 
-	public TransactionWrappedEntityManagerEntityProvider(EntityManager em, Map<Class<?>, String> idProperties, boolean useJTATransaction) {
+	public TransactionWrappedEntityManagerEntityProvider(
+			EntityManager em,
+			Map<Class<?>, String> idProperties,
+			boolean useJTATransaction) {
 		super( em, idProperties );
 		this.useJTATransaction = useJTATransaction;
 	}

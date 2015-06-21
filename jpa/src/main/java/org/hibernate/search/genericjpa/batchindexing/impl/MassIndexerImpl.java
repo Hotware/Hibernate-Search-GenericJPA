@@ -6,6 +6,10 @@
  */
 package org.hibernate.search.genericjpa.batchindexing.impl;
 
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.metamodel.EntityType;
+import javax.persistence.metamodel.Metamodel;
+import javax.persistence.metamodel.SingularAttribute;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,11 +32,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.metamodel.EntityType;
-import javax.persistence.metamodel.Metamodel;
-import javax.persistence.metamodel.SingularAttribute;
-
 import org.hibernate.search.backend.OptimizeLuceneWork;
 import org.hibernate.search.backend.PurgeAllLuceneWork;
 import org.hibernate.search.backend.impl.batch.DefaultBatchBackend;
@@ -54,61 +53,48 @@ import org.hibernate.search.genericjpa.jpa.util.NamingThreadFactory;
 public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
 	private static final Logger LOGGER = Logger.getLogger( MassIndexerImpl.class.getName() );
-
-	private BatchBackend batchBackend;
 	private final ExtendedSearchIntegrator searchIntegrator;
-
 	private final List<Class<?>> rootTypes;
 	private final boolean useJTATransaction;
 	private final EntityManagerFactory emf;
-
-	private ExecutorService executorServiceForIds;
-	private ExecutorService executorServiceForObjects;
-
-	private boolean purgeAllOnStart = true;
-	private boolean optimizeAfterPurge = true;
-	private boolean optimizeOnFinish = true;
-
-	private int batchSizeToLoadIds = 100;
-	private int batchSizeToLoadObjects = 10;
-	private int threadsToLoadIds = 1;
-	private int threadsToLoadObjects = 4;
-
-	private boolean started = false;
-	private Map<Class<?>, String> idProperties;
-
-	private Future<Void> future;
-
-	private ConcurrentLinkedQueue<EntityManagerEntityProvider> entityProviders = new ConcurrentLinkedQueue<>();
-
-	private MassIndexerProgressMonitor progressMonitor;
 	private final ConcurrentHashMap<Class<?>, AtomicInteger> idProgress = new ConcurrentHashMap<>();
 	private final ConcurrentHashMap<Class<?>, AtomicInteger> objectLoadedProgress = new ConcurrentHashMap<>();
 	private final ConcurrentHashMap<Class<?>, AtomicInteger> documentBuiltProgress = new ConcurrentHashMap<>();
 	private final AtomicInteger documentsAdded = new AtomicInteger();
-
 	/**
 	 * used to wait for finishing the indexing process
 	 */
 	private final Map<Class<?>, NumberCondition> finishConditions = new HashMap<>();
 	private final ConcurrentLinkedQueue<Future<?>> idProducerFutures = new ConcurrentLinkedQueue<>();
-
 	/**
 	 * this latch is used to wait for the cleanup thread to finish.
 	 */
 	private final CountDownLatch cleanUpLatch = new CountDownLatch( 1 );
-
-	/**
-	 * this is needed so we don't flood the executors for object handling. we store the amount of currently submitted
-	 * ObjectHandlerTasks in here
-	 */
-	private NumberCondition objectHandlerTaskCondition;
-
 	/**
 	 * lock to guard the cancelled variable. the cancel method of our future has the write lock while all the others are
 	 * "readers". -> cancel is is more important.
 	 */
 	private final ReadWriteLock cancelGuard = new ReentrantReadWriteLock();
+	private BatchBackend batchBackend;
+	private ExecutorService executorServiceForIds;
+	private ExecutorService executorServiceForObjects;
+	private boolean purgeAllOnStart = true;
+	private boolean optimizeAfterPurge = true;
+	private boolean optimizeOnFinish = true;
+	private int batchSizeToLoadIds = 100;
+	private int batchSizeToLoadObjects = 10;
+	private int threadsToLoadIds = 1;
+	private int threadsToLoadObjects = 4;
+	private boolean started = false;
+	private Map<Class<?>, String> idProperties;
+	private Future<Void> future;
+	private ConcurrentLinkedQueue<EntityManagerEntityProvider> entityProviders = new ConcurrentLinkedQueue<>();
+	private MassIndexerProgressMonitor progressMonitor;
+	/**
+	 * this is needed so we don't flood the executors for object handling. we store the amount of currently submitted
+	 * ObjectHandlerTasks in here
+	 */
+	private NumberCondition objectHandlerTaskCondition;
 	private boolean cancelled = false;
 
 	private EntityProvider userSpecifiedEntityProvider;

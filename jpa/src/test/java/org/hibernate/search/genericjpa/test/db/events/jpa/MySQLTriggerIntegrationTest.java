@@ -6,17 +6,13 @@
  */
 package org.hibernate.search.genericjpa.test.db.events.jpa;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
+import javax.persistence.EntityManager;
+import javax.persistence.EntityTransaction;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import javax.persistence.EntityManager;
-import javax.persistence.EntityTransaction;
 
 import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
@@ -26,7 +22,11 @@ import org.hibernate.search.genericjpa.test.jpa.entities.PlaceSorcererUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.PlaceUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
 import org.hibernate.search.genericjpa.util.Sleep;
+
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  * @author Martin
@@ -63,11 +63,19 @@ public class MySQLTriggerIntegrationTest extends DatabaseIntegrationTest {
 			tx.commit();
 
 			tx.begin();
-			assertEquals( countBefore + 1, em.createQuery( "SELECT a FROM PlaceSorcererUpdates a" ).getResultList().size() );
+			assertEquals(
+					countBefore + 1,
+					em.createQuery( "SELECT a FROM PlaceSorcererUpdates a" ).getResultList().size()
+			);
 			tx.commit();
 
 			tx.begin();
-			assertEquals( 1, em.createQuery( "SELECT a FROM PlaceSorcererUpdates a WHERE a.eventType = " + EventType.INSERT ).getResultList().size() );
+			assertEquals(
+					1,
+					em.createQuery( "SELECT a FROM PlaceSorcererUpdates a WHERE a.eventType = " + EventType.INSERT )
+							.getResultList()
+							.size()
+			);
 			tx.commit();
 
 			tx.begin();
@@ -76,34 +84,55 @@ public class MySQLTriggerIntegrationTest extends DatabaseIntegrationTest {
 			tx.commit();
 
 			tx.begin();
-			assertEquals( countBefore + 2, em.createQuery( "SELECT a FROM PlaceSorcererUpdates a" ).getResultList().size() );
+			assertEquals(
+					countBefore + 2,
+					em.createQuery( "SELECT a FROM PlaceSorcererUpdates a" ).getResultList().size()
+			);
 			tx.commit();
 
 			tx.begin();
-			assertEquals( 1, em.createQuery( "SELECT a FROM PlaceSorcererUpdates a WHERE a.eventType = " + EventType.DELETE ).getResultList().size() );
+			assertEquals(
+					1,
+					em.createQuery( "SELECT a FROM PlaceSorcererUpdates a WHERE a.eventType = " + EventType.DELETE )
+							.getResultList()
+							.size()
+			);
 			tx.commit();
 
 			JPAUpdateSource updateSource = new JPAUpdateSource(
-					parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class, PlaceUpdates.class ) ) ), emf, false, 1, TimeUnit.SECONDS, 1, 1 );
-			updateSource.setUpdateConsumers( Arrays.asList( new UpdateConsumer() {
+					parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class, PlaceUpdates.class ) ) ),
+					emf,
+					false,
+					1,
+					TimeUnit.SECONDS,
+					1,
+					1
+			);
+			updateSource.setUpdateConsumers(
+					Arrays.asList(
+							new UpdateConsumer() {
 
-				@Override
-				public void updateEvent(List<UpdateInfo> arg0) {
+								@Override
+								public void updateEvent(List<UpdateInfo> arg0) {
 
-				}
+								}
 
-			} ) );
+							}
+					)
+			);
 
 			updateSource.start();
-			Sleep.sleep( 1000, () -> {
-				tx.begin();
-				try {
-					return em.createQuery( "SELECT a FROM PlaceSorcererUpdates a" ).getResultList().size() == 0;
-				}
-				finally {
-					tx.commit();
-				}
-			} );
+			Sleep.sleep(
+					1000, () -> {
+						tx.begin();
+						try {
+							return em.createQuery( "SELECT a FROM PlaceSorcererUpdates a" ).getResultList().size() == 0;
+						}
+						finally {
+							tx.commit();
+						}
+					}
+			);
 
 			if ( exceptionString != null ) {
 				fail( exceptionString );

@@ -6,9 +6,6 @@
  */
 package org.hibernate.search.genericjpa.test.metadata;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -22,8 +19,12 @@ import org.hibernate.search.genericjpa.factory.SearchConfigurationImpl;
 import org.hibernate.search.genericjpa.metadata.MetadataRehasher;
 import org.hibernate.search.genericjpa.metadata.MetadataUtil;
 import org.hibernate.search.genericjpa.metadata.RehashedTypeMetadata;
+
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Martin Braun
@@ -41,7 +42,7 @@ public class MetadataRehasherTest {
 	}
 
 	@Test
-	public void test() {		
+	public void test() {
 		TypeMetadata fromRoot = this.metadataProvider.getTypeMetadataFor( RootEntity.class );
 		RehashedTypeMetadata fromRootRehashed = this.metadataRehasher.rehash( fromRoot );
 		{
@@ -54,12 +55,24 @@ public class MetadataRehasherTest {
 
 				assertEquals( 3, idFieldNamesForType.get( RootEntity.class ).size() );
 				assertTrue( idFieldNamesForType.get( RootEntity.class ).contains( "MAYBE_ROOT_NOT_NAMED_ID" ) );
-				assertTrue( idFieldNamesForType.get( RootEntity.class ).contains( "recursiveSelf.MAYBE_ROOT_NOT_NAMED_ID" ) );
-				assertTrue( idFieldNamesForType.get( RootEntity.class ).contains( "recursiveSelf.recursiveSelf.MAYBE_ROOT_NOT_NAMED_ID" ) );
+				assertTrue(
+						idFieldNamesForType.get( RootEntity.class ).contains(
+								"recursiveSelf.MAYBE_ROOT_NOT_NAMED_ID"
+						)
+				);
+				assertTrue(
+						idFieldNamesForType.get( RootEntity.class ).contains(
+								"recursiveSelf.recursiveSelf.MAYBE_ROOT_NOT_NAMED_ID"
+						)
+				);
 
 				assertEquals( 2, idFieldNamesForType.get( SubEntity.class ).size() );
 				assertTrue( idFieldNamesForType.get( SubEntity.class ).contains( "otherEntity.SUB_NOT_NAMED_ID" ) );
-				assertTrue( idFieldNamesForType.get( SubEntity.class ).contains( "recursiveSelf.otherEntity.SUB_NOT_NAMED_ID" ) );
+				assertTrue(
+						idFieldNamesForType.get( SubEntity.class ).contains(
+								"recursiveSelf.otherEntity.SUB_NOT_NAMED_ID"
+						)
+				);
 			}
 
 			// THE ID PROPERTY NAMES
@@ -72,20 +85,35 @@ public class MetadataRehasherTest {
 			{
 				assertEquals( 5, fromRootRehashed.getDocumentFieldMetadataForIdFieldName().size() );
 				// make sure all of these are different
-				assertEquals( 5, new HashSet<>( fromRootRehashed.getDocumentFieldMetadataForIdFieldName().values() ).size() );
+				assertEquals(
+						5, new HashSet<>(
+						fromRootRehashed.getDocumentFieldMetadataForIdFieldName()
+								.values()
+				).size()
+				);
 			}
 		}
 
 		TypeMetadata fromAnotherRoot = this.metadataProvider.getTypeMetadataFor( AnotherRootEntity.class );
 		RehashedTypeMetadata fromAnotherRootRehashed = this.metadataRehasher.rehash( fromAnotherRoot );
 
-		Set<Class<?>> indexRelevantEntities = MetadataUtil.calculateIndexRelevantEntities( Arrays.asList( fromRootRehashed, fromAnotherRootRehashed ) );
+		Set<Class<?>> indexRelevantEntities = MetadataUtil.calculateIndexRelevantEntities(
+				Arrays.asList(
+						fromRootRehashed,
+						fromAnotherRootRehashed
+				)
+		);
 		assertEquals( 3, indexRelevantEntities.size() );
 		assertTrue( indexRelevantEntities.contains( RootEntity.class ) );
 		assertTrue( indexRelevantEntities.contains( AnotherRootEntity.class ) );
 		assertTrue( indexRelevantEntities.contains( SubEntity.class ) );
 
-		Map<Class<?>, List<Class<?>>> inIndexOf = MetadataUtil.calculateInIndexOf( Arrays.asList( fromRootRehashed, fromAnotherRootRehashed ) );
+		Map<Class<?>, List<Class<?>>> inIndexOf = MetadataUtil.calculateInIndexOf(
+				Arrays.asList(
+						fromRootRehashed,
+						fromAnotherRootRehashed
+				)
+		);
 		assertEquals( 1, inIndexOf.get( RootEntity.class ).size() );
 		assertTrue( inIndexOf.get( RootEntity.class ).contains( RootEntity.class ) );
 

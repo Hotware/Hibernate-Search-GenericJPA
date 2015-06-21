@@ -6,6 +6,14 @@
  */
 package org.hibernate.search.genericjpa.impl;
 
+import javax.persistence.FlushModeType;
+import javax.persistence.LockModeType;
+import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
+import javax.persistence.Parameter;
+import javax.persistence.PersistenceException;
+import javax.persistence.Query;
+import javax.persistence.TemporalType;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
@@ -16,22 +24,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import javax.persistence.FlushModeType;
-import javax.persistence.LockModeType;
-import javax.persistence.NoResultException;
-import javax.persistence.NonUniqueResultException;
-import javax.persistence.Parameter;
-import javax.persistence.PersistenceException;
-import javax.persistence.Query;
-import javax.persistence.TemporalType;
-
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Sort;
+
+import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.filter.FullTextFilter;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.query.HSearchQuery;
-import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.jpa.FullTextQuery;
 import org.hibernate.search.query.DatabaseRetrievalMethod;
 import org.hibernate.search.query.ObjectLookupMethod;
@@ -48,17 +48,13 @@ import org.hibernate.search.spatial.Coordinates;
 final class FullTextQueryImpl implements FullTextQuery {
 
 	private final HSearchQuery hsearchQuery;
-	
+	// initialized at 0 since we don't expect to use hints at this stage
+	private final Map<String, Object> hints = new HashMap<>( 0 );
 	private EntityProvider entityProvider;
-
 	private Integer firstResult;
 	private Integer maxResults;
 	private String[] projection;
-
 	private DatabaseRetrievalMethod databaseRetrievalMethod;
-
-	// initialized at 0 since we don't expect to use hints at this stage
-	private final Map<String, Object> hints = new HashMap<>( 0 );
 	private FlushModeType jpaFlushMode = FlushModeType.AUTO;
 
 	public FullTextQueryImpl(HSearchQuery hsearchQuery, EntityProvider entityProvider) {
@@ -157,14 +153,14 @@ final class FullTextQueryImpl implements FullTextQuery {
 	}
 
 	void throwPersistenceException(PersistenceException e) {
-		if ( !( e instanceof NoResultException || e instanceof NonUniqueResultException ) ) {
+		if ( !(e instanceof NoResultException || e instanceof NonUniqueResultException) ) {
 			// FIXME rollback
 		}
 		throw e;
 	}
 
 	@Override
-	@SuppressWarnings({ "unchecked" })
+	@SuppressWarnings({"unchecked"})
 	public Object getSingleResult() {
 		try {
 			@SuppressWarnings("rawtypes")
@@ -200,7 +196,9 @@ final class FullTextQueryImpl implements FullTextQuery {
 	}
 
 	private HSearchQuery.Fetch getFetch() {
-		return this.databaseRetrievalMethod == DatabaseRetrievalMethod.FIND_BY_ID ? HSearchQuery.Fetch.FIND_BY_ID : HSearchQuery.Fetch.BATCH;
+		return this.databaseRetrievalMethod == DatabaseRetrievalMethod.FIND_BY_ID ?
+				HSearchQuery.Fetch.FIND_BY_ID :
+				HSearchQuery.Fetch.BATCH;
 	}
 
 	@Override
@@ -250,7 +248,9 @@ final class FullTextQueryImpl implements FullTextQuery {
 	}
 
 	@Override
-	public FullTextQuery initializeObjectsWith(ObjectLookupMethod lookupMethod, DatabaseRetrievalMethod retrievalMethod) {
+	public FullTextQuery initializeObjectsWith(
+			ObjectLookupMethod lookupMethod,
+			DatabaseRetrievalMethod retrievalMethod) {
 		this.databaseRetrievalMethod = retrievalMethod;
 		return this;
 	}
@@ -272,7 +272,7 @@ final class FullTextQueryImpl implements FullTextQuery {
 				this.hsearchQuery.setTimeout( Long.parseLong( (String) value ), TimeUnit.MILLISECONDS );
 			}
 			else if ( value instanceof Number ) {
-				this.hsearchQuery.setTimeout( ( (Number) value ).longValue(), TimeUnit.MILLISECONDS );
+				this.hsearchQuery.setTimeout( ((Number) value).longValue(), TimeUnit.MILLISECONDS );
 			}
 		}
 		return this;

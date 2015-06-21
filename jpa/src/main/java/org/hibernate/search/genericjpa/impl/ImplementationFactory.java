@@ -22,7 +22,9 @@ public final class ImplementationFactory {
 		// not meant to be instantiated
 	}
 
-	public static FullTextEntityManager createFullTextEntityManager(EntityManager em, JPASearchFactoryAdapter searchFactory) {
+	public static FullTextEntityManager createFullTextEntityManager(
+			EntityManager em,
+			JPASearchFactoryAdapter searchFactory) {
 		return new FullTextEntityManagerImpl( em, searchFactory );
 	}
 

@@ -6,11 +6,10 @@
  */
 package org.hibernate.search.genericjpa.factory;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.transaction.Status;
 import javax.transaction.Synchronization;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.hibernate.search.genericjpa.transaction.TransactionContext;
 

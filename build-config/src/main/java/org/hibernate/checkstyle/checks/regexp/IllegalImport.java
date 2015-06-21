@@ -42,7 +42,7 @@ public class IllegalImport extends Check {
 
 	@Override
 	public int[] getDefaultTokens() {
-		return new int[] { TokenTypes.IMPORT, TokenTypes.STATIC_IMPORT };
+		return new int[] {TokenTypes.IMPORT, TokenTypes.STATIC_IMPORT};
 	}
 
 	@Override

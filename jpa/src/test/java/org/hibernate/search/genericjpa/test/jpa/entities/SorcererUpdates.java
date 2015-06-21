@@ -83,7 +83,9 @@ public class SorcererUpdates {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append( "SorcererUpdates [id=" ).append( id ).append( ", sorcererId=" ).append( sorcererId ).append( ", eventType=" ).append( eventType )
+		builder.append( "SorcererUpdates [id=" ).append( id ).append( ", sorcererId=" ).append( sorcererId ).append(
+				", eventType="
+		).append( eventType )
 				.append( "]" );
 		return builder.toString();
 	}

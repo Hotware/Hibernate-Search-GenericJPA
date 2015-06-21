@@ -14,6 +14,7 @@ import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.test.db.entities.PlaceSorcererUpdates;
+
 import org.junit.Test;
 
 /**

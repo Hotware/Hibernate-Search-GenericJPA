@@ -6,20 +6,18 @@
  */
 package org.hibernate.search.genericjpa.test.batchindexing;
 
-import static org.junit.Assert.assertEquals;
-
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.EntityTransaction;
+import javax.persistence.Persistence;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Future;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.EntityTransaction;
-import javax.persistence.Persistence;
-
 import org.apache.lucene.search.MatchAllDocsQuery;
+
 import org.hibernate.search.genericjpa.Constants;
 import org.hibernate.search.genericjpa.Setup;
 import org.hibernate.search.genericjpa.batchindexing.MassIndexer;
@@ -31,21 +29,23 @@ import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
 import org.hibernate.search.genericjpa.test.jpa.entities.Place;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
 import org.hibernate.search.jpa.FullTextEntityManager;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Martin Braun
  */
 public class MassIndexerTest {
 
+	private static final int COUNT = 2153;
 	private EntityManagerFactory emf;
 	private EntityManager em;
 	private JPASearchFactoryAdapter searchFactory;
 	private MassIndexer massIndexer;
-
-	private static final int COUNT = 2153;
 
 	@Test
 	public void test() throws InterruptedException {
@@ -62,7 +62,7 @@ public class MassIndexerTest {
 			throw new SearchException( e );
 		}
 		long after = System.currentTimeMillis();
-		System.out.println( "indexed " + COUNT + " root entities (3 sub each) in " + ( after - pre ) + "ms." );
+		System.out.println( "indexed " + COUNT + " root entities (3 sub each) in " + (after - pre) + "ms." );
 
 		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
 
@@ -78,7 +78,11 @@ public class MassIndexerTest {
 	@Test
 	public void testFromSearchFactory() {
 		try {
-			this.searchFactory.createMassIndexer().threadsToLoadObjects( 15 ).batchSizeToLoadObjects( 100 ).progressMonitor( this.progress() ).startAndWait();
+			this.searchFactory.createMassIndexer()
+					.threadsToLoadObjects( 15 )
+					.batchSizeToLoadObjects( 100 )
+					.progressMonitor( this.progress() )
+					.startAndWait();
 		}
 		catch (InterruptedException e) {
 			throw new SearchException( e );
@@ -132,7 +136,12 @@ public class MassIndexerTest {
 			}
 		}
 		this.em = this.emf.createEntityManager();
-		this.massIndexer = new MassIndexerImpl( this.emf, this.searchFactory.getSearchIntegrator(), Arrays.asList( Place.class ), false );
+		this.massIndexer = new MassIndexerImpl(
+				this.emf,
+				this.searchFactory.getSearchIntegrator(),
+				Arrays.asList( Place.class ),
+				false
+		);
 		this.massIndexer.progressMonitor( this.progress() );
 	}
 

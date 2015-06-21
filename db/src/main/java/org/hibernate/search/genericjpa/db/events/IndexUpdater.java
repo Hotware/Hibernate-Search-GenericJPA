@@ -7,10 +7,11 @@
 package org.hibernate.search.genericjpa.db.events;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import org.jboss.logging.Logger;
 
 import org.hibernate.search.backend.spi.SingularTermDeletionQuery;
 import org.hibernate.search.backend.spi.Work;
@@ -26,8 +27,6 @@ import org.hibernate.search.genericjpa.factory.Transaction;
 import org.hibernate.search.genericjpa.metadata.RehashedTypeMetadata;
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.hibernate.search.query.engine.spi.HSQuery;
-
-import org.jboss.logging.Logger;
 
 /**
  * This class is the "glue" between a {@link org.hibernate.search.genericjpa.db.events.UpdateSource} and the actual

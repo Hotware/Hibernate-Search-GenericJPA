@@ -6,16 +6,15 @@
  */
 package org.hibernate.search.genericjpa.batchindexing.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
@@ -37,16 +36,20 @@ public class IdProducerTask implements Runnable {
 	private final UpdateConsumer updateConsumer;
 	private final List<UpdateInfo> updateInfoBatch;
 	private final NumberCondition numberCondition;
-
-	private BiConsumer<Class<?>, Integer> progressMonitor;
-
 	private final Consumer<Exception> exceptionConsumer;
-
+	private BiConsumer<Class<?>, Integer> progressMonitor;
 	private Runnable finishConsumer;
 
-	public IdProducerTask(Class<?> entityClass, String idProperty, EntityManagerFactory emf, boolean useJTATransaction, int batchSizeToLoadIds,
-			int batchSizeToLoadObjects, UpdateConsumer updateConsumer,
-			Consumer<Exception> exceptionConsumer, NumberCondition numberCondition) {
+	public IdProducerTask(
+			Class<?> entityClass,
+			String idProperty,
+			EntityManagerFactory emf,
+			boolean useJTATransaction,
+			int batchSizeToLoadIds,
+			int batchSizeToLoadObjects,
+			UpdateConsumer updateConsumer,
+			Consumer<Exception> exceptionConsumer,
+			NumberCondition numberCondition) {
 		this.entityClass = entityClass;
 		this.idProperty = idProperty;
 		this.emf = emf;
@@ -75,9 +78,13 @@ public class IdProducerTask implements Runnable {
 				while ( position < totalCount && !Thread.currentThread().isInterrupted() ) {
 					tx.begin();
 					try {
-						Query query = em.createQuery( new StringBuilder().append( "SELECT obj." ).append( this.idProperty ).append( " FROM " )
-								.append( em.getMetamodel().entity( this.entityClass ).getName() ).append( " obj ORDER BY obj." ).append( this.idProperty )
-								.toString() );
+						Query query = em.createQuery(
+								new StringBuilder().append( "SELECT obj." ).append( this.idProperty ).append( " FROM " )
+										.append( em.getMetamodel().entity( this.entityClass ).getName() ).append(
+										" obj ORDER BY obj."
+								).append( this.idProperty )
+										.toString()
+						);
 						query.setFirstResult( (int) position ).setMaxResults( this.batchSizeToLoadIds ).getResultList();
 
 						@SuppressWarnings("rawtypes")

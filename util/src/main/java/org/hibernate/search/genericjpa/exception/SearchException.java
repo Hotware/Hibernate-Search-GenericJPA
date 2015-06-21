@@ -8,7 +8,7 @@ package org.hibernate.search.genericjpa.exception;
 
 /**
  * Base Exception for Hibernate Search Generic JPA
- * 
+ *
  * @author Martin Braun
  */
 public class SearchException extends RuntimeException {

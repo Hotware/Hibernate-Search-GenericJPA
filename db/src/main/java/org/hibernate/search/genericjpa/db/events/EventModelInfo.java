@@ -26,8 +26,13 @@ public class EventModelInfo {
 	private final String eventTypeColumn;
 	private final List<IdInfo> idInfos;
 
-	public EventModelInfo(Class<?> updateClass, String tableName, String originalTableName, Function<Object, Integer> eventTypeAccessor,
-			String eventTypeColumn, List<IdInfo> idInfos) {
+	public EventModelInfo(
+			Class<?> updateClass,
+			String tableName,
+			String originalTableName,
+			Function<Object, Integer> eventTypeAccessor,
+			String eventTypeColumn,
+			List<IdInfo> idInfos) {
 		super();
 		this.updateClass = updateClass;
 		this.tableName = tableName;
@@ -97,7 +102,8 @@ public class EventModelInfo {
 		private final String[] columnsInOriginal;
 		private final ToOriginalIdBridge toOriginalBridge;
 
-		public IdInfo(Function<Object, Object> idAccessor, Class<?> entityClass, String[] columns, String[] columnsInOriginal,
+		public IdInfo(
+				Function<Object, Object> idAccessor, Class<?> entityClass, String[] columns, String[] columnsInOriginal,
 				ToOriginalIdBridge toOriginalBridge) {
 			super();
 			this.idAccessor = idAccessor;
@@ -148,7 +154,9 @@ public class EventModelInfo {
 		 */
 		@Override
 		public String toString() {
-			return "IdInfo [idAccessor=" + idAccessor + ", entityClass=" + entityClass + ", columns=" + Arrays.toString( columns ) + ", columnsInOriginal="
+			return "IdInfo [idAccessor=" + idAccessor + ", entityClass=" + entityClass + ", columns=" + Arrays.toString(
+					columns
+			) + ", columnsInOriginal="
 					+ Arrays.toString( columnsInOriginal ) + "]";
 		}
 

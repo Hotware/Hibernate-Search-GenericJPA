@@ -6,14 +6,13 @@
  */
 package org.hibernate.search.genericjpa.jpa.util;
 
+import javax.persistence.Query;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import javax.persistence.Query;
 
 import org.hibernate.search.exception.AssertionFailure;
 
@@ -38,19 +37,6 @@ public class MultiQueryAccess {
 
 	private Object scheduled;
 	private Class<?> entityClass;
-
-	public static class ObjectClassWrapper {
-
-		public final Object object;
-		public final Class<?> clazz;
-
-		public ObjectClassWrapper(Object object, Class<?> clazz) {
-			super();
-			this.object = object;
-			this.clazz = clazz;
-		}
-
-	}
 
 	/**
 	 * this doesn't do real batching as it has a batchSize of 1
@@ -83,6 +69,10 @@ public class MultiQueryAccess {
 			this.values.put( clazz, new LinkedList<>() );
 			this.processed.put( clazz, 0L );
 		}
+	}
+
+	private static int toInt(Long l) {
+		return (int) (long) l;
 	}
 
 	/**
@@ -163,8 +153,17 @@ public class MultiQueryAccess {
 		return this.entityClass;
 	}
 
-	private static int toInt(Long l) {
-		return (int) (long) l;
+	public static class ObjectClassWrapper {
+
+		public final Object object;
+		public final Class<?> clazz;
+
+		public ObjectClassWrapper(Object object, Class<?> clazz) {
+			super();
+			this.object = object;
+			this.clazz = clazz;
+		}
+
 	}
 
 }

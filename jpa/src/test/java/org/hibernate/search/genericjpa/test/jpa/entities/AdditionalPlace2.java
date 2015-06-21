@@ -29,14 +29,14 @@ public class AdditionalPlace2 {
 	private AdditionalPlace additionalPlace;
 	private String info;
 
-	public void setId(Integer id) {
-		this.id = id;
-	}
-
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	public Integer getId() {
 		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
 	}
 
 	@OneToOne(mappedBy = "additionalPlace2")

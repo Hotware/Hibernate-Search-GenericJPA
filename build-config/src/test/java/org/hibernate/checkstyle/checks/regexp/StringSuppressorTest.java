@@ -9,11 +9,11 @@ package org.hibernate.checkstyle.checks.regexp;
 import java.io.File;
 import java.util.Arrays;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.puppycrawl.tools.checkstyle.api.FileContents;
 import com.puppycrawl.tools.checkstyle.api.FileText;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * @author Davide D'Alto <davide@hibernate.org>

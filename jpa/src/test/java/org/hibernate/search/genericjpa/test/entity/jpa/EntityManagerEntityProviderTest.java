@@ -6,9 +6,7 @@
  */
 package org.hibernate.search.genericjpa.test.entity.jpa;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
+import javax.persistence.EntityManager;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -16,13 +14,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.persistence.EntityManager;
-
 import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.test.db.events.jpa.DatabaseIntegrationTest;
 import org.hibernate.search.genericjpa.test.db.events.jpa.MetaModelParser;
 import org.hibernate.search.genericjpa.test.jpa.entities.Place;
+
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Martin
@@ -39,13 +39,20 @@ public class EntityManagerEntityProviderTest extends DatabaseIntegrationTest {
 		EntityManagerEntityProvider provider = new EntityManagerEntityProvider( em, metaModelParser.getIdProperties() );
 		try {
 
-			assertEquals( "Valinor", ( (Place) provider.get( Place.class, this.valinorId ) ).getName() );
-			List<Place> batch = (List<Place>) provider.getBatch( Place.class, Arrays.asList( this.valinorId, this.helmsDeepId ) );
+			assertEquals( "Valinor", ((Place) provider.get( Place.class, this.valinorId )).getName() );
+			List<Place> batch = (List<Place>) provider.getBatch(
+					Place.class, Arrays.asList(
+							this.valinorId,
+							this.helmsDeepId
+					)
+			);
 			assertEquals( 2, batch.size() );
 			// order is not preserved in getBatch!
-			Set<String> names = batch.stream().map( (place) -> {
-				return place.getName();
-			} ).collect( Collectors.toSet() );
+			Set<String> names = batch.stream().map(
+					(place) -> {
+						return place.getName();
+					}
+			).collect( Collectors.toSet() );
 			assertTrue( "didn't contain Valinor!", names.contains( "Valinor" ) );
 			assertTrue( "didn't contain Helm's Deep", names.contains( "Helm's Deep" ) );
 		}

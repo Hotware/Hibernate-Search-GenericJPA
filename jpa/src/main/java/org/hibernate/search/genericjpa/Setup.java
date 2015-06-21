@@ -6,25 +6,13 @@
  */
 package org.hibernate.search.genericjpa;
 
-import static org.hibernate.search.genericjpa.Constants.ADDITIONAL_INDEXED_TYPES_KEY;
-import static org.hibernate.search.genericjpa.Constants.BATCH_SIZE_FOR_UPDATES_DEFAULT_VALUE;
-import static org.hibernate.search.genericjpa.Constants.BATCH_SIZE_FOR_UPDATES_KEY;
-import static org.hibernate.search.genericjpa.Constants.SEARCH_FACTORY_TYPE_DEFAULT_VALUE;
-import static org.hibernate.search.genericjpa.Constants.SEARCH_FACTORY_TYPE_KEY;
-import static org.hibernate.search.genericjpa.Constants.TRIGGER_SOURCE_KEY;
-import static org.hibernate.search.genericjpa.Constants.UPDATE_DELAY_DEFAULT_VALUE;
-import static org.hibernate.search.genericjpa.Constants.UPDATE_DELAY_KEY;
-import static org.hibernate.search.genericjpa.Constants.USE_JTA_TRANSACTIONS_DEFAULT_VALUE;
-import static org.hibernate.search.genericjpa.Constants.USE_JTA_TRANSACTIONS_KEY;
-
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.metamodel.EntityType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.metamodel.EntityType;
 
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.genericjpa.annotations.InIndex;
@@ -35,6 +23,17 @@ import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
 import org.hibernate.search.genericjpa.impl.SQLJPAUpdateSourceProvider;
 import org.hibernate.search.genericjpa.impl.SearchFactoryRegistry;
 import org.hibernate.search.genericjpa.impl.UpdateSourceProvider;
+
+import static org.hibernate.search.genericjpa.Constants.ADDITIONAL_INDEXED_TYPES_KEY;
+import static org.hibernate.search.genericjpa.Constants.BATCH_SIZE_FOR_UPDATES_DEFAULT_VALUE;
+import static org.hibernate.search.genericjpa.Constants.BATCH_SIZE_FOR_UPDATES_KEY;
+import static org.hibernate.search.genericjpa.Constants.SEARCH_FACTORY_TYPE_DEFAULT_VALUE;
+import static org.hibernate.search.genericjpa.Constants.SEARCH_FACTORY_TYPE_KEY;
+import static org.hibernate.search.genericjpa.Constants.TRIGGER_SOURCE_KEY;
+import static org.hibernate.search.genericjpa.Constants.UPDATE_DELAY_DEFAULT_VALUE;
+import static org.hibernate.search.genericjpa.Constants.UPDATE_DELAY_KEY;
+import static org.hibernate.search.genericjpa.Constants.USE_JTA_TRANSACTIONS_DEFAULT_VALUE;
+import static org.hibernate.search.genericjpa.Constants.USE_JTA_TRANSACTIONS_KEY;
 
 /**
  * @author Martin Braun

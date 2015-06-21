@@ -6,14 +6,13 @@
  */
 package org.hibernate.search.genericjpa.impl;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.FlushModeType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
-
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.FlushModeType;
 
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
@@ -36,7 +35,11 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 	private final EntityManagerFactory emf;
 	private final boolean useJTATransaction;
 
-	public SQLJPAUpdateSourceProvider(EntityManagerFactory emf, boolean useJTATransaction, TriggerSQLStringSource triggerSource, List<Class<?>> updateClasses) {
+	public SQLJPAUpdateSourceProvider(
+			EntityManagerFactory emf,
+			boolean useJTATransaction,
+			TriggerSQLStringSource triggerSource,
+			List<Class<?>> updateClasses) {
 		this.triggerSource = triggerSource;
 		this.updateClasses = updateClasses;
 		this.emf = emf;
@@ -48,7 +51,14 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 		EventModelParser eventModelParser = new EventModelParser();
 		List<EventModelInfo> eventModelInfos = eventModelParser.parse( new ArrayList<>( this.updateClasses ) );
 		this.setupTriggers( eventModelInfos );
-		return new JPAUpdateSource( eventModelInfos, this.emf, this.useJTATransaction, delay, timeUnit, batchSizeForUpdates );
+		return new JPAUpdateSource(
+				eventModelInfos,
+				this.emf,
+				this.useJTATransaction,
+				delay,
+				timeUnit,
+				batchSizeForUpdates
+		);
 	}
 
 	private void setupTriggers(List<EventModelInfo> eventModelInfos) {

@@ -15,6 +15,7 @@ import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
+
 import org.hibernate.search.backend.spi.DeleteByQueryWork;
 import org.hibernate.search.backend.spi.SingularTermDeletionQuery;
 import org.hibernate.search.backend.spi.Work;
@@ -142,7 +143,10 @@ public class StandaloneSearchFactoryImpl implements StandaloneSearchFactory {
 		while ( processed < count ) {
 			hsQuery.firstResult( processed ).maxResults( 10 );
 			processed += 10;
-			for ( Object[] vals : hsQuery.queryProjection( ProjectionConstants.OBJECT_CLASS, ProjectionConstants.ID ) ) {
+			for ( Object[] vals : hsQuery.queryProjection(
+					ProjectionConstants.OBJECT_CLASS,
+					ProjectionConstants.ID
+			) ) {
 				this.purge( entityClass, (Serializable) vals[1], tc );
 			}
 		}
@@ -199,8 +203,22 @@ public class StandaloneSearchFactoryImpl implements StandaloneSearchFactory {
 		this.purgeByTerm( entityClass, field, val, SingularTermDeletionQuery.Type.STRING, tc );
 	}
 
-	private void purgeByTerm(Class<?> entityClass, String field, Object val, SingularTermDeletionQuery.Type type, TransactionContext tc) {
-		this.searchIntegrator.getWorker().performWork( new DeleteByQueryWork( entityClass, new SingularTermDeletionQuery( field, val, type ) ), tc );
+	private void purgeByTerm(
+			Class<?> entityClass,
+			String field,
+			Object val,
+			SingularTermDeletionQuery.Type type,
+			TransactionContext tc) {
+		this.searchIntegrator.getWorker().performWork(
+				new DeleteByQueryWork(
+						entityClass,
+						new SingularTermDeletionQuery(
+								field,
+								val,
+								type
+						)
+				), tc
+		);
 	}
 
 }

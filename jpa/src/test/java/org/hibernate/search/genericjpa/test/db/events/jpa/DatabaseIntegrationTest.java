@@ -6,6 +6,10 @@
  */
 package org.hibernate.search.genericjpa.test.db.events.jpa;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.EntityTransaction;
+import javax.persistence.Persistence;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -17,11 +21,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.EntityTransaction;
-import javax.persistence.Persistence;
-
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventType;
@@ -31,6 +30,7 @@ import org.hibernate.search.genericjpa.test.jpa.entities.PlaceSorcererUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.PlaceUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
 import org.hibernate.search.genericjpa.test.jpa.entities.SorcererUpdates;
+
 import org.junit.After;
 
 /**
@@ -133,7 +133,11 @@ public abstract class DatabaseIntegrationTest {
 
 		{
 			@SuppressWarnings("unchecked")
-			List<PlaceSorcererUpdates> toDelete2 = new ArrayList<>( em.createQuery( "SELECT a FROM PlaceSorcererUpdates a" ).getResultList() );
+			List<PlaceSorcererUpdates> toDelete2 = new ArrayList<>(
+					em.createQuery(
+							"SELECT a FROM PlaceSorcererUpdates a"
+					).getResultList()
+			);
 			for ( PlaceSorcererUpdates val : toDelete2 ) {
 				em.remove( val );
 			}
@@ -147,7 +151,15 @@ public abstract class DatabaseIntegrationTest {
 		try {
 			EntityTransaction tx = em.getTransaction();
 			tx.begin();
-			List<EventModelInfo> infos = parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class, PlaceUpdates.class, SorcererUpdates.class ) ) );
+			List<EventModelInfo> infos = parser.parse(
+					new HashSet<>(
+							Arrays.asList(
+									PlaceSorcererUpdates.class,
+									PlaceUpdates.class,
+									SorcererUpdates.class
+							)
+					)
+			);
 
 			java.sql.Connection connection = em.unwrap( java.sql.Connection.class );
 			connection.setAutoCommit( false );
@@ -260,7 +272,7 @@ public abstract class DatabaseIntegrationTest {
 		Thread[] threadArray = threadSet.toArray( new Thread[threadSet.size()] );
 		for ( Thread t : threadArray ) {
 			if ( t.getName().contains( "Abandoned connection cleanup thread" ) ) {
-				synchronized ( t ) {
+				synchronized (t) {
 					t.stop(); // don't complain, it works
 				}
 			}

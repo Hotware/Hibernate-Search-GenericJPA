@@ -6,6 +6,8 @@
  */
 package org.hibernate.search.genericjpa.impl;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -22,9 +24,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
@@ -66,28 +65,24 @@ public final class JPASearchFactoryAdapter
 		implements StandaloneSearchFactory, UpdateConsumer, JPASearchFactoryController {
 
 	private final Logger LOGGER = Logger.getLogger( JPASearchFactoryAdapter.class.getName() );
-	private StandaloneSearchFactory searchFactory;
-	private UpdateSource updateSource;
-	private Set<Class<?>> indexRelevantEntities;
-	private Map<Class<?>, String> idProperties;
-
 	private final String name;
 	private final EntityManagerFactory emf;
 	private final Properties properties;
 	private final UpdateSourceProvider updateSourceProvider;
 	private final List<Class<?>> indexRootTypes;
 	private final boolean useJTATransaction;
-
+	private final Set<UpdateConsumer> updateConsumers = new HashSet<>();
+	private final Lock lock = new ReentrantLock();
+	private StandaloneSearchFactory searchFactory;
+	private UpdateSource updateSource;
+	private Set<Class<?>> indexRelevantEntities;
+	private Map<Class<?>, String> idProperties;
 	private int updateDelay = 500;
 	private int batchSizeForUpdates = 5;
-
 	private IndexUpdater indexUpdater;
 	private Map<Class<?>, RehashedTypeMetadata> rehashedTypeMetadataForIndexRoot;
 	private Map<Class<?>, List<Class<?>>> containedInIndexOf;
 	private ExtendedSearchIntegrator searchIntegrator;
-
-	private final Set<UpdateConsumer> updateConsumers = new HashSet<>();
-	private final Lock lock = new ReentrantLock();
 
 	@SuppressWarnings("unchecked")
 	public JPASearchFactoryAdapter(

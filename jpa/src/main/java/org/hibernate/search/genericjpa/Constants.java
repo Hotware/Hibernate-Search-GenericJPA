@@ -13,27 +13,20 @@ import org.hibernate.search.genericjpa.impl.SearchFactoryRegistry;
  */
 public class Constants {
 
+	public static final String USE_JTA_TRANSACTIONS_KEY = "org.hibernate.search.genericjpa.searchfactory.useJTATransactions";
+	public static final String USE_JTA_TRANSACTIONS_DEFAULT_VALUE = "false";
+	public static final String SEARCH_FACTORY_TYPE_KEY = "org.hibernate.search.genericjpa.searchfactory.type";
+	public static final String SEARCH_FACTORY_TYPE_DEFAULT_VALUE = "sql";
+	public static final String BATCH_SIZE_FOR_UPDATES_KEY = "org.hibernate.search.genericjpa.searchfactory.batchSizeForUpdates";
+	public static final String BATCH_SIZE_FOR_UPDATES_DEFAULT_VALUE = "5";
+	public static final String UPDATE_DELAY_KEY = "org.hibernate.search.genericjpa.searchfactory.updateDelay";
+	public static final String UPDATE_DELAY_DEFAULT_VALUE = "500";
+	public static final String TRIGGER_SOURCE_KEY = "org.hibernate.search.genericjpa.searchfactory.triggerSource";
+	public static final String ADDITIONAL_INDEXED_TYPES_KEY = "org.hibernate.search.genericjpa.searchfactory.additionalIndexedTypes";
+	public static final String SEARCH_FACTORY_NAME_KEY = SearchFactoryRegistry.NAME_PROPERTY;
+	public static final String SEARCH_FACTORY_NAME_DEFAULT_VALUE = SearchFactoryRegistry.DEFAULT_NAME;
 	private Constants() {
 		// can't touch this!
 	}
-
-	public static final String USE_JTA_TRANSACTIONS_KEY = "org.hibernate.search.genericjpa.searchfactory.useJTATransactions";
-	public static final String USE_JTA_TRANSACTIONS_DEFAULT_VALUE = "false";
-
-	public static final String SEARCH_FACTORY_TYPE_KEY = "org.hibernate.search.genericjpa.searchfactory.type";
-	public static final String SEARCH_FACTORY_TYPE_DEFAULT_VALUE = "sql";
-
-	public static final String BATCH_SIZE_FOR_UPDATES_KEY = "org.hibernate.search.genericjpa.searchfactory.batchSizeForUpdates";
-	public static final String BATCH_SIZE_FOR_UPDATES_DEFAULT_VALUE = "5";
-
-	public static final String UPDATE_DELAY_KEY = "org.hibernate.search.genericjpa.searchfactory.updateDelay";
-	public static final String UPDATE_DELAY_DEFAULT_VALUE = "500";
-
-	public static final String TRIGGER_SOURCE_KEY = "org.hibernate.search.genericjpa.searchfactory.triggerSource";
-
-	public static final String ADDITIONAL_INDEXED_TYPES_KEY = "org.hibernate.search.genericjpa.searchfactory.additionalIndexedTypes";
-
-	public static final String SEARCH_FACTORY_NAME_KEY = SearchFactoryRegistry.NAME_PROPERTY;
-	public static final String SEARCH_FACTORY_NAME_DEFAULT_VALUE = SearchFactoryRegistry.DEFAULT_NAME;
 
 }

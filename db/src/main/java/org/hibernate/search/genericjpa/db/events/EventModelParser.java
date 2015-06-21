@@ -16,12 +16,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
-import org.hibernate.search.genericjpa.exception.AssertionFailure;
-import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.annotations.Event;
 import org.hibernate.search.genericjpa.annotations.IdFor;
 import org.hibernate.search.genericjpa.annotations.Updates;
 import org.hibernate.search.genericjpa.db.id.ToOriginalIdBridge;
+import org.hibernate.search.genericjpa.exception.AssertionFailure;
+import org.hibernate.search.genericjpa.exception.SearchException;
 
 /**
  * This class has means to parse Classes annotated with {@link Updates} into their respective representation as a
@@ -64,7 +64,9 @@ public class EventModelParser {
 					forFields = pmr;
 					if ( forFields.foundAnything() ) {
 						if ( !forFields.foundBoth() ) {
-							throw new IllegalArgumentException( "you have to annotate either Fields OR Methods with both @IdFor AND @Event" );
+							throw new IllegalArgumentException(
+									"you have to annotate either Fields OR Methods with both @IdFor AND @Event"
+							);
 						}
 						if ( pmr.eventTypeMember != null ) {
 							eventTypeMember = pmr.eventTypeMember;
@@ -84,7 +86,9 @@ public class EventModelParser {
 					}
 					if ( pmr.foundAnything() ) {
 						if ( !pmr.foundBoth() ) {
-							throw new IllegalArgumentException( "you have to annotate either Fields OR Methods with both @IdFor AND @Event" );
+							throw new IllegalArgumentException(
+									"you have to annotate either Fields OR Methods with both @IdFor AND @Event"
+							);
 						}
 						if ( pmr.eventTypeMember != null ) {
 							eventTypeMember = pmr.eventTypeMember;
@@ -97,12 +101,16 @@ public class EventModelParser {
 				throw new IllegalArgumentException( "Updates class does not host @Updates. Class: " + clazz );
 			}
 			if ( eventTypeMember == null ) {
-				throw new IllegalArgumentException( "no Integer Field found hosting @Event in Class: " + clazz
-						+ ". check if your Fields OR Methods are correctly annotated!" );
+				throw new IllegalArgumentException(
+						"no Integer Field found hosting @Event in Class: " + clazz
+								+ ". check if your Fields OR Methods are correctly annotated!"
+				);
 			}
 			if ( idInfos.size() == 0 ) {
-				throw new IllegalArgumentException( "@Updates-class does not host @IdInfo: " + clazz
-						+ ". check if your Fields OR Methods are correctly annotated!" );
+				throw new IllegalArgumentException(
+						"@Updates-class does not host @IdInfo: " + clazz
+								+ ". check if your Fields OR Methods are correctly annotated!"
+				);
 			}
 
 			// TODO: Exception for wrong values
@@ -110,42 +118,38 @@ public class EventModelParser {
 			Function<Object, Integer> eventTypeAccessor = (Object object) -> {
 				try {
 					if ( eventTypeMemberFinal instanceof Method ) {
-						return (Integer) ( (Method) eventTypeMemberFinal ).invoke( object );
+						return (Integer) ((Method) eventTypeMemberFinal).invoke( object );
 					}
 					else if ( eventTypeMemberFinal instanceof Field ) {
-						return (Integer) ( (Field) eventTypeMemberFinal ).get( object );
+						return (Integer) ((Field) eventTypeMemberFinal).get( object );
 					}
 					else {
-						throw new AssertionFailure("");
+						throw new AssertionFailure( "" );
 					}
 				}
 				catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 					throw new SearchException( e );
 				}
 			};
-			ret.add( new EventModelInfo( clazz, updates.tableName(), updates.originalTableName(), eventTypeAccessor, eventTypeColumn, idInfos ) );
+			ret.add(
+					new EventModelInfo(
+							clazz,
+							updates.tableName(),
+							updates.originalTableName(),
+							eventTypeAccessor,
+							eventTypeColumn,
+							idInfos
+					)
+			);
 
 		}
 		return ret;
 	}
 
-	private static class ParseMembersReturn {
-
-		Member eventTypeMember;
-		boolean foundIdInfos;
-		String eventTypeColumn;
-
-		public boolean foundAnything() {
-			return this.eventTypeMember != null || this.foundIdInfos;
-		}
-
-		public boolean foundBoth() {
-			return this.eventTypeMember != null && this.foundIdInfos;
-		}
-
-	}
-
-	private ParseMembersReturn parseMembers(Class<?> clazz, List<? extends Member> members, List<EventModelInfo.IdInfo> idInfos) {
+	private ParseMembersReturn parseMembers(
+			Class<?> clazz,
+			List<? extends Member> members,
+			List<EventModelInfo.IdInfo> idInfos) {
 		ParseMembersReturn ret = new ParseMembersReturn();
 		for ( Member member : members ) {
 			IdFor idFor = this.getAnnotation( member, IdFor.class );
@@ -178,13 +182,13 @@ public class EventModelParser {
 					Object val;
 					try {
 						if ( member instanceof Method ) {
-							val = ( (Method) member ).invoke( object );
+							val = ((Method) member).invoke( object );
 						}
 						else if ( member instanceof Field ) {
-							val = ( (Field) member ).get( object );
+							val = ((Field) member).get( object );
 						}
 						else {
-							throw new AssertionFailure("");
+							throw new AssertionFailure( "" );
 						}
 					}
 					catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
@@ -193,11 +197,15 @@ public class EventModelParser {
 					return toOriginalBridge.toOriginal( val );
 				};
 				if ( idFor.columns().length != idFor.columnsInOriginal().length ) {
-					throw new IllegalArgumentException( "the count of IdFor-columns in the update table has to "
-							+ "match the count of Id-columns in the original" );
+					throw new IllegalArgumentException(
+							"the count of IdFor-columns in the update table has to "
+									+ "match the count of Id-columns in the original"
+					);
 				}
-				EventModelInfo.IdInfo idInfo = new EventModelInfo.IdInfo( idAccessor, idFor.entityClass(), idFor.columns(), idFor.columnsInOriginal(),
-						toOriginalBridge );
+				EventModelInfo.IdInfo idInfo = new EventModelInfo.IdInfo(
+						idAccessor, idFor.entityClass(), idFor.columns(), idFor.columnsInOriginal(),
+						toOriginalBridge
+				);
 				idInfos.add( idInfo );
 			}
 		}
@@ -234,6 +242,22 @@ public class EventModelParser {
 			throw new AssertionFailure( "member should either be Field or Member" );
 		}
 		return ret;
+	}
+
+	private static class ParseMembersReturn {
+
+		Member eventTypeMember;
+		boolean foundIdInfos;
+		String eventTypeColumn;
+
+		public boolean foundAnything() {
+			return this.eventTypeMember != null || this.foundIdInfos;
+		}
+
+		public boolean foundBoth() {
+			return this.eventTypeMember != null && this.foundIdInfos;
+		}
+
 	}
 
 }

@@ -25,7 +25,9 @@ public interface DtoDescriptor {
 	 * parses a class annotated with @DtoOverEntity and attempts to create a valid DtoDescription out of it
 	 *
 	 * @param clazz the class to parse
+	 *
 	 * @return a valid DtoDescription
+	 *
 	 * @throws IllegalArgumentException when the Dto-Class is annotated in a wrong way (i.e. the 2 fieldNames for one
 	 * field in the same profile)
 	 */
@@ -33,10 +35,30 @@ public interface DtoDescriptor {
 
 	public final class DtoDescription {
 
-		public static final String DEFAULT_PROFILE = (String) getDefaultValueForAnnotationMethod( DtoField.class, "profileName" );
-		public static final String DEFAULT_FIELD_NAME = (String) getDefaultValueForAnnotationMethod( DtoField.class, "fieldName" );
+		public static final String DEFAULT_PROFILE = (String) getDefaultValueForAnnotationMethod(
+				DtoField.class,
+				"profileName"
+		);
+		public static final String DEFAULT_FIELD_NAME = (String) getDefaultValueForAnnotationMethod(
+				DtoField.class,
+				"fieldName"
+		);
+		private final Class<?> dtoClass;
+		private final Class<?> entityClass;
+		private final Map<String, Set<FieldDescription>> fieldNamesForProfile;
+		public DtoDescription(
+				Class<?> dtoClass,
+				Class<?> entityClass,
+				Map<String, Set<FieldDescription>> fieldNamesForProfile) {
+			super();
+			this.dtoClass = dtoClass;
+			this.entityClass = entityClass;
+			this.fieldNamesForProfile = fieldNamesForProfile;
+		}
 
-		public static Object getDefaultValueForAnnotationMethod(Class<? extends Annotation> annotationClass, String name) {
+		public static Object getDefaultValueForAnnotationMethod(
+				Class<? extends Annotation> annotationClass,
+				String name) {
 			try {
 				return annotationClass.getDeclaredMethod( name ).getDefaultValue();
 			}
@@ -45,19 +67,13 @@ public interface DtoDescriptor {
 			}
 		}
 
-		private final Class<?> dtoClass;
-		private final Class<?> entityClass;
-		private final Map<String, Set<FieldDescription>> fieldNamesForProfile;
-
-		public DtoDescription(Class<?> dtoClass, Class<?> entityClass, Map<String, Set<FieldDescription>> fieldNamesForProfile) {
-			super();
-			this.dtoClass = dtoClass;
-			this.entityClass = entityClass;
-			this.fieldNamesForProfile = fieldNamesForProfile;
-		}
-
 		public Set<FieldDescription> getFieldDescriptionsForProfile(String profile) {
-			return Collections.unmodifiableSet( this.fieldNamesForProfile.getOrDefault( profile, Collections.emptySet() ) );
+			return Collections.unmodifiableSet(
+					this.fieldNamesForProfile.getOrDefault(
+							profile,
+							Collections.emptySet()
+					)
+			);
 		}
 
 		public Class<?> getEntityClass() {
@@ -66,6 +82,46 @@ public interface DtoDescriptor {
 
 		public Class<?> getDtoClass() {
 			return this.dtoClass;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((entityClass == null) ? 0 : entityClass.hashCode());
+			result = prime * result + ((fieldNamesForProfile == null) ? 0 : fieldNamesForProfile.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if ( this == obj ) {
+				return true;
+			}
+			if ( obj == null ) {
+				return false;
+			}
+			if ( getClass() != obj.getClass() ) {
+				return false;
+			}
+			DtoDescription other = (DtoDescription) obj;
+			if ( entityClass == null ) {
+				if ( other.entityClass != null ) {
+					return false;
+				}
+			}
+			else if ( !entityClass.equals( other.entityClass ) ) {
+				return false;
+			}
+			if ( fieldNamesForProfile == null ) {
+				if ( other.fieldNamesForProfile != null ) {
+					return false;
+				}
+			}
+			else if ( !fieldNamesForProfile.equals( other.fieldNamesForProfile ) ) {
+				return false;
+			}
+			return true;
 		}
 
 		public static class FieldDescription {
@@ -91,8 +147,8 @@ public interface DtoDescriptor {
 			public int hashCode() {
 				final int prime = 31;
 				int result = 1;
-				result = prime * result + ( ( field == null ) ? 0 : field.hashCode() );
-				result = prime * result + ( ( fieldName == null ) ? 0 : fieldName.hashCode() );
+				result = prime * result + ((field == null) ? 0 : field.hashCode());
+				result = prime * result + ((fieldName == null) ? 0 : fieldName.hashCode());
 				return result;
 			}
 
@@ -127,46 +183,6 @@ public interface DtoDescriptor {
 				return true;
 			}
 
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ( ( entityClass == null ) ? 0 : entityClass.hashCode() );
-			result = prime * result + ( ( fieldNamesForProfile == null ) ? 0 : fieldNamesForProfile.hashCode() );
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if ( this == obj ) {
-				return true;
-			}
-			if ( obj == null ) {
-				return false;
-			}
-			if ( getClass() != obj.getClass() ) {
-				return false;
-			}
-			DtoDescription other = (DtoDescription) obj;
-			if ( entityClass == null ) {
-				if ( other.entityClass != null ) {
-					return false;
-				}
-			}
-			else if ( !entityClass.equals( other.entityClass ) ) {
-				return false;
-			}
-			if ( fieldNamesForProfile == null ) {
-				if ( other.fieldNamesForProfile != null ) {
-					return false;
-				}
-			}
-			else if ( !fieldNamesForProfile.equals( other.fieldNamesForProfile ) ) {
-				return false;
-			}
-			return true;
 		}
 
 	}

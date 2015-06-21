@@ -29,42 +29,48 @@ public class DtoDescriptorImpl implements DtoDescriptor {
 			throw new IllegalArgumentException( "clazz must specify exactly one " + "DtoOverEntity annotation at a class level" );
 		}
 		java.lang.reflect.Field[] declared = clazz.getDeclaredFields();
-		Arrays.asList( declared ).forEach( (field) -> {
-			// should be accessible :)
-				field.setAccessible( true );
-				List<DtoField> annotations = new ArrayList<>();
-				{
-					DtoFields dtoFields = field.getAnnotation( DtoFields.class );
-					if ( dtoFields != null ) {
-						annotations.addAll( Arrays.asList( dtoFields.value() ) );
-					}
-					else {
-						DtoField dtoField = field.getAnnotation( DtoField.class );
-						if ( dtoField != null ) {
-							annotations.add( dtoField );
+		Arrays.asList( declared ).forEach(
+				(field) -> {
+					// should be accessible :)
+					field.setAccessible( true );
+					List<DtoField> annotations = new ArrayList<>();
+					{
+						DtoFields dtoFields = field.getAnnotation( DtoFields.class );
+						if ( dtoFields != null ) {
+							annotations.addAll( Arrays.asList( dtoFields.value() ) );
+						}
+						else {
+							DtoField dtoField = field.getAnnotation( DtoField.class );
+							if ( dtoField != null ) {
+								annotations.add( dtoField );
+							}
 						}
 					}
+					annotations.forEach(
+							(annotation) -> {
+								String profileName = annotation.profileName();
+								String fieldName = annotation.fieldName();
+								if ( fieldName.equals( DtoDescription.DEFAULT_FIELD_NAME ) ) {
+									// if we want to support
+									// hierarchies at any time
+									// in the future we have to
+									// change this!
+									fieldName = field.getName();
+								}
+								Set<FieldDescription> fieldDescriptions = fieldDescriptionsForProfile.computeIfAbsent(
+										profileName, (key) -> {
+											return new HashSet<>();
+										}
+								);
+								FieldDescription fieldDesc = new FieldDescription( fieldName, field );
+								if ( fieldDescriptions.contains( fieldDesc ) ) {
+									throw new IllegalArgumentException( "profile " + profileName + " already has a field to project from for " + field );
+								}
+								fieldDescriptions.add( fieldDesc );
+							}
+					);
 				}
-				annotations.forEach( (annotation) -> {
-					String profileName = annotation.profileName();
-					String fieldName = annotation.fieldName();
-					if ( fieldName.equals( DtoDescription.DEFAULT_FIELD_NAME ) ) {
-						// if we want to support
-						// hierarchies at any time
-						// in the future we have to
-						// change this!
-						fieldName = field.getName();
-					}
-					Set<FieldDescription> fieldDescriptions = fieldDescriptionsForProfile.computeIfAbsent( profileName, (key) -> {
-						return new HashSet<>();
-					} );
-					FieldDescription fieldDesc = new FieldDescription( fieldName, field );
-					if ( fieldDescriptions.contains( fieldDesc ) ) {
-						throw new IllegalArgumentException( "profile " + profileName + " already has a field to project from for " + field );
-					}
-					fieldDescriptions.add( fieldDesc );
-				} );
-			} );
+		);
 		if ( fieldDescriptionsForProfile.isEmpty() ) {
 			throw new IllegalArgumentException( "no DtoField(s) found! The passed class is no annotated DTO" );
 		}

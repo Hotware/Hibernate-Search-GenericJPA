@@ -13,7 +13,7 @@ import org.hibernate.search.genericjpa.exception.SearchException;
 
 /**
  * <b>internal, don't use this across different threads!</b>
- * 
+ *
  * @author Martin Braun
  */
 public class JPATransactionWrapper {
@@ -25,6 +25,17 @@ public class JPATransactionWrapper {
 	public JPATransactionWrapper(EntityTransaction tx, EntityManager em) {
 		this.tx = tx;
 		this.em = em;
+	}
+
+	public static JPATransactionWrapper get(EntityManager em, boolean useJTATransaction) {
+		EntityTransaction tx;
+		if ( !useJTATransaction ) {
+			tx = em.getTransaction();
+		}
+		else {
+			tx = null;
+		}
+		return new JPATransactionWrapper( tx, em );
 	}
 
 	public void setIgnoreExceptionsForJTATransaction(boolean ignoreExceptionsForJTATransaction) {
@@ -78,16 +89,6 @@ public class JPATransactionWrapper {
 				}
 			}
 		}
-	}
-
-	public static JPATransactionWrapper get(EntityManager em, boolean useJTATransaction) {
-		EntityTransaction tx;
-		if ( !useJTATransaction ) {
-			tx = em.getTransaction();
-		} else {
-			tx = null;
-		}
-		return new JPATransactionWrapper( tx, em );
 	}
 
 }

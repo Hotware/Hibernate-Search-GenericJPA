@@ -59,26 +59,36 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 	}
 
 	private void init() {
-		this.createUniqueIdTable = String.format( "CREATE TABLE IF NOT EXISTS %s (                                                 \n"
-				+ "id BIGINT(64) NOT NULL AUTO_INCREMENT,                                                                          \n"
-				+ "PRIMARY KEY (id)                                                                                               \n"
-				+ ");                                                                                                              \n", this.uniqueIdTableName );
+		this.createUniqueIdTable = String.format(
+				"CREATE TABLE IF NOT EXISTS %s (                                                 \n"
+						+ "id BIGINT(64) NOT NULL AUTO_INCREMENT,                                                                          \n"
+						+ "PRIMARY KEY (id)                                                                                               \n"
+						+ ");                                                                                                              \n",
+				this.uniqueIdTableName
+		);
 		this.dropUniqueIdTable = String.format( "DROP TABLE IF EXISTS %s;", this.uniqueIdTableName );
-		this.dropUniqueIdProcedure = String.format( "DROP PROCEDURE IF EXISTS %s;                                                  \n",
-				this.uniqueIdProcedureName );
-		this.createUniqueIdProcedure = String.format( "CREATE PROCEDURE %s                                                         \n"
-				+ "(OUT ret BIGINT)                                                                                                \n"
-				+ "BEGIN                                                                                                           \n"
-				+ "	INSERT INTO %s VALUES ();                                                                                      \n"
-				+ "	SET ret = last_insert_id();                                                                                    \n"
-				+ "END;                                                                                                            \n",
-				this.uniqueIdProcedureName, this.uniqueIdTableName );
-		this.createTriggerCleanUpSQLFormat = CREATE_TRIGGER_CLEANUP_SQL_FORMAT.replaceAll( "#UNIQUE_ID_TABLE_NAME#", this.uniqueIdTableName );
+		this.dropUniqueIdProcedure = String.format(
+				"DROP PROCEDURE IF EXISTS %s;                                                  \n",
+				this.uniqueIdProcedureName
+		);
+		this.createUniqueIdProcedure = String.format(
+				"CREATE PROCEDURE %s                                                         \n"
+						+ "(OUT ret BIGINT)                                                                                                \n"
+						+ "BEGIN                                                                                                           \n"
+						+ "	INSERT INTO %s VALUES ();                                                                                      \n"
+						+ "	SET ret = last_insert_id();                                                                                    \n"
+						+ "END;                                                                                                            \n",
+				this.uniqueIdProcedureName, this.uniqueIdTableName
+		);
+		this.createTriggerCleanUpSQLFormat = CREATE_TRIGGER_CLEANUP_SQL_FORMAT.replaceAll(
+				"#UNIQUE_ID_TABLE_NAME#",
+				this.uniqueIdTableName
+		);
 	}
 
 	@Override
 	public String[] getSetupCode() {
-		return new String[] { this.createUniqueIdTable, this.dropUniqueIdProcedure, this.createUniqueIdProcedure };
+		return new String[] {this.createUniqueIdTable, this.dropUniqueIdProcedure, this.createUniqueIdProcedure};
 	}
 
 	@Override
@@ -112,20 +122,35 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 		}
 		String eventTypeValue = String.valueOf( eventType );
 		String createTriggerOriginalTableSQL = new StringBuilder().append(
-				String.format( CREATE_TRIGGER_ORIGINAL_TABLE_SQL_FORMAT, triggerName, EventType.toString( eventType ), originalTableName,
-						uniqueIdProcedureName, tableName, eventTypeColumn, idColumnNames.toString(), eventTypeValue, valuesFromOriginal.toString() ) )
+				String.format(
+						CREATE_TRIGGER_ORIGINAL_TABLE_SQL_FORMAT,
+						triggerName,
+						EventType.toString( eventType ),
+						originalTableName,
+						uniqueIdProcedureName,
+						tableName,
+						eventTypeColumn,
+						idColumnNames.toString(),
+						eventTypeValue,
+						valuesFromOriginal.toString()
+				)
+		)
 				.toString();
-		return new String[] { createTriggerOriginalTableSQL };
+		return new String[] {createTriggerOriginalTableSQL};
 	}
 
 	@Override
 	public String[] getTriggerDropCode(EventModelInfo eventModelInfo, int eventType) {
 		String triggerName = this.getTriggerName( eventModelInfo.getOriginalTableName(), eventType );
-		return new String[] { String.format( DROP_TRIGGER_SQL_FORMAT, triggerName ).toUpperCase() };
+		return new String[] {String.format( DROP_TRIGGER_SQL_FORMAT, triggerName ).toUpperCase()};
 	}
 
 	private String getTriggerName(String originalTableName, int eventType) {
-		return new StringBuilder().append( originalTableName ).append( "_updates_hsearch_" ).append( EventType.toString( eventType ) ).toString();
+		return new StringBuilder().append( originalTableName ).append( "_updates_hsearch_" ).append(
+				EventType.toString(
+						eventType
+				)
+		).toString();
 	}
 
 	private String getCleanUpTriggerName(String updatesTableName) {
@@ -134,19 +159,26 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 
 	@Override
 	public String[] getSpecificSetupCode(EventModelInfo eventModelInfo) {
-		String createTriggerCleanUpSQL = String.format( this.createTriggerCleanUpSQLFormat, this.getCleanUpTriggerName( eventModelInfo.getTableName() ),
-				eventModelInfo.getTableName() );
-		return new String[] { createTriggerCleanUpSQL };
+		String createTriggerCleanUpSQL = String.format(
+				this.createTriggerCleanUpSQLFormat, this.getCleanUpTriggerName( eventModelInfo.getTableName() ),
+				eventModelInfo.getTableName()
+		);
+		return new String[] {createTriggerCleanUpSQL};
 	}
 
 	@Override
 	public String[] getSpecificUnSetupCode(EventModelInfo eventModelInfo) {
-		return new String[] { String.format( DROP_TRIGGER_SQL_FORMAT, this.getCleanUpTriggerName( eventModelInfo.getTableName() ) ) };
+		return new String[] {
+				String.format(
+						DROP_TRIGGER_SQL_FORMAT,
+						this.getCleanUpTriggerName( eventModelInfo.getTableName() )
+				)
+		};
 	}
 
 	@Override
 	public String[] getRecreateUniqueIdTableCode() {
-		return new String[] { this.dropUniqueIdTable, this.createUniqueIdTable };
+		return new String[] {this.dropUniqueIdTable, this.createUniqueIdTable};
 	}
 
 }

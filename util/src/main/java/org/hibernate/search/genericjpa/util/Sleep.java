@@ -16,23 +16,24 @@ public final class Sleep {
 	private Sleep() {
 		// can't touch this!
 	}
-	
+
 	public static void sleep(long millis, BooleanSupplier condition) throws InterruptedException {
-		sleep( millis, condition, "no message!");
+		sleep( millis, condition, "no message!" );
 	}
 
 	public static void sleep(long millis, BooleanSupplier condition, String message) throws InterruptedException {
-		sleep( millis, condition, Math.max( millis / 50, 1 ), message);
+		sleep( millis, condition, Math.max( millis / 50, 1 ), message );
 	}
 
-	public static void sleep(long millis, BooleanSupplier condition, long delayMillis, String message) throws InterruptedException {
+	public static void sleep(long millis, BooleanSupplier condition, long delayMillis, String message)
+			throws InterruptedException {
 		long waited = 0;
 		long start = System.currentTimeMillis();
 		while ( !condition.getAsBoolean() ) {
 			Thread.sleep( delayMillis );
 			waited += System.currentTimeMillis() - start;
-			if(waited >= millis) {
-				throw new RuntimeException("timeout: " + message); 
+			if ( waited >= millis ) {
+				throw new RuntimeException( "timeout: " + message );
 			}
 		}
 	}

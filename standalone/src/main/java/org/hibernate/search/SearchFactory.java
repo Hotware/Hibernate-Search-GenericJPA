@@ -10,6 +10,7 @@ package org.hibernate.search;
 import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
+
 import org.hibernate.search.indexes.IndexReaderAccessor;
 import org.hibernate.search.metadata.IndexedTypeDescriptor;
 import org.hibernate.search.query.dsl.QueryContextBuilder;
@@ -84,7 +85,7 @@ public interface SearchFactory {
 	 * @param entityType the entity for which to retrieve the descriptor
 	 *
 	 * @return a non {@code null} {@code IndexedEntityDescriptor}. This method can also be called for non indexed types.
-	 *         To determine whether the entity is actually indexed {@link org.hibernate.search.metadata.IndexedTypeDescriptor#isIndexed()} can be used.
+	 * To determine whether the entity is actually indexed {@link org.hibernate.search.metadata.IndexedTypeDescriptor#isIndexed()} can be used.
 	 *
 	 * @throws IllegalArgumentException in case {@code entityType} is {@code null}
 	 */

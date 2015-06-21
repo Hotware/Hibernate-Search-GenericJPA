@@ -6,19 +6,19 @@
  */
 package org.hibernate.search.genericjpa.annotations;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
 
 /**
  * used to identify the field which contains the information about what operation happened on the database
  *
  * @author Martin
  */
-@Target({ FIELD, METHOD })
+@Target({FIELD, METHOD})
 @Retention(RUNTIME)
 public @interface Event {
 

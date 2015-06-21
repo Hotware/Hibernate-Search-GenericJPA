@@ -6,6 +6,7 @@
  */
 package org.hibernate.search.genericjpa.batchindexing.impl;
 
+import javax.persistence.PersistenceUnitUtil;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -13,8 +14,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import javax.persistence.PersistenceUnitUtil;
 
 import org.hibernate.search.backend.AddLuceneWork;
 import org.hibernate.search.backend.spi.BatchBackend;
@@ -36,8 +35,8 @@ import org.hibernate.search.spi.InstanceInitializer;
  */
 public class ObjectHandlerTask implements Runnable {
 
+	private static final InstanceInitializer INITIALIZER = SubClassSupportInstanceInitializer.INSTANCE;
 	private final BatchBackend batchBackend;
-
 	private final Class<?> entityClass;
 	private final EntityIndexBinding entityIndexBinding;
 	private final Supplier<EntityProvider> emProvider;
@@ -45,15 +44,10 @@ public class ObjectHandlerTask implements Runnable {
 	private final PersistenceUnitUtil peristenceUnitUtil;
 	private final NumberCondition condition;
 	private final Consumer<Exception> exceptionConsumer;
-
+	List<UpdateInfo> batch;
 	private BiConsumer<Class<?>, Integer> objectLoadedProgressMonitor;
 	private BiConsumer<Class<?>, Integer> documentBuiltProgressMonitor;
-
-	List<UpdateInfo> batch;
-
 	private Runnable finishConsumer;
-
-	private static final InstanceInitializer INITIALIZER = SubClassSupportInstanceInitializer.INSTANCE;
 
 	public ObjectHandlerTask(
 			BatchBackend batchBackend, Class<?> entityClass, EntityIndexBinding entityIndexBinding,

@@ -6,30 +6,37 @@
  */
 package org.hibernate.search.genericjpa.test.util.test;
 
-import static org.junit.Assert.fail;
-
 import org.hibernate.search.genericjpa.util.Sleep;
+
 import org.junit.Test;
+
+import static org.junit.Assert.fail;
 
 public class SleepTest {
 
 	@Test
 	public void test() throws InterruptedException {
-		Sleep.sleep( 1000, () -> {
-			return true;
-		} );
-		boolean val[] = { false };
-		Sleep.sleep( 1000, () -> {
-			if ( val[0] ) {
-				return true;
-			}
-			val[0] = true;
-			return false;
-		} );
+		Sleep.sleep(
+				1000, () -> {
+					return true;
+				}
+		);
+		boolean val[] = {false};
+		Sleep.sleep(
+				1000, () -> {
+					if ( val[0] ) {
+						return true;
+					}
+					val[0] = true;
+					return false;
+				}
+		);
 		try {
-			Sleep.sleep( 1000, () -> {
-				return false;
-			} );
+			Sleep.sleep(
+					1000, () -> {
+						return false;
+					}
+			);
 			fail( "timeout expected!" );
 		}
 		catch (RuntimeException e) {

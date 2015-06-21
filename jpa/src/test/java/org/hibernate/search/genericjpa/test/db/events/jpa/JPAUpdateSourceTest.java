@@ -6,17 +6,14 @@
  */
 package org.hibernate.search.genericjpa.test.db.events.jpa;
 
-import static org.junit.Assert.assertEquals;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
-
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventType;
@@ -28,12 +25,27 @@ import org.hibernate.search.genericjpa.test.jpa.entities.PlaceSorcererUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.PlaceUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
 import org.hibernate.search.genericjpa.util.Sleep;
+
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Martin Braun
  */
 public class JPAUpdateSourceTest {
+
+	/**
+	 * this is needed in other tests because the query method of JPAUpdateSource has package access
+	 */
+	public static MultiQueryAccess query(EntityManagerFactory emf, EntityManager em) throws NoSuchFieldException {
+		EventModelParser parser = new EventModelParser();
+		JPAUpdateSource updateSource = new JPAUpdateSource(
+				parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class, PlaceUpdates.class ) ) ),
+				emf, false, 1, TimeUnit.SECONDS, 2, 2
+		);
+		return JPAUpdateSource.query( updateSource, em );
+	}
 
 	@Test
 	public void test() throws InterruptedException {
@@ -41,7 +53,14 @@ public class JPAUpdateSourceTest {
 		try {
 			EventModelParser parser = new EventModelParser();
 			JPAUpdateSource updateSource = new JPAUpdateSource(
-					parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class, PlaceUpdates.class ) ) ), emf, false, 1, TimeUnit.SECONDS, 2, 2 );
+					parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class, PlaceUpdates.class ) ) ),
+					emf,
+					false,
+					1,
+					TimeUnit.SECONDS,
+					2,
+					2
+			);
 
 			{
 				EntityManager em = null;
@@ -66,41 +85,51 @@ public class JPAUpdateSourceTest {
 			}
 
 			final boolean[] gotEvent = new boolean[2];
-			updateSource.setUpdateConsumers( Arrays.asList( new UpdateConsumer() {
+			updateSource.setUpdateConsumers(
+					Arrays.asList(
+							new UpdateConsumer() {
 
-				@Override
-				public void updateEvent(List<UpdateInfo> updateInfos) {
-					for ( UpdateInfo updateInfo : updateInfos ) {
-						Object id = updateInfo.getId();
-						int eventType = updateInfo.getEventType();
-						if ( id.equals( 2 ) && Place.class.equals( updateInfo.getEntityClass() ) && EventType.INSERT == eventType ) {
-							gotEvent[0] = true;
-						}
-						else if ( id.equals( 3 ) && updateInfo.getEntityClass().equals( Sorcerer.class ) && eventType == EventType.INSERT ) {
-							gotEvent[1] = true;
-						}
-					}
-				}
-			} ) );
+								@Override
+								public void updateEvent(List<UpdateInfo> updateInfos) {
+									for ( UpdateInfo updateInfo : updateInfos ) {
+										Object id = updateInfo.getId();
+										int eventType = updateInfo.getEventType();
+										if ( id.equals( 2 ) && Place.class.equals( updateInfo.getEntityClass() ) && EventType.INSERT == eventType ) {
+											gotEvent[0] = true;
+										}
+										else if ( id.equals( 3 ) && updateInfo.getEntityClass()
+												.equals( Sorcerer.class ) && eventType == EventType.INSERT ) {
+											gotEvent[1] = true;
+										}
+									}
+								}
+							}
+					)
+			);
 			updateSource.start();
-			Sleep.sleep( 1000 * 100, () -> {
-				for ( boolean ev : gotEvent ) {
-					if ( !ev ) {
-						return false;
-					}
-				}
-				return true;
-			}, 100, "");
+			Sleep.sleep(
+					1000 * 100, () -> {
+						for ( boolean ev : gotEvent ) {
+							if ( !ev ) {
+								return false;
+							}
+						}
+						return true;
+					}, 100, ""
+			);
 			updateSource.stop();
-			
+
 
 			EntityManager em = null;
 			try {
 				em = emf.createEntityManager();
 				EntityTransaction tx = em.getTransaction();
 				tx.begin();
-				assertEquals( "UpdateSource should delete all things after it has processed the updates but didn't do so", null,
-						em.find( PlaceSorcererUpdates.class, 1L ) );
+				assertEquals(
+						"UpdateSource should delete all things after it has processed the updates but didn't do so",
+						null,
+						em.find( PlaceSorcererUpdates.class, 1L )
+				);
 				tx.commit();
 			}
 			finally {
@@ -113,16 +142,6 @@ public class JPAUpdateSourceTest {
 		finally {
 			emf.close();
 		}
-	}
-
-	/**
-	 * this is needed in other tests because the query method of JPAUpdateSource has package access
-	 */
-	public static MultiQueryAccess query(EntityManagerFactory emf, EntityManager em) throws NoSuchFieldException {
-		EventModelParser parser = new EventModelParser();
-		JPAUpdateSource updateSource = new JPAUpdateSource( parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class, PlaceUpdates.class ) ) ),
-				emf, false, 1, TimeUnit.SECONDS, 2, 2 );
-		return JPAUpdateSource.query( updateSource, em );
 	}
 
 }

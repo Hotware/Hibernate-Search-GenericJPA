@@ -37,9 +37,10 @@ class CommentSuppressor implements MatchSuppressor {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public boolean shouldSuppress(int aStartLineNo, int aStartColNo,
+	public boolean shouldSuppress(
+			int aStartLineNo, int aStartColNo,
 			int aEndLineNo, int aEndColNo) {
-		return ( null != mCurrentContents )
+		return (null != mCurrentContents)
 				&& mCurrentContents.hasIntersectionWithComment(
 				aStartLineNo,
 				aStartColNo, aEndLineNo, aEndColNo

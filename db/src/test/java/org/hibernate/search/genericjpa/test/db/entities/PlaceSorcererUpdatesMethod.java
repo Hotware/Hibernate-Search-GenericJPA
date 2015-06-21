@@ -33,6 +33,13 @@ public class PlaceSorcererUpdatesMethod {
 	}
 
 	/**
+	 * @param placeId the placeId to set
+	 */
+	public void setPlaceId(Integer placeId) {
+		this.placeId = placeId;
+	}
+
+	/**
 	 * @return the sorcererId
 	 */
 	@IdFor(entityClass = Sorcerer.class, columns = "sorcererId", columnsInOriginal = "sorc_id")
@@ -74,13 +81,6 @@ public class PlaceSorcererUpdatesMethod {
 	 */
 	public void setId(Integer id) {
 		this.id = id;
-	}
-
-	/**
-	 * @param placeId the placeId to set
-	 */
-	public void setPlaceId(Integer placeId) {
-		this.placeId = placeId;
 	}
 
 }

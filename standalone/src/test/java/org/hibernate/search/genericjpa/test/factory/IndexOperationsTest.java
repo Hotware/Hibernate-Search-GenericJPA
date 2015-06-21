@@ -6,9 +6,6 @@
  */
 package org.hibernate.search.genericjpa.test.factory;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +14,7 @@ import java.util.logging.Logger;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.TermQuery;
+
 import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Index;
@@ -28,93 +26,27 @@ import org.hibernate.search.genericjpa.factory.SearchConfigurationImpl;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchFactory;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchFactoryFactory;
 import org.hibernate.search.genericjpa.factory.Transaction;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+
 public class IndexOperationsTest {
 
 	private static final Logger LOGGER = Logger.getLogger( IndexOperationsTest.class.getName() );
-
-	@Indexed
-	@DtoOverEntity(entityClass = Book.class)
-	public static final class Book {
-
-		@DtoField(fieldName = "id")
-		private int id;
-		@DtoField(fieldName = "title")
-		private String title;
-
-		public Book() {
-
-		}
-
-		public Book(int id, String title) {
-			this.id = id;
-			this.title = title;
-		}
-
-		@DocumentId
-		public int getId() {
-			return id;
-		}
-
-		public void setId(int id) {
-			this.id = id;
-		}
-
-		@Field(store = Store.YES, index = Index.YES)
-		public String getTitle() {
-			return this.title;
-		}
-
-		public void setText(String title) {
-			this.title = title;
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + id;
-			result = prime * result + ( ( title == null ) ? 0 : title.hashCode() );
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if ( this == obj ) {
-				return true;
-			}
-			if ( obj == null ) {
-				return false;
-			}
-			if ( getClass() != obj.getClass() ) {
-				return false;
-			}
-			Book other = (Book) obj;
-			if ( id != other.id ) {
-				return false;
-			}
-			if ( title == null ) {
-				if ( other.title != null ) {
-					return false;
-				}
-			}
-			else if ( !title.equals( other.title ) ) {
-				return false;
-			}
-			return true;
-		}
-
-	}
-
 	private StandaloneSearchFactory factory;
 
 	@Before
 	public void setup() {
 		LOGGER.info( "setting up IndexOperationsTest" );
-		this.factory = StandaloneSearchFactoryFactory.createSearchFactory( new SearchConfigurationImpl(), Arrays.asList( Book.class ) );
+		this.factory = StandaloneSearchFactoryFactory.createSearchFactory(
+				new SearchConfigurationImpl(), Arrays.asList(
+						Book.class
+				)
+		);
 	}
 
 	@Test
@@ -248,26 +180,120 @@ public class IndexOperationsTest {
 	}
 
 	private void assertCount(int count) {
-		assertEquals( count, this.factory.createQuery( this.factory.buildQueryBuilder().forEntity( Book.class ).get().all().createQuery(), Book.class )
-				.queryResultSize() );
+		assertEquals(
+				count, this.factory.createQuery(
+						this.factory.buildQueryBuilder()
+								.forEntity( Book.class )
+								.get()
+								.all()
+								.createQuery(), Book.class
+				)
+						.queryResultSize()
+		);
 	}
 
 	private List<Book> all() {
-		return this.factory.createQuery( this.factory.buildQueryBuilder().forEntity( Book.class ).get().all().createQuery(), Book.class ).maxResults( 10 )
+		return this.factory.createQuery(
+				this.factory.buildQueryBuilder()
+						.forEntity( Book.class )
+						.get()
+						.all()
+						.createQuery(), Book.class
+		).maxResults( 10 )
 				.queryDto( Book.class );
 	}
 
 	private Book id(int id) {
 		return this.factory
 				.createQuery(
-						this.factory.buildQueryBuilder().forEntity( Book.class ).get().keyword().onField( "id" ).matching( String.valueOf( id ) ).createQuery(),
-						Book.class ).maxResults( 10 ).queryDto( Book.class ).get( 0 );
+						this.factory.buildQueryBuilder()
+								.forEntity( Book.class )
+								.get()
+								.keyword()
+								.onField( "id" )
+								.matching( String.valueOf( id ) )
+								.createQuery(),
+						Book.class
+				).maxResults( 10 ).queryDto( Book.class ).get( 0 );
 	}
 
 	@After
 	public void tearDown() throws IOException {
 		LOGGER.info( "tearing down IndexOperationsTest" );
 		this.factory.close();
+	}
+
+	@Indexed
+	@DtoOverEntity(entityClass = Book.class)
+	public static final class Book {
+
+		@DtoField(fieldName = "id")
+		private int id;
+		@DtoField(fieldName = "title")
+		private String title;
+
+		public Book() {
+
+		}
+
+		public Book(int id, String title) {
+			this.id = id;
+			this.title = title;
+		}
+
+		@DocumentId
+		public int getId() {
+			return id;
+		}
+
+		public void setId(int id) {
+			this.id = id;
+		}
+
+		@Field(store = Store.YES, index = Index.YES)
+		public String getTitle() {
+			return this.title;
+		}
+
+		public void setText(String title) {
+			this.title = title;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + id;
+			result = prime * result + ((title == null) ? 0 : title.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if ( this == obj ) {
+				return true;
+			}
+			if ( obj == null ) {
+				return false;
+			}
+			if ( getClass() != obj.getClass() ) {
+				return false;
+			}
+			Book other = (Book) obj;
+			if ( id != other.id ) {
+				return false;
+			}
+			if ( title == null ) {
+				if ( other.title != null ) {
+					return false;
+				}
+			}
+			else if ( !title.equals( other.title ) ) {
+				return false;
+			}
+			return true;
+		}
+
 	}
 
 }

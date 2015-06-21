@@ -6,17 +6,17 @@
  */
 package org.hibernate.search.jpa;
 
+import javax.persistence.Query;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import javax.persistence.Query;
 
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Sort;
+
+import org.hibernate.search.engine.ProjectionConstants;
 import org.hibernate.search.filter.FullTextFilter;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
-import org.hibernate.search.engine.ProjectionConstants;
 import org.hibernate.search.query.DatabaseRetrievalMethod;
 import org.hibernate.search.query.ObjectLookupMethod;
 import org.hibernate.search.query.engine.spi.FacetManager;
@@ -57,14 +57,14 @@ public interface FullTextQuery extends Query, ProjectionConstants {
 
 	/**
 	 * Returns the number of hits for this search
-	 *
+	 * <p>
 	 * Caution:
 	 * The number of results might be slightly different from
 	 * <code>getResultList().size()</code> because getResultList()
 	 * may be not in sync with the database at the time of query.
 	 */
 	int getResultSize();
-	
+
 	/**
 	 * NOTE: NO setCriteriaQuery(Criteria criteria)!
 	 */
@@ -73,10 +73,10 @@ public interface FullTextQuery extends Query, ProjectionConstants {
 	 * Defines the Lucene field names projected and returned in a query result
 	 * Each field is converted back to it's object representation, an Object[] being returned for each "row"
 	 * (similar to an HQL or a Criteria API projection).
-	 *
+	 * <p>
 	 * A projectable field must be stored in the Lucene index and use a {@link org.hibernate.search.bridge.TwoWayFieldBridge}
 	 * Unless notified in their JavaDoc, all built-in bridges are two-way. All @DocumentId fields are projectable by design.
-	 *
+	 * <p>
 	 * If the projected field is not a projectable field, null is returned in the object[]
 	 */
 	FullTextQuery setProjection(String... fields);
@@ -134,14 +134,14 @@ public interface FullTextQuery extends Query, ProjectionConstants {
 
 	/**
 	 * *Experimental* API, subject to change or removal
-	 *
+	 * <p>
 	 * Limit the time used by Hibernate Search to execute the query. When the limit is reached, results already
 	 * fetched are returned. This time limit is a best effort. The query will likely run for longer than the
 	 * provided time.
-	 *
+	 * <p>
 	 * The time limit only applies to the interactions between Hibernate Search and Lucene. In other words,
 	 * a query to the database will not be limited.
-	 *
+	 * <p>
 	 * If the limit is reached and all results are not yet fetched, {@link #hasPartialResults()} returns true.
 	 *
 	 * @param timeout time out period
@@ -151,7 +151,7 @@ public interface FullTextQuery extends Query, ProjectionConstants {
 
 	/**
 	 * *Experimental* API, subject to change or removal
-	 *
+	 * <p>
 	 * When using {@link #limitExecutionTimeTo(long, java.util.concurrent.TimeUnit)} }, returns true if partial results are returned (ie if the time limit has been reached
 	 * and the result fetching process has been terminated.
 	 */
@@ -159,18 +159,18 @@ public interface FullTextQuery extends Query, ProjectionConstants {
 
 	/**
 	 * Refine the strategies used to load entities.
-	 *
+	 * <p>
 	 * The lookup method defines whether or not to lookup first in the second level cache or the persistence context
 	 * before trying to initialize objects from the database. Defaults to SKIP.
-	 *
+	 * <p>
 	 * The database retrieval method defines how objects are loaded from the database. Defaults to QUERY.
-	 *
+	 * <p>
 	 * Note that Hibernate Search can deviate from these choices when it makes sense.
 	 */
 	FullTextQuery initializeObjectsWith(ObjectLookupMethod lookupMethod, DatabaseRetrievalMethod retrievalMethod);
-	
+
 	FullTextQuery entityProvider(EntityProvider entityProvider);
-	
+
 	<T> List<T> queryDto(Class<T> returnedType);
 
 }

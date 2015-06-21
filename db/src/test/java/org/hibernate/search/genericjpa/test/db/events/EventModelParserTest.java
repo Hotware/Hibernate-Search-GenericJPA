@@ -6,9 +6,6 @@
  */
 package org.hibernate.search.genericjpa.test.db.events;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -18,14 +15,18 @@ import org.hibernate.search.genericjpa.annotations.Event;
 import org.hibernate.search.genericjpa.annotations.IdFor;
 import org.hibernate.search.genericjpa.annotations.Updates;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
+import org.hibernate.search.genericjpa.db.events.EventModelInfo.IdInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventType;
-import org.hibernate.search.genericjpa.db.events.EventModelInfo.IdInfo;
 import org.hibernate.search.genericjpa.test.db.entities.Place;
 import org.hibernate.search.genericjpa.test.db.entities.PlaceSorcererUpdates;
 import org.hibernate.search.genericjpa.test.db.entities.PlaceSorcererUpdatesMethod;
 import org.hibernate.search.genericjpa.test.db.entities.Sorcerer;
+
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  * @author Martin
@@ -46,14 +47,16 @@ public class EventModelParserTest {
 			placeUpdate.setEventType( EventType.INSERT );
 
 			List<EventModelInfo.IdInfo> idInfos = infos.get( 0 ).getIdInfos();
-			idInfos.sort( new Comparator<EventModelInfo.IdInfo>() {
+			idInfos.sort(
+					new Comparator<EventModelInfo.IdInfo>() {
 
-				@Override
-				public int compare(IdInfo o1, IdInfo o2) {
-					return o1.getColumns()[0].compareTo( o2.getColumns()[0] );
-				}
+						@Override
+						public int compare(IdInfo o1, IdInfo o2) {
+							return o1.getColumns()[0].compareTo( o2.getColumns()[0] );
+						}
 
-			} );
+					}
+			);
 
 			assertEquals( PlaceSorcererUpdates.class, infos.get( 0 ).getUpdateClass() );
 			assertEquals( "PlaceSorcererUpdates", infos.get( 0 ).getTableName() );
@@ -84,14 +87,16 @@ public class EventModelParserTest {
 			placeUpdate.setEventType( EventType.INSERT );
 
 			List<EventModelInfo.IdInfo> idInfos = infos.get( 0 ).getIdInfos();
-			idInfos.sort( new Comparator<EventModelInfo.IdInfo>() {
+			idInfos.sort(
+					new Comparator<EventModelInfo.IdInfo>() {
 
-				@Override
-				public int compare(IdInfo o1, IdInfo o2) {
-					return o1.getColumns()[0].compareTo( o2.getColumns()[0] );
-				}
+						@Override
+						public int compare(IdInfo o1, IdInfo o2) {
+							return o1.getColumns()[0].compareTo( o2.getColumns()[0] );
+						}
 
-			} );
+					}
+			);
 
 			assertEquals( PlaceSorcererUpdatesMethod.class, infos.get( 0 ).getUpdateClass() );
 			assertEquals( "PlaceSorcererUpdates", infos.get( 0 ).getTableName() );

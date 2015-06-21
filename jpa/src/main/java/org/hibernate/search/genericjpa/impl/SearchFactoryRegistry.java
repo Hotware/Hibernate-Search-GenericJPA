@@ -16,16 +16,15 @@ public class SearchFactoryRegistry {
 
 	public static final String NAME_PROPERTY = "org.hibernate.search.genericjpa.searchfactory.name";
 	public static final String DEFAULT_NAME = "default";
+	private static Map<String, JPASearchFactoryAdapter> searchFactories = new HashMap<>();
+
+	// FIXME: is this okay for multiple classloaders?
 
 	private SearchFactoryRegistry() {
 		// can't touch this!
 	}
 
-	// FIXME: is this okay for multiple classloaders?
-
-	private static Map<String, JPASearchFactoryAdapter> searchFactories = new HashMap<>();
-
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@SuppressWarnings({"rawtypes", "unchecked"})
 	public static String getNameProperty(Map properties) {
 		return (String) properties.getOrDefault( NAME_PROPERTY, DEFAULT_NAME );
 	}

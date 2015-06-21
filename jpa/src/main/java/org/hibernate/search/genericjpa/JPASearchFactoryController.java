@@ -6,9 +6,8 @@
  */
 package org.hibernate.search.genericjpa;
 
-import java.io.Closeable;
-
 import javax.persistence.EntityManager;
+import java.io.Closeable;
 
 import org.hibernate.search.SearchFactory;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
@@ -16,7 +15,7 @@ import org.hibernate.search.jpa.FullTextEntityManager;
 
 /**
  * This interface is the main entry point to get Search working in your JPA application
- * 
+ *
  * @author Martin Braun
  */
 public interface JPASearchFactoryController extends Closeable {

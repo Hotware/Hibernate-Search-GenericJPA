@@ -8,7 +8,6 @@ package org.hibernate.search.genericjpa.factory;
 
 import java.io.Closeable;
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Collections;
 
 import org.apache.lucene.search.Query;

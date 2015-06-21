@@ -13,6 +13,7 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 import org.apache.lucene.util.Version;
+
 import org.hibernate.annotations.common.reflection.ReflectionManager;
 import org.hibernate.annotations.common.reflection.java.JavaReflectionManager;
 import org.hibernate.search.cfg.SearchMapping;
@@ -60,14 +61,18 @@ public class SearchConfigurationImpl extends SearchConfigurationBase implements 
 		this.classes = new HashMap<>();
 		this.properties = properties;
 		// default values if nothing was explicitly set
-		this.properties.computeIfAbsent( "hibernate.search.default.directory_provider", (key) -> {
-			LOGGER.info( "defaulting to RAM directory-provider" );
-			return "ram";
-		} );
-		this.properties.computeIfAbsent( "hibernate.search.lucene_version", (key) -> {
-			LOGGER.info( "defaulting to Lucene Version: " + Version.LUCENE_4_10_4.toString() );
-			return Version.LUCENE_4_10_4.toString();
-		} );
+		this.properties.computeIfAbsent(
+				"hibernate.search.default.directory_provider", (key) -> {
+					LOGGER.info( "defaulting to RAM directory-provider" );
+					return "ram";
+				}
+		);
+		this.properties.computeIfAbsent(
+				"hibernate.search.lucene_version", (key) -> {
+					LOGGER.info( "defaulting to Lucene Version: " + Version.LUCENE_4_10_4.toString() );
+					return Version.LUCENE_4_10_4.toString();
+				}
+		);
 		this.reflectionManager = new JavaReflectionManager();
 		this.providedServices = new HashMap<>();
 		this.classLoaderService = new DefaultClassLoaderService();

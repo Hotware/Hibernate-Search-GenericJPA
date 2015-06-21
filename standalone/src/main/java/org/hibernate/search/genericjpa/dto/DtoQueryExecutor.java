@@ -37,37 +37,43 @@ public class DtoQueryExecutor {
 	}
 
 	public <T> List<T> executeHSQuery(HSQuery hsQuery, Class<T> returnedType, String profile) {
-		DtoDescription desc = this.dtoDescriptions.computeIfAbsent( returnedType, (clazz_) -> {
-			return this.dtoDescriptor.getDtoDescription( clazz_ );
-		} );
+		DtoDescription desc = this.dtoDescriptions.computeIfAbsent(
+				returnedType, (clazz_) -> {
+					return this.dtoDescriptor.getDtoDescription( clazz_ );
+				}
+		);
 		String[] projectedFieldsBefore = hsQuery.getProjectedFields();
 		try {
 			List<String> projection = new ArrayList<>();
 			List<java.lang.reflect.Field> fields = new ArrayList<>();
-			desc.getFieldDescriptionsForProfile( profile ).forEach( (fd) -> {
-				projection.add( fd.getFieldName() );
-				fields.add( fd.getField() );
-			} );
+			desc.getFieldDescriptionsForProfile( profile ).forEach(
+					(fd) -> {
+						projection.add( fd.getFieldName() );
+						fields.add( fd.getField() );
+					}
+			);
 			hsQuery.projection( projection.toArray( new String[0] ) );
 
 			List<T> ret;
 			{
 				hsQuery.getTimeoutManager().start();
 
-				ret = hsQuery.queryEntityInfos().stream().map( (entityInfo) -> {
-					try {
-						T val = returnedType.newInstance();
-						Object[] projectedValues = entityInfo.getProjection();
-						for ( int i = 0; i < projection.size(); i++ ) {
-							java.lang.reflect.Field field = fields.get( i );
-							field.set( val, projectedValues[i] );
+				ret = hsQuery.queryEntityInfos().stream().map(
+						(entityInfo) -> {
+							try {
+								T val = returnedType.newInstance();
+								Object[] projectedValues = entityInfo.getProjection();
+								for ( int i = 0; i < projection.size(); i++ ) {
+									java.lang.reflect.Field field = fields.get( i );
+									field.set( val, projectedValues[i] );
+								}
+								return val;
+							}
+							catch (InstantiationException | IllegalAccessException e) {
+								throw new SearchException( e );
+							}
 						}
-						return val;
-					}
-					catch (InstantiationException | IllegalAccessException e) {
-						throw new SearchException( e );
-					}
-				} ).collect( Collectors.toList() );
+				).collect( Collectors.toList() );
 
 				hsQuery.getTimeoutManager().stop();
 			}

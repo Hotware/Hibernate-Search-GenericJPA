@@ -35,7 +35,8 @@ interface MatchSuppressor {
 	 *
 	 * @return true if the positions intersects with a comment.
 	 */
-	boolean shouldSuppress(int aStartLineNo, int aStartColNo, int aEndLineNo,
+	boolean shouldSuppress(
+			int aStartLineNo, int aStartColNo, int aEndLineNo,
 			int aEndColNo);
 }
 

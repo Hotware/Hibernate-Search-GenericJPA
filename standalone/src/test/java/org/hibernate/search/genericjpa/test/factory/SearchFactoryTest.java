@@ -6,8 +6,6 @@
  */
 package org.hibernate.search.genericjpa.test.factory;
 
-import static org.junit.Assert.assertEquals;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,6 +13,7 @@ import java.util.List;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.TermQuery;
+
 import org.hibernate.search.annotations.ContainedIn;
 import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Field;
@@ -31,95 +30,12 @@ import org.hibernate.search.genericjpa.factory.Transaction;
 import org.hibernate.search.genericjpa.query.HSearchQuery;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
+
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
+
 public class SearchFactoryTest {
-
-	@Indexed
-	public static class TopLevel {
-
-		private int id;
-		private Embedded embedded;
-
-		public void setId(int id) {
-			this.id = id;
-		}
-
-		@DocumentId
-		public int getId() {
-			return this.id;
-		}
-
-		@IndexedEmbedded
-		public Embedded getEmbedded() {
-			return embedded;
-		}
-
-		public void setEmbedded(Embedded embedded) {
-			this.embedded = embedded;
-		}
-
-	}
-
-	public static class Embedded {
-
-		private String test;
-		private TopLevel topLevel;
-		private List<Embedded2> embedded2;
-
-		public void setTest(String test) {
-			this.test = test;
-		}
-
-		@Field(store = Store.YES)
-		public String getTest() {
-			return this.test;
-		}
-
-		@ContainedIn
-		public TopLevel getTopLevel() {
-			return this.topLevel;
-		}
-
-		public void setTopLevel(TopLevel topLevel) {
-			this.topLevel = topLevel;
-		}
-
-		@IndexedEmbedded
-		public List<Embedded2> getEmbedded2() {
-			return embedded2;
-		}
-
-		public void setEmbedded2(List<Embedded2> embedded2) {
-			this.embedded2 = embedded2;
-		}
-
-	}
-
-	public static class Embedded2 {
-
-		private String test;
-		private Embedded embedded;
-
-		public void setTest(String test) {
-			this.test = test;
-		}
-
-		@Field(store = Store.YES)
-		public String getTest() {
-			return this.test;
-		}
-
-		@ContainedIn
-		public Embedded getEmbedded() {
-			return embedded;
-		}
-
-		public void setEmbedded(Embedded embedded) {
-			this.embedded = embedded;
-		}
-
-	}
 
 	@Test
 	public void testWithoutNewClasses() {
@@ -129,9 +45,11 @@ public class SearchFactoryTest {
 		SearchIntegratorBuilder builder = new SearchIntegratorBuilder();
 		// we have to build an integrator here (but we don't need it afterwards)
 		builder.configuration( searchConfiguration ).buildSearchIntegrator();
-		classes.forEach( (clazz) -> {
-			builder.addClass( clazz );
-		} );
+		classes.forEach(
+				(clazz) -> {
+					builder.addClass( clazz );
+				}
+		);
 		SearchIntegrator impl = builder.buildSearchIntegrator();
 
 		TopLevel tl = new TopLevel();
@@ -158,8 +76,10 @@ public class SearchFactoryTest {
 
 	@Test
 	public void test() throws IOException {
-		try (StandaloneSearchFactory factory = StandaloneSearchFactoryFactory.createSearchFactory( new SearchConfigurationImpl(),
-				Arrays.asList( TopLevel.class, Embedded.class, Embedded2.class ) )) {
+		try (StandaloneSearchFactory factory = StandaloneSearchFactoryFactory.createSearchFactory(
+				new SearchConfigurationImpl(),
+				Arrays.asList( TopLevel.class, Embedded.class, Embedded2.class )
+		)) {
 
 			TopLevel tl = new TopLevel();
 			tl.setId( 123 );
@@ -187,8 +107,100 @@ public class SearchFactoryTest {
 			assertEquals( 1, factory.getStatistics().getNumberOfIndexedEntities( TopLevel.class.getName() ) );
 
 			factory.purge( TopLevel.class, new TermQuery( new Term( "id", "123" ) ) );
-			HSearchQuery query = factory.createQuery( factory.buildQueryBuilder().forEntity( TopLevel.class ).get().all().createQuery(), TopLevel.class );
+			HSearchQuery query = factory.createQuery(
+					factory.buildQueryBuilder()
+							.forEntity( TopLevel.class )
+							.get()
+							.all()
+							.createQuery(), TopLevel.class
+			);
 			assertEquals( 0, query.queryResultSize() );
 		}
+	}
+
+	@Indexed
+	public static class TopLevel {
+
+		private int id;
+		private Embedded embedded;
+
+		@DocumentId
+		public int getId() {
+			return this.id;
+		}
+
+		public void setId(int id) {
+			this.id = id;
+		}
+
+		@IndexedEmbedded
+		public Embedded getEmbedded() {
+			return embedded;
+		}
+
+		public void setEmbedded(Embedded embedded) {
+			this.embedded = embedded;
+		}
+
+	}
+
+	public static class Embedded {
+
+		private String test;
+		private TopLevel topLevel;
+		private List<Embedded2> embedded2;
+
+		@Field(store = Store.YES)
+		public String getTest() {
+			return this.test;
+		}
+
+		public void setTest(String test) {
+			this.test = test;
+		}
+
+		@ContainedIn
+		public TopLevel getTopLevel() {
+			return this.topLevel;
+		}
+
+		public void setTopLevel(TopLevel topLevel) {
+			this.topLevel = topLevel;
+		}
+
+		@IndexedEmbedded
+		public List<Embedded2> getEmbedded2() {
+			return embedded2;
+		}
+
+		public void setEmbedded2(List<Embedded2> embedded2) {
+			this.embedded2 = embedded2;
+		}
+
+	}
+
+	public static class Embedded2 {
+
+		private String test;
+		private Embedded embedded;
+
+		@Field(store = Store.YES)
+		public String getTest() {
+			return this.test;
+		}
+
+		public void setTest(String test) {
+			this.test = test;
+		}
+
+		@ContainedIn
+		public Embedded getEmbedded() {
+			return embedded;
+		}
+
+		public void setEmbedded(Embedded embedded) {
+			this.embedded = embedded;
+		}
+
 	}
 }

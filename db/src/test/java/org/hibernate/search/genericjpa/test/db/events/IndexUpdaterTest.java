@@ -6,9 +6,6 @@
  */
 package org.hibernate.search.genericjpa.test.db.events;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,8 +34,12 @@ import org.hibernate.search.genericjpa.metadata.RehashedTypeMetadata;
 import org.hibernate.search.genericjpa.test.db.entities.Place;
 import org.hibernate.search.genericjpa.test.db.entities.Sorcerer;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
+
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Martin Braun
@@ -112,8 +113,15 @@ public class IndexUpdaterTest {
 			public void update(Object entity, Transaction tx) {
 				if ( entity != null ) {
 					try {
-						assertTrue( updateInfoSet.remove( new UpdateInfo( entity.getClass(), (Integer) entity.getClass().getMethod( "getId" ).invoke( entity ),
-								EventType.UPDATE ) ) );
+						assertTrue(
+								updateInfoSet.remove(
+										new UpdateInfo(
+												entity.getClass(),
+												(Integer) entity.getClass().getMethod( "getId" ).invoke( entity ),
+												EventType.UPDATE
+										)
+								)
+						);
 					}
 					catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
 						throw new RuntimeException( e );
@@ -125,8 +133,15 @@ public class IndexUpdaterTest {
 			public void index(Object entity, Transaction tx) {
 				if ( entity != null ) {
 					try {
-						assertTrue( updateInfoSet.remove( new UpdateInfo( entity.getClass(), (Integer) entity.getClass().getMethod( "getId" ).invoke( entity ),
-								EventType.INSERT ) ) );
+						assertTrue(
+								updateInfoSet.remove(
+										new UpdateInfo(
+												entity.getClass(),
+												(Integer) entity.getClass().getMethod( "getId" ).invoke( entity ),
+												EventType.INSERT
+										)
+								)
+						);
 					}
 					catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
 						throw new RuntimeException( e );
@@ -135,7 +150,12 @@ public class IndexUpdaterTest {
 			}
 
 		};
-		IndexUpdater updater = new IndexUpdater( this.rehashedTypeMetadataPerIndexRoot, this.containedInIndexOf, this.entityProvider, indexWrapper );
+		IndexUpdater updater = new IndexUpdater(
+				this.rehashedTypeMetadataPerIndexRoot,
+				this.containedInIndexOf,
+				this.entityProvider,
+				indexWrapper
+		);
 		updater.updateEvent( updateInfos );
 	}
 
@@ -147,12 +167,19 @@ public class IndexUpdaterTest {
 		SearchIntegratorBuilder builder = new SearchIntegratorBuilder();
 		// we have to build an integrator here (but we don't need it afterwards)
 		builder.configuration( searchConfiguration ).buildSearchIntegrator();
-		classes.forEach( (clazz) -> {
-			builder.addClass( clazz );
-		} );
+		classes.forEach(
+				(clazz) -> {
+					builder.addClass( clazz );
+				}
+		);
 		ExtendedSearchIntegrator impl = (ExtendedSearchIntegrator) builder.buildSearchIntegrator();
 
-		IndexUpdater updater = new IndexUpdater( this.rehashedTypeMetadataPerIndexRoot, this.containedInIndexOf, this.entityProvider, impl );
+		IndexUpdater updater = new IndexUpdater(
+				this.rehashedTypeMetadataPerIndexRoot,
+				this.containedInIndexOf,
+				this.entityProvider,
+				impl
+		);
 		this.reset( updater, impl );
 
 		this.tryOutDelete( updater, impl, 0, 1, Place.class );
@@ -199,20 +226,32 @@ public class IndexUpdaterTest {
 	private void assertCount(ExtendedSearchIntegrator impl, int count) {
 		assertEquals(
 				count,
-				impl.createHSQuery().targetedEntities( Arrays.asList( Place.class ) )
-						.luceneQuery( impl.buildQueryBuilder().forEntity( Place.class ).get().all().createQuery() ).queryResultSize() );
+				impl.createHSQuery()
+						.targetedEntities( Arrays.asList( Place.class ) )
+						.luceneQuery( impl.buildQueryBuilder().forEntity( Place.class ).get().all().createQuery() )
+						.queryResultSize()
+		);
 	}
 
-	private void tryOutDelete(IndexUpdater updater, ExtendedSearchIntegrator impl, int expectedCount, Object id, Class<?> clazz) {
+	private void tryOutDelete(
+			IndexUpdater updater,
+			ExtendedSearchIntegrator impl,
+			int expectedCount,
+			Object id,
+			Class<?> clazz) {
 		updater.updateEvent( Arrays.asList( new UpdateInfo( clazz, id, EventType.DELETE ) ) );
 		assertEquals(
 				expectedCount,
-				impl.createHSQuery().targetedEntities( Arrays.asList( Place.class ) )
-						.luceneQuery( impl.buildQueryBuilder().forEntity( Place.class ).get().all().createQuery() ).queryResultSize() );
+				impl.createHSQuery()
+						.targetedEntities( Arrays.asList( Place.class ) )
+						.luceneQuery( impl.buildQueryBuilder().forEntity( Place.class ).get().all().createQuery() )
+						.queryResultSize()
+		);
 		this.reset( updater, impl );
 	}
 
-	private void tryOutDeleteNonRoot(IndexUpdater updater, ExtendedSearchIntegrator impl, int expectedCount, Object id, Class<?> clazz,
+	private void tryOutDeleteNonRoot(
+			IndexUpdater updater, ExtendedSearchIntegrator impl, int expectedCount, Object id, Class<?> clazz,
 			String fieldToCheckCount, String originalMatch) {
 		this.deletedSorcerer = true;
 		updater.updateEvent( Arrays.asList( new UpdateInfo( clazz, id, EventType.DELETE ) ) );
@@ -221,13 +260,23 @@ public class IndexUpdaterTest {
 				impl.createHSQuery()
 						.targetedEntities( Arrays.asList( Place.class ) )
 						.luceneQuery(
-								impl.buildQueryBuilder().forEntity( Place.class ).get().keyword().onField( fieldToCheckCount ).matching( originalMatch )
-										.createQuery() ).queryResultSize() );
+								impl.buildQueryBuilder().forEntity( Place.class ).get().keyword().onField(
+										fieldToCheckCount
+								).matching( originalMatch )
+										.createQuery()
+						).queryResultSize()
+		);
 		this.deletedSorcerer = false;
 		this.reset( updater, impl );
 	}
 
-	private void tryOutUpdate(IndexUpdater updater, ExtendedSearchIntegrator impl, int expectedCount, Object id, Class<?> clazz, String field,
+	private void tryOutUpdate(
+			IndexUpdater updater,
+			ExtendedSearchIntegrator impl,
+			int expectedCount,
+			Object id,
+			Class<?> clazz,
+			String field,
 			String originalMatch) {
 		this.changed = true;
 		updater.updateEvent( Arrays.asList( new UpdateInfo( clazz, id, EventType.UPDATE ) ) );
@@ -236,8 +285,16 @@ public class IndexUpdaterTest {
 				impl.createHSQuery()
 						.targetedEntities( Arrays.asList( Place.class ) )
 						.luceneQuery(
-								impl.buildQueryBuilder().forEntity( Place.class ).get().keyword().onField( field ).matching( originalMatch ).createQuery() )
-						.queryResultSize() );
+								impl.buildQueryBuilder()
+										.forEntity( Place.class )
+										.get()
+										.keyword()
+										.onField( field )
+										.matching( originalMatch )
+										.createQuery()
+						)
+						.queryResultSize()
+		);
 		this.changed = false;
 		this.reset( updater, impl );
 	}
