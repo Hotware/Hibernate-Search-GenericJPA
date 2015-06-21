@@ -247,7 +247,7 @@ public class SearchFactoryTest {
 				}
 			};
 
-			//we should find everything with the dummies
+			//we shouldn't find anything as the ids are null
 			assertEquals(
 					0, factory.createQuery( new MatchAllDocsQuery(), TopLevel.class, Embedded.class ).query(
 							dummyProvider, HSearchQuery.Fetch.BATCH
