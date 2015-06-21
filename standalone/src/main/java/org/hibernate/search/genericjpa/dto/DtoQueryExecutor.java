@@ -38,9 +38,7 @@ public class DtoQueryExecutor {
 
 	public <T> List<T> executeHSQuery(HSQuery hsQuery, Class<T> returnedType, String profile) {
 		DtoDescription desc = this.dtoDescriptions.computeIfAbsent(
-				returnedType, (clazz_) -> {
-					return this.dtoDescriptor.getDtoDescription( clazz_ );
-				}
+				returnedType, this.dtoDescriptor::getDtoDescription
 		);
 		String[] projectedFieldsBefore = hsQuery.getProjectedFields();
 		try {

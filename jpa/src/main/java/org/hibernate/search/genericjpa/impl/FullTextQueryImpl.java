@@ -267,7 +267,7 @@ final class FullTextQueryImpl implements FullTextQuery {
 			if ( value == null ) {
 				// nothing
 			}
-			// TODO: this doesn't limit the execution time on the JPA fetches.
+			// FIXME: this doesn't limit the execution time on the JPA fetches.
 			else if ( value instanceof String ) {
 				this.hsearchQuery.setTimeout( Long.parseLong( (String) value ), TimeUnit.MILLISECONDS );
 			}

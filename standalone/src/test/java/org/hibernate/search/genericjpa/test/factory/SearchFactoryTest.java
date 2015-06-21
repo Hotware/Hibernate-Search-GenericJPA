@@ -25,6 +25,7 @@ import org.hibernate.search.annotations.Store;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
+import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.factory.SearchConfigurationImpl;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchFactory;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchFactoryFactory;
@@ -77,11 +78,13 @@ public class SearchFactoryTest {
 
 		tc.commit();
 
-		assertEquals(1, impl.createHSQuery().luceneQuery( new MatchAllDocsQuery() ).targetedEntities(
-				Collections.singletonList(
-						TopLevel.class
-				)
-		).queryResultSize());
+		assertEquals(
+				1, impl.createHSQuery().luceneQuery( new MatchAllDocsQuery() ).targetedEntities(
+						Collections.singletonList(
+								TopLevel.class
+						)
+				).queryResultSize()
+		);
 	}
 
 	@Test
@@ -124,6 +127,77 @@ public class SearchFactoryTest {
 					2, factory.createQuery( new MatchAllDocsQuery(), TopLevel.class, Embedded.class )
 							.queryResultSize()
 			);
+
+			{
+				final EntityProvider emptyProvider = new EntityProvider() {
+					@Override
+					public Object get(Class<?> entityClass, Object id) {
+						return null;
+					}
+
+					@Override
+					public List getBatch(Class<?> entityClass, List<Object> id) {
+						return Collections.emptyList();
+					}
+
+					@Override
+					public void close() throws IOException {
+
+					}
+				};
+
+				//we shouldn't find anything for null/empty
+				assertEquals(
+						0, factory.createQuery( new MatchAllDocsQuery(), TopLevel.class, Embedded.class ).query(
+								emptyProvider, HSearchQuery.Fetch.BATCH
+						).size()
+				);
+				assertEquals(
+						0, factory.createQuery( new MatchAllDocsQuery(), TopLevel.class, Embedded.class ).query(
+								emptyProvider, HSearchQuery.Fetch.FIND_BY_ID
+						).size()
+				);
+			}
+
+			{
+				final EntityProvider dummyProvider = new EntityProvider() {
+
+					@Override
+					public Object get(Class<?> entityClass, Object id) {
+						if ( TopLevel.class.equals( entityClass ) ) {
+							TopLevel ret = new TopLevel();
+							ret.setId( 1 );
+							return ret;
+						}
+						else {
+							Embedded ret = new Embedded( 1 );
+							return ret;
+						}
+					}
+
+					@Override
+					public List getBatch(Class<?> entityClass, List<Object> id) {
+						return Collections.singletonList( this.get( entityClass, id.get( 0 ) ) );
+					}
+
+					@Override
+					public void close() throws IOException {
+
+					}
+				};
+
+				//we should find everything with the dummies
+				assertEquals(
+						2, factory.createQuery( new MatchAllDocsQuery(), TopLevel.class, Embedded.class ).query(
+								dummyProvider, HSearchQuery.Fetch.BATCH
+						).size()
+				);
+				assertEquals(
+						2, factory.createQuery( new MatchAllDocsQuery(), TopLevel.class, Embedded.class ).query(
+								dummyProvider, HSearchQuery.Fetch.FIND_BY_ID
+						).size()
+				);
+			}
 
 			factory.purge( TopLevel.class, new TermQuery( new Term( "id", "1" ) ) );
 			HSearchQuery query = factory.createQuery(

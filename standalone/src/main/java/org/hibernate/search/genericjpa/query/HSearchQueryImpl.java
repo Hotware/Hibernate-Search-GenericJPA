@@ -120,8 +120,18 @@ public class HSearchQueryImpl implements HSearchQuery {
 		List<Object[]> projected = this.queryProjection( ProjectionConstants.OBJECT_CLASS, ProjectionConstants.ID );
 		if ( fetchType == Fetch.FIND_BY_ID ) {
 			ret = projected.stream().map(
-					(arr) -> entityProvider.get( (Class<?>) arr[0], arr[1] )
-			).collect( Collectors.toList() );
+					(arr) -> {
+						if ( arr[1] == null ) {
+							LOGGER.info( "null id in index ommited for query" );
+							return null;
+						}
+						Object obj = entityProvider.get( (Class<?>) arr[0], arr[1] );
+						if ( obj == null ) {
+							LOGGER.info( "ommiting object of class " + arr[0] + " and id " + arr[1] + " which was found in the index but not in the database!" );
+						}
+						return obj;
+					}
+			).filter( (obj) -> obj != null ).collect( Collectors.toList() );
 		}
 		else {
 			ret = new ArrayList<>( projected.size() );
@@ -133,7 +143,7 @@ public class HSearchQueryImpl implements HSearchQuery {
 			projected.stream().forEach(
 					(arr) -> {
 						if ( arr[1] == null ) {
-							LOGGER.info( "null id ommited" );
+							LOGGER.info( "null id in index ommited for query" );
 							return;
 						}
 						originalOrder.add( arr );
@@ -166,7 +176,7 @@ public class HSearchQueryImpl implements HSearchQuery {
 					(arr) -> {
 						Object value = classToIdToObject.get( arr[0] ).get( arr[1] );
 						if ( value == null ) {
-							LOGGER.info( "ommiting object of class " + arr[0] + "and id " + arr[1] + " which was found in the index but not in the database!" );
+							LOGGER.info( "ommiting object of class " + arr[0] + " and id " + arr[1] + " which was found in the index but not in the database!" );
 						}
 						else {
 							ret.add( classToIdToObject.get( arr[0] ).get( arr[1] ) );

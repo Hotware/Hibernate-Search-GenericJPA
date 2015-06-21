@@ -171,58 +171,64 @@ public class IntegrationTest {
 				}, 100, "coudln't find all entities in index!"
 		);
 
-		fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class ).initializeObjectsWith(
-				ObjectLookupMethod.SKIP,
-				DatabaseRetrievalMethod.QUERY
-		)
-				.entityProvider(
-						new EntityProvider() {
+		//assert for 0 is needed here, because we want to test if the query does filter out stuff
+		//that is not found in the database anymore properly
+		assertEquals(
+				0, fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class ).initializeObjectsWith(
+						ObjectLookupMethod.SKIP,
+						DatabaseRetrievalMethod.QUERY
+				)
+						.entityProvider(
+								new EntityProvider() {
 
-							@Override
-							public void close() throws IOException {
-								// no-op
-							}
+									@Override
+									public void close() throws IOException {
+										// no-op
+									}
 
-							@Override
-							public List getBatch(Class<?> entityClass, List<Object> id) {
-								// this should happen!
-								// an empty list is actually quite interesting for the backend.
-								// does it handle not finding anything for a given entityClass right?
-								return Collections.emptyList();
-							}
+									@Override
+									public List getBatch(Class<?> entityClass, List<Object> id) {
+										// this should happen!
+										// an empty list is actually quite interesting for the backend.
+										// does it handle not finding anything for a given entityClass right?
+										return Collections.emptyList();
+									}
 
-							@Override
-							public Object get(Class<?> entityClass, Object id) {
-								throw new AssertionError( "should have used getBatch instead!" );
-							}
+									@Override
+									public Object get(Class<?> entityClass, Object id) {
+										throw new AssertionError( "should have used getBatch instead!" );
+									}
 
-						}
-				).getResultList();
+								}
+						).getResultList().size()
+		);
 
-		fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class ).initializeObjectsWith(
-				ObjectLookupMethod.SKIP,
-				DatabaseRetrievalMethod.FIND_BY_ID
-		)
-				.entityProvider(
-						new EntityProvider() {
+		assertEquals(
+				0, fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class ).initializeObjectsWith(
+						ObjectLookupMethod.SKIP,
+						DatabaseRetrievalMethod.FIND_BY_ID
+				)
+						.entityProvider(
+								new EntityProvider() {
 
-							@Override
-							public void close() throws IOException {
-								// no-op
-							}
+									@Override
+									public void close() throws IOException {
+										// no-op
+									}
 
-							@Override
-							public List getBatch(Class<?> entityClass, List<Object> id) {
-								throw new AssertionError( "should have used get instead!" );
-							}
+									@Override
+									public List getBatch(Class<?> entityClass, List<Object> id) {
+										throw new AssertionError( "should have used get instead!" );
+									}
 
-							@Override
-							public Object get(Class<?> entityClass, Object id) {
-								return null;
-							}
+									@Override
+									public Object get(Class<?> entityClass, Object id) {
+										return null;
+									}
 
-						}
-				).getResultList();
+								}
+						).getResultList().size()
+		);
 
 		fem.commitSearchTransaction();
 	}
@@ -231,7 +237,7 @@ public class IntegrationTest {
 	public void testDeleteByQuery() {
 		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
 
-		//TODO: test for all the Sorcerers still available?
+		//TODO: test if all the Sorcerers still available?
 
 		fem.beginSearchTransaction();
 		fem.purgeByTerm( Place.class, "id", this.valinorId );
