@@ -100,10 +100,15 @@ public class IdProducerTask implements Runnable {
 					}
 					catch (Exception e) {
 						tx.rollback();
-						this.exceptionConsumer.accept( e );
+						throw e;
 					}
 				}
 				this.flushBatch();
+			}
+			catch (Exception e) {
+				if ( this.exceptionConsumer != null ) {
+					this.exceptionConsumer.accept( e );
+				}
 			}
 			finally {
 				if ( em != null ) {

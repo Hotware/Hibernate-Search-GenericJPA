@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.hibernate.search.backend.spi.SingularTermDeletionQuery;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.engine.metadata.impl.MetadataProvider;
 import org.hibernate.search.engine.metadata.impl.TypeMetadata;
@@ -87,9 +88,9 @@ public class MetadataRehasherTest {
 				// make sure all of these are different
 				assertEquals(
 						5, new HashSet<>(
-						fromRootRehashed.getDocumentFieldMetadataForIdFieldName()
-								.values()
-				).size()
+								fromRootRehashed.getDocumentFieldMetadataForIdFieldName()
+										.values()
+						).size()
 				);
 			}
 		}
@@ -124,7 +125,28 @@ public class MetadataRehasherTest {
 		assertTrue( inIndexOf.get( SubEntity.class ).contains( RootEntity.class ) );
 		assertTrue( inIndexOf.get( SubEntity.class ).contains( AnotherRootEntity.class ) );
 
-		// FIXME: unit-test the TermDeletion stuff
+		this.assertStringDeletion( fromRootRehashed, "MAYBE_ROOT_NOT_NAMED_ID" );
+		this.assertStringDeletion( fromRootRehashed, "recursiveSelf.MAYBE_ROOT_NOT_NAMED_ID" );
+		this.assertStringDeletion( fromRootRehashed, "recursiveSelf.recursiveSelf.MAYBE_ROOT_NOT_NAMED_ID" );
+		this.assertStringDeletion( fromRootRehashed, "otherEntity.SUB_NOT_NAMED_ID" );
+		this.assertStringDeletion( fromRootRehashed, "recursiveSelf.otherEntity.SUB_NOT_NAMED_ID" );
+
+		//well, we don't have to check this, but we can do it at least for the root
+		//default id name is relevant as well
+		this.assertStringDeletion( fromAnotherRootRehashed, "id" );
+
+		// FIXME: unit-test the TermDeletion stuff for Numeric ids?
+		//... nvm. as of Hibernate Search 5.3.0.Beta1 all ids are Strings in the document
+	}
+
+	private void assertStringDeletion(RehashedTypeMetadata rehashed, String fieldName) {
+		assertEquals(
+				SingularTermDeletionQuery.Type.STRING,
+				rehashed.getSingularTermDeletionQueryTypeForIdFieldName()
+						.get(
+								fieldName
+						)
+		);
 	}
 
 }

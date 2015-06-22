@@ -19,7 +19,7 @@ import org.hibernate.search.annotations.IndexedEmbedded;
 public class AnotherRootEntity {
 
 	@DocumentId
-	private Long id;
+	private String id;
 
 	@Field(analyze = Analyze.NO)
 	private String name;

@@ -334,21 +334,27 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 			@Override
 			public void run() {
 				try {
-					MassIndexerImpl.this.awaitJobsFinish();
-					if ( MassIndexerImpl.this.optimizeOnFinish ) {
-						for ( Class<?> rootEntity : MassIndexerImpl.this.rootTypes ) {
-							try {
-								MassIndexerImpl.this.batchBackend.enqueueAsyncWork( new OptimizeLuceneWork( rootEntity ) );
-							}
-							catch (InterruptedException e) {
-								LOGGER.log( Level.WARNING, "interrupted while optimizing on finish!", e );
+					try {
+						MassIndexerImpl.this.awaitJobsFinish();
+						if ( MassIndexerImpl.this.optimizeOnFinish ) {
+							for ( Class<?> rootEntity : MassIndexerImpl.this.rootTypes ) {
+								try {
+									MassIndexerImpl.this.batchBackend.enqueueAsyncWork(
+											new OptimizeLuceneWork(
+													rootEntity
+											)
+									);
+								}
+								catch (InterruptedException e) {
+									LOGGER.log( Level.WARNING, "interrupted while optimizing on finish!", e );
+								}
 							}
 						}
 					}
-
-					// flush all the works that are left in the queue
-					MassIndexerImpl.this.batchBackend.flush( new HashSet<>( MassIndexerImpl.this.rootTypes ) );
-
+					finally {
+						// flush all the works that are left in the queue EVEN if we get interrupted
+						MassIndexerImpl.this.batchBackend.flush( new HashSet<>( MassIndexerImpl.this.rootTypes ) );
+					}
 					MassIndexerImpl.this.closeExecutorServices();
 					MassIndexerImpl.this.closeAllOpenEntityManagers();
 					MassIndexerImpl.this.cleanUpLatch.countDown();
@@ -385,9 +391,8 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 				// FIXME: wait for all the running threads to finish up.
 
 				// blow the signal to stop everything
-				for ( NumberCondition condition : MassIndexerImpl.this.finishConditions.values() ) {
-					condition.disable();
-				}
+				MassIndexerImpl.this.finishConditions.values()
+						.forEach( NumberCondition::disable );
 
 				// but we have to wait for the cleanup thread to finish up
 				try {

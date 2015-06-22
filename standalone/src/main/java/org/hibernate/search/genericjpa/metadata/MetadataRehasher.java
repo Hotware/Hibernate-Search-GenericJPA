@@ -87,6 +87,7 @@ public final class MetadataRehasher {
 				);
 				SingularTermDeletionQuery.Type deletionQueryType;
 				if ( documentFieldMetadata.isNumeric() ) {
+					//as of Hibernate Search 5.3.0.Beta1 ids are always Strings, but just to make sure
 					NumericEncodingType numEncType = documentFieldMetadata.getNumericEncodingType();
 					switch ( numEncType ) {
 						case LONG:

@@ -79,7 +79,8 @@ public class NumberCondition {
 	public void check() throws InterruptedException {
 		this.lock.lock();
 		try {
-			while ( (!this.initialSetupDone || this.count > this.lockCount) && !this.disable ) {
+			while ( (!this.initialSetupDone || this.count > this.lockCount) && !this.disable && !Thread.currentThread()
+					.isInterrupted() ) {
 				this.condition.await();
 			}
 		}
@@ -91,7 +92,8 @@ public class NumberCondition {
 	public boolean check(long time, TimeUnit timeUnit) throws InterruptedException {
 		this.lock.lock();
 		try {
-			if ( (!this.initialSetupDone || this.count > this.lockCount) && !this.disable ) {
+			if ( (!this.initialSetupDone || this.count > this.lockCount) && !this.disable && !Thread.currentThread()
+					.isInterrupted() ) {
 				return this.condition.await( time, timeUnit );
 			}
 			return true;

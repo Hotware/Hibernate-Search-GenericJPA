@@ -10,8 +10,11 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Future;
@@ -24,6 +27,7 @@ import org.hibernate.search.genericjpa.batchindexing.MassIndexer;
 import org.hibernate.search.genericjpa.batchindexing.MassIndexerProgressMonitor;
 import org.hibernate.search.genericjpa.batchindexing.impl.MassIndexerImpl;
 import org.hibernate.search.genericjpa.db.events.MySQLTriggerSQLStringSource;
+import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
 import org.hibernate.search.genericjpa.test.jpa.entities.Place;
@@ -35,6 +39,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Martin Braun
@@ -79,6 +84,71 @@ public class MassIndexerTest {
 		assertEquals( 0, fem.createFullTextQuery( new MatchAllDocsQuery(), Sorcerer.class ).getResultSize() );
 
 		assertEquals( COUNT, fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class ).getResultSize() );
+	}
+
+	@Test
+	public void provokeException() throws InterruptedException {
+		System.out.println( "**********************************************" );
+		System.out.println( "**********************************************" );
+		System.out.println( "**********************************************" );
+		System.out.println( "**********************************************" );
+		System.out.println( "************ Exceptions expected! ************" );
+		System.out.println( "**********************************************" );
+		System.out.println( "**********************************************" );
+		System.out.println( "**********************************************" );
+		System.out.println( "**********************************************" );
+		final EntityProvider entityProvider = new EntityProvider() {
+			@Override
+			public Object get(Class<?> entityClass, Object id) {
+				throw new RuntimeException( "Exceptions are expected in this test!" );
+			}
+
+			@Override
+			public List getBatch(Class<?> entityClass, List<Object> id) {
+				throw new RuntimeException( "Exceptions are expected in this test!" );
+			}
+
+			@Override
+			public void close() throws IOException {
+
+			}
+		};
+		this.massIndexer.entityProvider( entityProvider ).startAndWait();
+		Thread.sleep( 1000 );
+		System.out.println( "**********************************************" );
+		System.out.println( "**********************************************" );
+		System.out.println( "**********************************************" );
+		System.out.println( "**********************************************" );
+		System.out.println( "************ Exceptions expected! ************" );
+		System.out.println( "**********************************************" );
+		System.out.println( "**********************************************" );
+		System.out.println( "**********************************************" );
+		System.out.println( "**********************************************" );
+	}
+
+	@Test
+	public void testManualEntityProvider() throws InterruptedException {
+		boolean[] usedManual = new boolean[1];
+		final EntityProvider entityProvider = new EntityProvider() {
+			@Override
+			public Object get(Class<?> entityClass, Object id) {
+				usedManual[0] = true;
+				return null;
+			}
+
+			@Override
+			public List getBatch(Class<?> entityClass, List<Object> id) {
+				usedManual[0] = true;
+				return Collections.emptyList();
+			}
+
+			@Override
+			public void close() throws IOException {
+
+			}
+		};
+		this.massIndexer.entityProvider( entityProvider ).startAndWait();
+		assertTrue( usedManual[0] );
 	}
 
 	@Test

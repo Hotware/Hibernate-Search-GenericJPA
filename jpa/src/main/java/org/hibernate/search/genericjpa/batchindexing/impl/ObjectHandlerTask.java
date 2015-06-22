@@ -133,10 +133,7 @@ public class ObjectHandlerTask implements Runnable {
 				}
 			}
 		}
-
-		finally
-
-		{
+		finally {
 			if ( this.finishConsumer != null ) {
 				this.finishConsumer.run();
 			}
