@@ -123,7 +123,7 @@ public class MySQLTriggerIntegrationTest extends DatabaseIntegrationTest {
 
 			updateSource.start();
 			Sleep.sleep(
-					1000, () -> {
+					100_000, () -> {
 						tx.begin();
 						try {
 							return em.createQuery( "SELECT a FROM PlaceSorcererUpdates a" ).getResultList().size() == 0;
@@ -131,7 +131,8 @@ public class MySQLTriggerIntegrationTest extends DatabaseIntegrationTest {
 						finally {
 							tx.commit();
 						}
-					}
+					},
+					100, ""
 			);
 
 			if ( exceptionString != null ) {
