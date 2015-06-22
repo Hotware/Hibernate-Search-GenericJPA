@@ -68,6 +68,8 @@ public class OpenJPATomEEIntegrationTest {
 	@Inject
 	private JPASearchFactoryController searchFactory;
 
+	private static final int MAX_SLEEP_TIME = 100_000;
+
 	@Deployment
 	public static Archive<?> createDeployment() {
 		return IntegrationTestUtil.createOpenJPAMySQLDeployment();
@@ -161,7 +163,7 @@ public class OpenJPATomEEIntegrationTest {
 	@Test
 	public void shouldFindAllGamesInIndexBatchQuery() throws Exception {
 		Sleep.sleep(
-				10000, () -> {
+				MAX_SLEEP_TIME, () -> {
 					List<Game> games = new ArrayList<>();
 					FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
 					games.addAll(
@@ -180,7 +182,7 @@ public class OpenJPATomEEIntegrationTest {
 	@Test
 	public void shouldFindAllGamesInIndexFindByIdQuery() throws Exception {
 		Sleep.sleep(
-				10000, () -> {
+				MAX_SLEEP_TIME, () -> {
 					List<Game> games = new ArrayList<>();
 					FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
 					games.addAll(
@@ -199,7 +201,7 @@ public class OpenJPATomEEIntegrationTest {
 	@Test
 	public void shouldFindAllGamesInIndex() throws Exception {
 		Sleep.sleep(
-				10000, () -> {
+				MAX_SLEEP_TIME, () -> {
 					List<Game> games = new ArrayList<>();
 					FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
 					for ( String title : GAME_TITLES ) {
@@ -225,7 +227,7 @@ public class OpenJPATomEEIntegrationTest {
 		fem.index( newGame );
 		fem.commitSearchTransaction();
 		Sleep.sleep(
-				10000, () -> {
+				MAX_SLEEP_TIME, () -> {
 					FullTextQuery fullTextQuery = fem.createFullTextQuery(
 							new TermQuery(
 									new Term(
@@ -253,7 +255,7 @@ public class OpenJPATomEEIntegrationTest {
 		fem.index( newGame );
 		fem.rollbackSearchTransaction();
 		Sleep.sleep(
-				10000, () -> {
+				MAX_SLEEP_TIME, () -> {
 					FullTextQuery fullTextQuery = fem.createFullTextQuery(
 							new TermQuery( new Term( "title", "Pong" ) ),
 							Game.class
