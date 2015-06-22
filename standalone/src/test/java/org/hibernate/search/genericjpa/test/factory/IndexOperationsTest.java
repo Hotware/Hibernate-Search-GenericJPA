@@ -179,6 +179,98 @@ public class IndexOperationsTest {
 		this.assertCount( 0 );
 	}
 
+	@Test
+	public void testPurgeByTerm() {
+		//test purgeByTerm for a String
+		{
+			this.factory.index( new Book( 1, "The Hitchhiker’s Guide to the Galaxy" ) );
+			this.assertCount( 1 );
+			//DocumentId is a string
+			this.factory.purgeByTerm( Book.class, "id", "1" );
+			this.assertCount( 0 );
+		}
+
+		//test purgeByTerm for a String with a Transaction
+		{
+			this.factory.index( new Book( 1, "Hitchhiker again" ) );
+			Transaction tx = new Transaction();
+			this.factory.purgeByTerm( Book.class, "id", "1", tx );
+			this.assertCount( 1 );
+			tx.commit();
+			this.assertCount( 0 );
+		}
+
+		//test for something different than a string
+		{
+			{
+				this.factory.index( new Book( new Integer( 2 ) ) );
+				this.assertCount( 1 );
+				this.factory.purgeByTerm( Book.class, "someInt", 2 );
+				this.assertCount( 0 );
+			}
+
+			{
+				this.factory.index( new Book( new Long( 3L ) ) );
+				this.assertCount( 1 );
+				this.factory.purgeByTerm( Book.class, "someLong", 3L );
+				this.assertCount( 0 );
+			}
+
+			{
+				this.factory.index( new Book( new Float( 4.5F ) ) );
+				this.assertCount( 1 );
+				this.factory.purgeByTerm( Book.class, "someFloat", 4.5F );
+				this.assertCount( 0 );
+			}
+
+			{
+				this.factory.index( new Book( new Double( 5.5D ) ) );
+				this.assertCount( 1 );
+				this.factory.purgeByTerm( Book.class, "someDouble", 5.5D );
+				this.assertCount( 0 );
+			}
+		}
+
+		//the same thing, but with a Transaction
+		{
+			{
+				Transaction tx = new Transaction();
+				this.factory.index( new Book( new Integer( 2 ) ) );
+				this.assertCount( 1 );
+				this.factory.purgeByTerm( Book.class, "someInt", 2, tx );
+				tx.commit();
+				this.assertCount( 0 );
+			}
+
+			{
+				Transaction tx = new Transaction();
+				this.factory.index( new Book( new Long( 3L ) ) );
+				this.assertCount( 1 );
+				this.factory.purgeByTerm( Book.class, "someLong", 3L, tx );
+				tx.commit();
+				this.assertCount( 0 );
+			}
+
+			{
+				Transaction tx = new Transaction();
+				this.factory.index( new Book( new Float( 4.5F ) ) );
+				this.assertCount( 1 );
+				this.factory.purgeByTerm( Book.class, "someFloat", 4.5F, tx );
+				tx.commit();
+				this.assertCount( 0 );
+			}
+
+			{
+				Transaction tx = new Transaction();
+				this.factory.index( new Book( new Double( 5.5D ) ) );
+				this.assertCount( 1 );
+				this.factory.purgeByTerm( Book.class, "someDouble", 5.5D, tx );
+				tx.commit();
+				this.assertCount( 0 );
+			}
+		}
+	}
+
 	private void assertCount(int count) {
 		assertEquals(
 				count, this.factory.createQuery(
@@ -232,6 +324,15 @@ public class IndexOperationsTest {
 		@DtoField(fieldName = "title")
 		private String title;
 
+		@Field
+		private Integer someInt;
+		@Field
+		private Long someLong;
+		@Field
+		private Float someFloat;
+		@Field
+		private Double someDouble;
+
 		public Book() {
 
 		}
@@ -239,6 +340,26 @@ public class IndexOperationsTest {
 		public Book(int id, String title) {
 			this.id = id;
 			this.title = title;
+		}
+
+		public Book(Integer someInt) {
+			this( 1, "someTitle" );
+			this.someInt = someInt;
+		}
+
+		public Book(Long someLong) {
+			this( 1, "someTitle" );
+			this.someLong = someLong;
+		}
+
+		public Book(Float someFloat) {
+			this( 1, "someTitle" );
+			this.someFloat = someFloat;
+		}
+
+		public Book(Double someDouble) {
+			this( 1, "someTitle" );
+			this.someDouble = someDouble;
 		}
 
 		@DocumentId
