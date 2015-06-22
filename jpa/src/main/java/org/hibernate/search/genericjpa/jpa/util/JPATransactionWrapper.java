@@ -8,6 +8,7 @@ package org.hibernate.search.genericjpa.jpa.util;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
+import javax.transaction.TransactionManager;
 
 import org.hibernate.search.genericjpa.exception.SearchException;
 
@@ -20,22 +21,24 @@ public class JPATransactionWrapper {
 
 	private final EntityTransaction tx;
 	private final EntityManager em;
+	private final TransactionManager transactionManager;
 	private boolean ignoreExceptionsForJTATransaction;
 
-	public JPATransactionWrapper(EntityTransaction tx, EntityManager em) {
+	public JPATransactionWrapper(EntityTransaction tx, EntityManager em, TransactionManager transactionManager) {
 		this.tx = tx;
 		this.em = em;
+		this.transactionManager = transactionManager;
 	}
 
-	public static JPATransactionWrapper get(EntityManager em, boolean useJTATransaction) {
+	public static JPATransactionWrapper get(EntityManager em, TransactionManager transactionManager) {
 		EntityTransaction tx;
-		if ( !useJTATransaction ) {
+		if ( transactionManager == null ) {
 			tx = em.getTransaction();
 		}
 		else {
 			tx = null;
 		}
-		return new JPATransactionWrapper( tx, em );
+		return new JPATransactionWrapper( tx, em, transactionManager );
 	}
 
 	public void setIgnoreExceptionsForJTATransaction(boolean ignoreExceptionsForJTATransaction) {
@@ -48,7 +51,7 @@ public class JPATransactionWrapper {
 		}
 		else {
 			try {
-				JTALookup.lookup().begin();
+				this.transactionManager.begin();
 				this.em.joinTransaction();
 			}
 			catch (Exception e) {
@@ -65,7 +68,7 @@ public class JPATransactionWrapper {
 		}
 		else {
 			try {
-				JTALookup.lookup().commit();
+				this.transactionManager.commit();
 			}
 			catch (Exception e) {
 				if ( !this.ignoreExceptionsForJTATransaction ) {
@@ -81,7 +84,7 @@ public class JPATransactionWrapper {
 		}
 		else {
 			try {
-				JTALookup.lookup().rollback();
+				this.transactionManager.rollback();
 			}
 			catch (Exception e) {
 				if ( !this.ignoreExceptionsForJTATransaction ) {

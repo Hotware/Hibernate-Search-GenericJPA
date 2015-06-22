@@ -11,6 +11,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.transaction.TransactionManager;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,7 +57,7 @@ public class JPAUpdateSource implements UpdateSource {
 	private final Map<Class<?>, EventModelInfo> updateClassToEventModelInfo;
 	private final Map<Class<?>, Function<Object, Object>> idAccessorMap;
 	private final ScheduledExecutorService exec;
-	private final boolean useJTATransaction;
+	private final  TransactionManager transactionManager;
 	private final ReentrantLock lock = new ReentrantLock();
 	private List<UpdateConsumer> updateConsumers;
 	private ScheduledFuture<?> job;
@@ -69,14 +70,14 @@ public class JPAUpdateSource implements UpdateSource {
 	public JPAUpdateSource(
 			List<EventModelInfo> eventModelInfos,
 			EntityManagerFactory emf,
-			boolean useJTATransaction,
+			TransactionManager transactionManager,
 			long timeOut,
 			TimeUnit timeUnit,
 			int batchSizeForUpdates) {
 		this(
 				eventModelInfos,
 				emf,
-				useJTATransaction,
+				transactionManager,
 				timeOut,
 				timeUnit,
 				batchSizeForUpdates,
@@ -91,7 +92,7 @@ public class JPAUpdateSource implements UpdateSource {
 	public JPAUpdateSource(
 			List<EventModelInfo> eventModelInfos,
 			EntityManagerFactory emf,
-			boolean useJTATransaction,
+			TransactionManager transactionManager,
 			long timeOut,
 			TimeUnit timeUnit,
 			int batchSizeForUpdates,
@@ -99,7 +100,7 @@ public class JPAUpdateSource implements UpdateSource {
 		this(
 				eventModelInfos,
 				emf,
-				useJTATransaction,
+				transactionManager,
 				timeOut,
 				timeUnit,
 				batchSizeForUpdates,
@@ -115,7 +116,7 @@ public class JPAUpdateSource implements UpdateSource {
 	public JPAUpdateSource(
 			List<EventModelInfo> eventModelInfos,
 			EntityManagerFactory emf,
-			boolean useJTATransaction,
+			TransactionManager transactionManager,
 			long timeOut,
 			TimeUnit timeUnit,
 			int batchSizeForUpdates,
@@ -161,7 +162,7 @@ public class JPAUpdateSource implements UpdateSource {
 			throw new IllegalArgumentException( "the ScheduledExecutorService may not be null!" );
 		}
 		this.exec = exec;
-		this.useJTATransaction = useJTATransaction;
+		this.transactionManager = transactionManager;
 	}
 
 	private static ThreadFactory tf() {
@@ -229,7 +230,7 @@ public class JPAUpdateSource implements UpdateSource {
 						EntityManager em = null;
 						try {
 							em = this.emf.createEntityManager();
-							JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useJTATransaction );
+							JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.transactionManager );
 							tx.begin();
 							try {
 								MultiQueryAccess query = query( this, em );

@@ -9,6 +9,7 @@ package org.hibernate.search.genericjpa.impl;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.FlushModeType;
+import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -33,17 +34,17 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 	private final TriggerSQLStringSource triggerSource;
 	private final List<Class<?>> updateClasses;
 	private final EntityManagerFactory emf;
-	private final boolean useJTATransaction;
+	private final TransactionManager transactionManager;
 
 	public SQLJPAUpdateSourceProvider(
 			EntityManagerFactory emf,
-			boolean useJTATransaction,
+			TransactionManager transactionManager,
 			TriggerSQLStringSource triggerSource,
 			List<Class<?>> updateClasses) {
 		this.triggerSource = triggerSource;
 		this.updateClasses = updateClasses;
 		this.emf = emf;
-		this.useJTATransaction = useJTATransaction;
+		this.transactionManager = transactionManager;
 	}
 
 	@Override
@@ -54,7 +55,7 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 		return new JPAUpdateSource(
 				eventModelInfos,
 				this.emf,
-				this.useJTATransaction,
+				this.transactionManager,
 				delay,
 				timeUnit,
 				batchSizeForUpdates
@@ -65,7 +66,7 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 		EntityManager em = null;
 		try {
 			em = this.emf.createEntityManager();
-			JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useJTATransaction );
+			JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.transactionManager );
 			if ( tx != null ) {
 				tx.setIgnoreExceptionsForJTATransaction( true );
 				tx.begin();

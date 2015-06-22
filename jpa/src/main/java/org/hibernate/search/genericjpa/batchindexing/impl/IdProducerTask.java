@@ -11,6 +11,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -30,7 +31,7 @@ public class IdProducerTask implements Runnable {
 	private final Class<?> entityClass;
 	private final String idProperty;
 	private final EntityManagerFactory emf;
-	private final boolean useJTATransaction;
+	private final TransactionManager transactionManager;
 	private final int batchSizeToLoadIds;
 	private final int batchSizeToLoadObjects;
 	private final UpdateConsumer updateConsumer;
@@ -44,7 +45,7 @@ public class IdProducerTask implements Runnable {
 			Class<?> entityClass,
 			String idProperty,
 			EntityManagerFactory emf,
-			boolean useJTATransaction,
+			TransactionManager transactionManager,
 			int batchSizeToLoadIds,
 			int batchSizeToLoadObjects,
 			UpdateConsumer updateConsumer,
@@ -53,7 +54,7 @@ public class IdProducerTask implements Runnable {
 		this.entityClass = entityClass;
 		this.idProperty = idProperty;
 		this.emf = emf;
-		this.useJTATransaction = useJTATransaction;
+		this.transactionManager = transactionManager;
 		this.batchSizeToLoadIds = batchSizeToLoadIds;
 		this.batchSizeToLoadObjects = batchSizeToLoadObjects;
 		this.updateConsumer = updateConsumer;
@@ -67,7 +68,7 @@ public class IdProducerTask implements Runnable {
 		try {
 			EntityManager em = this.emf.createEntityManager();
 			try {
-				JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useJTATransaction );
+				JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.transactionManager );
 				long position = 0;
 				long totalCount = this.getTotalCount( entityClass );
 				if ( this.numberCondition != null ) {
@@ -152,7 +153,7 @@ public class IdProducerTask implements Runnable {
 		EntityManager em = null;
 		try {
 			em = this.emf.createEntityManager();
-			JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.useJTATransaction );
+			JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.transactionManager );
 			tx.begin();
 			try {
 				CriteriaBuilder cb = em.getCriteriaBuilder();

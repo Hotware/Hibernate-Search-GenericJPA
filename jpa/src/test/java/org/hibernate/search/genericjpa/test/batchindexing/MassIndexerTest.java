@@ -232,7 +232,7 @@ public class MassIndexerTest {
 				this.emf,
 				this.searchFactory.getSearchIntegrator(),
 				Arrays.asList( Place.class ),
-				false
+				null
 		);
 		this.massIndexer.progressMonitor( this.progress() );
 	}

@@ -10,6 +10,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.metamodel.EntityType;
 import javax.persistence.metamodel.Metamodel;
 import javax.persistence.metamodel.SingularAttribute;
+import javax.transaction.TransactionManager;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,7 +56,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 	private static final Logger LOGGER = Logger.getLogger( MassIndexerImpl.class.getName() );
 	private final ExtendedSearchIntegrator searchIntegrator;
 	private final List<Class<?>> rootTypes;
-	private final boolean useJTATransaction;
+	private final TransactionManager transactionManager;
 	private final EntityManagerFactory emf;
 	private final ConcurrentHashMap<Class<?>, AtomicInteger> idProgress = new ConcurrentHashMap<>();
 	private final ConcurrentHashMap<Class<?>, AtomicInteger> objectLoadedProgress = new ConcurrentHashMap<>();
@@ -103,11 +104,11 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 			EntityManagerFactory emf,
 			ExtendedSearchIntegrator searchIntegrator,
 			List<Class<?>> rootTypes,
-			boolean useJTATransaction) {
+			TransactionManager transactionManager) {
 		this.emf = emf;
 		this.searchIntegrator = searchIntegrator;
 		this.rootTypes = rootTypes;
-		this.useJTATransaction = useJTATransaction;
+		this.transactionManager = transactionManager;
 	}
 
 	@Override
@@ -279,7 +280,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 					rootClass,
 					this.idProperties.get( rootClass ),
 					this.emf,
-					this.useJTATransaction,
+					this.transactionManager,
 					this.batchSizeToLoadIds,
 					this.batchSizeToLoadObjects,
 					this,
@@ -501,7 +502,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 				em = new TransactionWrappedEntityManagerEntityProvider(
 						this.emf.createEntityManager(),
 						this.idProperties,
-						this.useJTATransaction
+						this.transactionManager
 				);
 			}
 			return em;

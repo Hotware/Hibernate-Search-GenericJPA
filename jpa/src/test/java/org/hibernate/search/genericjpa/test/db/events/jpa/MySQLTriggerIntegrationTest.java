@@ -102,7 +102,7 @@ public class MySQLTriggerIntegrationTest extends DatabaseIntegrationTest {
 			JPAUpdateSource updateSource = new JPAUpdateSource(
 					parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class, PlaceUpdates.class ) ) ),
 					emf,
-					false,
+					null,
 					1,
 					TimeUnit.SECONDS,
 					1,

@@ -8,6 +8,7 @@ package org.hibernate.search.genericjpa.impl;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.transaction.TransactionManager;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -84,6 +85,8 @@ public final class JPASearchFactoryAdapter
 	private Map<Class<?>, RehashedTypeMetadata> rehashedTypeMetadataForIndexRoot;
 	private Map<Class<?>, List<Class<?>>> containedInIndexOf;
 	private ExtendedSearchIntegrator searchIntegrator;
+
+	private TransactionManager transactionManager;
 
 	@Override
 	public void updateEvent(List<UpdateInfo> updateInfo) {
@@ -164,7 +167,7 @@ public final class JPASearchFactoryAdapter
 			JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider(
 					this.getEmf(),
 					this.idProperties,
-					this.isUseJTATransaction()
+					this.transactionManager
 			);
 			this.indexUpdater = new IndexUpdater(
 					rehashedTypeMetadataForIndexRoot, containedInIndexOf, entityProvider,
@@ -173,6 +176,15 @@ public final class JPASearchFactoryAdapter
 			this.updateSource.setUpdateConsumers( Arrays.asList( indexUpdater, this ) );
 			this.updateSource.start();
 		}
+	}
+
+	public TransactionManager getTransactionManager() {
+		return transactionManager;
+	}
+
+	public JPASearchFactoryAdapter setTransactionManager(TransactionManager transactionManager) {
+		this.transactionManager = transactionManager;
+		return this;
 	}
 
 	public String getName() {
@@ -267,7 +279,7 @@ public final class JPASearchFactoryAdapter
 	}
 
 	public MassIndexer createMassIndexer(List<Class<?>> indexRootTypes) {
-		return new MassIndexerImpl( this.emf, this.searchIntegrator, indexRootTypes, this.isUseJTATransaction() );
+		return new MassIndexerImpl( this.emf, this.searchIntegrator, indexRootTypes, this.transactionManager );
 	}
 
 	public MassIndexer createMassIndexer() {

@@ -7,6 +7,7 @@
 package org.hibernate.search.genericjpa;
 
 import org.hibernate.search.genericjpa.impl.SearchFactoryRegistry;
+import org.hibernate.search.genericjpa.transaction.impl.JNDILookupTransactionmanagerProvider;
 
 /**
  * @author Martin Braun
@@ -25,6 +26,10 @@ public class Constants {
 	public static final String ADDITIONAL_INDEXED_TYPES_KEY = "org.hibernate.search.genericjpa.searchfactory.additionalIndexedTypes";
 	public static final String SEARCH_FACTORY_NAME_KEY = SearchFactoryRegistry.NAME_PROPERTY;
 	public static final String SEARCH_FACTORY_NAME_DEFAULT_VALUE = SearchFactoryRegistry.DEFAULT_NAME;
+	public static final String TRANSACTION_MANAGER_PROVIDER_KEY = "org.hibernate.search.genericjpa.searchfactory.transactionManagerProvider";
+	public static final String TRANSACTION_MANAGER_PROVIDER_DEFAULT_VALUE = JNDILookupTransactionmanagerProvider.class.getName();
+	public static final String TRANSACTION_MANAGER_JNDI_KEY = "org.hibernate.serach.genericjpa.searchfactory.transactionManagerProvider.jndi";
+
 	private Constants() {
 		// can't touch this!
 	}

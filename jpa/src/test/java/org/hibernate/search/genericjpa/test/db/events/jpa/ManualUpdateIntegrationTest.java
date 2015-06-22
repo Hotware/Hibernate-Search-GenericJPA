@@ -93,8 +93,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 			ExtendedSearchIntegrator impl = (ExtendedSearchIntegrator) builder.buildSearchIntegrator();
 			JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider(
 					this.emf,
-					this.metaModelParser.getIdProperties(),
-					false
+					this.metaModelParser.getIdProperties()
 			);
 			IndexUpdater indexUpdater = new IndexUpdater(
 					this.rehashedTypeMetadataPerIndexRoot,
@@ -114,7 +113,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 			JPAUpdateSource updateSource = new JPAUpdateSource(
 					eventModelInfos,
 					this.emf,
-					false,
+					null,
 					100,
 					TimeUnit.MILLISECONDS,
 					10

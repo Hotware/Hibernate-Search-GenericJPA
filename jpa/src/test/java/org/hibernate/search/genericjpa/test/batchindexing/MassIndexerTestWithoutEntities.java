@@ -63,7 +63,7 @@ public class MassIndexerTestWithoutEntities {
 				this.emf,
 				this.searchFactory.getSearchIntegrator(),
 				Arrays.asList( Place.class ),
-				false
+				null
 		);
 	}
 

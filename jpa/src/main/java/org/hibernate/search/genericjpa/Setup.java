@@ -6,8 +6,10 @@
  */
 package org.hibernate.search.genericjpa;
 
+import javax.naming.InitialContext;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.metamodel.EntityType;
+import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,12 +25,15 @@ import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
 import org.hibernate.search.genericjpa.impl.SQLJPAUpdateSourceProvider;
 import org.hibernate.search.genericjpa.impl.SearchFactoryRegistry;
 import org.hibernate.search.genericjpa.impl.UpdateSourceProvider;
+import org.hibernate.search.genericjpa.transaction.TransactionManagerProvider;
 
 import static org.hibernate.search.genericjpa.Constants.ADDITIONAL_INDEXED_TYPES_KEY;
 import static org.hibernate.search.genericjpa.Constants.BATCH_SIZE_FOR_UPDATES_DEFAULT_VALUE;
 import static org.hibernate.search.genericjpa.Constants.BATCH_SIZE_FOR_UPDATES_KEY;
 import static org.hibernate.search.genericjpa.Constants.SEARCH_FACTORY_TYPE_DEFAULT_VALUE;
 import static org.hibernate.search.genericjpa.Constants.SEARCH_FACTORY_TYPE_KEY;
+import static org.hibernate.search.genericjpa.Constants.TRANSACTION_MANAGER_PROVIDER_DEFAULT_VALUE;
+import static org.hibernate.search.genericjpa.Constants.TRANSACTION_MANAGER_PROVIDER_KEY;
 import static org.hibernate.search.genericjpa.Constants.TRIGGER_SOURCE_KEY;
 import static org.hibernate.search.genericjpa.Constants.UPDATE_DELAY_DEFAULT_VALUE;
 import static org.hibernate.search.genericjpa.Constants.UPDATE_DELAY_KEY;
@@ -116,6 +121,27 @@ public final class Setup {
 				throw new SearchException( "there is already a searchfactory running for name: " + name + ". close it first!" );
 			}
 
+			TransactionManager transactionManager = null;
+			if ( useJTATransactions ) {
+				LOGGER.info( "using JTA Transactions" );
+				String transactionManagerClassName = (String) properties.getOrDefault(
+						TRANSACTION_MANAGER_PROVIDER_KEY,
+						TRANSACTION_MANAGER_PROVIDER_DEFAULT_VALUE
+				);
+				if ( transactionManagerClassName == null ) {
+					throw new SearchException( TRANSACTION_MANAGER_PROVIDER_KEY + " must be specified when using JTA transactions!" );
+				}
+				//FIXME: can we do this differently?
+				//we have to make sure that this method is called on the right thread/classloader, which is not ideal
+				Class<TransactionManagerProvider> providerClass = (Class<TransactionManagerProvider>) Class.forName(
+						transactionManagerClassName
+				);
+				transactionManager = providerClass.newInstance().get(
+						Thread.currentThread().getContextClassLoader(),
+						properties
+				);
+			}
+
 			//what UpdateSource to be used
 			UpdateSourceProvider updateSourceProvider;
 			if ( "sql".equals( type ) ) {
@@ -127,7 +153,7 @@ public final class Setup {
 					);
 				}
 				updateSourceProvider = new SQLJPAUpdateSourceProvider(
-						emf, useJTATransactions, (TriggerSQLStringSource) triggerSourceClass.newInstance(),
+						emf, transactionManager, (TriggerSQLStringSource) triggerSourceClass.newInstance(),
 						updateClasses
 				);
 			}
@@ -138,9 +164,7 @@ public final class Setup {
 				throw new SearchException( "unrecognized type : " + type );
 			}
 
-			if ( useJTATransactions ) {
-				LOGGER.info( "using JTA Transactions" );
-			}
+
 			JPASearchFactoryAdapter ret = new JPASearchFactoryAdapter();
 			ret.setName( name ).setEmf( emf ).setUseJTATransaction( useJTATransactions ).setIndexRootTypes(
 					indexRootTypes
@@ -148,7 +172,7 @@ public final class Setup {
 					batchSizeForUpdates
 			).setUpdateDelay(
 					updateDelay
-			);
+			).setTransactionManager( transactionManager );
 
 			//initialize this
 			ret.init();

@@ -24,7 +24,6 @@ import org.hibernate.search.genericjpa.JPASearchFactoryController;
 import org.hibernate.search.genericjpa.Setup;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.exception.SearchException;
-import org.hibernate.search.genericjpa.jpa.util.JTALookup;
 import org.hibernate.search.jpa.FullTextEntityManager;
 
 @Startup
@@ -41,7 +40,6 @@ public class EJBJPASearchFactoryController implements JPASearchFactoryController
 
 	@PostConstruct
 	public void start() {
-		JTALookup.lookup();
 		Properties properties = new Properties();
 		try (InputStream is = EJBJPASearchFactoryController.class.getResource( PROPERTIES_PATH ).openStream()) {
 			properties.load( is );

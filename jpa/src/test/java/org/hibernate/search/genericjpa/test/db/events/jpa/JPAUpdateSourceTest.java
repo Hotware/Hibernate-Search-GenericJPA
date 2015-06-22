@@ -42,7 +42,7 @@ public class JPAUpdateSourceTest {
 		EventModelParser parser = new EventModelParser();
 		JPAUpdateSource updateSource = new JPAUpdateSource(
 				parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class, PlaceUpdates.class ) ) ),
-				emf, false, 1, TimeUnit.SECONDS, 2, 2
+				emf, null, 1, TimeUnit.SECONDS, 2, 2
 		);
 		return JPAUpdateSource.query( updateSource, em );
 	}
@@ -55,7 +55,7 @@ public class JPAUpdateSourceTest {
 			JPAUpdateSource updateSource = new JPAUpdateSource(
 					parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class, PlaceUpdates.class ) ) ),
 					emf,
-					false,
+					null,
 					1,
 					TimeUnit.SECONDS,
 					2,

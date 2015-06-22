@@ -14,11 +14,11 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
+import javax.transaction.TransactionManager;
 import java.util.List;
 import java.util.Map;
 
 import org.hibernate.search.genericjpa.exception.SearchException;
-import org.hibernate.search.genericjpa.jpa.util.JTALookup;
 
 /**
  * @author Martin Braun
@@ -28,17 +28,24 @@ public class JPAReusableEntityProvider implements ReusableEntityProvider {
 	private final EntityManagerFactory emf;
 	private final Map<Class<?>, String> idProperties;
 	private final boolean useJTATransaction;
+	private final TransactionManager transactionManager;
 	private EntityManager em;
 	private EntityManagerEntityProvider provider;
 	private boolean startedJTA = false;
 
 	public JPAReusableEntityProvider(
 			EntityManagerFactory emf,
-			Map<Class<?>, String> idProperties,
-			boolean useJTATransaction) {
+			Map<Class<?>, String> idProperties) {
+		this( emf, idProperties, null );
+	}
+
+	public JPAReusableEntityProvider(
+			EntityManagerFactory emf,
+			Map<Class<?>, String> idProperties, TransactionManager transactionManager) {
 		this.emf = emf;
 		this.idProperties = idProperties;
-		this.useJTATransaction = useJTATransaction;
+		this.useJTATransaction = transactionManager != null;
+		this.transactionManager = transactionManager;
 	}
 
 	@Override
@@ -103,8 +110,8 @@ public class JPAReusableEntityProvider implements ReusableEntityProvider {
 		}
 		else {
 			try {
-				if ( JTALookup.lookup().getStatus() == Status.STATUS_NO_TRANSACTION ) {
-					JTALookup.lookup().begin();
+				if ( this.transactionManager.getStatus() == Status.STATUS_NO_TRANSACTION ) {
+					this.transactionManager.begin();
 					this.startedJTA = true;
 				}
 			}
@@ -122,7 +129,7 @@ public class JPAReusableEntityProvider implements ReusableEntityProvider {
 			try {
 				if ( this.startedJTA ) {
 					this.startedJTA = false;
-					JTALookup.lookup().commit();
+					this.transactionManager.commit();
 				}
 			}
 			catch (SecurityException | IllegalStateException | RollbackException | HeuristicMixedException | HeuristicRollbackException | SystemException e) {

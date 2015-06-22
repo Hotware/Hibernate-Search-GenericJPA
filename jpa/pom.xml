@@ -100,13 +100,6 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- infinispan: we need this for JTA lookup -->
-		<dependency>
-			<groupId>org.infinispan</groupId>
-			<artifactId>infinispan-core</artifactId>
-			<version>7.2.2.Final</version>
-		</dependency>
-
 	</dependencies>
 
 </project>

@@ -26,7 +26,6 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.TermQuery;
-import org.eclipse.persistence.internal.jpa.transaction.JTATransactionWrapper;
 
 import org.hibernate.search.backend.impl.batch.DefaultBatchBackend;
 import org.hibernate.search.backend.spi.BatchBackend;
@@ -101,7 +100,7 @@ public class IntegrationTest {
 
 	private void testIdProducerTask(int batchSizeToLoadIds, int batchSizeToLoadObjects) {
 		IdProducerTask idProducer = new IdProducerTask(
-				Place.class, "id", this.emf, false, batchSizeToLoadIds, batchSizeToLoadObjects, new UpdateConsumer() {
+				Place.class, "id", this.emf, null, batchSizeToLoadIds, batchSizeToLoadObjects, new UpdateConsumer() {
 
 			private boolean hadOne = false;
 

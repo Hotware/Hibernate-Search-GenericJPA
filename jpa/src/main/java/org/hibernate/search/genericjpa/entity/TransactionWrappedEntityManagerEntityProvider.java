@@ -7,6 +7,7 @@
 package org.hibernate.search.genericjpa.entity;
 
 import javax.persistence.EntityManager;
+import javax.transaction.TransactionManager;
 import java.util.List;
 import java.util.Map;
 
@@ -14,19 +15,19 @@ import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 
 public class TransactionWrappedEntityManagerEntityProvider extends EntityManagerEntityProvider {
 
-	private final boolean useJTATransaction;
+	private final TransactionManager transactionManager;
 
 	public TransactionWrappedEntityManagerEntityProvider(
 			EntityManager em,
 			Map<Class<?>, String> idProperties,
-			boolean useJTATransaction) {
+			TransactionManager transactionManager) {
 		super( em, idProperties );
-		this.useJTATransaction = useJTATransaction;
+		this.transactionManager = transactionManager;
 	}
 
 	@Override
 	public Object get(Class<?> entityClass, Object id) {
-		JPATransactionWrapper tx = JPATransactionWrapper.get( this.getEm(), this.useJTATransaction );
+		JPATransactionWrapper tx = JPATransactionWrapper.get( this.getEm(), this.transactionManager );
 		tx.begin();
 		try {
 			Object ret = super.get( entityClass, id );
@@ -42,7 +43,7 @@ public class TransactionWrappedEntityManagerEntityProvider extends EntityManager
 	@SuppressWarnings("rawtypes")
 	@Override
 	public List getBatch(Class<?> entityClass, List<Object> ids) {
-		JPATransactionWrapper tx = JPATransactionWrapper.get( this.getEm(), this.useJTATransaction );
+		JPATransactionWrapper tx = JPATransactionWrapper.get( this.getEm(), this.transactionManager );
 		tx.begin();
 		try {
 			List ret = super.getBatch( entityClass, ids );
