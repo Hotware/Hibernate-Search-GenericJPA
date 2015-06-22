@@ -346,6 +346,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 							}
 							catch (InterruptedException e) {
 								LOGGER.log( Level.WARNING, "interrupted while optimizing on finish!", e );
+								throw e;
 							}
 						}
 					}
