@@ -78,6 +78,11 @@ public class HSearchQueryImpl implements HSearchQuery {
 	}
 
 	@Override
+	public <R> List<R> queryDto(Class<R> returnedType, String profileName) {
+		return this.queryExec.executeHSQuery( this.hsquery, returnedType, profileName );
+	}
+
+	@Override
 	public List<Object[]> queryProjection(String... projection) {
 		String[] projectedFieldsBefore = this.hsquery.getProjectedFields();
 		List<Object[]> ret;

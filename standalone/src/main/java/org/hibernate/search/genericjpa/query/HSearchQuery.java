@@ -44,6 +44,8 @@ public interface HSearchQuery {
 
 	<R> List<R> queryDto(Class<R> returnedType);
 
+	<R> List<R> queryDto(Class<R> returnedType, String profileName);
+
 	List<Object[]> queryProjection(String... projection);
 
 	int queryResultSize();

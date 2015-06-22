@@ -46,14 +46,8 @@ public final class Setup {
 		// can't touch this!
 	}
 
-	public static JPASearchFactoryController createUnmanagedSearchFactory(EntityManagerFactory emf) {
+	public static JPASearchFactoryController createSearchFactory(EntityManagerFactory emf) {
 		return createSearchFactory( emf, emf.getProperties() );
-	}
-
-	public static JPASearchFactoryController createUnmanagedSearchFactory(
-			EntityManagerFactory emf,
-			@SuppressWarnings("rawtypes") Map properties) {
-		return createSearchFactory( emf, properties );
 	}
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
@@ -129,7 +123,7 @@ public final class Setup {
 				Class<?> triggerSourceClass;
 				if ( triggerSource == null || (triggerSourceClass = Class.forName( triggerSource )) == null ) {
 					throw new SearchException(
-							"class specified in org.hibernate.search.genericjpa.searchfactory.triggerSource could not be found."
+							"class specified in " + TRIGGER_SOURCE_KEY + " could not be found."
 					);
 				}
 				updateSourceProvider = new SQLJPAUpdateSourceProvider(
@@ -147,16 +141,16 @@ public final class Setup {
 			if ( useJTATransactions ) {
 				LOGGER.info( "using JTA Transactions" );
 			}
-			JPASearchFactoryAdapter ret = new JPASearchFactoryAdapter(
-					name,
-					emf,
-					useJTATransactions,
-					indexRootTypes,
-					properties,
-					updateSourceProvider
+			JPASearchFactoryAdapter ret = new JPASearchFactoryAdapter();
+			ret.setName( name ).setEmf( emf ).setUseJTATransaction( useJTATransactions ).setIndexRootTypes(
+					indexRootTypes
+			).setProperties( properties ).setUpdateSourceProvider( updateSourceProvider ).setBatchSizeForUpdates(
+					batchSizeForUpdates
+			).setUpdateDelay(
+					updateDelay
 			);
-			ret.setBatchSizeForUpdates( batchSizeForUpdates );
-			ret.setUpdateDelay( updateDelay );
+
+			//initialize this
 			ret.init();
 
 			SearchFactoryRegistry.setup( name, ret );

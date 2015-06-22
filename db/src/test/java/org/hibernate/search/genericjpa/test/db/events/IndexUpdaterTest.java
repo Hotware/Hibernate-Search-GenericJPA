@@ -57,7 +57,7 @@ public class IndexUpdaterTest {
 	public void setup() {
 		this.changed = false;
 		this.deletedSorcerer = false;
-		MetadataProvider metadataProvider = MetadataUtil.getMetadataProvider( new SearchConfigurationImpl() );
+		MetadataProvider metadataProvider = MetadataUtil.getDummyMetadataProvider( new SearchConfigurationImpl() );
 		MetadataRehasher rehasher = new MetadataRehasher();
 		List<RehashedTypeMetadata> rehashedTypeMetadatas = new ArrayList<>();
 		rehashedTypeMetadataPerIndexRoot = new HashMap<>();

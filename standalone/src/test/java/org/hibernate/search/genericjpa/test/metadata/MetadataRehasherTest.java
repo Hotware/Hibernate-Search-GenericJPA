@@ -38,7 +38,7 @@ public class MetadataRehasherTest {
 	@Before
 	public void setup() {
 		SearchConfiguration searchConfiguration = new SearchConfigurationImpl();
-		metadataProvider = MetadataUtil.getMetadataProvider( searchConfiguration );
+		metadataProvider = MetadataUtil.getDummyMetadataProvider( searchConfiguration );
 		this.metadataRehasher = new MetadataRehasher();
 	}
 

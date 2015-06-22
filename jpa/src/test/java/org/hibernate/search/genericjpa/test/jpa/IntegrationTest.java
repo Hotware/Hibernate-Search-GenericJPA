@@ -26,6 +26,7 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.TermQuery;
+import org.eclipse.persistence.internal.jpa.transaction.JTATransactionWrapper;
 
 import org.hibernate.search.backend.impl.batch.DefaultBatchBackend;
 import org.hibernate.search.backend.spi.BatchBackend;
@@ -43,6 +44,7 @@ import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
 import org.hibernate.search.genericjpa.test.db.events.jpa.MetaModelParser;
 import org.hibernate.search.genericjpa.test.jpa.entities.Place;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
+import org.hibernate.search.genericjpa.test.jpa.entities.TestDto;
 import org.hibernate.search.genericjpa.util.Sleep;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.FullTextQuery;
@@ -126,8 +128,40 @@ public class IntegrationTest {
 	}
 
 	@Test
+	public void testQueryDto() {
+		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
+
+		List<TestDto> testDtos = fem.createFullTextQuery(
+				new TermQuery(
+						new Term(
+								"id",
+								String.valueOf( this.valinorId )
+						)
+				), Place.class
+		)
+				.queryDto( TestDto.class );
+		assertEquals( "Valinor", testDtos.get( 0 ).getField() );
+	}
+
+	@Test
+	public void testQueryDtoWithProfile() {
+		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
+
+		List<TestDto> testDtos = fem.createFullTextQuery(
+				new TermQuery(
+						new Term(
+								"id",
+								String.valueOf( this.valinorId )
+						)
+				), Place.class
+		)
+				.queryDto( TestDto.class, "ID_PROFILE" );
+		assertEquals( this.valinorId, testDtos.get( 0 ).getField() );
+	}
+
+	@Test
 	public void testObjectHandlerTask() {
-		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( em );
+		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
 		fem.beginSearchTransaction();
 		fem.purgeAll( Place.class );
 		fem.commitSearchTransaction();
@@ -137,9 +171,7 @@ public class IntegrationTest {
 		BatchBackend batchBackend = new DefaultBatchBackend( this.searchFactory.getSearchIntegrator(), null );
 		ObjectHandlerTask handler = new ObjectHandlerTask(
 				batchBackend, Place.class, this.searchFactory.getSearchIntegrator().getIndexBinding( Place.class ),
-				() -> {
-					return new EntityManagerEntityProvider( this.em, idProperties );
-				}, (x, y) -> {
+				() -> new EntityManagerEntityProvider( this.em, idProperties ), (x, y) -> {
 
 		}, this.emf.getPersistenceUnitUtil()
 		);
@@ -313,7 +345,7 @@ public class IntegrationTest {
 				MySQLTriggerSQLStringSource.class.getName()
 		);
 		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.type", "manual-updates" );
-		this.searchFactory = (JPASearchFactoryAdapter) Setup.createUnmanagedSearchFactory( this.emf, properties );
+		this.searchFactory = (JPASearchFactoryAdapter) Setup.createSearchFactory( this.emf, properties );
 		EntityManager em = emf.createEntityManager();
 		try {
 			EntityTransaction tx = em.getTransaction();

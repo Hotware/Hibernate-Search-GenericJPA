@@ -38,7 +38,7 @@ public class MetadataUtil {
 		throw new AssertionFailure( "can't touch this!" );
 	}
 
-	public static MetadataProvider getMetadataProvider(SearchConfiguration searchConfiguration) {
+	public static MetadataProvider getDummyMetadataProvider(SearchConfiguration searchConfiguration) {
 		ConfigContext configContext = new ConfigContext(
 				searchConfiguration, new BuildContext() {
 

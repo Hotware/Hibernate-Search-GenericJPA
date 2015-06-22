@@ -415,4 +415,9 @@ final class FullTextQueryImpl implements FullTextQuery {
 		return this.hsearchQuery.queryDto( returnedType );
 	}
 
+	@Override
+	public <T> List<T> queryDto(Class<T> returnedType, String profileName) {
+		return this.hsearchQuery.queryDto( returnedType, profileName );
+	}
+
 }

@@ -57,7 +57,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 
 	@Before
 	public void setup() throws SQLException {
-		MetadataProvider metadataProvider = MetadataUtil.getMetadataProvider( new SearchConfigurationImpl() );
+		MetadataProvider metadataProvider = MetadataUtil.getDummyMetadataProvider( new SearchConfigurationImpl() );
 		MetadataRehasher rehasher = new MetadataRehasher();
 		List<RehashedTypeMetadata> rehashedTypeMetadatas = new ArrayList<>();
 		rehashedTypeMetadataPerIndexRoot = new HashMap<>();

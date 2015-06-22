@@ -33,6 +33,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
 
 public class IndexOperationsTest {
 
@@ -271,6 +272,42 @@ public class IndexOperationsTest {
 		}
 	}
 
+	@Test
+	public void testHSQuery() {
+		this.factory.index( new Book( 1, "The Hitchhiker’s Guide to the Galaxy" ) );
+		this.assertCount( 1 );
+
+		{
+			Book book = this.factory.createQuery(
+					this.factory.buildQueryBuilder()
+							.forEntity( Book.class )
+							.get()
+							.keyword()
+							.onField( "id" )
+							.matching( 1 )
+							.createQuery(), Book.class
+			).queryDto( Book.class, "otherProfile" ).get( 0 );
+			assertNull( book.getId() );
+			assertNull( book.getTitle() );
+			assertEquals( "The Hitchhiker’s Guide to the Galaxy", book.getTitle2() );
+		}
+
+		{
+			Book book = this.factory.createQuery(
+					this.factory.buildQueryBuilder()
+							.forEntity( Book.class )
+							.get()
+							.keyword()
+							.onField( "id" )
+							.matching( 1 )
+							.createQuery(), Book.class
+			).queryDto( Book.class ).get( 0 );
+			assertEquals( "The Hitchhiker’s Guide to the Galaxy", book.getTitle() );
+			assertEquals( new Integer( 1 ), book.getId() );
+			assertNull( book.getTitle2() );
+		}
+	}
+
 	private void assertCount(int count) {
 		assertEquals(
 				count, this.factory.createQuery(
@@ -320,9 +357,11 @@ public class IndexOperationsTest {
 	public static final class Book {
 
 		@DtoField(fieldName = "id")
-		private int id;
+		private Integer id;
 		@DtoField(fieldName = "title")
 		private String title;
+		@DtoField(fieldName = "title", profileName = "otherProfile")
+		private String title2;
 
 		@Field
 		private Integer someInt;
@@ -362,12 +401,24 @@ public class IndexOperationsTest {
 			this.someDouble = someDouble;
 		}
 
+		public void setTitle(String title) {
+			this.title = title;
+		}
+
+		public String getTitle2() {
+			return title2;
+		}
+
+		public void setTitle2(String title2) {
+			this.title2 = title2;
+		}
+
 		@DocumentId
-		public int getId() {
+		public Integer getId() {
 			return id;
 		}
 
-		public void setId(int id) {
+		public void setId(Integer id) {
 			this.id = id;
 		}
 

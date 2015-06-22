@@ -67,7 +67,7 @@ public class Place {
 		this.cool = cool;
 	}
 
-	@Field(store = Store.NO, index = Index.YES)
+	@Field(store = Store.YES, index = Index.YES)
 	public String getName() {
 		return name;
 	}

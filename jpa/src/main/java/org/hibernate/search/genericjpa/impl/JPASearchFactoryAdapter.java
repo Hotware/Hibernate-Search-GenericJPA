@@ -39,7 +39,6 @@ import org.hibernate.search.genericjpa.db.events.UpdateSource;
 import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.entity.JPAReusableEntityProvider;
-import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.factory.SearchConfigurationImpl;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchFactory;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchFactoryImpl;
@@ -64,15 +63,17 @@ import org.hibernate.search.stat.Statistics;
 public final class JPASearchFactoryAdapter
 		implements StandaloneSearchFactory, UpdateConsumer, JPASearchFactoryController {
 
-	private final Logger LOGGER = Logger.getLogger( JPASearchFactoryAdapter.class.getName() );
-	private final String name;
-	private final EntityManagerFactory emf;
-	private final Properties properties;
-	private final UpdateSourceProvider updateSourceProvider;
-	private final List<Class<?>> indexRootTypes;
-	private final boolean useJTATransaction;
+	private static final Logger LOGGER = Logger.getLogger( JPASearchFactoryAdapter.class.getName() );
+
 	private final Set<UpdateConsumer> updateConsumers = new HashSet<>();
 	private final Lock lock = new ReentrantLock();
+
+	private String name;
+	private EntityManagerFactory emf;
+	private Properties properties;
+	private UpdateSourceProvider updateSourceProvider;
+	private List<Class<?>> indexRootTypes;
+	private boolean useJTATransaction;
 	private StandaloneSearchFactory searchFactory;
 	private UpdateSource updateSource;
 	private Set<Class<?>> indexRelevantEntities;
@@ -83,19 +84,6 @@ public final class JPASearchFactoryAdapter
 	private Map<Class<?>, RehashedTypeMetadata> rehashedTypeMetadataForIndexRoot;
 	private Map<Class<?>, List<Class<?>>> containedInIndexOf;
 	private ExtendedSearchIntegrator searchIntegrator;
-
-	@SuppressWarnings("unchecked")
-	public JPASearchFactoryAdapter(
-			String name, EntityManagerFactory emf, boolean useJTATransaction, List<Class<?>> indexRootTypes,
-			@SuppressWarnings("rawtypes") Map properties, UpdateSourceProvider updateSourceProvider) {
-		this.name = name;
-		this.emf = emf;
-		this.useJTATransaction = useJTATransaction;
-		this.indexRootTypes = indexRootTypes;
-		this.properties = new Properties();
-		this.properties.putAll( properties );
-		this.updateSourceProvider = updateSourceProvider;
-	}
 
 	@Override
 	public void updateEvent(List<UpdateInfo> updateInfo) {
@@ -133,15 +121,15 @@ public final class JPASearchFactoryAdapter
 
 	public final void init() {
 		SearchConfigurationImpl config;
-		if ( this.getConfigProperties() != null ) {
-			LOGGER.info( "using config @" + this.getConfigProperties() );
-			config = new SearchConfigurationImpl( this.getConfigProperties() );
+		if ( this.properties != null ) {
+			LOGGER.info( "using config @" + this.properties );
+			config = new SearchConfigurationImpl( this.properties );
 		}
 		else {
 			config = new SearchConfigurationImpl();
 		}
 
-		MetadataProvider metadataProvider = MetadataUtil.getMetadataProvider( config );
+		MetadataProvider metadataProvider = MetadataUtil.getDummyMetadataProvider( config );
 		MetadataRehasher rehasher = new MetadataRehasher();
 
 		List<RehashedTypeMetadata> rehashedTypeMetadatas = new ArrayList<>();
@@ -187,6 +175,79 @@ public final class JPASearchFactoryAdapter
 		}
 	}
 
+	public String getName() {
+		return this.name;
+	}
+
+	public JPASearchFactoryAdapter setName(String name) {
+		this.name = name;
+		return this;
+	}
+
+	public EntityManagerFactory getEmf() {
+		return this.emf;
+	}
+
+	public JPASearchFactoryAdapter setEmf(EntityManagerFactory emf) {
+		this.emf = emf;
+		return this;
+	}
+
+	public boolean isUseJTATransaction() {
+		return this.useJTATransaction;
+	}
+
+	public JPASearchFactoryAdapter setUseJTATransaction(boolean useJTATransaction) {
+		this.useJTATransaction = useJTATransaction;
+		return this;
+	}
+
+	public List<Class<?>> getIndexRootTypes() {
+		return this.indexRootTypes;
+	}
+
+	public JPASearchFactoryAdapter setIndexRootTypes(List<Class<?>> indexRootTypes) {
+		this.indexRootTypes = indexRootTypes;
+		return this;
+	}
+
+	public Properties getProperties() {
+		return this.properties;
+	}
+
+	public JPASearchFactoryAdapter setProperties(Map properties) {
+		this.properties = new Properties();
+		this.properties.putAll( properties );
+		return this;
+	}
+
+	public UpdateSourceProvider getUpdateSourceProvider() {
+		return this.updateSourceProvider;
+	}
+
+	public JPASearchFactoryAdapter setUpdateSourceProvider(UpdateSourceProvider updateSourceProvider) {
+		this.updateSourceProvider = updateSourceProvider;
+		return this;
+	}
+
+	public int getBatchSizeForUpdates() {
+		return this.batchSizeForUpdates;
+	}
+
+	public JPASearchFactoryAdapter setBatchSizeForUpdates(int batchSizeForUpdates) {
+		this.batchSizeForUpdates = batchSizeForUpdates;
+		return this;
+	}
+
+	public int getUpdateDelay() {
+		return this.updateDelay;
+	}
+
+	public JPASearchFactoryAdapter setUpdateDelay(int updateDelay) {
+		this.updateDelay = updateDelay;
+		return this;
+	}
+
 	@Override
 	public void pauseUpdating(boolean pause) {
 		if ( this.updateSource != null ) {
@@ -202,15 +263,6 @@ public final class JPASearchFactoryAdapter
 		}
 		else {
 			return ImplementationFactory.createFullTextEntityManager( em, this );
-		}
-	}
-
-	public void shutdown() {
-		try {
-			this.close();
-		}
-		catch (IOException e) {
-			throw new SearchException( e );
 		}
 	}
 
@@ -345,72 +397,24 @@ public final class JPASearchFactoryAdapter
 		this.searchFactory.purge( entityClass, query, tc );
 	}
 
+	@Override
 	public void flushToIndexes(TransactionContext tc) {
 		this.searchFactory.flushToIndexes( tc );
 	}
 
+	@Override
 	public IndexedTypeDescriptor getIndexedTypeDescriptor(Class<?> entityType) {
 		return this.searchFactory.getIndexedTypeDescriptor( entityType );
 	}
 
-	public String getName() {
-		return this.name;
-	}
-
+	@Override
 	public Set<Class<?>> getIndexedTypes() {
 		return this.searchFactory.getIndexedTypes();
 	}
 
+	@Override
 	public <T> T unwrap(Class<T> cls) {
 		return this.searchFactory.unwrap( cls );
-	}
-
-	/**
-	 * @return the updateDelay
-	 */
-	public int getUpdateDelay() {
-		return this.updateDelay;
-	}
-
-	/**
-	 * @param updateDelay the updateDelay to set
-	 */
-	public void setUpdateDelay(int updateDelay) {
-		this.updateDelay = updateDelay;
-	}
-
-	/**
-	 * @return the batchSizeForUpdates
-	 */
-	public int getBatchSizeForUpdates() {
-		return this.batchSizeForUpdates;
-	}
-
-	/**
-	 * @param batchSizeForUpdates the batchSizeForUpdates to set
-	 */
-	public void setBatchSizeForUpdates(int batchSizeForUpdates) {
-		this.batchSizeForUpdates = batchSizeForUpdates;
-	}
-
-	public IndexUpdater getIndexUpdater() {
-		return this.indexUpdater;
-	}
-
-	private EntityManagerFactory getEmf() {
-		return this.emf;
-	}
-
-	private Properties getConfigProperties() {
-		return this.properties;
-	}
-
-	private List<Class<?>> getIndexRootTypes() {
-		return this.indexRootTypes;
-	}
-
-	private boolean isUseJTATransaction() {
-		return this.useJTATransaction;
 	}
 
 	@Override

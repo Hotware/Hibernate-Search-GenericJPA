@@ -173,4 +173,6 @@ public interface FullTextQuery extends Query, ProjectionConstants {
 
 	<T> List<T> queryDto(Class<T> returnedType);
 
+	<T> List<T> queryDto(Class<T> returnedType, String profileName);
+
 }
