@@ -334,33 +334,33 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 			@Override
 			public void run() {
 				try {
-					try {
-						MassIndexerImpl.this.awaitJobsFinish();
-						if ( MassIndexerImpl.this.optimizeOnFinish ) {
-							for ( Class<?> rootEntity : MassIndexerImpl.this.rootTypes ) {
-								try {
-									MassIndexerImpl.this.batchBackend.enqueueAsyncWork(
-											new OptimizeLuceneWork(
-													rootEntity
-											)
-									);
-								}
-								catch (InterruptedException e) {
-									LOGGER.log( Level.WARNING, "interrupted while optimizing on finish!", e );
-								}
+					MassIndexerImpl.this.awaitJobsFinish();
+					if ( MassIndexerImpl.this.optimizeOnFinish ) {
+						for ( Class<?> rootEntity : MassIndexerImpl.this.rootTypes ) {
+							try {
+								MassIndexerImpl.this.batchBackend.enqueueAsyncWork(
+										new OptimizeLuceneWork(
+												rootEntity
+										)
+								);
+							}
+							catch (InterruptedException e) {
+								LOGGER.log( Level.WARNING, "interrupted while optimizing on finish!", e );
 							}
 						}
 					}
-					finally {
-						// flush all the works that are left in the queue EVEN if we get interrupted
-						MassIndexerImpl.this.batchBackend.flush( new HashSet<>( MassIndexerImpl.this.rootTypes ) );
-					}
-					MassIndexerImpl.this.closeExecutorServices();
-					MassIndexerImpl.this.closeAllOpenEntityManagers();
-					MassIndexerImpl.this.cleanUpLatch.countDown();
 				}
 				catch (InterruptedException e) {
 					throw new SearchException( "Error during massindexing!", e );
+				}
+				finally {
+					// flush all the works that are left in the queue EVEN if we get interrupted
+					MassIndexerImpl.this.batchBackend.flush( new HashSet<>( MassIndexerImpl.this.rootTypes ) );
+
+					//we also have to finish up
+					MassIndexerImpl.this.closeExecutorServices();
+					MassIndexerImpl.this.closeAllOpenEntityManagers();
+					MassIndexerImpl.this.cleanUpLatch.countDown();
 				}
 			}
 
