@@ -29,7 +29,7 @@ public class JNDILookupTransactionManagerProvider implements TransactionManagerP
 		if ( jndiName == null ) {
 			throw new SearchException( JNDI_KEY + " must not be null if using: " + JNDILookupTransactionManagerProvider.class );
 		}
-		TransactionManager ret = null;
+		TransactionManager ret;
 		try {
 			ret = InitialContext.doLookup( jndiName );
 		}
