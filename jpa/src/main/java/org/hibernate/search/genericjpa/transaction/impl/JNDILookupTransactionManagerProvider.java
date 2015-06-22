@@ -17,15 +17,17 @@ import org.hibernate.search.genericjpa.transaction.TransactionManagerProvider;
 import static org.hibernate.search.genericjpa.Constants.TRANSACTION_MANAGER_JNDI_KEY;
 
 /**
- * Created by Martin on 22.06.2015.
+ * {@link TransactionManagerProvider} that looks up the TransactionManager per JNDI lookup in {@link InitialContext} of the property specified value in {@value #JNDI_KEY}
  */
 public class JNDILookupTransactionManagerProvider implements TransactionManagerProvider {
 
+	private static final String JNDI_KEY = TRANSACTION_MANAGER_JNDI_KEY;
+
 	@Override
 	public TransactionManager get(ClassLoader classLoader, Map properties) {
-		String jndiName = (String) properties.get( TRANSACTION_MANAGER_JNDI_KEY );
+		String jndiName = (String) properties.get( JNDI_KEY );
 		if ( jndiName == null ) {
-			throw new SearchException( TRANSACTION_MANAGER_JNDI_KEY + " must not be null if using: " + JNDILookupTransactionManagerProvider.class );
+			throw new SearchException( JNDI_KEY + " must not be null if using: " + JNDILookupTransactionManagerProvider.class );
 		}
 		TransactionManager ret = null;
 		try {

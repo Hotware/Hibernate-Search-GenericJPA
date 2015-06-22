@@ -9,10 +9,14 @@ package org.hibernate.search.genericjpa.transaction;
 import javax.transaction.TransactionManager;
 import java.util.Map;
 
+import org.hibernate.search.genericjpa.Constants;
+
 /**
- * Created by Martin on 22.06.2015.
+ * Utility interface to abstract the lookup of a TransactionManager. Users can specify their own logic for lookup, by implementing it and setting {@value #TRANSACTION_MANAGER_CLASS_KEY}
  */
 public interface TransactionManagerProvider {
+
+	String TRANSACTION_MANAGER_CLASS_KEY = Constants.TRANSACTION_MANAGER_PROVIDER_KEY;
 
 	TransactionManager get(ClassLoader classLoader, Map properties);
 
