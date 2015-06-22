@@ -122,6 +122,7 @@ public final class Setup {
 				throw new SearchException( "there is already a searchfactory running for name: " + name + ". close it first!" );
 			}
 
+			//what UpdateSource to be used
 			UpdateSourceProvider updateSourceProvider;
 			if ( "sql".equals( type ) ) {
 				String triggerSource = (String) properties.get( TRIGGER_SOURCE_KEY );
