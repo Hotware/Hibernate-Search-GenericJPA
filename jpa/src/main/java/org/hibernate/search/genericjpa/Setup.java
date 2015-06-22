@@ -6,7 +6,6 @@
  */
 package org.hibernate.search.genericjpa;
 
-import javax.naming.InitialContext;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.metamodel.EntityType;
 import javax.transaction.TransactionManager;
@@ -57,26 +56,14 @@ public final class Setup {
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	public static JPASearchFactoryController createSearchFactory(EntityManagerFactory emf, Map properties) {
-		boolean useJTATransactions = Boolean.parseBoolean(
-				(String) properties.getOrDefault(
-						USE_JTA_TRANSACTIONS_KEY,
-						USE_JTA_TRANSACTIONS_DEFAULT_VALUE
-				)
-		);
 		try {
+			LOGGER.info( "using hibernate-search properties: " + properties );
+
 			// hack... but OpenJPA wants this so it can enhance the classes.
 			emf.createEntityManager().close();
 
-			// get all the updates classes marked by an @Updates annotation
-			List<Class<?>> updateClasses = emf.getMetamodel().getEntities().stream().map(
-					EntityType::getBindableJavaType
-			).filter(
-					(entityClass) -> entityClass.isAnnotationPresent( Updates.class )
-			).collect( Collectors.toList() );
-
-			// get all the root types maked by an @InIndex and @Indexed (@Indexed isn't sufficient here!)
+			// get all the root types marked by an @InIndex and @Indexed (@Indexed isn't sufficient here!)
 			List<Class<?>> indexRootTypes = new ArrayList<>();
-
 			emf.getMetamodel().getEntities().stream().map( EntityType::getBindableJavaType ).filter(
 					(entityClass) -> entityClass.isAnnotationPresent( InIndex.class ) && entityClass.isAnnotationPresent(
 							Indexed.class
@@ -84,7 +71,6 @@ public final class Setup {
 			).forEach(
 					indexRootTypes::add
 			);
-
 			// user specified types are supported. even those that are no JPA entities!
 			String additionalIndexedTypesValue = (String) properties.get( ADDITIONAL_INDEXED_TYPES_KEY );
 			if ( additionalIndexedTypesValue != null ) {
@@ -96,31 +82,19 @@ public final class Setup {
 				}
 			}
 
-			LOGGER.info( "using hibernate-search properties: " + properties );
 			// get the basic properties
 			String name = SearchFactoryRegistry.getNameProperty( properties );
-			String type = (String) properties.getOrDefault(
-					SEARCH_FACTORY_TYPE_KEY,
-					SEARCH_FACTORY_TYPE_DEFAULT_VALUE
-			);
-			Integer batchSizeForUpdates = Integer
-					.parseInt(
-							(String) properties.getOrDefault(
-									BATCH_SIZE_FOR_UPDATES_KEY,
-									BATCH_SIZE_FOR_UPDATES_DEFAULT_VALUE
-							)
-					);
-			Integer updateDelay = Integer.parseInt(
-					(String) properties.getOrDefault(
-							UPDATE_DELAY_KEY,
-							UPDATE_DELAY_DEFAULT_VALUE
-					)
-			);
-
 			if ( SearchFactoryRegistry.getSearchFactory( name ) != null ) {
 				throw new SearchException( "there is already a searchfactory running for name: " + name + ". close it first!" );
 			}
 
+
+			boolean useJTATransactions = Boolean.parseBoolean(
+					(String) properties.getOrDefault(
+							USE_JTA_TRANSACTIONS_KEY,
+							USE_JTA_TRANSACTIONS_DEFAULT_VALUE
+					)
+			);
 			TransactionManager transactionManager = null;
 			if ( useJTATransactions ) {
 				LOGGER.info( "using JTA Transactions" );
@@ -142,6 +116,16 @@ public final class Setup {
 				);
 			}
 
+			String type = (String) properties.getOrDefault(
+					SEARCH_FACTORY_TYPE_KEY,
+					SEARCH_FACTORY_TYPE_DEFAULT_VALUE
+			);
+			// get all the updates classes marked by an @Updates annotation
+			List<Class<?>> updateClasses = emf.getMetamodel().getEntities().stream().map(
+					EntityType::getBindableJavaType
+			).filter(
+					(entityClass) -> entityClass.isAnnotationPresent( Updates.class )
+			).collect( Collectors.toList() );
 			//what UpdateSource to be used
 			UpdateSourceProvider updateSourceProvider;
 			if ( "sql".equals( type ) ) {
@@ -164,6 +148,19 @@ public final class Setup {
 				throw new SearchException( "unrecognized type : " + type );
 			}
 
+			Integer batchSizeForUpdates = Integer
+					.parseInt(
+							(String) properties.getOrDefault(
+									BATCH_SIZE_FOR_UPDATES_KEY,
+									BATCH_SIZE_FOR_UPDATES_DEFAULT_VALUE
+							)
+					);
+			Integer updateDelay = Integer.parseInt(
+					(String) properties.getOrDefault(
+							UPDATE_DELAY_KEY,
+							UPDATE_DELAY_DEFAULT_VALUE
+					)
+			);
 
 			JPASearchFactoryAdapter ret = new JPASearchFactoryAdapter();
 			ret.setName( name ).setEmf( emf ).setUseJTATransaction( useJTATransactions ).setIndexRootTypes(
