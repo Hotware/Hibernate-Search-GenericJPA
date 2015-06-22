@@ -19,13 +19,13 @@ import static org.hibernate.search.genericjpa.Constants.TRANSACTION_MANAGER_JNDI
 /**
  * Created by Martin on 22.06.2015.
  */
-public class JNDILookupTransactionmanagerProvider implements TransactionManagerProvider {
+public class JNDILookupTransactionManagerProvider implements TransactionManagerProvider {
 
 	@Override
 	public TransactionManager get(ClassLoader classLoader, Map properties) {
 		String jndiName = (String) properties.get( TRANSACTION_MANAGER_JNDI_KEY );
 		if ( jndiName == null ) {
-			throw new SearchException( TRANSACTION_MANAGER_JNDI_KEY + " must not be null if using: " + JNDILookupTransactionmanagerProvider.class );
+			throw new SearchException( TRANSACTION_MANAGER_JNDI_KEY + " must not be null if using: " + JNDILookupTransactionManagerProvider.class );
 		}
 		TransactionManager ret = null;
 		try {
