@@ -24,6 +24,9 @@ public interface JPASearchFactoryController extends Closeable {
 
 	void pauseUpdating(boolean pause);
 
+	/**
+	 * @param em may be null if you only want to do index related operations
+	 */
 	FullTextEntityManager getFullTextEntityManager(EntityManager em);
 
 	void addUpdateConsumer(UpdateConsumer updateConsumer);

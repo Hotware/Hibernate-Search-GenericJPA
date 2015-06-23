@@ -38,6 +38,7 @@ import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
 import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
+import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchFactory;
 import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
 import org.hibernate.search.genericjpa.test.db.events.jpa.MetaModelParser;
@@ -140,6 +141,44 @@ public class IntegrationTest {
 		)
 				.queryDto( TestDto.class );
 		assertEquals( "Valinor", testDtos.get( 0 ).getField() );
+	}
+
+	@Test
+	public void testNullEntityManager() {
+		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( null );
+		try {
+			//basic queries are allowed
+			{
+				FullTextQuery ftQuery = fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class );
+				assertEquals( 2, ftQuery.getResultSize() );
+				assertEquals( 2, ftQuery.queryDto( TestDto.class ).size() );
+			}
+
+			//purging as well
+			fem.beginSearchTransaction();
+			fem.purgeAll( Place.class );
+			fem.commitSearchTransaction();
+			{
+				FullTextQuery ftQuery = fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class );
+				assertEquals( 0, ftQuery.getResultSize() );
+				assertEquals( 0, ftQuery.queryDto( TestDto.class ).size() );
+			}
+
+			//should work as well
+			fem.createIndexer().startAndWait();
+			{
+				FullTextQuery ftQuery = fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class );
+				assertEquals( 2, ftQuery.getResultSize() );
+				assertEquals( 2, ftQuery.queryDto( TestDto.class ).size() );
+			}
+			//TODO: do we really need to test this for purgeByTerm (?)
+		}
+		catch (InterruptedException e) {
+			throw new SearchException( e );
+		}
+		finally {
+			fem.close();
+		}
 	}
 
 	@Test
