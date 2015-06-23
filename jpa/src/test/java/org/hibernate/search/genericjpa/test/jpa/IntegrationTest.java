@@ -29,6 +29,7 @@ import org.apache.lucene.search.TermQuery;
 
 import org.hibernate.search.backend.impl.batch.DefaultBatchBackend;
 import org.hibernate.search.backend.spi.BatchBackend;
+import org.hibernate.search.genericjpa.Constants;
 import org.hibernate.search.genericjpa.Setup;
 import org.hibernate.search.genericjpa.batchindexing.impl.IdProducerTask;
 import org.hibernate.search.genericjpa.batchindexing.impl.ObjectHandlerTask;
@@ -42,6 +43,7 @@ import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchFactory;
 import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
 import org.hibernate.search.genericjpa.test.db.events.jpa.MetaModelParser;
+import org.hibernate.search.genericjpa.test.jpa.entities.NonJPAEntity;
 import org.hibernate.search.genericjpa.test.jpa.entities.Place;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
 import org.hibernate.search.genericjpa.test.jpa.entities.TestDto;
@@ -304,6 +306,14 @@ public class IntegrationTest {
 	}
 
 	@Test
+	public void testMassIndexerWithNonJPAEntityPresent() throws InterruptedException {
+		//this shouldn't throw an Exception while having a NonJPAEntity present?
+		this.searchFactory.createMassIndexer().startAndWait();
+
+		//this should be sufficient even though we are not checking for index sizes
+	}
+
+	@Test
 	public void testDeleteByQuery() {
 		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
 
@@ -382,6 +392,7 @@ public class IntegrationTest {
 				"org.hibernate.search.genericjpa.searchfactory.triggerSource",
 				MySQLTriggerSQLStringSource.class.getName()
 		);
+		properties.setProperty( Constants.ADDITIONAL_INDEXED_TYPES_KEY, NonJPAEntity.class.getName() );
 		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.type", "manual-updates" );
 		this.searchFactory = (JPASearchFactoryAdapter) Setup.createSearchFactory( this.emf, properties );
 		EntityManager em = emf.createEntityManager();

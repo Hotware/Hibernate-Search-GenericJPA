@@ -89,8 +89,7 @@ public final class Setup {
 			if ( SearchFactoryRegistry.getSearchFactory( name ) != null ) {
 				throw new SearchException( "there is already a searchfactory running for name: " + name + ". close it first!" );
 			}
-
-
+			
 			boolean useJTATransactions = Boolean.parseBoolean(
 					(String) properties.getOrDefault(
 							USE_JTA_TRANSACTIONS_KEY,
