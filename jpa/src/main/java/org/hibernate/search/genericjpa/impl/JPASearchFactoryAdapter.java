@@ -74,6 +74,7 @@ public final class JPASearchFactoryAdapter
 	private Properties properties;
 	private UpdateSourceProvider updateSourceProvider;
 	private List<Class<?>> indexRootTypes;
+	private List<Class<?>> jpaRootTypes;
 	private boolean useJTATransaction;
 	private StandaloneSearchFactory searchFactory;
 	private UpdateSource updateSource;
@@ -223,6 +224,15 @@ public final class JPASearchFactoryAdapter
 		return this;
 	}
 
+	public List<Class<?>> getJpaRootTypes() {
+		return jpaRootTypes;
+	}
+
+	public JPASearchFactoryAdapter setJpaRootTypes(List<Class<?>> jpaRootTypes) {
+		this.jpaRootTypes = jpaRootTypes;
+		return this;
+	}
+
 	public Properties getProperties() {
 		return this.properties;
 	}
@@ -283,7 +293,7 @@ public final class JPASearchFactoryAdapter
 	}
 
 	public MassIndexer createMassIndexer() {
-		return this.createMassIndexer( this.indexRootTypes );
+		return this.createMassIndexer( this.jpaRootTypes );
 	}
 
 	public ExtendedSearchIntegrator getSearchIntegrator() {

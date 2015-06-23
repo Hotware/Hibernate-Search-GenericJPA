@@ -63,14 +63,16 @@ public final class Setup {
 			emf.createEntityManager().close();
 
 			// get all the root types marked by an @InIndex and @Indexed (@Indexed isn't sufficient here!)
-			List<Class<?>> indexRootTypes = new ArrayList<>();
+			List<Class<?>> jpaRootTypes = new ArrayList<>();
 			emf.getMetamodel().getEntities().stream().map( EntityType::getBindableJavaType ).filter(
 					(entityClass) -> entityClass.isAnnotationPresent( InIndex.class ) && entityClass.isAnnotationPresent(
 							Indexed.class
 					)
 			).forEach(
-					indexRootTypes::add
+					jpaRootTypes::add
 			);
+
+			List<Class<?>> indexRootTypes = new ArrayList<>( jpaRootTypes );
 			// user specified types are supported. even those that are no JPA entities!
 			String additionalIndexedTypesValue = (String) properties.get( ADDITIONAL_INDEXED_TYPES_KEY );
 			if ( additionalIndexedTypesValue != null ) {
@@ -163,13 +165,22 @@ public final class Setup {
 			);
 
 			JPASearchFactoryAdapter ret = new JPASearchFactoryAdapter();
-			ret.setName( name ).setEmf( emf ).setUseJTATransaction( useJTATransactions ).setIndexRootTypes(
-					indexRootTypes
-			).setProperties( properties ).setUpdateSourceProvider( updateSourceProvider ).setBatchSizeForUpdates(
-					batchSizeForUpdates
-			).setUpdateDelay(
-					updateDelay
-			).setTransactionManager( transactionManager );
+			ret.setName( name )
+					.setEmf( emf )
+					.setUseJTATransaction( useJTATransactions )
+					.setJpaRootTypes( jpaRootTypes )
+					.setIndexRootTypes(
+							indexRootTypes
+					)
+					.setProperties( properties )
+					.setUpdateSourceProvider( updateSourceProvider )
+					.setBatchSizeForUpdates(
+							batchSizeForUpdates
+					)
+					.setUpdateDelay(
+							updateDelay
+					)
+					.setTransactionManager( transactionManager );
 
 			//initialize this
 			ret.init();
