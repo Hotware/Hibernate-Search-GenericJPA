@@ -57,7 +57,7 @@ public class JPAUpdateSource implements UpdateSource {
 	private final Map<Class<?>, EventModelInfo> updateClassToEventModelInfo;
 	private final Map<Class<?>, Function<Object, Object>> idAccessorMap;
 	private final ScheduledExecutorService exec;
-	private final  TransactionManager transactionManager;
+	private final TransactionManager transactionManager;
 	private final ReentrantLock lock = new ReentrantLock();
 	private List<UpdateConsumer> updateConsumers;
 	private ScheduledFuture<?> job;
@@ -239,8 +239,7 @@ public class JPAUpdateSource implements UpdateSource {
 								long processed = 0;
 								while ( query.next() ) {
 									// we have no order problems here since
-									// the query does
-									// the ordering for us
+									// the query does the ordering for us
 									Object val = query.get();
 									toRemove.add( new Object[] {query.entityClass(), val} );
 									EventModelInfo evi = this.updateClassToEventModelInfo.get( query.entityClass() );
