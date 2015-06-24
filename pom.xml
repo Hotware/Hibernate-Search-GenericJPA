@@ -1,176 +1,183 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.hibernate</groupId>
-	<artifactId>hibernate-search-genericjpa-parent</artifactId>
-	<version>0.2.0.0</version>
-	<packaging>pom</packaging>
-	<name>hibernate-search-genericjpa-parent</name>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.hibernate</groupId>
+    <artifactId>hibernate-search-genericjpa-parent</artifactId>
+    <version>0.2.0.0</version>
+    <packaging>pom</packaging>
+    <name>hibernate-search-genericjpa-parent</name>
 
-	<modules>
-		<module>build-config</module>
-		<module>util</module>
-		<module>standalone</module>
-		<module>db</module>
-		<module>jpa</module>
-		<module>ejb</module>
-		<module>integrationtest/glassfish</module>
-		<module>integrationtest/tomee</module>
-		<module>integrationtest/wildfly</module>
-	</modules>
+    <modules>
+        <module>build-config</module>
+        <module>util</module>
+        <module>standalone</module>
+        <module>db</module>
+        <module>jpa</module>
+        <module>ejb</module>
+        <module>integrationtest/glassfish</module>
+        <module>integrationtest/tomee</module>
+        <module>integrationtest/wildfly</module>
+        <module>integrationtest/infinispan</module>
+    </modules>
 
-	<description>
-		Use the JPA Provider you want but still keep Hibernate-Search
-	</description>
-	<url>https://github.com/Hotware/Hibernate-Search-JPA</url>
+    <description>
+        Use the JPA Provider you want but still keep Hibernate-Search
+    </description>
+    <url>https://github.com/Hotware/Hibernate-Search-JPA</url>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-		<hibernate-search.version>5.3.0.Beta1</hibernate-search.version>
-		<arquillian.version>1.1.8.Final</arquillian.version>
-	</properties>
+        <hibernate-search.version>5.3.0.Beta1</hibernate-search.version>
+        <arquillian.version>1.1.8.Final</arquillian.version>
+    </properties>
 
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>junit</groupId>
-				<artifactId>junit</artifactId>
-				<version>4.11</version>
-				<scope>test</scope>
-			</dependency>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.11</version>
+                <scope>test</scope>
+            </dependency>
 
-			<dependency>
-				<groupId>org.hibernate</groupId>
-				<artifactId>hibernate-search-engine</artifactId>
-				<version>${hibernate-search.version}</version>
-				<scope>provided</scope>
-			</dependency>
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-search-engine</artifactId>
+                <version>${hibernate-search.version}</version>
+                <scope>provided</scope>
+            </dependency>
 
-			<dependency>
-				<groupId>javax.transaction</groupId>
-				<artifactId>jta</artifactId>
-				<version>1.1</version>
-			</dependency>
+            <dependency>
+                <groupId>javax.transaction</groupId>
+                <artifactId>jta</artifactId>
+                <version>1.1</version>
+            </dependency>
 
-			<!-- connection pooling -->
-			<dependency>
-				<groupId>commons-dbcp</groupId>
-				<artifactId>commons-dbcp</artifactId>
-				<version>1.4</version>
-				<scope>test</scope>
-			</dependency>
+            <!-- connection pooling -->
+            <dependency>
+                <groupId>commons-dbcp</groupId>
+                <artifactId>commons-dbcp</artifactId>
+                <version>1.4</version>
+                <scope>test</scope>
+            </dependency>
 
-			<!-- our in-memory database provider -->
-			<dependency>
-				<groupId>org.hsqldb</groupId>
-				<artifactId>hsqldb</artifactId>
-				<version>2.2.8</version>
-				<scope>provided</scope>
-			</dependency>
+            <!-- our in-memory database provider -->
+            <dependency>
+                <groupId>org.hsqldb</groupId>
+                <artifactId>hsqldb</artifactId>
+                <version>2.2.8</version>
+                <scope>provided</scope>
+            </dependency>
 
-			<dependency>
-				<groupId>com.h2database</groupId>
-				<artifactId>h2</artifactId>
-				<version>1.4.187</version>
-				<scope>provided</scope>
-			</dependency>
+            <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>1.4.187</version>
+                <scope>provided</scope>
+            </dependency>
 
-			<dependency>
-				<groupId>mysql</groupId>
-				<artifactId>mysql-connector-java</artifactId>
-				<version>5.1.34</version>
-				<scope>test</scope>
-			</dependency>
+            <dependency>
+                <groupId>mysql</groupId>
+                <artifactId>mysql-connector-java</artifactId>
+                <version>5.1.34</version>
+                <scope>test</scope>
+            </dependency>
 
-			<!-- Eclipselink -->
-			<dependency>
-				<groupId>org.eclipse.persistence</groupId>
-				<artifactId>eclipselink</artifactId>
-				<version>2.5.0</version>
-				<scope>test</scope>
-			</dependency>
+            <!-- Eclipselink -->
+            <dependency>
+                <groupId>org.eclipse.persistence</groupId>
+                <artifactId>eclipselink</artifactId>
+                <version>2.5.0</version>
+                <scope>test</scope>
+            </dependency>
 
-			<!-- code gen -->
-			<dependency>
-				<groupId>com.squareup</groupId>
-				<artifactId>javapoet</artifactId>
-				<version>1.0.0</version>
-			</dependency>
+            <!-- code gen -->
+            <dependency>
+                <groupId>com.squareup</groupId>
+                <artifactId>javapoet</artifactId>
+                <version>1.0.0</version>
+            </dependency>
 
-			<dependency>
-				<groupId>javax</groupId>
-				<artifactId>javaee-api</artifactId>
-				<version>7.0</version>
-			</dependency>
-			
-			<dependency>
-				<groupId>javax.enterprise.concurrent</groupId>
-				<artifactId>javax.enterprise.concurrent-api</artifactId>
-				<version>1.0</version>
-			</dependency>
+            <dependency>
+                <groupId>javax</groupId>
+                <artifactId>javaee-api</artifactId>
+                <version>7.0</version>
+            </dependency>
 
-			<dependency>
-				<groupId>org.jboss.arquillian</groupId>
-				<artifactId>arquillian-bom</artifactId>
-				<version>${arquillian.version}</version>
-				<scope>import</scope>
-				<type>pom</type>
-			</dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-directory-provider</artifactId>
+                <version>7.2.0.Final</version>
+            </dependency>
 
-			<dependency>
-				<groupId>org.jboss.arquillian.junit</groupId>
-				<artifactId>arquillian-junit-container</artifactId>
-				<version>${arquillian.version}</version>
-			</dependency>
+            <dependency>
+                <groupId>javax.enterprise.concurrent</groupId>
+                <artifactId>javax.enterprise.concurrent-api</artifactId>
+                <version>1.0</version>
+            </dependency>
 
-		</dependencies>
-	</dependencyManagement>
+            <dependency>
+                <groupId>org.jboss.arquillian</groupId>
+                <artifactId>arquillian-bom</artifactId>
+                <version>${arquillian.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
 
-	<build>
-		<plugins>
+            <dependency>
+                <groupId>org.jboss.arquillian.junit</groupId>
+                <artifactId>arquillian-junit-container</artifactId>
+                <version>${arquillian.version}</version>
+            </dependency>
 
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-deploy-plugin</artifactId>
-				<version>2.8.1</version>
-			</plugin>
+        </dependencies>
+    </dependencyManagement>
 
-			<plugin>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.17</version>
-			</plugin>
+    <build>
+        <plugins>
 
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-resources-plugin</artifactId>
-				<version>2.7</version>
-			</plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.8.1</version>
+            </plugin>
 
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.1</version>
-				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
-					<encoding>UTF-8</encoding>
-				</configuration>
-			</plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.17</version>
+            </plugin>
 
-			<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-checkstyle-plugin</artifactId> 
-				<version>2.12.1</version> <dependencies> <dependency> <groupId>org.hibernate</groupId> 
-				<artifactId>hibernate-search-genericjpa-build-config</artifactId> <version>${project.version}</version> 
-				</dependency> </dependencies> <configuration> -->
-			<!-- Location is relative to the classpath -->
-			<!-- <configLocation>checkstyle.xml</configLocation> <consoleOutput>true</consoleOutput> 
-				<failsOnError>false</failsOnError> <violationSeverity>error</violationSeverity> 
-				<includeTestSourceDirectory>true</includeTestSourceDirectory> <resourceIncludes>**/*.xml,**/*.properties</resourceIncludes> -->
-			<!-- generated respectively copied code -->
-			<!-- <excludes>**/Generated.java,**/TypeHelper*.java,**/MatchSuppressor.java,**/CommentSuppressor.java,**/NeverSuppress.java</excludes> 
-				</configuration> <executions> <execution> <id>check-style</id> <phase>verify</phase> 
-				<goals> <goal>checkstyle</goal> </goals> </execution> </executions> </plugin> -->
-		</plugins>
-	</build>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.7</version>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+
+            <!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>2.12.1</version> <dependencies> <dependency> <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-search-genericjpa-build-config</artifactId> <version>${project.version}</version>
+                </dependency> </dependencies> <configuration> -->
+            <!-- Location is relative to the classpath -->
+            <!-- <configLocation>checkstyle.xml</configLocation> <consoleOutput>true</consoleOutput>
+                <failsOnError>false</failsOnError> <violationSeverity>error</violationSeverity>
+                <includeTestSourceDirectory>true</includeTestSourceDirectory> <resourceIncludes>**/*.xml,**/*.properties</resourceIncludes> -->
+            <!-- generated respectively copied code -->
+            <!-- <excludes>**/Generated.java,**/TypeHelper*.java,**/MatchSuppressor.java,**/CommentSuppressor.java,**/NeverSuppress.java</excludes>
+                </configuration> <executions> <execution> <id>check-style</id> <phase>verify</phase>
+                <goals> <goal>checkstyle</goal> </goals> </execution> </executions> </plugin> -->
+        </plugins>
+    </build>
 
 </project>

@@ -21,45 +21,45 @@ import org.hibernate.search.genericjpa.annotations.Updates;
 @Updates(tableName = "Game_VendorUpdates", originalTableName = "Game_Vendor")
 public class GameVendorUpdates implements Serializable {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	@Id
-	private Long id;
+    @Id
+    private Long id;
 
-	@IdFor(entityClass = Game.class, columns = "gameId", columnsInOriginal = "game_ID")
-	@Column
-	private Long gameId;
+    @IdFor(entityClass = Game.class, columns = "gameId", columnsInOriginal = "game_ID")
+    @Column(name = "gameId")
+    private Long gameId;
 
-	@IdFor(entityClass = Vendor.class, columns = "vendorId", columnsInOriginal = "vendors_ID")
-	@Column
-	private Long vendorId;
+    @IdFor(entityClass = Vendor.class, columns = "vendorId", columnsInOriginal = "vendors_ID")
+    @Column(name = "vendorId")
+    private Long vendorId;
 
-	@Event(column = "eventType")
-	@Column
-	private Integer eventType;
+    @Event(column = "eventType")
+    @Column(name = "eventType")
+    private Integer eventType;
 
-	public Long getId() {
-		return id;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public Long getGameId() {
-		return gameId;
-	}
+    public Long getGameId() {
+        return gameId;
+    }
 
-	public void setGameId(Long gameId) {
-		this.gameId = gameId;
-	}
+    public void setGameId(Long gameId) {
+        this.gameId = gameId;
+    }
 
-	public Integer getEventType() {
-		return eventType;
-	}
+    public Integer getEventType() {
+        return eventType;
+    }
 
-	public void setEventType(Integer eventType) {
-		this.eventType = eventType;
-	}
+    public void setEventType(Integer eventType) {
+        this.eventType = eventType;
+    }
 
 }

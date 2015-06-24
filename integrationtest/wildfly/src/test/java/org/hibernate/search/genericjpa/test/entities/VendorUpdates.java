@@ -27,11 +27,11 @@ public class VendorUpdates implements Serializable {
 	private Long id;
 
 	@IdFor(entityClass = Vendor.class, columns = "vendorId", columnsInOriginal = "id")
-	@Column
+	@Column(name = "vendorId")
 	private Long vendorId;
 
 	@Event(column = "eventType")
-	@Column
+	@Column(name = "eventType")
 	private Integer eventType;
 
 	public Long getId() {

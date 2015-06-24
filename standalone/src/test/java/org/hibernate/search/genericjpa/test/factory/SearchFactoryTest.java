@@ -89,10 +89,11 @@ public class SearchFactoryTest {
 
 	@Test
 	public void test() throws IOException {
-		try (StandaloneSearchFactory factory = StandaloneSearchFactoryFactory.createSearchFactory(
+		StandaloneSearchFactory factory = StandaloneSearchFactoryFactory.createSearchFactory(
 				new SearchConfigurationImpl(),
 				Arrays.asList( TopLevel.class, Embedded.class, Embedded2.class )
-		)) {
+		);
+		try {
 
 			//both have the same id
 			//this is important for the multi-entity query
@@ -209,14 +210,18 @@ public class SearchFactoryTest {
 			);
 			assertEquals( 0, query.queryResultSize() );
 		}
+		finally {
+			factory.close();
+		}
 	}
 
 	@Test
 	public void testNullInIndexNotReturned() throws IOException {
-		try (StandaloneSearchFactory factory = StandaloneSearchFactoryFactory.createSearchFactory(
+		StandaloneSearchFactory factory = StandaloneSearchFactoryFactory.createSearchFactory(
 				new SearchConfigurationImpl(),
 				Arrays.asList( TopLevel.class, Embedded.class, Embedded2.class )
-		)) {
+		);
+		try {
 			//both have the same id
 			//this is important for the multi-entity query
 			TopLevel tl = new TopLevel();
@@ -258,6 +263,9 @@ public class SearchFactoryTest {
 							dummyProvider, HSearchQuery.Fetch.FIND_BY_ID
 					).size()
 			);
+		}
+		finally {
+			factory.close();
 		}
 	}
 

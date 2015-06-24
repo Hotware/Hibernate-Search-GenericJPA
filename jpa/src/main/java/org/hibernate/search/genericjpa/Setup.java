@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.genericjpa.annotations.InIndex;
 import org.hibernate.search.genericjpa.annotations.Updates;
-import org.hibernate.search.genericjpa.db.events.TriggerSQLStringSource;
+import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
 import org.hibernate.search.genericjpa.impl.SQLJPAUpdateSourceProvider;
@@ -89,7 +89,7 @@ public final class Setup {
 			if ( SearchFactoryRegistry.getSearchFactory( name ) != null ) {
 				throw new SearchException( "there is already a searchfactory running for name: " + name + ". close it first!" );
 			}
-			
+
 			boolean useJTATransactions = Boolean.parseBoolean(
 					(String) properties.getOrDefault(
 							USE_JTA_TRANSACTIONS_KEY,
@@ -146,7 +146,7 @@ public final class Setup {
 				updateSourceProvider = (a, b, c) -> null;
 			}
 			else {
-				throw new SearchException( "unrecognized type : " + type );
+				throw new SearchException( "unrecognized " + SEARCH_FACTORY_TYPE_KEY + ": " + type );
 			}
 
 			Integer batchSizeForUpdates = Integer

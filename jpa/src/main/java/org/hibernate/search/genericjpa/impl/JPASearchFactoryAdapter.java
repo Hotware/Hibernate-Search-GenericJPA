@@ -34,7 +34,7 @@ import org.hibernate.search.engine.metadata.impl.MetadataProvider;
 import org.hibernate.search.genericjpa.JPASearchFactoryController;
 import org.hibernate.search.genericjpa.batchindexing.MassIndexer;
 import org.hibernate.search.genericjpa.batchindexing.impl.MassIndexerImpl;
-import org.hibernate.search.genericjpa.db.events.IndexUpdater;
+import org.hibernate.search.genericjpa.db.events.index.IndexUpdater;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateSource;
 import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
@@ -126,7 +126,7 @@ public final class JPASearchFactoryAdapter
 	public final void init() {
 		SearchConfigurationImpl config;
 		if ( this.properties != null ) {
-			LOGGER.info( "using config @" + this.properties );
+			LOGGER.info( "using config: " + this.properties );
 			config = new SearchConfigurationImpl( this.properties );
 		}
 		else {
@@ -306,7 +306,7 @@ public final class JPASearchFactoryAdapter
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		try {
 			if ( this.updateSource != null ) {
 				this.updateSource.stop();

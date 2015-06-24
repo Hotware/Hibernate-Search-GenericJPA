@@ -18,7 +18,7 @@ import org.hibernate.search.jpa.FullTextEntityManager;
  *
  * @author Martin Braun
  */
-public interface JPASearchFactoryController extends Closeable {
+public interface JPASearchFactoryController {
 
 	SearchFactory getSearchFactory();
 
@@ -32,5 +32,7 @@ public interface JPASearchFactoryController extends Closeable {
 	void addUpdateConsumer(UpdateConsumer updateConsumer);
 
 	void removeUpdateConsumer(UpdateConsumer updateConsumer);
+
+	void close();
 
 }

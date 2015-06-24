@@ -60,7 +60,7 @@ public class EJBJPASearchFactoryController implements JPASearchFactoryController
 				this.jpaSearchFactoryController.close();
 			}
 		}
-		catch (IOException e) {
+		catch (Exception e) {
 			throw new SearchException( e );
 		}
 	}
@@ -78,8 +78,8 @@ public class EJBJPASearchFactoryController implements JPASearchFactoryController
 	}
 
 	@Override
-	public void close() throws IOException {
-		// no-op
+	public void close() {
+		throw new SearchException( "A Container Managed SearchFactoryController cannot be closed" );
 	}
 
 	@Override

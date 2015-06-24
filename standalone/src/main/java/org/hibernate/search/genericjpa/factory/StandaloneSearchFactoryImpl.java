@@ -70,7 +70,7 @@ public class StandaloneSearchFactoryImpl implements StandaloneSearchFactory {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		this.searchIntegrator.close();
 	}
 

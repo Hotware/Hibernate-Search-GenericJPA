@@ -6,15 +6,15 @@
  */
 package org.hibernate.search.genericjpa.test.entities;
 
+import org.hibernate.search.genericjpa.annotations.Event;
+import org.hibernate.search.genericjpa.annotations.IdFor;
+import org.hibernate.search.genericjpa.annotations.Updates;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.io.Serializable;
-
-import org.hibernate.search.genericjpa.annotations.Event;
-import org.hibernate.search.genericjpa.annotations.IdFor;
-import org.hibernate.search.genericjpa.annotations.Updates;
 
 @Entity
 @Table(name = "VendorUpdates")
@@ -27,11 +27,11 @@ public class VendorUpdates implements Serializable {
 	private Long id;
 
 	@IdFor(entityClass = Vendor.class, columns = "vendorId", columnsInOriginal = "id")
-	@Column
+	@Column(name = "vendorId")
 	private Long vendorId;
 
 	@Event(column = "eventType")
-	@Column
+	@Column(name = "eventType")
 	private Integer eventType;
 
 	public Long getId() {

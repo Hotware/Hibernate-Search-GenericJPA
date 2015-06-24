@@ -6,7 +6,14 @@
  */
 package org.hibernate.search.genericjpa.db.id;
 
-// TODO: maybe move this?
+/**
+ * interface used to specify a custom brdige between the id used in an Update class to the original entity's id.
+ * <br>
+ * <br>
+ * If your Update class has the same id type, you probably won't need this
+ *
+ * @author Martin Braun
+ */
 public interface ToOriginalIdBridge {
 
 	Object toOriginal(Object object);

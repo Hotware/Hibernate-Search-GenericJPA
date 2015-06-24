@@ -15,7 +15,9 @@ import org.apache.lucene.search.Query;
 import org.hibernate.search.genericjpa.query.HSearchQuery;
 import org.hibernate.search.genericjpa.transaction.TransactionContext;
 
-public interface StandaloneSearchFactory extends org.hibernate.search.SearchFactory, Closeable {
+public interface StandaloneSearchFactory extends org.hibernate.search.SearchFactory {
+
+	void close();
 
 	void flushToIndexes(TransactionContext tc);
 
