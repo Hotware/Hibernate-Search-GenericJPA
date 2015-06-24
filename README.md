@@ -15,7 +15,7 @@ http://hibernatesearchandjpa.blogspot.de/
 
 Introduction
 ============
-Hibernate Search is an awesome library if you have a JPA based application and you want to add fully fletched fulltext search capabilities to your domain model. You simply add annotations to the fields you want to index and then you can generate a working Index from the JPA objects. When the database changes, the index is updated accordingly. This works just fine (TM).
+Hibernate Search is an awesome library if you have a JPA based application and want to add fully fletched fulltext search capabilities to your domain model. You simply add annotations to the fields you want to index and then you can generate a working Index from the JPA objects. When the database changes, the index is updated accordingly. This works just fine (TM).
 
 Here is an example from the [Hibernate Search getting started page](http://hibernate.org/search/documentation/getting-started/)
 
