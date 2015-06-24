@@ -8,7 +8,6 @@ package org.hibernate.search.genericjpa.test.infinispan;
 
 import org.hibernate.search.genericjpa.JPASearchFactoryController;
 import org.hibernate.search.genericjpa.Setup;
-import org.hibernate.search.genericjpa.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.test.entities.Book;
 import org.hibernate.search.jpa.FullTextEntityManager;
 
