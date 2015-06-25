@@ -114,6 +114,8 @@ public class EventModelInfo {
 		}
 
 		/**
+		 * id accessor that applies all the logic to get an id for the updated entity from the Updates class
+		 *
 		 * @return the idAccessor
 		 */
 		public Function<Object, Object> getIdAccessor() {
@@ -135,6 +137,8 @@ public class EventModelInfo {
 		}
 
 		/**
+		 *
+		 *
 		 * @return the columnsInOriginal
 		 */
 		public String[] getColumnsInOriginal() {
@@ -142,6 +146,8 @@ public class EventModelInfo {
 		}
 
 		/**
+		 * <b>internal method used for debugging</b>
+		 *
 		 * @return the toOriginalBridge
 		 */
 		public ToOriginalIdBridge getToOriginalBridge() {

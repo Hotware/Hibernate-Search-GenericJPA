@@ -203,8 +203,7 @@ public class EventModelParser {
 					);
 				}
 				EventModelInfo.IdInfo idInfo = new EventModelInfo.IdInfo(
-						idAccessor, idFor.entityClass(), idFor.columns(), idFor.columnsInOriginal(),
-						toOriginalBridge
+						idAccessor, idFor.entityClass(), idFor.columns(), idFor.columnsInOriginal(), toOriginalBridge
 				);
 				idInfos.add( idInfo );
 			}

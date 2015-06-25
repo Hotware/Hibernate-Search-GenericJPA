@@ -121,24 +121,23 @@ public class ObjectHandlerTask implements Runnable {
 					throw new SearchException( e );
 				}
 			}
-			catch (Exception e) {
-				if ( this.exceptionConsumer != null ) {
-					this.exceptionConsumer.accept( e );
-				}
-				// TODO: should throw this?
-			}
 			finally {
 				if ( entityProvider != null ) {
 					this.entityManagerDisposer.accept( this, entityProvider );
 				}
 			}
 		}
+		catch (Exception e) {
+			if ( this.exceptionConsumer != null ) {
+				this.exceptionConsumer.accept( e );
+			}
+			// TODO: should throw this?
+		}
 		finally {
 			if ( this.finishConsumer != null ) {
 				this.finishConsumer.run();
 			}
 		}
-
 	}
 
 	public void objectLoadedProgressMonitor(BiConsumer<Class<?>, Integer> objectLoadedProgressMonitor) {

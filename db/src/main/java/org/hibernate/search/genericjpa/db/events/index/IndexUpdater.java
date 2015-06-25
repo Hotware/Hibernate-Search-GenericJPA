@@ -10,8 +10,8 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import org.jboss.logging.Logger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.hibernate.search.backend.spi.SingularTermDeletionQuery;
 import org.hibernate.search.backend.spi.Work;
@@ -44,7 +44,7 @@ public class IndexUpdater implements UpdateConsumer {
 
 	// TODO: unit test this with several batches
 
-	private static final Logger LOGGER = Logger.getLogger( IndexUpdater.class );
+	private static final Logger LOGGER = Logger.getLogger( IndexUpdater.class.getName() );
 
 	private static final int HSQUERY_BATCH = 50;
 
@@ -106,20 +106,20 @@ public class IndexUpdater implements UpdateConsumer {
 							break;
 						}
 						default: {
-							LOGGER.warn( "unknown eventType-id found: " + eventType );
+							LOGGER.warning( "unknown eventType-id found: " + eventType );
 						}
 					}
 				}
 				else {
-					LOGGER.warn( "class: " + entityClass + " not found in any index!" );
+					LOGGER.warning( "class: " + entityClass + " not found in any index!" );
 				}
 			}
 			tx.commit();
 		}
 		catch (Exception e) {
 			tx.rollback();
-			LOGGER.warn( "Error while updating the index! Your index might be corrupt!" );
-			throw new SearchException( "Error while updating the index! Your index might be corrupt!" );
+			LOGGER.log( Level.WARNING, "Error while updating the index! Your index might be corrupt!", e );
+			throw new SearchException( "Error while updating the index! Your index might be corrupt!", e );
 		}
 		finally {
 			provider.close();

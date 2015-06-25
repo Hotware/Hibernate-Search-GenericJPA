@@ -80,7 +80,7 @@ public class IntegrationTest {
 			MetaModelParser parser = new MetaModelParser();
 			parser.parse( this.emf.getMetamodel() );
 			{
-				assertEquals( 4, parser.getIndexRelevantEntites().size() );
+				assertEquals( 5, parser.getIndexRelevantEntites().size() );
 			}
 		}
 		finally {

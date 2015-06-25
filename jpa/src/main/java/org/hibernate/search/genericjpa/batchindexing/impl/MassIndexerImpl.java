@@ -375,26 +375,16 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 			@Override
 			public boolean cancel(boolean mayInterruptIfRunning) {
 				boolean ret = false;
-				for ( Future<?> future : MassIndexerImpl.this.idProducerFutures ) {
-					ret |= future.cancel( mayInterruptIfRunning );
-				}
 
-				MassIndexerImpl.this.objectHandlerTaskCondition.disable();
+				ret |= MassIndexerImpl.this.cancelIdProducers( mayInterruptIfRunning );
 
-				Lock lock = MassIndexerImpl.this.cancelGuard.writeLock();
-				lock.lock();
-				try {
-					MassIndexerImpl.this.cancelled = true;
-				}
-				finally {
-					lock.unlock();
-				}
+				MassIndexerImpl.this.setCancelled();
 
 				// FIXME: wait for all the running threads to finish up.
+				// add this logic here, but don't add it in the onException method
+				// or this will result in a deadlock
 
-				// blow the signal to stop everything
-				MassIndexerImpl.this.finishConditions.values()
-						.forEach( NumberCondition::disable );
+				MassIndexerImpl.this.disableFinishConditions();
 
 				// but we have to wait for the cleanup thread to finish up
 				try {
@@ -518,9 +508,48 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 		this.objectHandlerTaskCondition.down( 1 );
 	}
 
+
+	private boolean cancelIdProducers(boolean mayInterruptIfRunning) {
+		boolean ret = false;
+		for ( Future<?> future : MassIndexerImpl.this.idProducerFutures ) {
+			ret |= future.cancel( mayInterruptIfRunning );
+		}
+
+		MassIndexerImpl.this.objectHandlerTaskCondition.disable();
+		return ret;
+	}
+
+	/**
+	 * careful, this is used in ObjectHandlerTasks as well, don't produce deadlocks!
+	 */
+	private void disableFinishConditions() {
+		// blow the signal to stop everything
+		MassIndexerImpl.this.finishConditions.values()
+				.forEach( NumberCondition::disable );
+	}
+
+	private void setCancelled() {
+		Lock lock = MassIndexerImpl.this.cancelGuard.writeLock();
+		lock.lock();
+		try {
+			MassIndexerImpl.this.cancelled = true;
+		}
+		finally {
+			lock.unlock();
+		}
+	}
+
+	/**
+	 * this method is called whenever an Exception occurs in either the IdProducerTask or the ObjectHandlerTask
+	 */
 	private void onException(Exception e) {
 		LOGGER.log( Level.WARNING, "Exception during indexing", e );
-		this.future.cancel( true );
+		//this doesn't wait for anything, so we can call this even if we are coming from a IdProducer-Thread
+		this.cancelIdProducers( true );
+		//we should stop producing new ObjectHandlerTasks
+		this.setCancelled();
+		//welp, since the ObjectHandler Threads are borked anyways we can just disable all waiting for them.
+		this.disableFinishConditions();
 	}
 
 	private void closeExecutorServices() {

@@ -15,6 +15,9 @@
 		<class>org.hibernate.search.genericjpa.test.jpa.entities.PlaceUpdates</class>
 		<class>org.hibernate.search.genericjpa.test.jpa.entities.OneToManyWithoutTable</class>
 		<class>org.hibernate.search.genericjpa.test.jpa.entities.JoinTableOneToOne</class>
+
+		<class>org.hibernate.search.genericjpa.test.jpa.entities.MultipleColumnsIdEntity</class>
+		<class>org.hibernate.search.genericjpa.test.jpa.entities.MultipleColumnsIdEntityUpdates</class>
 		<properties>
 			<property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver" />
 			<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/testingdb" />
@@ -38,6 +41,9 @@
 		<class>org.hibernate.search.genericjpa.test.jpa.entities.PlaceUpdates</class>
 		<class>org.hibernate.search.genericjpa.test.jpa.entities.OneToManyWithoutTable</class>
 		<class>org.hibernate.search.genericjpa.test.jpa.entities.JoinTableOneToOne</class>
+
+		<class>org.hibernate.search.genericjpa.test.jpa.entities.MultipleColumnsIdEntity</class>
+		<class>org.hibernate.search.genericjpa.test.jpa.entities.MultipleColumnsIdEntityUpdates</class>
 		<properties>
 			<property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbcDriver" />
 			<property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:mem:eclipselink" />

@@ -7,7 +7,6 @@
 package org.hibernate.search.genericjpa.test.db.events;
 
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 
@@ -15,9 +14,9 @@ import org.hibernate.search.genericjpa.annotations.Event;
 import org.hibernate.search.genericjpa.annotations.IdFor;
 import org.hibernate.search.genericjpa.annotations.Updates;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
-import org.hibernate.search.genericjpa.db.events.EventModelInfo.IdInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventType;
+import org.hibernate.search.genericjpa.db.id.ToOriginalIdBridge;
 import org.hibernate.search.genericjpa.test.db.entities.Place;
 import org.hibernate.search.genericjpa.test.db.entities.PlaceSorcererUpdates;
 import org.hibernate.search.genericjpa.test.db.entities.PlaceSorcererUpdatesMethod;
@@ -48,14 +47,7 @@ public class EventModelParserTest {
 
 			List<EventModelInfo.IdInfo> idInfos = infos.get( 0 ).getIdInfos();
 			idInfos.sort(
-					new Comparator<EventModelInfo.IdInfo>() {
-
-						@Override
-						public int compare(IdInfo o1, IdInfo o2) {
-							return o1.getColumns()[0].compareTo( o2.getColumns()[0] );
-						}
-
-					}
+					(o1, o2) -> o1.getColumns()[0].compareTo( o2.getColumns()[0] )
 			);
 
 			assertEquals( PlaceSorcererUpdates.class, infos.get( 0 ).getUpdateClass() );
@@ -88,14 +80,7 @@ public class EventModelParserTest {
 
 			List<EventModelInfo.IdInfo> idInfos = infos.get( 0 ).getIdInfos();
 			idInfos.sort(
-					new Comparator<EventModelInfo.IdInfo>() {
-
-						@Override
-						public int compare(IdInfo o1, IdInfo o2) {
-							return o1.getColumns()[0].compareTo( o2.getColumns()[0] );
-						}
-
-					}
+					(o1, o2) -> o1.getColumns()[0].compareTo( o2.getColumns()[0] )
 			);
 
 			assertEquals( PlaceSorcererUpdatesMethod.class, infos.get( 0 ).getUpdateClass() );
@@ -170,6 +155,26 @@ public class EventModelParserTest {
 
 			}
 		}
+	}
+
+	@Test
+	public void testMultiColumnsIdUpdates() {
+		EventModelParser parser = new EventModelParser();
+
+		MultipleColumnsIdUpdates update = new MultipleColumnsIdUpdates();
+		update.eventType = EventType.INSERT;
+		update.multipleColumnsId = new String[] {"one", "two"};
+		EventModelInfo evi = parser.parse( new HashSet<>( Arrays.asList( MultipleColumnsIdUpdates.class ) ) ).get( 0 );
+		assertEquals( EventType.INSERT, (int) evi.getEventTypeAccessor().apply( update ) );
+		ToOriginalIdBridge bridge = evi.getIdInfos().get( 0 ).getToOriginalBridge();
+		//we actually apply the bridge here already
+		assertEquals( "onetwo", evi.getIdInfos().get( 0 ).getIdAccessor().apply( update ) );
+		//but we can test whether this is right as well
+		assertEquals(
+				"onetwo", bridge.toOriginal(
+						update.multipleColumnsId
+				)
+		);
 	}
 
 	@Updates(originalTableName = "orig", tableName = "tbl")
@@ -249,4 +254,34 @@ public class EventModelParserTest {
 
 	}
 
+	public static class MultipleColumnsId {
+
+	}
+
+	public static class StringArrayConvertingBridge implements ToOriginalIdBridge {
+
+		@Override
+		public Object toOriginal(Object object) {
+			String[] arr = (String[]) object;
+			StringBuilder builder = new StringBuilder();
+			for ( String str : arr ) {
+				builder.append( str );
+			}
+			return builder.toString();
+		}
+	}
+
+	@Updates(tableName = "MultipleColumnsIdUpdates", originalTableName = "originalTable")
+	public static class MultipleColumnsIdUpdates {
+
+		@Event(column = "eventType")
+		private Integer eventType;
+
+		@IdFor(entityClass = MultipleColumnsId.class, columns = {
+				"columnsUpdates1",
+				"columnsUpdates2"
+		}, columnsInOriginal = {"columnsOriginal1", "columnsOriginal2"}, bridge = StringArrayConvertingBridge.class)
+		private String[] multipleColumnsId;
+
+	}
 }
