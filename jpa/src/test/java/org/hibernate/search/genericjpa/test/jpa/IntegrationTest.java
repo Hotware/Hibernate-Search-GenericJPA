@@ -314,6 +314,11 @@ public class IntegrationTest {
 	}
 
 	@Test
+	public void testAdditionalIndexedTypeProperty() {
+		searchFactory.getIndexRootTypes().contains( NonJPAEntity.class );
+	}
+
+	@Test
 	public void testDeleteByQuery() {
 		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
 
