@@ -22,10 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.lucene.index.Term;
 import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.TermQuery;
-import org.apache.openejb.core.BaseContext;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -207,7 +204,16 @@ public class OpenJPATomEEIntegrationTest {
 					FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
 					for ( String title : GAME_TITLES ) {
 						FullTextQuery query = fem.createFullTextQuery(
-								new TermQuery( new Term( "title", title ) ),
+								fem.getSearchFactory()
+										.buildQueryBuilder()
+										.forEntity( Game.class )
+										.get()
+										.keyword()
+										.onField(
+												"title"
+										)
+										.matching( title )
+										.createQuery(),
 								Game.class
 						);
 						games.addAll( query.getResultList() );
@@ -230,12 +236,9 @@ public class OpenJPATomEEIntegrationTest {
 		Sleep.sleep(
 				MAX_SLEEP_TIME, () -> {
 					FullTextQuery fullTextQuery = fem.createFullTextQuery(
-							new TermQuery(
-									new Term(
-											"title",
-											"Legend of Zelda"
-									)
-							), Game.class
+							fem.getSearchFactory().buildQueryBuilder().forEntity( Game.class ).get().keyword().onField(
+									"title"
+							).matching( "Legend of Zelda" ).createQuery(), Game.class
 					);
 					// we can find it in the index even though it is not persisted in the database
 					boolean val1 = 1 == fullTextQuery.getResultSize();
@@ -258,7 +261,16 @@ public class OpenJPATomEEIntegrationTest {
 		Sleep.sleep(
 				MAX_SLEEP_TIME, () -> {
 					FullTextQuery fullTextQuery = fem.createFullTextQuery(
-							new TermQuery( new Term( "title", "Pong" ) ),
+							fem.getSearchFactory()
+									.buildQueryBuilder()
+									.forEntity( Game.class )
+									.get()
+									.keyword()
+									.onField(
+											"title"
+									)
+									.matching( "Pong" )
+									.createQuery(),
 							Game.class
 					);
 					// we can find it in the index even though it is not persisted in the database
