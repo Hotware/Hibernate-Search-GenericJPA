@@ -20,8 +20,14 @@ import org.hibernate.search.jpa.FullTextEntityManager;
  */
 public interface JPASearchFactoryController {
 
+	/**
+	 * @return the underlying SearchFactory
+	 */
 	SearchFactory getSearchFactory();
 
+	/**
+	 * (un-)pauses updating
+	 */
 	void pauseUpdating(boolean pause);
 
 	/**
@@ -29,10 +35,16 @@ public interface JPASearchFactoryController {
 	 */
 	FullTextEntityManager getFullTextEntityManager(EntityManager em);
 
+	/**
+	 * used to register UpdateConsumers to do manual update processing
+	 */
 	void addUpdateConsumer(UpdateConsumer updateConsumer);
 
 	void removeUpdateConsumer(UpdateConsumer updateConsumer);
 
+	/**
+	 * closes this Controller and all underlying resources
+	 */
 	void close();
 
 }

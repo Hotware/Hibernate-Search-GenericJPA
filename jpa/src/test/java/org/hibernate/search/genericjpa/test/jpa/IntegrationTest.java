@@ -385,13 +385,13 @@ public class IntegrationTest {
 	}
 
 	@Test
-	public void testDeleteByQuery() {
+	public void testDeleteByTerm() {
 		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
 
 		//TODO: test if all the Sorcerers still available?
 
 		fem.beginSearchTransaction();
-		fem.purgeByTerm( Place.class, "id", this.valinorId );
+		fem.purgeByTerm( Place.class, "id", String.valueOf( this.valinorId ) );
 		fem.commitSearchTransaction();
 
 		//TODO: test this for the other query types
