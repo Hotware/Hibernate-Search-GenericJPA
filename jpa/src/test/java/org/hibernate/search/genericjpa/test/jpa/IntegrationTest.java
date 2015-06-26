@@ -60,6 +60,7 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -230,7 +231,7 @@ public class IntegrationTest {
 
 	@Test
 	public void testJPAQueryInterfaces() throws InterruptedException {
-		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( em );
+		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
 		fem.beginSearchTransaction();
 
 		Sleep.sleep(
@@ -302,7 +303,72 @@ public class IntegrationTest {
 						).getResultList().size()
 		);
 
+		{
+			FullTextQuery ftQuery = fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class );
+			assertNotNull( ftQuery.getFirstResult() );
+		}
+
 		fem.commitSearchTransaction();
+	}
+
+	@Test
+	public void testGetSingleResult() {
+		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
+		{
+			this.em.find( Place.class, this.valinorId );
+			FullTextQuery ftQuery = fem.createFullTextQuery(
+					fem.getSearchFactory()
+							.buildQueryBuilder()
+							.forEntity( Place.class )
+							.get()
+							.keyword()
+							.onField( "name" )
+							.matching( "Valinor" )
+							.createQuery(),
+					Place.class
+			);
+			assertEquals( (Integer) this.valinorId, ((Place) ftQuery.getSingleResult()).getId() );
+		}
+	}
+
+	@Test
+	public void testGetSingleResultProjection() {
+		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
+		{
+			this.em.find( Place.class, this.valinorId );
+			FullTextQuery ftQuery = fem.createFullTextQuery(
+					fem.getSearchFactory()
+							.buildQueryBuilder()
+							.forEntity( Place.class )
+							.get()
+							.keyword()
+							.onField( "name" )
+							.matching( "Valinor" )
+							.createQuery(),
+					Place.class
+			).setProjection( "name" );
+			assertEquals( "Valinor", ((Object[]) ftQuery.getSingleResult())[0] );
+		}
+	}
+
+	@Test
+	public void testQueryPojectionJPA() {
+		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
+		{
+			this.em.find( Place.class, this.valinorId );
+			FullTextQuery ftQuery = fem.createFullTextQuery(
+					fem.getSearchFactory()
+							.buildQueryBuilder()
+							.forEntity( Place.class )
+							.get()
+							.keyword()
+							.onField( "name" )
+							.matching( "Valinor" )
+							.createQuery(),
+					Place.class
+			).setProjection( "name" );
+			assertEquals( "Valinor", ((Object[]) ftQuery.getResultList().get( 0 ))[0] );
+		}
 	}
 
 	@Test
@@ -331,7 +397,7 @@ public class IntegrationTest {
 		//TODO: test this for the other query types
 
 		assertEquals(
-				0, fem.createFullTextQuery( new TermQuery( new Term( "name", "Valinor" ) ), Place.class )
+				0, fem.createFullTextQuery( new TermQuery( new Term( "name", "valinor" ) ), Place.class )
 						.getResultList()
 						.size()
 		);

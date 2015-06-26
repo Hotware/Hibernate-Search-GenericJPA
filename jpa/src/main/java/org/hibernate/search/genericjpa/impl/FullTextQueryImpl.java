@@ -43,6 +43,7 @@ import org.hibernate.search.spatial.Coordinates;
  * Implements JPA 2 query interface and delegate the call to a Hibernate Core FullTextQuery. This has the consequence of
  * "duplicating" the JPA 2 query logic in some areas.
  *
+ * @author Martin Braun
  * @author Emmanuel Bernard
  */
 final class FullTextQueryImpl implements FullTextQuery {
@@ -213,7 +214,7 @@ final class FullTextQueryImpl implements FullTextQuery {
 
 	@Override
 	public int getMaxResults() {
-		return maxResults == null || maxResults == -1 ? Integer.MAX_VALUE : maxResults;
+		return this.maxResults == null || this.maxResults == -1 ? Integer.MAX_VALUE : this.maxResults;
 	}
 
 	@Override
@@ -228,7 +229,7 @@ final class FullTextQueryImpl implements FullTextQuery {
 
 	@Override
 	public int getFirstResult() {
-		return firstResult == null ? 0 : firstResult;
+		return this.firstResult == null ? 0 : this.firstResult;
 	}
 
 	@Override
@@ -280,7 +281,7 @@ final class FullTextQueryImpl implements FullTextQuery {
 
 	@Override
 	public Map<String, Object> getHints() {
-		return hints;
+		return this.hints;
 	}
 
 	@Override
