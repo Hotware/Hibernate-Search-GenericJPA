@@ -6,7 +6,7 @@
  */
 package org.hibernate.search.genericjpa.db.events;
 
-import org.hibernate.search.exception.AssertionFailure;
+import org.hibernate.search.genericjpa.exception.AssertionFailure;
 
 /**
  * Contains constants that describe the different Database-Events that are relevant to the index
@@ -19,6 +19,7 @@ public final class EventType {
 	public static final int UPDATE = -2;
 	public static final int INSERT = -3;
 	private static final int[] VALUES = {DELETE, UPDATE, INSERT};
+	
 	private EventType() {
 		throw new AssertionFailure( "can't touch this!" );
 	}

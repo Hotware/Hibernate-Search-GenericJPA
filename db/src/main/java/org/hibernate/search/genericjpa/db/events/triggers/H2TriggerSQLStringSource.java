@@ -21,12 +21,6 @@ import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 public class H2TriggerSQLStringSource implements TriggerSQLStringSource {
 
 	@Override
-	public String[] getRecreateUniqueIdTableCode() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public String[] getSetupCode() {
 		// TODO Auto-generated method stub
 		return null;

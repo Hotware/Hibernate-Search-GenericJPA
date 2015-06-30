@@ -178,9 +178,4 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 		};
 	}
 
-	@Override
-	public String[] getRecreateUniqueIdTableCode() {
-		return new String[] {this.dropUniqueIdTable, this.createUniqueIdTable};
-	}
-
 }

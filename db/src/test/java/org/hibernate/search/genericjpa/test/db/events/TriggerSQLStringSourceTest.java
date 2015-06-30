@@ -13,6 +13,8 @@ import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringSource;
+import org.hibernate.search.genericjpa.db.events.triggers.PostgreSQLTriggerSQLStringSource;
+import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource;
 import org.hibernate.search.genericjpa.test.db.entities.PlaceSorcererUpdates;
 
 import org.junit.Test;
@@ -20,13 +22,21 @@ import org.junit.Test;
 /**
  * @author Martin
  */
-public class MySQLTriggerSQLStringSourceTest {
+public class TriggerSQLStringSourceTest {
 
 	@Test
-	public void test() {
+	public void testMySQLSTringSource() {
+		this.test( new MySQLTriggerSQLStringSource() );
+	}
+
+	@Test
+	public void testPostgreSQLTriggerSQLStringSource() {
+		this.test( new PostgreSQLTriggerSQLStringSource() );
+	}
+
+	private void test(TriggerSQLStringSource triggerSource) {
 		EventModelParser parser = new EventModelParser();
 		EventModelInfo info = parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class ) ) ).get( 0 );
-		MySQLTriggerSQLStringSource triggerSource = new MySQLTriggerSQLStringSource();
 		System.out.println( Arrays.asList( triggerSource.getSetupCode() ) );
 		for ( int eventType : EventType.values() ) {
 			String[] triggerCreationString = triggerSource.getTriggerCreationCode( info, eventType );
