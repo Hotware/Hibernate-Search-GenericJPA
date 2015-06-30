@@ -21,7 +21,7 @@ public class Transaction implements TransactionContext {
 
 	@Override
 	public boolean isTransactionInProgress() {
-		return progress;
+		return this.progress;
 	}
 
 	@Override
@@ -31,7 +31,7 @@ public class Transaction implements TransactionContext {
 
 	@Override
 	public void registerSynchronization(Synchronization synchronization) {
-		syncs.add( synchronization );
+		this.syncs.add( synchronization );
 	}
 
 	/**
@@ -44,7 +44,7 @@ public class Transaction implements TransactionContext {
 		this.progress = false;
 		this.syncs.forEach( Synchronization::beforeCompletion );
 
-		for ( Synchronization sync : syncs ) {
+		for ( Synchronization sync : this.syncs ) {
 			sync.afterCompletion( Status.STATUS_COMMITTED );
 		}
 	}
@@ -59,7 +59,7 @@ public class Transaction implements TransactionContext {
 		this.progress = false;
 		this.syncs.forEach( Synchronization::beforeCompletion );
 
-		for ( Synchronization sync : syncs ) {
+		for ( Synchronization sync : this.syncs ) {
 			sync.afterCompletion( Status.STATUS_ROLLEDBACK );
 		}
 	}
