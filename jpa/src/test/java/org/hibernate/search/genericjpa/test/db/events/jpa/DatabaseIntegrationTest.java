@@ -253,6 +253,9 @@ public abstract class DatabaseIntegrationTest {
 			java.sql.Connection connection = em.unwrap( java.sql.Connection.class );
 			connection.setAutoCommit( false );
 
+			if ( dropStrings == null ) {
+				return;
+			}
 			for ( String dropString : dropStrings ) {
 				Statement statement = connection.createStatement();
 				System.out.println( "DROP: " + connection.nativeSQL( dropString ) );
@@ -372,7 +375,13 @@ public abstract class DatabaseIntegrationTest {
 	}
 
 	@After
-	public void __shutDown() {
+	public void shutdown() {
+		try {
+			this.tearDownTriggers();
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
 		if ( this.emf != null ) {
 			this.emf.close();
 			this.emf = null;

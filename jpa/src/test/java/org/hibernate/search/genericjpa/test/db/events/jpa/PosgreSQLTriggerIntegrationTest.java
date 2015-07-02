@@ -10,7 +10,6 @@ import java.sql.SQLException;
 
 import org.hibernate.search.genericjpa.db.events.triggers.PostgreSQLTriggerSQLStringSource;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -28,11 +27,6 @@ public class PosgreSQLTriggerIntegrationTest extends DatabaseIntegrationTest {
 	@Test
 	public void test() throws InterruptedException {
 		this.testUpdateIntegration();
-	}
-
-	@After
-	public void shutdown() throws SQLException {
-		this.tearDownTriggers();
 	}
 
 }

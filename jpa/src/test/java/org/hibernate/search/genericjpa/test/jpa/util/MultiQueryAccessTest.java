@@ -176,15 +176,6 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 		}
 	}
 
-	@After
-	public void shutDown() {
-		if ( this.emf != null ) {
-			System.out.println( "shutting down MultiQueryAccessTest" );
-			this.emf.close();
-			this.emf = null;
-		}
-	}
-
 	private MultiQueryAccess query(EntityManager em) throws NoSuchFieldException {
 		return JPAUpdateSourceTest.query( this.emf, em );
 	}

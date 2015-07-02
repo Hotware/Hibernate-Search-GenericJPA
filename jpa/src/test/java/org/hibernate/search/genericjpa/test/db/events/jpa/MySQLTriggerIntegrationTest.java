@@ -10,6 +10,7 @@ import java.sql.SQLException;
 
 import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringSource;
 
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -17,15 +18,15 @@ import org.junit.Test;
  */
 public class MySQLTriggerIntegrationTest extends DatabaseIntegrationTest {
 
-	@Test
-	public void testMySQLIntegration() throws SQLException, InterruptedException {
+	@Before
+	public void setup() throws SQLException {
 		this.setup( "EclipseLink_MySQL" );
-		this.setupTriggers(new MySQLTriggerSQLStringSource());
-		try {
-			this.testUpdateIntegration();
-		}
-		finally {
-			this.tearDownTriggers();
-		}
+		this.setupTriggers( new MySQLTriggerSQLStringSource() );
 	}
+
+	@Test
+	public void test() throws InterruptedException {
+		this.testUpdateIntegration();
+	}
+
 }
