@@ -20,18 +20,27 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventType;
+import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
+import org.hibernate.search.genericjpa.db.events.jpa.JPAUpdateSource;
 import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringSource;
+import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource;
+import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.test.jpa.entities.Place;
 import org.hibernate.search.genericjpa.test.jpa.entities.PlaceSorcererUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.PlaceUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
 import org.hibernate.search.genericjpa.test.jpa.entities.SorcererUpdates;
+import org.hibernate.search.genericjpa.util.Sleep;
 
 import org.junit.After;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  * @author Martin Braun
@@ -146,11 +155,28 @@ public abstract class DatabaseIntegrationTest {
 		tx.commit();
 	}
 
-	public void setupTriggers() throws SQLException {
+	public void setupTriggers(TriggerSQLStringSource triggerSource) throws SQLException {
 		EntityManager em = this.emf.createEntityManager();
 		try {
 			EntityTransaction tx = em.getTransaction();
 			tx.begin();
+
+			java.sql.Connection connection = em.unwrap( java.sql.Connection.class );
+			connection.setAutoCommit( false );
+
+			dropStrings = new ArrayList<>();
+			// this is just for the unit tests to work properly.
+			// normally we shouldn'tdelete the unique_id table or we could run
+			// into trouble
+			{
+				if ( triggerSource instanceof MySQLTriggerSQLStringSource ) {
+					Statement statement = connection.createStatement();
+					statement.addBatch( connection.nativeSQL( "DROP TABLE IF EXISTS " + MySQLTriggerSQLStringSource.DEFAULT_UNIQUE_ID_TABLE_NAME ) );
+					statement.executeBatch();
+					connection.commit();
+				}
+			}
+
 			List<EventModelInfo> infos = parser.parse(
 					new HashSet<>(
 							Arrays.asList(
@@ -161,55 +187,48 @@ public abstract class DatabaseIntegrationTest {
 					)
 			);
 
-			java.sql.Connection connection = em.unwrap( java.sql.Connection.class );
-			connection.setAutoCommit( false );
-
-			dropStrings = new ArrayList<>();
-			// this is just for the unit tests to work properly.
-			// normally we shouldn'tdelete the unique_id table or we could run
-			// into trouble
-			{
-				Statement statement = connection.createStatement();
-				statement.addBatch( connection.nativeSQL( "DROP TABLE IF EXISTS " + MySQLTriggerSQLStringSource.DEFAULT_UNIQUE_ID_TABLE_NAME ) );
-				statement.executeBatch();
-				connection.commit();
-			}
-
-			MySQLTriggerSQLStringSource triggerSource = new MySQLTriggerSQLStringSource();
-			for ( String str : triggerSource.getSetupCode() ) {
-				Statement statement = connection.createStatement();
-				statement.addBatch( connection.nativeSQL( str ) );
-				statement.executeBatch();
-				connection.commit();
-			}
-			for ( EventModelInfo info : infos ) {
-				try {
-					for ( String setupCode : triggerSource.getSpecificSetupCode( info ) ) {
-						Statement statement = connection.createStatement();
-						statement.addBatch( connection.nativeSQL( setupCode ) );
-						statement.executeBatch();
-						connection.commit();
+			try {
+				for ( String str : triggerSource.getSetupCode() ) {
+					System.out.println( str );
+					em.createNativeQuery( str ).executeUpdate();
+					if ( tx != null ) {
+						System.out.println( "commiting setup code!" );
+						tx.commit();
+						tx.begin();
 					}
-					dropStrings.addAll( Arrays.asList( triggerSource.getSpecificUnSetupCode( info ) ) );
+				}
+				for ( EventModelInfo info : infos ) {
+					for ( String unSetupCode : triggerSource.getSpecificUnSetupCode( info ) ) {
+						System.out.println( unSetupCode );
+						em.createNativeQuery( unSetupCode ).executeUpdate();
+					}
+					for ( String setupCode : triggerSource.getSpecificSetupCode( info ) ) {
+						System.out.println( setupCode );
+						em.createNativeQuery( setupCode ).executeUpdate();
+					}
 					for ( int eventType : EventType.values() ) {
-						String[] triggerCreationStrings = triggerSource.getTriggerCreationCode( info, eventType );
 						String[] triggerDropStrings = triggerSource.getTriggerDropCode( info, eventType );
-						for ( String triggerCreationString : triggerCreationStrings ) {
-							System.out.println( "CREATE: " + connection.nativeSQL( triggerCreationString ) );
-							dropStrings.addAll( Arrays.asList( triggerDropStrings ) );
-							Statement statement = connection.createStatement();
-							statement.addBatch( connection.nativeSQL( triggerCreationString ) );
-							statement.executeBatch();
-							connection.commit();
+						for ( String triggerCreationString : triggerDropStrings ) {
+							System.out.println( triggerCreationString );
+							em.createNativeQuery( triggerCreationString ).executeUpdate();
 						}
 					}
+					for ( int eventType : EventType.values() ) {
+						String[] triggerCreationStrings = triggerSource.getTriggerCreationCode( info, eventType );
+						for ( String triggerCreationString : triggerCreationStrings ) {
+							System.out.println( triggerCreationString );
+							em.createNativeQuery( triggerCreationString ).executeUpdate();
+						}
+					}
+
 				}
-				catch (Exception e) {
-					connection.rollback();
-					exceptionString = e.getMessage();
-					// for some reason we don't throw the exception here.
-					// there is a legit reason for this though
+			}
+			catch (Exception e) {
+				if ( tx != null ) {
+					tx.rollback();
+					System.out.println( "rolling back trigger setup!" );
 				}
+				throw new SearchException( e );
 			}
 			tx.commit();
 		}
@@ -247,6 +266,108 @@ public abstract class DatabaseIntegrationTest {
 			if ( em != null ) {
 				em.close();
 			}
+		}
+	}
+
+	public void testUpdateIntegration() throws InterruptedException {
+		EntityManager em = this.emf.createEntityManager();
+		try {
+			EntityTransaction tx = em.getTransaction();
+			tx.begin();
+
+			int countBefore = em.createQuery( "SELECT a FROM PlaceSorcererUpdates a" ).getResultList().size();
+			em.flush();
+			tx.commit();
+
+			tx.begin();
+			Place valinorDb = em.find( Place.class, this.valinorId );
+			Sorcerer randomNewGuy = new Sorcerer();
+			randomNewGuy.setId( -42 );
+			randomNewGuy.setName( "randomNewGuy" );
+			randomNewGuy.setPlace( valinorDb );
+			em.persist( randomNewGuy );
+			valinorDb.getSorcerers().add( randomNewGuy );
+			tx.commit();
+
+			tx.begin();
+			assertEquals(
+					countBefore + 1,
+					em.createQuery( "SELECT a FROM PlaceSorcererUpdates a" ).getResultList().size()
+			);
+			tx.commit();
+
+			tx.begin();
+			assertEquals(
+					1,
+					em.createQuery( "SELECT a FROM PlaceSorcererUpdates a WHERE a.eventType = " + EventType.INSERT )
+							.getResultList()
+							.size()
+			);
+			tx.commit();
+
+			tx.begin();
+			valinorDb.getSorcerers().remove( randomNewGuy );
+			em.remove( randomNewGuy );
+			tx.commit();
+
+			tx.begin();
+			assertEquals(
+					countBefore + 2,
+					em.createQuery( "SELECT a FROM PlaceSorcererUpdates a" ).getResultList().size()
+			);
+			tx.commit();
+
+			tx.begin();
+			assertEquals(
+					1,
+					em.createQuery( "SELECT a FROM PlaceSorcererUpdates a WHERE a.eventType = " + EventType.DELETE )
+							.getResultList()
+							.size()
+			);
+			tx.commit();
+
+			JPAUpdateSource updateSource = new JPAUpdateSource(
+					parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class, PlaceUpdates.class ) ) ),
+					emf,
+					null,
+					1,
+					TimeUnit.SECONDS,
+					1,
+					1
+			);
+			updateSource.setUpdateConsumers(
+					Arrays.asList(
+							new UpdateConsumer() {
+
+								@Override
+								public void updateEvent(List<UpdateInfo> arg0) {
+
+								}
+
+							}
+					)
+			);
+
+			updateSource.start();
+			Sleep.sleep(
+					100_000, () -> {
+						tx.begin();
+						try {
+							return em.createQuery( "SELECT a FROM PlaceSorcererUpdates a" ).getResultList().size() == 0;
+						}
+						finally {
+							tx.commit();
+						}
+					},
+					100, ""
+			);
+
+			if ( exceptionString != null ) {
+				fail( exceptionString );
+			}
+		}
+		finally {
+			em.close();
 		}
 	}
 

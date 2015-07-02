@@ -72,7 +72,6 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 				tx.begin();
 			}
 
-			TriggerSQLStringSource triggerSource = this.triggerSource;
 			try {
 				for ( String str : triggerSource.getSetupCode() ) {
 					LOGGER.info( str );
@@ -84,23 +83,23 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 					}
 				}
 				for ( EventModelInfo info : eventModelInfos ) {
-					for ( String unSetupCode : triggerSource.getSpecificUnSetupCode( info ) ) {
+					for ( String unSetupCode : this.triggerSource.getSpecificUnSetupCode( info ) ) {
 						LOGGER.info( unSetupCode );
 						em.createNativeQuery( unSetupCode ).executeUpdate();
 					}
-					for ( String setupCode : triggerSource.getSpecificSetupCode( info ) ) {
+					for ( String setupCode : this.triggerSource.getSpecificSetupCode( info ) ) {
 						LOGGER.info( setupCode );
 						em.createNativeQuery( setupCode ).executeUpdate();
 					}
 					for ( int eventType : EventType.values() ) {
-						String[] triggerDropStrings = triggerSource.getTriggerDropCode( info, eventType );
+						String[] triggerDropStrings = this.triggerSource.getTriggerDropCode( info, eventType );
 						for ( String triggerCreationString : triggerDropStrings ) {
 							LOGGER.info( triggerCreationString );
 							em.createNativeQuery( triggerCreationString ).executeUpdate();
 						}
 					}
 					for ( int eventType : EventType.values() ) {
-						String[] triggerCreationStrings = triggerSource.getTriggerCreationCode( info, eventType );
+						String[] triggerCreationStrings = this.triggerSource.getTriggerCreationCode( info, eventType );
 						for ( String triggerCreationString : triggerCreationStrings ) {
 							LOGGER.info( triggerCreationString );
 							em.createNativeQuery( triggerCreationString ).executeUpdate();
@@ -120,6 +119,7 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 				tx.commit();
 				LOGGER.info( "commited trigger setup!" );
 			}
+			//TODO: what is this doing here? :D
 			em.setFlushMode( FlushModeType.COMMIT );
 			LOGGER.info( "finished setting up triggers!" );
 		}

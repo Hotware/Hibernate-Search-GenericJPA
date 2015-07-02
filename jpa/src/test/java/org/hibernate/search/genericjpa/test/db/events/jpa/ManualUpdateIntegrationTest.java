@@ -25,6 +25,7 @@ import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.index.IndexUpdater;
 import org.hibernate.search.genericjpa.db.events.jpa.JPAUpdateSource;
+import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.entity.JPAReusableEntityProvider;
 import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
 import org.hibernate.search.genericjpa.factory.SearchConfigurationImpl;
@@ -74,7 +75,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 
 	@Test
 	public void test() throws SQLException, InterruptedException {
-		this.setupTriggers();
+		this.setupTriggers(new MySQLTriggerSQLStringSource());
 		try {
 			if ( this.exceptionString != null ) {
 				fail( exceptionString );

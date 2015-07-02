@@ -14,7 +14,7 @@ import org.hibernate.search.genericjpa.db.events.EventType;
  */
 public class PostgreSQLTriggerSQLStringSource implements TriggerSQLStringSource {
 
-	private static final String UNIQUE_ID_SEQUENCE_NAME = "______uNiQuE_iD_HsEaRch_____";
+	private static final String UNIQUE_ID_SEQUENCE_NAME = "______unique_id_hsearch_____";
 	private static final String CREATE_UNIQUE_ID_SEQUENCE_SQL = "DO $$BEGIN \n" +
 			"    CREATE SEQUENCE \"" + UNIQUE_ID_SEQUENCE_NAME + "\";\n" +
 			"    EXCEPTION WHEN duplicate_table \n" +
@@ -118,10 +118,12 @@ public class PostgreSQLTriggerSQLStringSource implements TriggerSQLStringSource 
 								eventType
 						), eventModelInfo.getOriginalTableName()
 				),
-				DROP_FUNCTION_FORMAT_SQL, this.getFunctionName(
-				eventModelInfo.getOriginalTableName(),
-				eventType
-		)
+				String.format(
+						DROP_FUNCTION_FORMAT_SQL, this.getFunctionName(
+								eventModelInfo.getOriginalTableName(),
+								eventType
+						)
+				)
 		};
 	}
 

@@ -34,9 +34,9 @@ import org.hibernate.search.genericjpa.Setup;
 import org.hibernate.search.genericjpa.batchindexing.impl.IdProducerTask;
 import org.hibernate.search.genericjpa.batchindexing.impl.ObjectHandlerTask;
 import org.hibernate.search.genericjpa.db.events.EventType;
-import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
+import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource;
 import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.exception.SearchException;
@@ -54,7 +54,6 @@ import org.hibernate.search.query.DatabaseRetrievalMethod;
 import org.hibernate.search.query.ObjectLookupMethod;
 
 import org.junit.After;
-import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
@@ -64,7 +63,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class IntegrationTest {
+public abstract class IntegrationTest {
 
 	private int valinorId = 0;
 	private int helmsDeepId = 0;
@@ -454,14 +453,13 @@ public class IntegrationTest {
 		}
 	}
 
-	@Before
-	public void setup() {
-		this.emf = Persistence.createEntityManagerFactory( "EclipseLink_MySQL" );
+	public void setup(String emfName, Class<? extends TriggerSQLStringSource> triggerSource) {
+		this.emf = Persistence.createEntityManagerFactory( emfName );
 		Properties properties = new Properties();
 		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.name", "test" );
 		properties.setProperty(
 				"org.hibernate.search.genericjpa.searchfactory.triggerSource",
-				MySQLTriggerSQLStringSource.class.getName()
+				triggerSource.getName()
 		);
 		properties.setProperty( Constants.ADDITIONAL_INDEXED_TYPES_KEY, NonJPAEntity.class.getName() );
 		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.type", "manual-updates" );
