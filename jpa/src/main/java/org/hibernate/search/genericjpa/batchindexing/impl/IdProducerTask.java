@@ -40,6 +40,7 @@ public class IdProducerTask implements Runnable {
 	private final Consumer<Exception> exceptionConsumer;
 	private BiConsumer<Class<?>, Integer> progressMonitor;
 	private Runnable finishConsumer;
+	private Integer transactionTimeout = null;
 
 	public IdProducerTask(
 			Class<?> entityClass,
@@ -68,6 +69,9 @@ public class IdProducerTask implements Runnable {
 		try {
 			EntityManager em = this.emf.createEntityManager();
 			try {
+				if ( this.transactionTimeout != null ) {
+					this.transactionManager.setTransactionTimeout( this.transactionTimeout );
+				}
 				JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.transactionManager );
 				long position = 0;
 				long totalCount = this.getTotalCount( entityClass );
@@ -146,6 +150,13 @@ public class IdProducerTask implements Runnable {
 
 	public void progressMonitor(BiConsumer<Class<?>, Integer> progressMonitor) {
 		this.progressMonitor = progressMonitor;
+	}
+
+	/*
+	 * Integer here, so we can pass null values as well
+	 */
+	public void transactionTimeout(Integer seconds) {
+		this.transactionTimeout = seconds;
 	}
 
 	public long getTotalCount(Class<?> entityClass) {

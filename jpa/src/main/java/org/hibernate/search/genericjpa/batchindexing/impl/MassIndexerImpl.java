@@ -86,6 +86,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 	private int batchSizeToLoadObjects = 10;
 	private int threadsToLoadIds = 1;
 	private int threadsToLoadObjects = 4;
+	private Integer idProducerTransactionTimeout = null;
 	private boolean started = false;
 	private Map<Class<?>, String> idProperties;
 	private Future<Void> future;
@@ -260,6 +261,15 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 		return this;
 	}
 
+	@Override
+	public MassIndexer idProducerTransactionTimeout(int seconds) {
+		if ( seconds <= 0 ) {
+			throw new IllegalArgumentException( "idProducerTransactionTimeout must be greater than 0" );
+		}
+		this.idProducerTransactionTimeout = seconds;
+		return this;
+	}
+
 	private void startIdProducers() {
 		for ( Class<?> rootClass : this.rootTypes ) {
 			try {
@@ -288,6 +298,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 					this.finishConditions.get( rootClass )
 			);
 			idProducer.progressMonitor( this::idProgress );
+			idProducer.transactionTimeout( this.idProducerTransactionTimeout );
 			this.idProducerFutures.add( this.executorServiceForIds.submit( idProducer ) );
 		}
 	}

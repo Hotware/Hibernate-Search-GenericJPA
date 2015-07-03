@@ -61,6 +61,11 @@ public interface MassIndexer {
 	MassIndexer entityProvider(EntityProvider entityProvider);
 
 	/**
+	 * only applied in a JTA context
+	 */
+	MassIndexer idProducerTransactionTimeout(int seconds);
+
+	/**
 	 * starts the process and doesn't wait for completion
 	 */
 	Future<?> start();
