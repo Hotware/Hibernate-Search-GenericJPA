@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.MatchAllDocsQuery;
@@ -37,6 +38,7 @@ import org.hibernate.search.spi.SearchIntegratorBuilder;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class SearchFactoryTest {
 
@@ -198,6 +200,25 @@ public class SearchFactoryTest {
 								dummyProvider, HSearchQuery.Fetch.FIND_BY_ID
 						).size()
 				);
+			}
+
+			//test timeout
+			{
+				HSearchQuery query = factory.createQuery( new MatchAllDocsQuery(), TopLevel.class );
+				query.setTimeout( 1, TimeUnit.NANOSECONDS );
+				try {
+					query.queryResultSize();
+					fail( "Exception expected!" );
+				}
+				catch (Exception e) {
+				}
+			}
+
+			//test limit fetch time
+			{
+				HSearchQuery query = factory.createQuery( new MatchAllDocsQuery(), TopLevel.class );
+				query.limitExecutionTimeTo( 1, TimeUnit.NANOSECONDS );
+				assertEquals( 0, query.queryResultSize() );
 			}
 
 			factory.purge( TopLevel.class, new TermQuery( new Term( "id", "1" ) ) );
