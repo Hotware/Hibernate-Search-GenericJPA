@@ -33,6 +33,10 @@ import static org.hibernate.search.genericjpa.Constants.SEARCH_FACTORY_TYPE_DEFA
 import static org.hibernate.search.genericjpa.Constants.SEARCH_FACTORY_TYPE_KEY;
 import static org.hibernate.search.genericjpa.Constants.TRANSACTION_MANAGER_PROVIDER_DEFAULT_VALUE;
 import static org.hibernate.search.genericjpa.Constants.TRANSACTION_MANAGER_PROVIDER_KEY;
+import static org.hibernate.search.genericjpa.Constants.TRIGGER_CREATION_STRATEGY_CREATE;
+import static org.hibernate.search.genericjpa.Constants.TRIGGER_CREATION_STRATEGY_DEFAULT_VALUE;
+import static org.hibernate.search.genericjpa.Constants.TRIGGER_CREATION_STRATEGY_DROP_CREATE;
+import static org.hibernate.search.genericjpa.Constants.TRIGGER_CREATION_STRATEGY_KEY;
 import static org.hibernate.search.genericjpa.Constants.TRIGGER_SOURCE_KEY;
 import static org.hibernate.search.genericjpa.Constants.UPDATE_DELAY_DEFAULT_VALUE;
 import static org.hibernate.search.genericjpa.Constants.UPDATE_DELAY_KEY;
@@ -137,9 +141,17 @@ public final class Setup {
 							"class specified in " + TRIGGER_SOURCE_KEY + " could not be found."
 					);
 				}
+				String createTriggerStrategy = (String) properties.getOrDefault(
+						TRIGGER_CREATION_STRATEGY_KEY,
+						TRIGGER_CREATION_STRATEGY_DEFAULT_VALUE
+				);
+				if ( !TRIGGER_CREATION_STRATEGY_CREATE.equals( createTriggerStrategy ) && !TRIGGER_CREATION_STRATEGY_DROP_CREATE
+						.equals( createTriggerStrategy ) ) {
+					throw new SearchException( "unrecognized " + Constants.TRIGGER_CREATION_STRATEGY_KEY + " specified: " + createTriggerStrategy );
+				}
 				updateSourceProvider = new SQLJPAUpdateSourceProvider(
 						emf, transactionManager, (TriggerSQLStringSource) triggerSourceClass.newInstance(),
-						updateClasses
+						updateClasses, createTriggerStrategy
 				);
 			}
 			else if ( "manual-updates".equals( type ) ) {

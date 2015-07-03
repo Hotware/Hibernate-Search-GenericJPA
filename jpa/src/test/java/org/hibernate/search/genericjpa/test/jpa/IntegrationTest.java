@@ -462,6 +462,12 @@ public abstract class IntegrationTest {
 				triggerSource.getName()
 		);
 		properties.setProperty( Constants.ADDITIONAL_INDEXED_TYPES_KEY, NonJPAEntity.class.getName() );
+		//we do manual updates, so this will be ignored, but let's keep it here
+		//if we change our mind later
+		properties.setProperty(
+				Constants.TRIGGER_CREATION_STRATEGY_KEY,
+				Constants.TRIGGER_CREATION_STRATEGY_DROP_CREATE
+		);
 		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.type", "manual-updates" );
 		this.searchFactory = (JPASearchFactoryAdapter) Setup.createSearchFactory( this.emf, properties );
 		EntityManager em = emf.createEntityManager();

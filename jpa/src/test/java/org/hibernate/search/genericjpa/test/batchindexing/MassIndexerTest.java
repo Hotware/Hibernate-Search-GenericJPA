@@ -188,6 +188,10 @@ public class MassIndexerTest {
 		properties.setProperty( Constants.SEARCH_FACTORY_NAME_KEY, "test" );
 		properties.setProperty( Constants.TRIGGER_SOURCE_KEY, MySQLTriggerSQLStringSource.class.getName() );
 		properties.setProperty( Constants.SEARCH_FACTORY_TYPE_KEY, "sql" );
+		properties.setProperty(
+				Constants.TRIGGER_CREATION_STRATEGY_KEY,
+				Constants.TRIGGER_CREATION_STRATEGY_DROP_CREATE
+		);
 		properties.setProperty( "hibernate.search.default.directory_provider", "filesystem" );
 		properties.setProperty( "hibernate.search.default.indexBase", "target/indexes" );
 		this.searchFactory = (JPASearchFactoryAdapter) Setup.createSearchFactory( emf, properties );

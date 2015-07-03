@@ -18,7 +18,7 @@ import org.hibernate.search.genericjpa.db.events.EventType;
 public interface TriggerSQLStringSource {
 
 	/**
-	 * this is executed first
+	 * this is executed first, this can not be undone
 	 */
 	String[] getSetupCode();
 

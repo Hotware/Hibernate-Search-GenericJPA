@@ -40,6 +40,10 @@ public class MassIndexerTestWithoutEntities {
 		properties.setProperty( Constants.SEARCH_FACTORY_TYPE_KEY, "manual-updates" );
 		properties.setProperty( "hibernate.search.default.directory_provider", "filesystem" );
 		properties.setProperty( "hibernate.search.default.indexBase", "target/indexes" );
+		properties.setProperty(
+				Constants.TRIGGER_CREATION_STRATEGY_KEY,
+				Constants.TRIGGER_CREATION_STRATEGY_DROP_CREATE
+		);
 		this.searchFactory = (JPASearchFactoryAdapter) Setup.createSearchFactory( emf, properties );
 		this.searchFactory.pauseUpdating( true );
 		EntityManager em = emf.createEntityManager();

@@ -28,7 +28,12 @@ public class Constants {
 	public static final String SEARCH_FACTORY_NAME_DEFAULT_VALUE = SearchFactoryRegistry.DEFAULT_NAME;
 	public static final String TRANSACTION_MANAGER_PROVIDER_KEY = "org.hibernate.search.genericjpa.searchfactory.transactionManagerProvider";
 	public static final String TRANSACTION_MANAGER_PROVIDER_DEFAULT_VALUE = JNDILookupTransactionManagerProvider.class.getName();
-	public static final String TRANSACTION_MANAGER_JNDI_KEY = "org.hibernate.serach.genericjpa.searchfactory.transactionManagerProvider.jndi";
+	public static final String TRANSACTION_MANAGER_JNDI_KEY = "org.hibernate.search.genericjpa.searchfactory.transactionManagerProvider.jndi";
+
+	public static final String TRIGGER_CREATION_STRATEGY_KEY = "org.hibernate.search.genericjpa.searchfactory.triggers.createstrategy";
+	public static final String TRIGGER_CREATION_STRATEGY_CREATE = "create";
+	public static final String TRIGGER_CREATION_STRATEGY_DROP_CREATE = "drop-create";
+	public static final String TRIGGER_CREATION_STRATEGY_DEFAULT_VALUE = TRIGGER_CREATION_STRATEGY_CREATE;
 
 	private Constants() {
 		// can't touch this!
