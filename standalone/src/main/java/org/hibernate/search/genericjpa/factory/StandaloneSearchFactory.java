@@ -6,7 +6,6 @@
  */
 package org.hibernate.search.genericjpa.factory;
 
-import java.io.Closeable;
 import java.io.Serializable;
 import java.util.Collections;
 

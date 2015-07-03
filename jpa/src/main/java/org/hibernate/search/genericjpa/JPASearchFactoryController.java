@@ -7,7 +7,6 @@
 package org.hibernate.search.genericjpa;
 
 import javax.persistence.EntityManager;
-import java.io.Closeable;
 
 import org.hibernate.search.SearchFactory;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;

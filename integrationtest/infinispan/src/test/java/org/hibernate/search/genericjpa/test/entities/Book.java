@@ -6,15 +6,15 @@
  */
 package org.hibernate.search.genericjpa.test.entities;
 
-import org.hibernate.search.annotations.DocumentId;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.genericjpa.annotations.InIndex;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+
+import org.hibernate.search.annotations.DocumentId;
+import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.genericjpa.annotations.InIndex;
 
 /**
  * Created by Martin on 24.06.2015.

@@ -21,7 +21,6 @@ import org.hibernate.search.genericjpa.test.db.events.jpa.JPAUpdateSourceTest;
 import org.hibernate.search.genericjpa.test.jpa.entities.PlaceSorcererUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.PlaceUpdates;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 

@@ -16,7 +16,7 @@ import org.hibernate.search.genericjpa.dto.annotations.DtoOverEntity;
 @DtoOverEntity(entityClass = Place.class)
 public class TestDto {
 
-	@DtoFields({@DtoField(fieldName="name"), @DtoField(fieldName = "id", profileName = "ID_PROFILE")})
+	@DtoFields({@DtoField(fieldName = "name"), @DtoField(fieldName = "id", profileName = "ID_PROFILE")})
 	private Object field;
 
 	public Object getField() {

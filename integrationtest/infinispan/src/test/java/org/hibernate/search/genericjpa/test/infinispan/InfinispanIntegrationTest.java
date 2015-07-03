@@ -6,15 +6,6 @@
  */
 package org.hibernate.search.genericjpa.test.infinispan;
 
-import org.hibernate.search.genericjpa.JPASearchFactoryController;
-import org.hibernate.search.genericjpa.Setup;
-import org.hibernate.search.genericjpa.test.entities.Book;
-import org.hibernate.search.jpa.FullTextEntityManager;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
@@ -23,6 +14,15 @@ import java.io.InputStream;
 import java.util.Properties;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
+
+import org.hibernate.search.genericjpa.JPASearchFactoryController;
+import org.hibernate.search.genericjpa.Setup;
+import org.hibernate.search.genericjpa.test.entities.Book;
+import org.hibernate.search.jpa.FullTextEntityManager;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 

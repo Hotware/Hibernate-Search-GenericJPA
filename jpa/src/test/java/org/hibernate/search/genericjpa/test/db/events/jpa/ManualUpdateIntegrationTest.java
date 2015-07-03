@@ -75,7 +75,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 
 	@Test
 	public void test() throws SQLException, InterruptedException {
-		this.setupTriggers(new MySQLTriggerSQLStringSource());
+		this.setupTriggers( new MySQLTriggerSQLStringSource() );
 		try {
 			if ( this.exceptionString != null ) {
 				fail( exceptionString );

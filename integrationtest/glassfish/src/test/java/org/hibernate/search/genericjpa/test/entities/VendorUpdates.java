@@ -6,15 +6,15 @@
  */
 package org.hibernate.search.genericjpa.test.entities;
 
-import org.hibernate.search.genericjpa.annotations.Event;
-import org.hibernate.search.genericjpa.annotations.IdFor;
-import org.hibernate.search.genericjpa.annotations.Updates;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.io.Serializable;
+
+import org.hibernate.search.genericjpa.annotations.Event;
+import org.hibernate.search.genericjpa.annotations.IdFor;
+import org.hibernate.search.genericjpa.annotations.Updates;
 
 @Entity
 @Table(name = "VendorUpdates")

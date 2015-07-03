@@ -19,7 +19,7 @@ public final class EventType {
 	public static final int UPDATE = -2;
 	public static final int INSERT = -3;
 	private static final int[] VALUES = {DELETE, UPDATE, INSERT};
-	
+
 	private EventType() {
 		throw new AssertionFailure( "can't touch this!" );
 	}

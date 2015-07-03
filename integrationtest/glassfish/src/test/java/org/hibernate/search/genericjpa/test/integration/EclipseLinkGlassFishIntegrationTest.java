@@ -122,7 +122,7 @@ public class EclipseLinkGlassFishIntegrationTest {
 	public void testMassIndexer()
 			throws InterruptedException {
 		Game tmp = new Game( "should not appear in index" );
-		tmp.setId(-1L);
+		tmp.setId( -1L );
 		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( null );
 		fem.beginSearchTransaction();
 		fem.index( tmp );

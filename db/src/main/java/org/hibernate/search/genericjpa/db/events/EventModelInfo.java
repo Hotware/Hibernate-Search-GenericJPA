@@ -137,8 +137,6 @@ public class EventModelInfo {
 		}
 
 		/**
-		 *
-		 *
 		 * @return the columnsInOriginal
 		 */
 		public String[] getColumnsInOriginal() {

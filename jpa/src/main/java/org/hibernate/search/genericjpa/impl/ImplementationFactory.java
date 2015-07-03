@@ -6,25 +6,7 @@
  */
 package org.hibernate.search.genericjpa.impl;
 
-import javax.persistence.EntityGraph;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.EntityTransaction;
-import javax.persistence.FlushModeType;
-import javax.persistence.LockModeType;
-import javax.persistence.Query;
-import javax.persistence.StoredProcedureQuery;
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaDelete;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.CriteriaUpdate;
-import javax.persistence.metamodel.Metamodel;
-
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Map;
 
 import org.hibernate.search.jpa.FullTextEntityManager;
 
@@ -43,7 +25,7 @@ public final class ImplementationFactory {
 	public static FullTextEntityManager createFullTextEntityManager(
 			EntityManager em,
 			JPASearchFactoryAdapter searchFactory) {
-		if(em == null) {
+		if ( em == null ) {
 			em = new DummyEntityManager();
 		}
 		return new FullTextEntityManagerImpl( em, searchFactory );

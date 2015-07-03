@@ -46,6 +46,7 @@ public interface DtoDescriptor {
 		private final Class<?> dtoClass;
 		private final Class<?> entityClass;
 		private final Map<String, Set<FieldDescription>> fieldNamesForProfile;
+
 		public DtoDescription(
 				Class<?> dtoClass,
 				Class<?> entityClass,

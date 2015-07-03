@@ -11,7 +11,6 @@ import javax.transaction.Synchronization;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.transaction.TransactionContext;
 
 public class Transaction implements TransactionContext {
@@ -38,8 +37,8 @@ public class Transaction implements TransactionContext {
 	 * @throws IllegalStateException if already commited/rolledback
 	 */
 	public void commit() {
-		if(!this.progress) {
-			throw new IllegalStateException("can't commit - No Search Transaction is in Progress!");
+		if ( !this.progress ) {
+			throw new IllegalStateException( "can't commit - No Search Transaction is in Progress!" );
 		}
 		this.progress = false;
 		this.syncs.forEach( Synchronization::beforeCompletion );
@@ -53,8 +52,8 @@ public class Transaction implements TransactionContext {
 	 * @throws IllegalStateException if already commited/rolledback
 	 */
 	public void rollback() {
-		if(!this.progress) {
-			throw new IllegalStateException("can't rollback - No Search Transaction is in Progress!");
+		if ( !this.progress ) {
+			throw new IllegalStateException( "can't rollback - No Search Transaction is in Progress!" );
 		}
 		this.progress = false;
 		this.syncs.forEach( Synchronization::beforeCompletion );
