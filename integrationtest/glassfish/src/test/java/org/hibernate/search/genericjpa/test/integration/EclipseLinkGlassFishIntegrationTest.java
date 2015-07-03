@@ -9,11 +9,6 @@ package org.hibernate.search.genericjpa.test.integration;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -125,7 +120,13 @@ public class EclipseLinkGlassFishIntegrationTest {
 
 	@Test
 	public void testMassIndexer()
-			throws InterruptedException, SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException, RollbackException {
+			throws InterruptedException {
+		Game tmp = new Game( "should not appear in index" );
+		tmp.setId(-1L);
+		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( null );
+		fem.beginSearchTransaction();
+		fem.index( tmp );
+		fem.commitSearchTransaction();
 		//all the minimum stuff, so we can test with our little amount of entities
 		//the beefy tests are done in the jpa module anyways
 		//we just want to test whether we can do the indexing
@@ -137,7 +138,10 @@ public class EclipseLinkGlassFishIntegrationTest {
 					.batchSizeToLoadIds( 1 )
 					.batchSizeToLoadObjects( 1 )
 					.threadsToLoadIds( 1 )
-					.threadsToLoadObjects( 1 ).startAndWait();
+					.threadsToLoadObjects( 1 )
+							//just make sure there is no exception in setting this limit, we can't really test this properly as of now
+							//manual test showed this was done correctly
+					.idProducerTransactionTimeout( 1000 ).startAndWait();
 			assertEquals(
 					GAME_TITLES.length, this.searchFactory.getFullTextEntityManager( this.em ).createFullTextQuery(
 							new MatchAllDocsQuery(),
