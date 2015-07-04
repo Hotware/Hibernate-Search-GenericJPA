@@ -6,6 +6,7 @@
  */
 package org.hibernate.search.genericjpa.batchindexing.impl;
 
+import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.metamodel.EntityType;
 import javax.persistence.metamodel.Metamodel;
@@ -32,6 +33,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.h2.mvstore.ConcurrentArrayList;
 
 import org.hibernate.search.backend.OptimizeLuceneWork;
 import org.hibernate.search.backend.PurgeAllLuceneWork;
@@ -90,6 +93,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 	private boolean started = false;
 	private Map<Class<?>, String> idProperties;
 	private Future<Void> future;
+	private ConcurrentLinkedQueue<EntityManagerEntityProvider> freeEntityProviders = new ConcurrentLinkedQueue<>();
 	private ConcurrentLinkedQueue<EntityManagerEntityProvider> entityProviders = new ConcurrentLinkedQueue<>();
 	private MassIndexerProgressMonitor progressMonitor;
 	/**
@@ -214,18 +218,18 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
 	@Override
 	public void updateEvent(List<UpdateInfo> updateInfo) {
+		try {
+			// check if we should wait with submitting
+			this.objectHandlerTaskCondition.check();
+		}
+		catch (InterruptedException e) {
+			this.onException( e );
+		}
 		Lock lock = MassIndexerImpl.this.cancelGuard.readLock();
 		lock.lock();
 		try {
 			if ( this.cancelled ) {
 				return;
-			}
-			try {
-				// check if we should wait with submitting
-				this.objectHandlerTaskCondition.check();
-			}
-			catch (InterruptedException e) {
-				this.onException( e );
 			}
 			Class<?> entityClass = updateInfo.get( 0 ).getEntityClass();
 			ObjectHandlerTask task = new ObjectHandlerTask(
@@ -348,6 +352,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 				try {
 					MassIndexerImpl.this.awaitJobsFinish();
 					if ( MassIndexerImpl.this.optimizeOnFinish ) {
+						LOGGER.info( "optimizing on finish" );
 						for ( Class<?> rootEntity : MassIndexerImpl.this.rootTypes ) {
 							try {
 								MassIndexerImpl.this.batchBackend.enqueueAsyncWork(
@@ -498,15 +503,23 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 
 	private EntityProvider getEntityProvider() {
 		if ( this.userSpecifiedEntityProvider == null ) {
-			EntityManagerEntityProvider em = this.entityProviders.poll();
-			if ( em == null ) {
-				em = new TransactionWrappedEntityManagerEntityProvider(
-						this.emf.createEntityManager(),
-						this.idProperties,
-						this.transactionManager
-				);
+			EntityManagerEntityProvider emProvider = this.freeEntityProviders.poll();
+			if ( emProvider == null ) {
+				EntityManager em = this.emf.createEntityManager();
+				try {
+					emProvider = new TransactionWrappedEntityManagerEntityProvider(
+							em,
+							this.idProperties,
+							this.transactionManager
+					);
+				}
+				catch (Exception e) {
+					em.close();
+					throw e;
+				}
+				this.entityProviders.add( emProvider );
 			}
-			return em;
+			return emProvider;
 		}
 		return this.userSpecifiedEntityProvider;
 	}
@@ -514,7 +527,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 	private void disposeEntityManager(ObjectHandlerTask task, EntityProvider provider) {
 		if ( this.userSpecifiedEntityProvider == null ) {
 			((TransactionWrappedEntityManagerEntityProvider) provider).clearEm();
-			this.entityProviders.add( (EntityManagerEntityProvider) provider );
+			this.freeEntityProviders.add( (EntityManagerEntityProvider) provider );
 		}
 		this.objectHandlerTaskCondition.down( 1 );
 	}

@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 
 import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
@@ -27,6 +28,8 @@ import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
  * @author Martin Braun
  */
 public class IdProducerTask implements Runnable {
+
+	private static final Logger LOGGER = Logger.getLogger( IdProducerTask.class.getName() );
 
 	private final Class<?> entityClass;
 	private final String idProperty;
@@ -107,6 +110,9 @@ public class IdProducerTask implements Runnable {
 						tx.rollback();
 						throw e;
 					}
+				}
+				if ( Thread.currentThread().isInterrupted() ) {
+					LOGGER.info( "IdProducerTask for " + this.entityClass + " was interrupted!" );
 				}
 				this.flushBatch();
 			}
