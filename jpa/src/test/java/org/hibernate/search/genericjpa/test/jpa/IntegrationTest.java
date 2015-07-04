@@ -457,13 +457,13 @@ public abstract class IntegrationTest {
 		this.emf = Persistence.createEntityManagerFactory( emfName );
 		Properties properties = new Properties();
 		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.name", "test" );
+		properties.setProperty( Constants.ADDITIONAL_INDEXED_TYPES_KEY, NonJPAEntity.class.getName() );
+		//we do manual updates, so this will be ignored, but let's keep it here
+		//if we change our mind later
 		properties.setProperty(
 				"org.hibernate.search.genericjpa.searchfactory.triggerSource",
 				triggerSource.getName()
 		);
-		properties.setProperty( Constants.ADDITIONAL_INDEXED_TYPES_KEY, NonJPAEntity.class.getName() );
-		//we do manual updates, so this will be ignored, but let's keep it here
-		//if we change our mind later
 		properties.setProperty(
 				Constants.TRIGGER_CREATION_STRATEGY_KEY,
 				Constants.TRIGGER_CREATION_STRATEGY_DROP_CREATE

@@ -39,6 +39,8 @@ import org.hibernate.search.genericjpa.db.events.index.IndexUpdater;
 import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.entity.JPAReusableEntityProvider;
+import org.hibernate.search.genericjpa.exception.AssertionFailure;
+import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.factory.SearchConfigurationImpl;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchFactory;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchFactoryImpl;
@@ -162,10 +164,15 @@ public final class JPASearchFactoryAdapter
 
 		this.updateSource = this.createUpdateSource();
 		if ( this.updateSource != null ) {
+			//TODO: we could allow this, but then we would need to change
+			//the way we get the entityProvider. it's safest to keep it like this
+			if ( this.emf == null ) {
+				throw new AssertionFailure( "emf may not be null when using an UpdateSource" );
+			}
 			this.containedInIndexOf = MetadataUtil.calculateInIndexOf( rehashedTypeMetadatas );
 
 			JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider(
-					this.getEmf(),
+					this.emf,
 					this.idProperties,
 					this.transactionManager
 			);
@@ -288,6 +295,9 @@ public final class JPASearchFactoryAdapter
 	}
 
 	public MassIndexer createMassIndexer(List<Class<?>> indexRootTypes) {
+		if ( this.emf == null ) {
+			throw new SearchException( "can only create a MassIndexer with a JPA EntityManagerFactory present!" );
+		}
 		return new MassIndexerImpl( this.emf, this.searchIntegrator, indexRootTypes, this.transactionManager );
 	}
 

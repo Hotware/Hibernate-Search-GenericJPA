@@ -10,6 +10,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.metamodel.EntityType;
 import javax.transaction.TransactionManager;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -62,19 +63,23 @@ public final class Setup {
 	public static JPASearchFactoryController createSearchFactory(EntityManagerFactory emf, Map properties) {
 		try {
 			LOGGER.info( "using hibernate-search properties: " + properties );
+			LOGGER.info( "using EntityManagerFactory: " + emf );
 
-			// hack... but OpenJPA wants this so it can enhance the classes.
-			emf.createEntityManager().close();
-
-			// get all the root types marked by an @InIndex and @Indexed (@Indexed isn't sufficient here!)
 			List<Class<?>> jpaRootTypes = new ArrayList<>();
-			emf.getMetamodel().getEntities().stream().map( EntityType::getBindableJavaType ).filter(
-					(entityClass) -> entityClass.isAnnotationPresent( InIndex.class ) && entityClass.isAnnotationPresent(
-							Indexed.class
-					)
-			).forEach(
-					jpaRootTypes::add
-			);
+			if ( emf != null ) {
+				// hack... but OpenJPA wants this so it can enhance the classes.
+				emf.createEntityManager().close();
+
+				// get all the root types marked by an @InIndex and @Indexed (@Indexed isn't sufficient here!)
+
+				emf.getMetamodel().getEntities().stream().map( EntityType::getBindableJavaType ).filter(
+						(entityClass) -> entityClass.isAnnotationPresent( InIndex.class ) && entityClass.isAnnotationPresent(
+								Indexed.class
+						)
+				).forEach(
+						jpaRootTypes::add
+				);
+			}
 
 			List<Class<?>> indexRootTypes = new ArrayList<>( jpaRootTypes );
 			// user specified types are supported. even those that are no JPA entities!
@@ -126,14 +131,23 @@ public final class Setup {
 					SEARCH_FACTORY_TYPE_DEFAULT_VALUE
 			);
 			// get all the updates classes marked by an @Updates annotation
-			List<Class<?>> updateClasses = emf.getMetamodel().getEntities().stream().map(
-					EntityType::getBindableJavaType
-			).filter(
-					(entityClass) -> entityClass.isAnnotationPresent( Updates.class )
-			).collect( Collectors.toList() );
+			List<Class<?>> updateClasses;
+			if ( emf != null ) {
+				updateClasses = emf.getMetamodel().getEntities().stream().map(
+						EntityType::getBindableJavaType
+				).filter(
+						(entityClass) -> entityClass.isAnnotationPresent( Updates.class )
+				).collect( Collectors.toList() );
+			}
+			else {
+				updateClasses = Collections.emptyList();
+			}
 			//what UpdateSource to be used
 			UpdateSourceProvider updateSourceProvider;
 			if ( "sql".equals( type ) ) {
+				if ( emf == null ) {
+					throw new SearchException( "EntityManagerFactory must not be null when using " + SEARCH_FACTORY_TYPE_KEY + " of \"sql\"" );
+				}
 				String triggerSource = (String) properties.get( TRIGGER_SOURCE_KEY );
 				Class<?> triggerSourceClass;
 				if ( triggerSource == null || (triggerSourceClass = Class.forName( triggerSource )) == null ) {
