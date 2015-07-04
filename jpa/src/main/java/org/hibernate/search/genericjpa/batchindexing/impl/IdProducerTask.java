@@ -126,6 +126,9 @@ public class IdProducerTask implements Runnable {
 			if ( this.exceptionConsumer != null ) {
 				this.exceptionConsumer.accept( e );
 			}
+			else {
+				throw new RuntimeException( e );
+			}
 		}
 		finally {
 			if ( this.finishConsumer != null ) {

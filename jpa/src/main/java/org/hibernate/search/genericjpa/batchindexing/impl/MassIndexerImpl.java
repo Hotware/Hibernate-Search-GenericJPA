@@ -34,8 +34,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.h2.mvstore.ConcurrentArrayList;
-
 import org.hibernate.search.backend.OptimizeLuceneWork;
 import org.hibernate.search.backend.PurgeAllLuceneWork;
 import org.hibernate.search.backend.impl.batch.DefaultBatchBackend;
@@ -54,7 +52,7 @@ import org.hibernate.search.genericjpa.jpa.util.NamingThreadFactory;
 /**
  * @author Martin Braun
  */
-public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
+public class MassIndexerImpl implements MassIndexer {
 
 	private static final Logger LOGGER = Logger.getLogger( MassIndexerImpl.class.getName() );
 	private final ExtendedSearchIntegrator searchIntegrator;
@@ -216,14 +214,14 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 		}
 	}
 
-	@Override
-	public void updateEvent(List<UpdateInfo> updateInfo) {
+	public void updateEvent(List<UpdateConsumer.UpdateInfo> updateInfo) {
 		try {
 			// check if we should wait with submitting
 			this.objectHandlerTaskCondition.check();
 		}
 		catch (InterruptedException e) {
-			this.onException( e );
+			//throw this forward. this should be catched by the IdProducer
+			throw new RuntimeException( e );
 		}
 		Lock lock = MassIndexerImpl.this.cancelGuard.readLock();
 		lock.lock();
@@ -297,7 +295,7 @@ public class MassIndexerImpl implements MassIndexer, UpdateConsumer {
 					this.transactionManager,
 					this.batchSizeToLoadIds,
 					this.batchSizeToLoadObjects,
-					this,
+					this::updateEvent,
 					this::onException,
 					this.finishConditions.get( rootClass )
 			);
