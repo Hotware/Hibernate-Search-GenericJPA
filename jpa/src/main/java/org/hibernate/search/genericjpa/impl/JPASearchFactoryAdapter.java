@@ -74,11 +74,11 @@ public final class JPASearchFactoryAdapter
 	private EntityManagerFactory emf;
 	private Properties properties;
 	private UpdateSourceProvider updateSourceProvider;
+	private UpdateSource updateSource;
 	private List<Class<?>> indexRootTypes;
 	private List<Class<?>> jpaRootTypes;
 	private boolean useJTATransaction;
 	private StandaloneSearchFactory searchFactory;
-	private UpdateSource updateSource;
 	private Set<Class<?>> indexRelevantEntities;
 	private Map<Class<?>, String> idProperties;
 	private int updateDelay = 500;
@@ -184,7 +184,7 @@ public final class JPASearchFactoryAdapter
 					rehashedTypeMetadataForIndexRoot, containedInIndexOf, entityProvider,
 					impl.unwrap( ExtendedSearchIntegrator.class )
 			);
-			this.updateSource.setUpdateConsumers( Arrays.asList( indexUpdater, this ) );
+			this.updateSource.setUpdateConsumers( Arrays.asList( this.indexUpdater, this ) );
 			this.updateSource.start();
 		}
 	}
