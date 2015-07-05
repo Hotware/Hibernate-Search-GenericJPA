@@ -171,6 +171,10 @@ public final class JPASearchFactoryAdapter
 			}
 			this.containedInIndexOf = MetadataUtil.calculateInIndexOf( rehashedTypeMetadatas );
 
+			//TODO: make this configurable we can handle the retrieval of
+			//the updates in JPA but if we make this configurable
+			//NonJPA EntityProviders are possible.
+			//maybe allow for a mapping Map<Class<?>, EntityProvider>?
 			JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider(
 					this.emf,
 					this.idProperties,
