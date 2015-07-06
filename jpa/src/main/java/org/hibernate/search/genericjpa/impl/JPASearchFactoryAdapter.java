@@ -171,7 +171,7 @@ public final class JPASearchFactoryAdapter
 			}
 			this.containedInIndexOf = MetadataUtil.calculateInIndexOf( rehashedTypeMetadatas );
 
-			//TODO: make this configurable we can handle the retrieval of
+			//TODO: make this configurable so we can handle the retrieval of
 			//the updates in JPA but if we make this configurable
 			//NonJPA EntityProviders are possible.
 			//maybe allow for a mapping Map<Class<?>, EntityProvider>?
@@ -181,7 +181,7 @@ public final class JPASearchFactoryAdapter
 					this.transactionManager
 			);
 			this.indexUpdater = new IndexUpdater(
-					rehashedTypeMetadataForIndexRoot, containedInIndexOf, entityProvider,
+					this.rehashedTypeMetadataForIndexRoot, this.containedInIndexOf, entityProvider,
 					impl.unwrap( ExtendedSearchIntegrator.class )
 			);
 			this.updateSource.setUpdateConsumers( Arrays.asList( indexUpdater, this ) );
@@ -190,7 +190,7 @@ public final class JPASearchFactoryAdapter
 	}
 
 	public TransactionManager getTransactionManager() {
-		return transactionManager;
+		return this.transactionManager;
 	}
 
 	public JPASearchFactoryAdapter setTransactionManager(TransactionManager transactionManager) {
