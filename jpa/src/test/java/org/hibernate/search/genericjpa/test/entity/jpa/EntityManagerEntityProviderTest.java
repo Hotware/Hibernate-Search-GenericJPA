@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
+import org.hibernate.search.genericjpa.entity.impl.BasicEntityProvider;
 import org.hibernate.search.genericjpa.test.db.events.jpa.DatabaseIntegrationTest;
 import org.hibernate.search.genericjpa.test.db.events.jpa.MetaModelParser;
 import org.hibernate.search.genericjpa.test.jpa.entities.Place;
@@ -36,7 +36,7 @@ public class EntityManagerEntityProviderTest extends DatabaseIntegrationTest {
 		EntityManager em = this.emf.createEntityManager();
 		MetaModelParser metaModelParser = new MetaModelParser();
 		metaModelParser.parse( this.emf.getMetamodel() );
-		EntityManagerEntityProvider provider = new EntityManagerEntityProvider( em, metaModelParser.getIdProperties() );
+		BasicEntityProvider provider = new BasicEntityProvider( em, metaModelParser.getIdProperties() );
 		try {
 
 			assertEquals( "Valinor", ((Place) provider.get( Place.class, this.valinorId )).getName() );

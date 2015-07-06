@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
-package org.hibernate.search.genericjpa.entity;
+package org.hibernate.search.genericjpa.entity.impl;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -16,6 +16,7 @@ import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
+import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
 import org.hibernate.search.genericjpa.exception.SearchException;
 
 /**
@@ -74,6 +75,10 @@ public abstract class TransactionWrappedReusableEntityProvider implements Reusab
 			this.em = null;
 			throw e;
 		}
+	}
+
+	public boolean isOpen() {
+		return this.open;
 	}
 
 	private void beginTransaction() {

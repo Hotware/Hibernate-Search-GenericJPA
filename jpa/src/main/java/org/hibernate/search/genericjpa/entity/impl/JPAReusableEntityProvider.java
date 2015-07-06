@@ -4,12 +4,14 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
-package org.hibernate.search.genericjpa.entity;
+package org.hibernate.search.genericjpa.entity.impl;
 
 import javax.persistence.EntityManagerFactory;
 import javax.transaction.TransactionManager;
 import java.util.List;
 import java.util.Map;
+
+import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
 
 /**
  * @author Martin Braun
@@ -18,7 +20,7 @@ public class JPAReusableEntityProvider extends TransactionWrappedReusableEntityP
 		implements ReusableEntityProvider {
 
 	private final Map<Class<?>, String> idProperties;
-	private EntityManagerEntityProvider provider;
+	private BasicEntityProvider provider;
 
 	public JPAReusableEntityProvider(
 			EntityManagerFactory emf,
@@ -59,7 +61,7 @@ public class JPAReusableEntityProvider extends TransactionWrappedReusableEntityP
 	@Override
 	public void open() {
 		super.open();
-		this.provider = new EntityManagerEntityProvider( this.getEntityManager(), this.idProperties );
+		this.provider = new BasicEntityProvider( this.getEntityManager(), this.idProperties );
 	}
 
 }

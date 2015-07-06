@@ -26,7 +26,7 @@ import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.index.IndexUpdater;
 import org.hibernate.search.genericjpa.db.events.jpa.JPAUpdateSource;
 import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringSource;
-import org.hibernate.search.genericjpa.entity.JPAReusableEntityProvider;
+import org.hibernate.search.genericjpa.entity.impl.JPAReusableEntityProvider;
 import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
 import org.hibernate.search.genericjpa.factory.SearchConfigurationImpl;
 import org.hibernate.search.genericjpa.metadata.MetadataRehasher;

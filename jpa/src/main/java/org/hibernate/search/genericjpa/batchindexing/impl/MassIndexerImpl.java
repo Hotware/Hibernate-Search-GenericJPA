@@ -42,9 +42,9 @@ import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.genericjpa.batchindexing.MassIndexer;
 import org.hibernate.search.genericjpa.batchindexing.MassIndexerProgressMonitor;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
-import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
+import org.hibernate.search.genericjpa.entity.impl.BasicEntityProvider;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
-import org.hibernate.search.genericjpa.entity.TransactionWrappedEntityManagerEntityProvider;
+import org.hibernate.search.genericjpa.entity.impl.TransactionWrappedEntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.jpa.util.NamingThreadFactory;
@@ -91,8 +91,8 @@ public class MassIndexerImpl implements MassIndexer {
 	private boolean started = false;
 	private Map<Class<?>, String> idProperties;
 	private Future<Void> future;
-	private ConcurrentLinkedQueue<EntityManagerEntityProvider> freeEntityProviders = new ConcurrentLinkedQueue<>();
-	private ConcurrentLinkedQueue<EntityManagerEntityProvider> entityProviders = new ConcurrentLinkedQueue<>();
+	private ConcurrentLinkedQueue<BasicEntityProvider> freeEntityProviders = new ConcurrentLinkedQueue<>();
+	private ConcurrentLinkedQueue<BasicEntityProvider> entityProviders = new ConcurrentLinkedQueue<>();
 	private MassIndexerProgressMonitor progressMonitor;
 	/**
 	 * this is needed so we don't flood the executors for object handling. we store the amount of currently submitted
@@ -501,7 +501,7 @@ public class MassIndexerImpl implements MassIndexer {
 
 	private EntityProvider getEntityProvider() {
 		if ( this.userSpecifiedEntityProvider == null ) {
-			EntityManagerEntityProvider emProvider = this.freeEntityProviders.poll();
+			BasicEntityProvider emProvider = this.freeEntityProviders.poll();
 			if ( emProvider == null ) {
 				EntityManager em = this.emf.createEntityManager();
 				try {
@@ -525,7 +525,7 @@ public class MassIndexerImpl implements MassIndexer {
 	private void disposeEntityManager(ObjectHandlerTask task, EntityProvider provider) {
 		if ( this.userSpecifiedEntityProvider == null ) {
 			((TransactionWrappedEntityManagerEntityProvider) provider).clearEm();
-			this.freeEntityProviders.add( (EntityManagerEntityProvider) provider );
+			this.freeEntityProviders.add( (BasicEntityProvider) provider );
 		}
 		this.objectHandlerTaskCondition.down( 1 );
 	}

@@ -36,9 +36,9 @@ import org.hibernate.search.genericjpa.batchindexing.impl.MassIndexerImpl;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateSource;
 import org.hibernate.search.genericjpa.db.events.index.IndexUpdater;
-import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
+import org.hibernate.search.genericjpa.entity.impl.BasicEntityProvider;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
-import org.hibernate.search.genericjpa.entity.JPAReusableEntityProvider;
+import org.hibernate.search.genericjpa.entity.impl.JPAReusableEntityProvider;
 import org.hibernate.search.genericjpa.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.factory.SearchConfigurationImpl;
@@ -121,7 +121,7 @@ public final class JPASearchFactoryAdapter
 	}
 
 	public EntityProvider entityProvider(EntityManager em) {
-		return new EntityManagerEntityProvider( em, this.idProperties );
+		return new BasicEntityProvider( em, this.idProperties );
 	}
 
 	public final void init() {

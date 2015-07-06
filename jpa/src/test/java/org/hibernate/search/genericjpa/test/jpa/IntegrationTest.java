@@ -37,7 +37,7 @@ import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
 import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource;
-import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
+import org.hibernate.search.genericjpa.entity.impl.BasicEntityProvider;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchFactory;
@@ -211,7 +211,7 @@ public abstract class IntegrationTest {
 		BatchBackend batchBackend = new DefaultBatchBackend( this.searchFactory.getSearchIntegrator(), null );
 		ObjectHandlerTask handler = new ObjectHandlerTask(
 				batchBackend, Place.class, this.searchFactory.getSearchIntegrator().getIndexBinding( Place.class ),
-				() -> new EntityManagerEntityProvider( this.em, idProperties ), (x, y) -> {
+				() -> new BasicEntityProvider( this.em, idProperties ), (x, y) -> {
 
 		}, this.emf.getPersistenceUnitUtil()
 		);
