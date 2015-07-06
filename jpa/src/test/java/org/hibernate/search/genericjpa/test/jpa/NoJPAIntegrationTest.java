@@ -26,6 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  * Created by Martin on 04.07.2015.
@@ -33,6 +34,7 @@ import static org.junit.Assert.assertEquals;
 public class NoJPAIntegrationTest {
 
 	private JPASearchFactoryAdapter searchFactory;
+	private FullTextEntityManager fem;
 
 	@Before
 	public void setup() {
@@ -41,18 +43,19 @@ public class NoJPAIntegrationTest {
 		properties.setProperty( Constants.ADDITIONAL_INDEXED_TYPES_KEY, NonJPAEntity.class.getName() );
 		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.type", "manual-updates" );
 		this.searchFactory = (JPASearchFactoryAdapter) Setup.createSearchFactory( null, properties );
+		this.fem = this.searchFactory.getFullTextEntityManager( null );
 	}
 
 	@Test
 	public void test() {
-		final NonJPAEntity tmp = new NonJPAEntity();
-		tmp.setDocumentId( "toast" );
-		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( null );
-		fem.beginSearchTransaction();
-		fem.index( tmp );
-		fem.commitSearchTransaction();
+		this.indexStuff();
 
-		NonJPAEntity fromQuery = (NonJPAEntity) fem.createFullTextQuery( new MatchAllDocsQuery(), NonJPAEntity.class )
+		final NonJPAEntity tmp = new NonJPAEntity();
+
+		NonJPAEntity fromQuery = (NonJPAEntity) this.fem.createFullTextQuery(
+				new MatchAllDocsQuery(),
+				NonJPAEntity.class
+		)
 				.initializeObjectsWith(
 						ObjectLookupMethod.SKIP, DatabaseRetrievalMethod.FIND_BY_ID
 				)
@@ -78,6 +81,31 @@ public class NoJPAIntegrationTest {
 				.get( 0 );
 
 		assertEquals( tmp, fromQuery );
+	}
+
+	@Test
+	public void testExpectedExceptions() {
+		this.indexStuff();
+
+		expectException( () -> this.fem.createFullTextQuery( new MatchAllDocsQuery() ).getResultList() );
+		expectException( () -> this.fem.createFullTextQuery( new MatchAllDocsQuery() ).getSingleResult() );
+	}
+
+	private void indexStuff() {
+		final NonJPAEntity tmp = new NonJPAEntity();
+		tmp.setDocumentId( "toast" );
+		this.fem.beginSearchTransaction();
+		this.fem.index( tmp );
+		this.fem.commitSearchTransaction();
+	}
+
+	private static void expectException(Runnable run) {
+		try {
+			run.run();
+			fail("Exception expected!");
+		}
+		catch (Exception e) {
+		}
 	}
 
 	@After
