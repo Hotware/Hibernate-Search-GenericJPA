@@ -17,9 +17,11 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.genericjpa.annotations.CustomUpdateEntityProvider;
 import org.hibernate.search.genericjpa.annotations.InIndex;
 import org.hibernate.search.genericjpa.annotations.Updates;
 import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource;
+import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
 import org.hibernate.search.genericjpa.impl.SQLJPAUpdateSourceProvider;
@@ -89,6 +91,11 @@ public final class Setup {
 					entityClassName = entityClassName.trim();
 					LOGGER.info( "using additional indexed type: " + entityClassName );
 					Class<?> entityClass = Class.forName( entityClassName );
+					if ( !entityClass.isAnnotationPresent( InIndex.class ) || !entityClass.isAnnotationPresent( Indexed.class ) ) {
+						throw new SearchException(
+								"additional indexed type specified that doesn't host both @InIndex and @Indexed!"
+						);
+					}
 					indexRootTypes.add( entityClass );
 				}
 			}
@@ -163,6 +170,7 @@ public final class Setup {
 						.equals( createTriggerStrategy ) ) {
 					throw new SearchException( "unrecognized " + Constants.TRIGGER_CREATION_STRATEGY_KEY + " specified: " + createTriggerStrategy );
 				}
+
 				updateSourceProvider = new SQLJPAUpdateSourceProvider(
 						emf, transactionManager, (TriggerSQLStringSource) triggerSourceClass.newInstance(),
 						updateClasses, createTriggerStrategy
@@ -189,8 +197,26 @@ public final class Setup {
 					)
 			);
 
+			//get all the CustomUpdateEntityProviders. this is not needed for manual-updates.
+			//but to keep everything simple we do it here anyways
+			Map<Class<?>, EntityManagerEntityProvider> customUpdateEntityProviders = indexRootTypes.stream()
+					.filter( (clazz) -> clazz.isAnnotationPresent( CustomUpdateEntityProvider.class ) )
+					.collect(
+							Collectors.toMap(
+									(clazz2) -> clazz2, (clazz3) -> {
+										try {
+											return (EntityManagerEntityProvider) clazz3.newInstance();
+										}
+										catch (Exception e) {
+											throw new SearchException( e );
+										}
+									}
+							)
+					);
+
 			JPASearchFactoryAdapter ret = new JPASearchFactoryAdapter();
 			ret.setName( name )
+					.setCustomUpdateEntityProviders( customUpdateEntityProviders )
 					.setEmf( emf )
 					.setUseJTATransaction( useJTATransactions )
 					.setJpaRootTypes( jpaRootTypes )

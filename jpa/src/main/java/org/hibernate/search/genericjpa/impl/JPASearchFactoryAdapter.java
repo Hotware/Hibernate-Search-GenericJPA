@@ -36,8 +36,9 @@ import org.hibernate.search.genericjpa.batchindexing.impl.MassIndexerImpl;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateSource;
 import org.hibernate.search.genericjpa.db.events.index.IndexUpdater;
-import org.hibernate.search.genericjpa.entity.impl.BasicEntityProvider;
+import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
+import org.hibernate.search.genericjpa.entity.impl.BasicEntityProvider;
 import org.hibernate.search.genericjpa.entity.impl.JPAReusableEntityProvider;
 import org.hibernate.search.genericjpa.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.exception.SearchException;
@@ -70,20 +71,22 @@ public final class JPASearchFactoryAdapter
 	private final Set<UpdateConsumer> updateConsumers = new HashSet<>();
 	private final Lock lock = new ReentrantLock();
 
+	private int updateDelay = 500;
+	private int batchSizeForUpdates = 5;
+	private UpdateSourceProvider updateSourceProvider;
+	private UpdateSource updateSource;
+	private IndexUpdater indexUpdater;
+	private Map<Class<?>, EntityManagerEntityProvider> customUpdateEntityProviders;
+
 	private String name;
 	private EntityManagerFactory emf;
 	private Properties properties;
-	private UpdateSourceProvider updateSourceProvider;
-	private UpdateSource updateSource;
 	private List<Class<?>> indexRootTypes;
 	private List<Class<?>> jpaRootTypes;
 	private boolean useJTATransaction;
 	private StandaloneSearchFactory searchFactory;
 	private Set<Class<?>> indexRelevantEntities;
 	private Map<Class<?>, String> idProperties;
-	private int updateDelay = 500;
-	private int batchSizeForUpdates = 5;
-	private IndexUpdater indexUpdater;
 	private Map<Class<?>, RehashedTypeMetadata> rehashedTypeMetadataForIndexRoot;
 	private Map<Class<?>, List<Class<?>>> containedInIndexOf;
 	private ExtendedSearchIntegrator searchIntegrator;
@@ -110,14 +113,6 @@ public final class JPASearchFactoryAdapter
 
 	public StandaloneSearchFactory getSearchFactory() {
 		return this.searchFactory;
-	}
-
-	private UpdateSource createUpdateSource() {
-		return this.updateSourceProvider.getUpdateSource(
-				this.updateDelay,
-				TimeUnit.MILLISECONDS,
-				this.batchSizeForUpdates
-		);
 	}
 
 	public EntityProvider entityProvider(EntityManager em) {
@@ -162,7 +157,11 @@ public final class JPASearchFactoryAdapter
 		this.searchIntegrator = impl.unwrap( ExtendedSearchIntegrator.class );
 		this.searchFactory = new StandaloneSearchFactoryImpl( this.searchIntegrator );
 
-		this.updateSource = this.createUpdateSource();
+		this.updateSource = this.updateSourceProvider.getUpdateSource(
+				this.updateDelay,
+				TimeUnit.MILLISECONDS,
+				this.batchSizeForUpdates
+		);
 		if ( this.updateSource != null ) {
 			//TODO: we could allow this, but then we would need to change
 			//the way we get the entityProvider. it's safest to keep it like this
@@ -178,7 +177,8 @@ public final class JPASearchFactoryAdapter
 			JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider(
 					this.emf,
 					this.idProperties,
-					this.transactionManager
+					this.transactionManager,
+					this.customUpdateEntityProviders
 			);
 			this.indexUpdater = new IndexUpdater(
 					this.rehashedTypeMetadataForIndexRoot, this.containedInIndexOf, entityProvider,
@@ -213,6 +213,15 @@ public final class JPASearchFactoryAdapter
 
 	public JPASearchFactoryAdapter setEmf(EntityManagerFactory emf) {
 		this.emf = emf;
+		return this;
+	}
+
+	public Map<Class<?>, EntityManagerEntityProvider> getCustomUpdateEntityProviders() {
+		return customUpdateEntityProviders;
+	}
+
+	public JPASearchFactoryAdapter setCustomUpdateEntityProviders(Map<Class<?>, EntityManagerEntityProvider> customUpdateEntityProviders) {
+		this.customUpdateEntityProviders = customUpdateEntityProviders;
 		return this;
 	}
 

@@ -7,8 +7,11 @@
 package org.hibernate.search.genericjpa.entity;
 
 import javax.persistence.EntityManager;
+import javax.transaction.TransactionManager;
 import java.io.IOException;
 import java.util.List;
+
+import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 
 /**
  * Created by Martin on 08.07.2015.
@@ -19,27 +22,69 @@ public final class EntityManagerEntityProviderAdapter {
 		//can't touch this!
 	}
 
-	public static EntityProvider adapt(EntityManagerEntityProvider provider, EntityManager em) {
-		return new Adapter( provider, em );
+	public static EntityProvider adapt(
+			EntityManagerEntityProvider provider,
+			EntityManager em) {
+		return new AdapterProvider( provider, em, null, false );
 	}
 
-	private static class Adapter implements EntityProvider {
+	public static EntityProvider adapt(
+			EntityManagerEntityProvider provider,
+			EntityManager em, TransactionManager transactionManager) {
+		return new AdapterProvider( provider, em, transactionManager, true );
+	}
+
+	private static class AdapterProvider implements EntityProvider {
 		private final EntityManagerEntityProvider provider;
 		private final EntityManager em;
+		private final TransactionManager transactionManager;
+		private final boolean wrapInTransaction;
 
-		public Adapter(EntityManagerEntityProvider provider, EntityManager em) {
+		public AdapterProvider(
+				EntityManagerEntityProvider provider,
+				EntityManager em,
+				TransactionManager transactionManager,
+				boolean wrapInTransaction) {
 			this.provider = provider;
 			this.em = em;
+			this.transactionManager = transactionManager;
+			this.wrapInTransaction = wrapInTransaction;
 		}
 
 		@Override
 		public Object get(Class<?> entityClass, Object id) {
-			return this.provider.get( this.em, entityClass, id );
+			if ( this.wrapInTransaction ) {
+				JPATransactionWrapper tx =
+						JPATransactionWrapper.get( this.em, this.transactionManager );
+				tx.begin();
+				try {
+					return this.provider.get( this.em, entityClass, id );
+				}
+				finally {
+					tx.commit();
+				}
+			}
+			else {
+				return this.provider.get( this.em, entityClass, id );
+			}
 		}
 
 		@Override
 		public List getBatch(Class<?> entityClass, List<Object> id) {
-			return this.provider.getBatch( this.em, entityClass, id );
+			if ( this.wrapInTransaction ) {
+				JPATransactionWrapper tx =
+						JPATransactionWrapper.get( this.em, this.transactionManager );
+				tx.begin();
+				try {
+					return this.provider.getBatch( this.em, entityClass, id );
+				}
+				finally {
+					tx.commit();
+				}
+			}
+			else {
+				return this.provider.getBatch( this.em, entityClass, id );
+			}
 		}
 
 		@Override

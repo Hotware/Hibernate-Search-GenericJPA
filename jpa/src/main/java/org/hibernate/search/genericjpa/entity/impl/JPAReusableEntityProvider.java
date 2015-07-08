@@ -8,9 +8,11 @@ package org.hibernate.search.genericjpa.entity.impl;
 
 import javax.persistence.EntityManagerFactory;
 import javax.transaction.TransactionManager;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
 
 /**
@@ -20,25 +22,32 @@ public class JPAReusableEntityProvider extends TransactionWrappedReusableEntityP
 		implements ReusableEntityProvider {
 
 	private final Map<Class<?>, String> idProperties;
+	private final Map<Class<?>, EntityManagerEntityProvider> customEntityProviders;
 	private BasicEntityProvider provider;
 
 	public JPAReusableEntityProvider(
 			EntityManagerFactory emf,
 			Map<Class<?>, String> idProperties) {
-		this( emf, idProperties, null );
+		this( emf, idProperties, null, new HashMap<>() );
 	}
 
 	public JPAReusableEntityProvider(
 			EntityManagerFactory emf,
-			Map<Class<?>, String> idProperties, TransactionManager transactionManager) {
+			Map<Class<?>, String> idProperties,
+			TransactionManager transactionManager,
+			Map<Class<?>, EntityManagerEntityProvider> customEntityProviders) {
 		super( emf, transactionManager );
 		this.idProperties = idProperties;
+		this.customEntityProviders = customEntityProviders;
 	}
 
 	@Override
 	public Object get(Class<?> entityClass, Object id) {
 		if ( this.provider == null ) {
 			throw new IllegalStateException( "not open!" );
+		}
+		if ( this.customEntityProviders.containsKey( entityClass ) ) {
+			return this.customEntityProviders.get( entityClass ).get( this.getEntityManager(), entityClass, id );
 		}
 		return this.provider.get( entityClass, id );
 	}
@@ -48,6 +57,9 @@ public class JPAReusableEntityProvider extends TransactionWrappedReusableEntityP
 	public List getBatch(Class<?> entityClass, List<Object> ids) {
 		if ( this.provider == null ) {
 			throw new IllegalStateException( "not open!" );
+		}
+		if ( this.customEntityProviders.containsKey( entityClass ) ) {
+			return this.customEntityProviders.get( entityClass ).getBatch( this.getEntityManager(), entityClass, ids );
 		}
 		return this.provider.getBatch( entityClass, ids );
 	}

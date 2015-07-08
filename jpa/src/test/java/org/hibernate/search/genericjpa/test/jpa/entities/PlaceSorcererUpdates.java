@@ -27,15 +27,15 @@ public class PlaceSorcererUpdates {
 	private Long id;
 
 	@IdFor(entityClass = Place.class, columns = "placeId", columnsInOriginal = "Place_ID")
-	@Column
+	@Column(name = "placeId")
 	private Integer placeId;
 
 	@IdFor(entityClass = Sorcerer.class, columns = "sorcererId", columnsInOriginal = "sorcerers_ID")
-	@Column
+	@Column(name = "sorcererId")
 	private Integer sorcererId;
 
 	@Event(column = "eventType")
-	@Column
+	@Column(name = "eventType")
 	private Integer eventType;
 
 	/**

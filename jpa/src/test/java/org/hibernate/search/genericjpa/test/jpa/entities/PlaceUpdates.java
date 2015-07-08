@@ -27,11 +27,11 @@ public class PlaceUpdates {
 	private Integer id;
 
 	@IdFor(entityClass = Place.class, columns = "placeId", columnsInOriginal = "id")
-	@Column
+	@Column(name = "placeId")
 	private Integer placeId;
 
 	@Event(column = "eventType")
-	@Column
+	@Column(name = "eventType")
 	private Integer eventType;
 
 	/**

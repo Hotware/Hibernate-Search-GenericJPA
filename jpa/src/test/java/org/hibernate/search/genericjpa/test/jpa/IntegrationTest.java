@@ -37,8 +37,8 @@ import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
 import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource;
-import org.hibernate.search.genericjpa.entity.impl.BasicEntityProvider;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
+import org.hibernate.search.genericjpa.entity.impl.BasicEntityProvider;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchFactory;
 import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
@@ -80,7 +80,7 @@ public abstract class IntegrationTest {
 			MetaModelParser parser = new MetaModelParser();
 			parser.parse( this.emf.getMetamodel() );
 			{
-				assertEquals( 5, parser.getIndexRelevantEntites().size() );
+				assertEquals( 6, parser.getIndexRelevantEntites().size() );
 			}
 		}
 		finally {
