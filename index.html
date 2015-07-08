@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>Hibernate Search GenericJPA by Hotware</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1>Hibernate Search GenericJPA</h1>
+        <h2>Hibernate-Search with the JPA provider you want</h2>
+        <a href="https://github.com/Hotware/Hibernate-Search-JPA" class="button"><small>View project on</small> GitHub</a>
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <h1>
+<a id="hibernate-search-jpa" class="anchor" href="#hibernate-search-jpa" aria-hidden="true"><span class="octicon octicon-link"></span></a>Hibernate-Search-JPA</h1>
+
+<p><a href="http://ci.hibernate.org/view/Personal%20runs/job/GSOC-hibernate-search-jpa/"><img src="http://ci.hibernate.org/view/Personal%20runs/job/GSOC-hibernate-search-jpa/badge/icon" alt="Build Status"></a>
+<a href="https://gitter.im/Hotware/Hibernate-Search-JPA?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge"><img src="https://badges.gitter.im/Join%20Chat.svg" alt="Gitter"></a></p>
+
+<p>Hibernate-Search with the JPA provider you want.</p>
+
+<p>Currently supported JPA providers:</p>
+
+<ul>
+<li>Hibernate</li>
+<li>EclipseLink</li>
+<li>OpenJPA</li>
+</ul>
+
+<p>Currently supported Databases (others work as well, but don't have automatic updating support):</p>
+
+<ul>
+<li>MySQL/MariaDB</li>
+<li>PostgreSQL</li>
+</ul>
+
+<p><a href="http://hibernatesearchandjpa.blogspot.de/">http://hibernatesearchandjpa.blogspot.de/</a></p>
+
+<h1>
+<a id="introduction" class="anchor" href="#introduction" aria-hidden="true"><span class="octicon octicon-link"></span></a>Introduction</h1>
+
+<p>Hibernate Search is an awesome library if you have a JPA based application and want to add fully fletched fulltext search capabilities to your domain model. You simply add annotations to the fields you want to index and then you can generate a working Index from the JPA objects. When the database changes, the index is updated accordingly. This works just fine (TM).</p>
+
+<p>Here is an example from the <a href="http://hibernate.org/search/documentation/getting-started/">Hibernate Search getting started page</a></p>
+
+<pre><code>@Entity
+@Indexed
+public class Book {
+
+  @Id
+  @GeneratedValue
+  private Integer id;
+
+  @Field(index=Index.YES, analyze=Analyze.YES, store=Store.NO)
+  private String title;
+
+  @Field(index=Index.YES, analyze=Analyze.YES, store=Store.NO)
+  private String subtitle;
+
+  @Field(index=Index.YES, analyze=Analyze.NO, store=Store.YES)
+  @DateBridge(resolution=Resolution.DAY)
+  private Date publicationDate;
+
+  @IndexedEmbedded
+  @ManyToMany
+  private Set&lt;Author&gt; authors = new HashSet&lt;Author&gt;();
+  public Book() {
+  }
+
+  // standard getters/setters follow here
+  ...
+}
+</code></pre>
+
+<p>One of the few problems it has, is that once you decide to use Hibernate Search you have to use/stick with Hibernate ORM and lose the possibility to swap the JPA provider for something along the lines of EclipseLink (switching the JPA provider - in my eyes - is one of the big benefits of using JPA), i.e. because your (new) Jave EE Container ships with it and you don't want to change it. This is due to Hibernate Search relying on Hibernate ORM specific events to update its index. These are by far more sophisticated than the ones plain JPA provides and while other JPA providers might have similar features, there is no clear specification for these.</p>
+
+<p><img src="http://4.bp.blogspot.com/-AMJtBIXzeSQ/VUCdkYUCMGI/AAAAAAAAALc/S8OVX9esVOQ/s1600/Hibernate-Search-With-Any-Problem-Schema.png" alt="The current problem"></p>
+
+<p>The goal of Hibernate-Search-JPA is to fix this and provide an integration of Hibernate Search's Engine that works with (most) JPA providers (and for now only SQL databases):</p>
+
+<p><img src="http://1.bp.blogspot.com/-U0osGoQE0DI/VUCemKbVoJI/AAAAAAAAALk/f1vt4Fln2ko/s1600/Basic%2BDesign%2B(1).png" alt="What we aim for"></p>
+
+<h1>
+<a id="examples" class="anchor" href="#examples" aria-hidden="true"><span class="octicon octicon-link"></span></a>Examples</h1>
+
+<p>An example on how to use this project can be found in the wiki: 
+<a href="https://github.com/Hotware/Hibernate-Search-JPA/wiki/How-To">https://github.com/Hotware/Hibernate-Search-JPA/wiki/How-To</a></p>
+        </section>
+
+        <aside id="sidebar">
+          <a href="https://github.com/Hotware/Hibernate-Search-JPA/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/Hotware/Hibernate-Search-JPA/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+
+          <p class="repo-owner"><a href="https://github.com/Hotware/Hibernate-Search-JPA"></a> is maintained by <a href="https://github.com/Hotware">Hotware</a>.</p>
+
+          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
+    </div>
+
+  
+  </body>
+</html>
