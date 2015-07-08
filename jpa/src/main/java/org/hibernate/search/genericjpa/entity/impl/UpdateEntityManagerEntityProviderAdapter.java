@@ -10,6 +10,9 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.transaction.TransactionManager;
 import java.util.List;
+import java.util.Map;
+
+import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 
 /**
  * Base Adaption class for EntityProviders used for updating in applications that want to access
@@ -19,12 +22,16 @@ import java.util.List;
  *
  * @hsearch.experimental
  */
-public abstract class EntityProviderTemplate extends TransactionWrappedReusableEntityProvider {
+public final class UpdateEntityManagerEntityProviderAdapter extends TransactionWrappedReusableEntityProvider {
 
-	public EntityProviderTemplate(
+	private final Map<Class<?>, EntityManagerEntityProvider> providers;
+
+	public UpdateEntityManagerEntityProviderAdapter(
 			EntityManagerFactory emf,
-			TransactionManager transactionManager) {
+			TransactionManager transactionManager,
+			Map<Class<?>, EntityManagerEntityProvider> providers) {
 		super( emf, transactionManager );
+		this.providers = providers;
 	}
 
 	@Override
@@ -63,8 +70,12 @@ public abstract class EntityProviderTemplate extends TransactionWrappedReusableE
 		}
 	}
 
-	public abstract Object get(EntityManager em, Class<?> entityClass, Object id);
+	public Object get(EntityManager em, Class<?> entityClass, Object id) {
+		return this.providers.get( entityClass ).get( em, entityClass, id );
+	}
 
-	public abstract List getBatch(EntityManager em, Class<?> entityClass, List<Object> id);
+	public List getBatch(EntityManager em, Class<?> entityClass, List<Object> id) {
+		return this.providers.get( entityClass ).getBatch( em, entityClass, id );
+	}
 
 }
