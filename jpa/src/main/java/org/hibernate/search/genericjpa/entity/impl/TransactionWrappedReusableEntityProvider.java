@@ -17,10 +17,11 @@ import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
 import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
+import org.hibernate.search.genericjpa.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.exception.SearchException;
 
 /**
- * Created by Martin on 06.07.2015.
+ * automatically rolls back the transaction on close
  */
 public abstract class TransactionWrappedReusableEntityProvider implements ReusableEntityProvider {
 
@@ -49,7 +50,7 @@ public abstract class TransactionWrappedReusableEntityProvider implements Reusab
 			if ( !this.open ) {
 				throw new IllegalStateException( "already closed!" );
 			}
-			this.commitTransaction();
+			this.rollbackTransaction();
 			this.em.close();
 		}
 		finally {
@@ -89,7 +90,13 @@ public abstract class TransactionWrappedReusableEntityProvider implements Reusab
 			try {
 				if ( this.transactionManager.getStatus() == Status.STATUS_NO_TRANSACTION ) {
 					this.transactionManager.begin();
+					this.em.joinTransaction();
 					this.startedJTA = true;
+				}
+				else {
+					throw new AssertionFailure(
+							"TransactionWrappedReusableEntityProvider must be able to start/close it's own transactions!"
+					);
 				}
 			}
 			catch (NotSupportedException | SystemException e) {
@@ -98,18 +105,28 @@ public abstract class TransactionWrappedReusableEntityProvider implements Reusab
 		}
 	}
 
-	private void commitTransaction() {
+	/**
+	 * this class should only be used in a read only way
+	 */
+	private void rollbackTransaction() {
 		if ( !this.useJTATransaction ) {
-			this.em.getTransaction().commit();
+			this.em.getTransaction().rollback();
 		}
 		else {
 			try {
+				//well if we didnt start the transaction
+				//we cannot rollback properly, but this shouldn't happen
 				if ( this.startedJTA ) {
 					this.startedJTA = false;
-					this.transactionManager.commit();
+					this.transactionManager.rollback();
+				}
+				else {
+					throw new AssertionFailure(
+							"TransactionWrappedReusableEntityProvider must be able to start/close it's own transactions!"
+					);
 				}
 			}
-			catch (SecurityException | IllegalStateException | RollbackException | HeuristicMixedException | HeuristicRollbackException | SystemException e) {
+			catch (SecurityException | IllegalStateException | SystemException e) {
 				throw new SearchException( "couldn't commit a JTA Transaction", e );
 			}
 		}

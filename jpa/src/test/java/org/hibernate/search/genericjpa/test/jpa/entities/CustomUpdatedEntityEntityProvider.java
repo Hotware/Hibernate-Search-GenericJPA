@@ -21,6 +21,7 @@ public class CustomUpdatedEntityEntityProvider implements EntityManagerEntityPro
 	@Override
 	public Object get(EntityManager em, Class<?> entityClass, Object id) {
 		CustomUpdatedEntity ret = (CustomUpdatedEntity) em.find( entityClass, id );
+		em.detach( ret );
 		//we somehow have to check whether this class was used.
 		ret.setText( "customupdated" );
 		return ret;

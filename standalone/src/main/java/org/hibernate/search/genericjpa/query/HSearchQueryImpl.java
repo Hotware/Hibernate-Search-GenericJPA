@@ -221,7 +221,7 @@ public class HSearchQueryImpl implements HSearchQuery {
 
 	@Override
 	public String toString() {
-		return this.hsquery.toString();
+		return this.hsquery.getLuceneQuery().toString();
 	}
 
 	@Override

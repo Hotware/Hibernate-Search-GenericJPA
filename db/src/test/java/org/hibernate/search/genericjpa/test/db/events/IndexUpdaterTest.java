@@ -156,7 +156,11 @@ public class IndexUpdaterTest {
 				this.entityProvider,
 				indexWrapper
 		);
-		updater.updateEvent( updateInfos );
+		try {
+			updater.updateEvent( updateInfos );
+		} finally {
+			updater.close();
+		}
 	}
 
 	@Test
@@ -180,15 +184,21 @@ public class IndexUpdaterTest {
 				this.entityProvider,
 				impl
 		);
-		this.reset( updater, impl );
+		try {
+			this.reset( updater, impl );
 
-		this.tryOutDelete( updater, impl, 0, 1, Place.class );
-		// this shouldn't delete the root though
-		this.tryOutDeleteNonRoot( updater, impl, 0, 2, Sorcerer.class, "sorcerers.name", "Saruman" );
-		this.tryOutDeleteNonRoot( updater, impl, 1, 2, Sorcerer.class, "name", "Valinor" );
+			this.tryOutDelete( updater, impl, 0, 1, Place.class );
+			// this shouldn't delete the root though
+			this.tryOutDeleteNonRoot( updater, impl, 0, 2, Sorcerer.class, "sorcerers.name", "Saruman" );
+			this.tryOutDeleteNonRoot( updater, impl, 1, 2, Sorcerer.class, "name", "Valinor" );
 
-		this.tryOutUpdate( updater, impl, 0, 1, Place.class, "name", "Valinor" );
-		this.tryOutUpdate( updater, impl, 0, 2, Sorcerer.class, "sorcerers.name", "Saruman" );
+			this.tryOutUpdate( updater, impl, 0, 1, Place.class, "name", "Valinor" );
+			this.tryOutUpdate( updater, impl, 0, 2, Sorcerer.class, "sorcerers.name", "Saruman" );
+
+		}
+		finally {
+			updater.close();
+		}
 	}
 
 	private void reset(IndexUpdater updater, ExtendedSearchIntegrator impl) {

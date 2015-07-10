@@ -10,6 +10,9 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,6 +30,7 @@ import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.factory.Transaction;
 import org.hibernate.search.genericjpa.metadata.RehashedTypeMetadata;
+import org.hibernate.search.genericjpa.util.NamingThreadFactory;
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.hibernate.search.query.engine.spi.HSQuery;
 
@@ -51,6 +55,7 @@ public class IndexUpdater implements UpdateConsumer {
 	private final Map<Class<?>, RehashedTypeMetadata> metadataForIndexRoot;
 	private final Map<Class<?>, List<Class<?>>> containedInIndexOf;
 	private final ReusableEntityProvider entityProvider;
+	private final ExecutorService exec;
 	private IndexWrapper indexWrapper;
 
 	public IndexUpdater(
@@ -60,6 +65,7 @@ public class IndexUpdater implements UpdateConsumer {
 		this.containedInIndexOf = containedInIndexOf;
 		this.entityProvider = entityProvider;
 		this.indexWrapper = indexWrapper;
+		this.exec = Executors.newSingleThreadExecutor(new NamingThreadFactory( "IndexUpdater Thread" ));
 	}
 
 	public IndexUpdater(
@@ -77,53 +83,85 @@ public class IndexUpdater implements UpdateConsumer {
 	}
 
 	public void updateEvent(List<UpdateInfo> updateInfos, ReusableEntityProvider provider) {
-		provider.open();
-		Transaction tx = new Transaction();
-		try {
-			for ( UpdateInfo updateInfo : updateInfos ) {
-				Class<?> entityClass = updateInfo.getEntityClass();
-				List<Class<?>> inIndexOf = this.containedInIndexOf.get( entityClass );
-				if ( inIndexOf != null && inIndexOf.size() != 0 ) {
-					int eventType = updateInfo.getEventType();
-					Object id = updateInfo.getId();
-					switch ( eventType ) {
-						case EventType.INSERT: {
-							Object obj = provider.get( entityClass, id );
-							if ( obj != null ) {
-								this.indexWrapper.index( obj, tx );
+		//FIXME: do this with a ExecutorService for better performance?
+		//this is a hack so we can start/end our transactions properly in JTA
+		//as transactions are bound to threads
+		final CountDownLatch latch = new CountDownLatch( 1 );
+		this.exec.submit(
+				() ->
+				{
+					try {
+						provider.open();
+						Transaction tx = new Transaction();
+						try {
+							for ( UpdateInfo updateInfo : updateInfos ) {
+								Class<?> entityClass = updateInfo.getEntityClass();
+								List<Class<?>> inIndexOf = IndexUpdater.this.containedInIndexOf.get( entityClass );
+								if ( inIndexOf != null && inIndexOf.size() != 0 ) {
+									int eventType = updateInfo.getEventType();
+									Object id = updateInfo.getId();
+									switch ( eventType ) {
+										case EventType.INSERT: {
+											Object obj = provider.get( entityClass, id );
+											if ( obj != null ) {
+												IndexUpdater.this.indexWrapper.index( obj, tx );
+											}
+											break;
+										}
+										case EventType.UPDATE: {
+											Object obj = provider.get( entityClass, id );
+											if ( obj != null ) {
+												IndexUpdater.this.indexWrapper.update( obj, tx );
+											}
+											break;
+										}
+										case EventType.DELETE: {
+											IndexUpdater.this.indexWrapper.delete( entityClass, inIndexOf, id, tx );
+											break;
+										}
+										default: {
+											LOGGER.warning( "unknown eventType-id found: " + eventType );
+										}
+									}
+								}
+								else {
+									LOGGER.warning( "class: " + entityClass + " not found in any index!" );
+								}
 							}
-							break;
+							tx.commit();
 						}
-						case EventType.UPDATE: {
-							Object obj = provider.get( entityClass, id );
-							if ( obj != null ) {
-								this.indexWrapper.update( obj, tx );
-							}
-							break;
+						catch (Exception e) {
+							tx.rollback();
+							LOGGER.log(
+									Level.WARNING,
+									"Error while updating the index! Your index might be corrupt!",
+									e
+							);
+							throw new SearchException(
+									"Error while updating the index! Your index might be corrupt!",
+									e
+							);
 						}
-						case EventType.DELETE: {
-							this.indexWrapper.delete( entityClass, inIndexOf, id, tx );
-							break;
-						}
-						default: {
-							LOGGER.warning( "unknown eventType-id found: " + eventType );
+						finally {
+							provider.close();
 						}
 					}
+					finally {
+						latch.countDown();
+					}
+
 				}
-				else {
-					LOGGER.warning( "class: " + entityClass + " not found in any index!" );
-				}
-			}
-			tx.commit();
+		);
+		try {
+			latch.await();
 		}
-		catch (Exception e) {
-			tx.rollback();
-			LOGGER.log( Level.WARNING, "Error while updating the index! Your index might be corrupt!", e );
-			throw new SearchException( "Error while updating the index! Your index might be corrupt!", e );
+		catch (InterruptedException e) {
+			throw new SearchException( e );
 		}
-		finally {
-			provider.close();
-		}
+	}
+
+	public void close() {
+		this.exec.shutdown();
 	}
 
 	public interface IndexWrapper {

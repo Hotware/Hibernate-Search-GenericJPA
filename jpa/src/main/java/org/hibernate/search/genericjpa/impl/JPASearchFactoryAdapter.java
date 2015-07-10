@@ -329,6 +329,9 @@ public final class JPASearchFactoryAdapter
 			if ( this.updateSource != null ) {
 				this.updateSource.stop();
 			}
+			if( this.indexUpdater != null) {
+				this.indexUpdater.close();
+			}
 			this.searchFactory.close();
 		}
 		finally {

@@ -10,7 +10,9 @@ import javax.persistence.EntityManager;
 import java.util.List;
 
 /**
- * Created by Martin on 06.07.2015.
+ * if you are using the EntityManager passed to this interface, make sure to detach your entities!
+ *
+ * @hsearch.experimental
  */
 public interface EntityManagerEntityProvider {
 

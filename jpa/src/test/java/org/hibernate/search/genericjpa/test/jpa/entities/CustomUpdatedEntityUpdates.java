@@ -24,11 +24,11 @@ import org.hibernate.search.genericjpa.annotations.Updates;
 public class CustomUpdatedEntityUpdates {
 
 	@Id
-	private Integer id;
+	private Long id;
 
 	@IdFor(entityClass = CustomUpdatedEntity.class, columns = "customUpdatedEntityId", columnsInOriginal = "id")
 	@Column(name = "customUpdatedEntityId")
-	private Integer customUpdatedEntityId;
+	private Long customUpdatedEntityId;
 
 	@Event(column = "eventType")
 	@Column(name = "eventType")
@@ -43,20 +43,20 @@ public class CustomUpdatedEntityUpdates {
 		return this;
 	}
 
-	public Integer getCustomUpdatedEntityId() {
+	public Long getCustomUpdatedEntityId() {
 		return this.customUpdatedEntityId;
 	}
 
-	public CustomUpdatedEntityUpdates setCustomUpdatedEntityId(Integer customUpdatedEntityId) {
+	public CustomUpdatedEntityUpdates setCustomUpdatedEntityId(Long customUpdatedEntityId) {
 		this.customUpdatedEntityId = customUpdatedEntityId;
 		return this;
 	}
 
-	public Integer getId() {
+	public Long getId() {
 		return this.id;
 	}
 
-	public CustomUpdatedEntityUpdates setId(Integer id) {
+	public CustomUpdatedEntityUpdates setId(Long id) {
 		this.id = id;
 		return this;
 	}

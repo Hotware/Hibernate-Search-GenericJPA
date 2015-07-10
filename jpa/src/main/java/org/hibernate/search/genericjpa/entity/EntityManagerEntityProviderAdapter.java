@@ -11,6 +11,7 @@ import javax.transaction.TransactionManager;
 import java.io.IOException;
 import java.util.List;
 
+import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 
 /**
@@ -32,6 +33,18 @@ public final class EntityManagerEntityProviderAdapter {
 			EntityManagerEntityProvider provider,
 			EntityManager em, TransactionManager transactionManager) {
 		return new AdapterProvider( provider, em, transactionManager, true );
+	}
+
+	public static EntityProvider adapt(
+			Class<? extends EntityManagerEntityProvider> providerClass,
+			EntityManager em,
+			TransactionManager transactionManager) {
+		try {
+			return new AdapterProvider( providerClass.newInstance(), em, transactionManager, true );
+		}
+		catch (Exception e) {
+			throw new SearchException( e );
+		}
 	}
 
 	private static class AdapterProvider implements EntityProvider {

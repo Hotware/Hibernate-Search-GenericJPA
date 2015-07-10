@@ -6,11 +6,19 @@
  */
 package org.hibernate.search.genericjpa.annotations;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
 import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 
 /**
- * Created by Martin on 08.07.2015.
+ * @hsearch.experimental
  */
+@Target({TYPE})
+@Retention(RUNTIME)
 public @interface CustomUpdateEntityProvider {
 
 	Class<? extends EntityManagerEntityProvider> impl();

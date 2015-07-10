@@ -47,7 +47,7 @@ import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.entity.impl.TransactionWrappedEntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.exception.SearchException;
-import org.hibernate.search.genericjpa.jpa.util.NamingThreadFactory;
+import org.hibernate.search.genericjpa.util.NamingThreadFactory;
 
 /**
  * @author Martin Braun

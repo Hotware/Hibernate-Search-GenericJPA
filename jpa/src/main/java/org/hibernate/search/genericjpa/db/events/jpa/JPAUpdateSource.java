@@ -35,7 +35,7 @@ import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess;
 import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess.ObjectClassWrapper;
-import org.hibernate.search.genericjpa.jpa.util.NamingThreadFactory;
+import org.hibernate.search.genericjpa.util.NamingThreadFactory;
 
 /**
  * a {@link UpdateSource} implementation that uses JPA to retrieve the updates from the database. For this to work the
@@ -166,7 +166,7 @@ public class JPAUpdateSource implements UpdateSource {
 	}
 
 	private static ThreadFactory tf() {
-		return new NamingThreadFactory( "Index Update Thread" );
+		return new NamingThreadFactory( "JPAUpdateSource Thread" );
 	}
 
 	public static MultiQueryAccess query(JPAUpdateSource updateSource, EntityManager em) {

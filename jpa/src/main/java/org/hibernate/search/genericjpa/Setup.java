@@ -205,7 +205,9 @@ public final class Setup {
 							Collectors.toMap(
 									(clazz2) -> clazz2, (clazz3) -> {
 										try {
-											return (EntityManagerEntityProvider) clazz3.newInstance();
+											return (EntityManagerEntityProvider) clazz3.getAnnotation(
+													CustomUpdateEntityProvider.class
+											).impl().newInstance();
 										}
 										catch (Exception e) {
 											throw new SearchException( e );

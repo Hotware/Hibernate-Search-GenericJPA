@@ -102,112 +102,123 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 					entityProvider,
 					impl
 			);
-			EventModelParser eventModelParser = new EventModelParser();
-			List<EventModelInfo> eventModelInfos = eventModelParser.parse(
-					new HashSet<>(
-							Arrays.asList(
-									PlaceUpdates.class, SorcererUpdates.class,
-									PlaceSorcererUpdates.class
-							)
-					)
-			);
-			JPAUpdateSource updateSource = new JPAUpdateSource(
-					eventModelInfos,
-					this.emf,
-					null,
-					100,
-					TimeUnit.MILLISECONDS,
-					10
-			);
-			updateSource.setUpdateConsumers( Arrays.asList( indexUpdater ) );
-			updateSource.start();
-
 			try {
+				EventModelParser eventModelParser = new EventModelParser();
+				List<EventModelInfo> eventModelInfos = eventModelParser.parse(
+						new HashSet<>(
+								Arrays.asList(
+										PlaceUpdates.class, SorcererUpdates.class,
+										PlaceSorcererUpdates.class
+								)
+						)
+				);
+				JPAUpdateSource updateSource = new JPAUpdateSource(
+						eventModelInfos,
+						this.emf,
+						null,
+						100,
+						TimeUnit.MILLISECONDS,
+						10
+				);
+				updateSource.setUpdateConsumers( Arrays.asList( indexUpdater ) );
+				updateSource.start();
 
-				// database already contains stuff, so clear everything out here
-				EntityManager em = this.emf.createEntityManager();
 				try {
-					if ( !this.assertCount( impl, 0 ) ) {
-						throw new AssertionError();
-					}
-					this.deleteAllData( em );
-					Sleep.sleep(
-							100_000, () -> {
-								return this.assertCount( impl, 0 );
-							}, 100, ""
-					);
 
-					this.writeAllIntoIndex( em, impl );
-
-					this.deleteAllData( em );
-					Sleep.sleep(
-							100_000, () -> {
-								return this.assertCount( impl, 0 );
-							}, 100, ""
-					);
-
-					this.writeAllIntoIndex( em, impl );
-
-					{
-						List<Integer> places = this.queryPlaceIds( impl, "name", "Valinor" );
-						assertEquals( "this test expects to have exactly one Place named Valinor!", 1, places.size() );
-						Integer valinorId = places.get( 0 );
-
-						{
-							EntityTransaction tx = em.getTransaction();
-							tx.begin();
-							Place valinor = em.find( Place.class, valinorId );
-							valinor.setName( "Alinor" );
-							em.persist( valinor );
-							tx.commit();
+					// database already contains stuff, so clear everything out here
+					EntityManager em = this.emf.createEntityManager();
+					try {
+						if ( !this.assertCount( impl, 0 ) ) {
+							throw new AssertionError();
 						}
+						this.deleteAllData( em );
 						Sleep.sleep(
-								100_000,
-								() -> {
-									return this.queryPlaceIds( impl, "name", "Valinor" )
-											.size() == 0 && this.assertCount( impl, 2 );
-								},
-								100,
-								"shouldn't have found \"Valinor\" in the index anymore, but overall count should have been equal to 2!"
+								100_000, () -> {
+									return this.assertCount( impl, 0 );
+								}, 100, ""
 						);
+
+						this.writeAllIntoIndex( em, impl );
+
+						this.deleteAllData( em );
+						Sleep.sleep(
+								100_000, () -> {
+									return this.assertCount( impl, 0 );
+								}, 100, ""
+						);
+
+						this.writeAllIntoIndex( em, impl );
+
 						{
-							String oldName;
+							List<Integer> places = this.queryPlaceIds( impl, "name", "Valinor" );
+							assertEquals(
+									"this test expects to have exactly one Place named Valinor!",
+									1,
+									places.size()
+							);
+							Integer valinorId = places.get( 0 );
+
 							{
 								EntityTransaction tx = em.getTransaction();
 								tx.begin();
 								Place valinor = em.find( Place.class, valinorId );
-								Sorcerer someSorcerer = valinor.getSorcerers().iterator().next();
-								oldName = someSorcerer.getName();
-								assertEquals(
-										"should have found \"" + oldName + "\" in the index!", 1, this.queryPlaceIds(
-												impl,
-												"sorcerers.name",
-												oldName
-										)
-												.size()
-								);
-								someSorcerer.setName( "Odalbert" );
+								valinor.setName( "Alinor" );
+								em.persist( valinor );
 								tx.commit();
 							}
 							Sleep.sleep(
 									100_000,
 									() -> {
-										return this.queryPlaceIds( impl, "sorcerers.name", oldName ).size() == 0 && this
-												.assertCount( impl, 2 );
-									}, 100,
-									"shouldn't have found \"" + oldName + "\" in the index anymore, but overall count should have been equal to 2!"
+										return this.queryPlaceIds( impl, "name", "Valinor" )
+												.size() == 0 && this.assertCount( impl, 2 );
+									},
+									100,
+									"shouldn't have found \"Valinor\" in the index anymore, but overall count should have been equal to 2!"
 							);
+							{
+								String oldName;
+								{
+									EntityTransaction tx = em.getTransaction();
+									tx.begin();
+									Place valinor = em.find( Place.class, valinorId );
+									Sorcerer someSorcerer = valinor.getSorcerers().iterator().next();
+									oldName = someSorcerer.getName();
+									assertEquals(
+											"should have found \"" + oldName + "\" in the index!",
+											1,
+											this.queryPlaceIds(
+													impl,
+													"sorcerers.name",
+													oldName
+											)
+													.size()
+									);
+									someSorcerer.setName( "Odalbert" );
+									tx.commit();
+								}
+								Sleep.sleep(
+										100_000,
+										() -> {
+											return this.queryPlaceIds( impl, "sorcerers.name", oldName )
+													.size() == 0 && this
+													.assertCount( impl, 2 );
+										}, 100,
+										"shouldn't have found \"" + oldName + "\" in the index anymore, but overall count should have been equal to 2!"
+								);
+							}
+						}
+					}
+					finally {
+						if ( em != null ) {
+							em.close();
 						}
 					}
 				}
 				finally {
-					if ( em != null ) {
-						em.close();
-					}
+					updateSource.stop();
 				}
-			}
-			finally {
-				updateSource.stop();
+			} finally {
+				indexUpdater.close();
 			}
 		}
 		finally {
