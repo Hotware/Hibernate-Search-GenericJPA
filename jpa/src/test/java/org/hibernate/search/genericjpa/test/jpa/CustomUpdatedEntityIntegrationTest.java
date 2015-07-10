@@ -119,19 +119,20 @@ public class CustomUpdatedEntityIntegrationTest {
 	public void setup() {
 		this.emf = Persistence.createEntityManagerFactory( "EclipseLink_MySQL" );
 		Properties properties = new Properties();
-		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.name", "test" );
+		properties.setProperty( Constants.SEARCH_FACTORY_NAME_KEY, "test" );
 		properties.setProperty( Constants.ADDITIONAL_INDEXED_TYPES_KEY, NonJPAEntity.class.getName() );
 		//we do manual updates, so this will be ignored, but let's keep it here
 		//if we change our mind later
 		properties.setProperty(
-				"org.hibernate.search.genericjpa.searchfactory.triggerSource",
+				Constants.TRIGGER_SOURCE_KEY,
 				MySQLTriggerSQLStringSource.class.getName()
 		);
 		properties.setProperty(
 				Constants.TRIGGER_CREATION_STRATEGY_KEY,
 				Constants.TRIGGER_CREATION_STRATEGY_DROP_CREATE
 		);
-		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.type", "sql" );
+		properties.setProperty( Constants.BATCH_SIZE_FOR_UPDATES_KEY, "2" );
+		properties.setProperty( Constants.SEARCH_FACTORY_TYPE_KEY, "sql" );
 		this.searchFactory = (JPASearchFactoryAdapter) Setup.createSearchFactory( this.emf, properties );
 		EntityManager em = emf.createEntityManager();
 		em.getTransaction().begin();
