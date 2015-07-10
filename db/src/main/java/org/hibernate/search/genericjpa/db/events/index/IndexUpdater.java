@@ -65,7 +65,7 @@ public class IndexUpdater implements UpdateConsumer {
 		this.containedInIndexOf = containedInIndexOf;
 		this.entityProvider = entityProvider;
 		this.indexWrapper = indexWrapper;
-		this.exec = Executors.newSingleThreadExecutor(new NamingThreadFactory( "IndexUpdater Thread" ));
+		this.exec = Executors.newSingleThreadExecutor( new NamingThreadFactory( "IndexUpdater Thread" ) );
 	}
 
 	public IndexUpdater(
@@ -83,9 +83,9 @@ public class IndexUpdater implements UpdateConsumer {
 	}
 
 	public void updateEvent(List<UpdateInfo> updateInfos, ReusableEntityProvider provider) {
-		//FIXME: do this with a ExecutorService for better performance?
 		//this is a hack so we can start/end our transactions properly in JTA
 		//as transactions are bound to threads
+		final SearchException[] exception = {null};
 		final CountDownLatch latch = new CountDownLatch( 1 );
 		this.exec.submit(
 				() ->
@@ -137,7 +137,7 @@ public class IndexUpdater implements UpdateConsumer {
 									"Error while updating the index! Your index might be corrupt!",
 									e
 							);
-							throw new SearchException(
+							exception[0] = new SearchException(
 									"Error while updating the index! Your index might be corrupt!",
 									e
 							);
@@ -154,6 +154,12 @@ public class IndexUpdater implements UpdateConsumer {
 		);
 		try {
 			latch.await();
+			//while we did things on a different thread we still
+			//want to throw the exceptions from there
+			//so the UpdateSource stumbles on this Exception
+			if ( exception[0] != null ) {
+				throw exception[0];
+			}
 		}
 		catch (InterruptedException e) {
 			throw new SearchException( e );
