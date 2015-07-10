@@ -518,8 +518,9 @@ public class MassIndexerImpl implements MassIndexer {
 				this.entityProviders.add( emProvider );
 			}
 			return emProvider;
+		} else {
+			return this.userSpecifiedEntityProvider;
 		}
-		return this.userSpecifiedEntityProvider;
 	}
 
 	private void disposeEntityManager(ObjectHandlerTask task, EntityProvider provider) {

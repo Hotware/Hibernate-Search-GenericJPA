@@ -18,12 +18,14 @@ import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
  */
 public class CustomUpdatedEntityEntityProvider implements EntityManagerEntityProvider {
 
+	public static final String CUSTOM_TEXT = "customupdated";
+
 	@Override
 	public Object get(EntityManager em, Class<?> entityClass, Object id) {
 		CustomUpdatedEntity ret = (CustomUpdatedEntity) em.find( entityClass, id );
 		em.detach( ret );
 		//we somehow have to check whether this class was used.
-		ret.setText( "customupdated" );
+		ret.setText( CUSTOM_TEXT );
 		return ret;
 	}
 

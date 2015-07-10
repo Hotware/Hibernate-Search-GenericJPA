@@ -9,6 +9,7 @@ package org.hibernate.search.genericjpa.test.jpa;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
@@ -16,8 +17,10 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.hibernate.search.genericjpa.Constants;
 import org.hibernate.search.genericjpa.Setup;
 import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringSource;
+import org.hibernate.search.genericjpa.entity.EntityManagerEntityProviderAdapter;
 import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
 import org.hibernate.search.genericjpa.test.jpa.entities.CustomUpdatedEntity;
+import org.hibernate.search.genericjpa.test.jpa.entities.CustomUpdatedEntityEntityProvider;
 import org.hibernate.search.genericjpa.test.jpa.entities.NonJPAEntity;
 import org.hibernate.search.genericjpa.util.Sleep;
 
@@ -48,6 +51,7 @@ public class CustomUpdatedEntityIntegrationTest {
 						.getResultSize()
 		);
 
+		//the original name should not be found
 		assertEquals(
 				0,
 				this.searchFactory.getFullTextEntityManager( this.em )
@@ -55,6 +59,58 @@ public class CustomUpdatedEntityIntegrationTest {
 								this.searchFactory.getSearchFactory().buildQueryBuilder().forEntity(
 										CustomUpdatedEntity.class
 								).get().keyword().onField( "text" ).matching( ENT_NAME_SHOULD_NOT_FIND ).createQuery()
+						).getResultSize()
+		);
+
+		//but the entities should still be the same
+		for ( CustomUpdatedEntity ent : (List<CustomUpdatedEntity>) this.searchFactory.getFullTextEntityManager( this.em )
+				.createFullTextQuery(
+						this.searchFactory.getSearchFactory().buildQueryBuilder().forEntity(
+								CustomUpdatedEntity.class
+						).get().keyword().onField( "text" ).matching( ENT_NAME_SHOULD_NOT_FIND ).createQuery()
+				).getResultList() ) {
+			assertEquals( ENT_NAME_SHOULD_NOT_FIND, ent.getText() );
+		}
+
+		this.assertEveryThingThere();
+
+		this.searchFactory.getFullTextEntityManager( this.em )
+				.createIndexer( CustomUpdatedEntity.class )
+				.entityProvider(
+						EntityManagerEntityProviderAdapter.adapt(
+								CustomUpdatedEntityEntityProvider.class,
+								this.em,
+								null
+						)
+				).startAndWait();
+		this.assertEveryThingThere();
+
+		this.searchFactory.getFullTextEntityManager( this.em )
+				.createIndexer( CustomUpdatedEntity.class )
+				.entityProvider(
+						EntityManagerEntityProviderAdapter.adapt(
+								CustomUpdatedEntityEntityProvider.class,
+								this.emf,
+								null, 8
+						)
+				).startAndWait();
+		this.assertEveryThingThere();
+	}
+
+	private void assertEveryThingThere() {
+		assertEquals(
+				ENTITY_COUNT, this.searchFactory.getFullTextEntityManager( this.em )
+						.createFullTextQuery(
+								this.searchFactory.getSearchFactory()
+										.buildQueryBuilder()
+										.forEntity(
+												CustomUpdatedEntity.class
+										)
+										.get()
+										.keyword()
+										.onField( "text" )
+										.matching( CustomUpdatedEntityEntityProvider.CUSTOM_TEXT )
+										.createQuery()
 						).getResultSize()
 		);
 	}
