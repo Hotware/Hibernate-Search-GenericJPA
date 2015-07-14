@@ -7,7 +7,9 @@
 package org.hibernate.search.genericjpa.entity;
 
 import java.io.Closeable;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Hibernate-Search is no object storage. All hits found on the Index have a original representation. This interface
@@ -17,12 +19,20 @@ import java.util.List;
  */
 public interface EntityProvider extends Closeable {
 
-	Object get(Class<?> entityClass, Object id);
+	default Object get(Class<?> entityClass, Object id) {
+		return this.get( entityClass, id, Collections.emptyMap() );
+	}
+
+	Object get(Class<?> entityClass, Object id, Map<String, String> hints);
+
+	default List getBatch(Class<?> entityClass, List<Object> id) {
+		return this.getBatch( entityClass, id, Collections.emptyMap() );
+	}
 
 	/**
 	 * ATTENTION: ORDER IS NOT PRESERVED!
 	 */
 	@SuppressWarnings("rawtypes")
-	List getBatch(Class<?> entityClass, List<Object> id);
+	List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints);
 
 }

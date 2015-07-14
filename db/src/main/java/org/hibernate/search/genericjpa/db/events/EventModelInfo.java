@@ -8,6 +8,7 @@ package org.hibernate.search.genericjpa.db.events;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import org.hibernate.search.genericjpa.db.id.ToOriginalIdBridge;
@@ -101,11 +102,11 @@ public class EventModelInfo {
 		private final String[] columns;
 		private final String[] columnsInOriginal;
 		private final ToOriginalIdBridge toOriginalBridge;
-		private final List<String> hints;
+		private final Map<String, String> hints;
 
 		public IdInfo(
 				Function<Object, Object> idAccessor, Class<?> entityClass, String[] columns, String[] columnsInOriginal,
-				ToOriginalIdBridge toOriginalBridge, List<String> hints) {
+				ToOriginalIdBridge toOriginalBridge, Map<String, String> hints) {
 			super();
 			this.idAccessor = idAccessor;
 			this.entityClass = entityClass;
@@ -154,7 +155,7 @@ public class EventModelInfo {
 			return toOriginalBridge;
 		}
 
-		public List<String> getHints() {
+		public Map<String, String> getHints() {
 			return hints;
 		}
 

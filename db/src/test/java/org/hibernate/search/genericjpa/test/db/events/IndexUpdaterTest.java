@@ -71,12 +71,12 @@ public class IndexUpdaterTest {
 
 			@SuppressWarnings("rawtypes")
 			@Override
-			public List getBatch(Class<?> entityClass, List<Object> ids) {
+			public List getBatch(Class<?> entityClass, List<Object> ids, Map<String, String> hints) {
 				throw new AssertionFailure( "not to be used in this test!" );
 			}
 
 			@Override
-			public Object get(Class<?> entityClass, Object id) {
+			public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
 				return IndexUpdaterTest.this.obj( entityClass, false );
 			}
 

@@ -32,13 +32,13 @@ public class BasicEntityProvider implements EntityProvider {
 	}
 
 	@Override
-	public Object get(Class<?> entityClass, Object id) {
+	public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
 		return this.em.find( entityClass, id );
 	}
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	@Override
-	public List getBatch(Class<?> entityClass, List<Object> ids) {
+	public List getBatch(Class<?> entityClass, List<Object> ids, Map<String, String> hints) {
 		List<Object> ret = new ArrayList<>( ids.size() );
 		if ( ids.size() > 0 ) {
 			String idProperty = this.idProperties.get( entityClass );

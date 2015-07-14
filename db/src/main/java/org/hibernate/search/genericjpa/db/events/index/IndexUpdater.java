@@ -96,20 +96,21 @@ public class IndexUpdater implements UpdateConsumer {
 						try {
 							for ( UpdateInfo updateInfo : updateInfos ) {
 								Class<?> entityClass = updateInfo.getEntityClass();
+								Map<String, String> hints = Collections.unmodifiableMap( updateInfo.getHints() );
 								List<Class<?>> inIndexOf = IndexUpdater.this.containedInIndexOf.get( entityClass );
 								if ( inIndexOf != null && inIndexOf.size() != 0 ) {
 									int eventType = updateInfo.getEventType();
 									Object id = updateInfo.getId();
 									switch ( eventType ) {
 										case EventType.INSERT: {
-											Object obj = provider.get( entityClass, id );
+											Object obj = provider.get( entityClass, id, hints );
 											if ( obj != null ) {
 												IndexUpdater.this.indexWrapper.index( obj, tx );
 											}
 											break;
 										}
 										case EventType.UPDATE: {
-											Object obj = provider.get( entityClass, id );
+											Object obj = provider.get( entityClass, id, hints );
 											if ( obj != null ) {
 												IndexUpdater.this.indexWrapper.update( obj, tx );
 											}

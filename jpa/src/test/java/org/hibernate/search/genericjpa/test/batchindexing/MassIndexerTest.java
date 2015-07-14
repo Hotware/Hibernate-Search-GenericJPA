@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Future;
@@ -99,12 +100,12 @@ public class MassIndexerTest {
 		System.out.println( "**********************************************" );
 		final EntityProvider entityProvider = new EntityProvider() {
 			@Override
-			public Object get(Class<?> entityClass, Object id) {
+			public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
 				throw new RuntimeException( "Exceptions are expected in this test!" );
 			}
 
 			@Override
-			public List getBatch(Class<?> entityClass, List<Object> id) {
+			public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
 				throw new RuntimeException( "Exceptions are expected in this test!" );
 			}
 
@@ -131,13 +132,13 @@ public class MassIndexerTest {
 		boolean[] usedManual = new boolean[1];
 		final EntityProvider entityProvider = new EntityProvider() {
 			@Override
-			public Object get(Class<?> entityClass, Object id) {
+			public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
 				usedManual[0] = true;
 				return null;
 			}
 
 			@Override
-			public List getBatch(Class<?> entityClass, List<Object> id) {
+			public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
 				usedManual[0] = true;
 				return Collections.emptyList();
 			}

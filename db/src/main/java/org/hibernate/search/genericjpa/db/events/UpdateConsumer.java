@@ -8,6 +8,7 @@ package org.hibernate.search.genericjpa.db.events;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Martin Braun
@@ -26,13 +27,13 @@ public interface UpdateConsumer {
 		private final Class<?> entityClass;
 		private final Object id;
 		private final int eventType;
-		private final List<String> hints;
+		private final Map<String, String> hints;
 
 		public UpdateInfo(Class<?> entityClass, Object id, int eventType) {
-			this( entityClass, id, eventType, Collections.emptyList() );
+			this( entityClass, id, eventType, Collections.emptyMap() );
 		}
 
-		public UpdateInfo(Class<?> entityClass, Object id, int eventType, List<String> hints) {
+		public UpdateInfo(Class<?> entityClass, Object id, int eventType, Map<String, String> hints) {
 			super();
 			this.entityClass = entityClass;
 			this.id = id;
@@ -59,6 +60,10 @@ public interface UpdateConsumer {
 		 */
 		public Class<?> getEntityClass() {
 			return entityClass;
+		}
+
+		public Map<String, String> getHints() {
+			return hints;
 		}
 
 		@Override

@@ -12,6 +12,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 import org.hibernate.search.genericjpa.annotations.Event;
+import org.hibernate.search.genericjpa.annotations.Hint;
 import org.hibernate.search.genericjpa.annotations.IdFor;
 import org.hibernate.search.genericjpa.annotations.Updates;
 
@@ -26,7 +27,8 @@ public class CustomUpdatedEntityUpdates {
 	@Id
 	private Long id;
 
-	@IdFor(entityClass = CustomUpdatedEntity.class, columns = "customUpdatedEntityId", columnsInOriginal = "id")
+	@IdFor(entityClass = CustomUpdatedEntity.class, columns = "customUpdatedEntityId", columnsInOriginal = "id",
+			hints = @Hint(key = "test", value = "toast"))
 	@Column(name = "customUpdatedEntityId")
 	private Long customUpdatedEntityId;
 

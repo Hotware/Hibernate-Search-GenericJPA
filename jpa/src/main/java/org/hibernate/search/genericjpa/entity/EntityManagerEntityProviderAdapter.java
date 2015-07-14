@@ -11,6 +11,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.transaction.TransactionManager;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.locks.Lock;
@@ -82,10 +83,10 @@ public final class EntityManagerEntityProviderAdapter {
 		}
 
 		@Override
-		public Object get(Class<?> entityClass, Object id) {
+		public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
 			EntityManagerAdapterProvider prov = this.providers.poll();
 			try {
-				return prov.get( entityClass, id );
+				return prov.get( entityClass, id, hints );
 			}
 			finally {
 				this.providers.add( prov );
@@ -93,10 +94,10 @@ public final class EntityManagerEntityProviderAdapter {
 		}
 
 		@Override
-		public List getBatch(Class<?> entityClass, List<Object> id) {
+		public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
 			EntityManagerAdapterProvider prov = this.providers.poll();
 			try {
-				return prov.getBatch( entityClass, id );
+				return prov.getBatch( entityClass, id, hints );
 			}
 			finally {
 				this.providers.add( prov );
@@ -130,7 +131,7 @@ public final class EntityManagerEntityProviderAdapter {
 		}
 
 		@Override
-		public Object get(Class<?> entityClass, Object id) {
+		public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
 			this.lock.lock();
 			try {
 				if ( this.wrapInTransaction ) {
@@ -138,14 +139,14 @@ public final class EntityManagerEntityProviderAdapter {
 							JPATransactionWrapper.get( this.em, this.transactionManager );
 					tx.begin();
 					try {
-						return this.provider.get( this.em, entityClass, id );
+						return this.provider.get( this.em, entityClass, id, hints );
 					}
 					finally {
 						tx.commit();
 					}
 				}
 				else {
-					return this.provider.get( this.em, entityClass, id );
+					return this.provider.get( this.em, entityClass, id, hints );
 				}
 			}
 			finally {
@@ -154,7 +155,7 @@ public final class EntityManagerEntityProviderAdapter {
 		}
 
 		@Override
-		public List getBatch(Class<?> entityClass, List<Object> id) {
+		public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
 			this.lock.lock();
 			try {
 				if ( this.wrapInTransaction ) {
@@ -162,14 +163,14 @@ public final class EntityManagerEntityProviderAdapter {
 							JPATransactionWrapper.get( this.em, this.transactionManager );
 					tx.begin();
 					try {
-						return this.provider.getBatch( this.em, entityClass, id );
+						return this.provider.getBatch( this.em, entityClass, id, hints );
 					}
 					finally {
 						tx.commit();
 					}
 				}
 				else {
-					return this.provider.getBatch( this.em, entityClass, id );
+					return this.provider.getBatch( this.em, entityClass, id, hints );
 				}
 			}
 			finally {

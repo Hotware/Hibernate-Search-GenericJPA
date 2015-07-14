@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.index.Term;
@@ -134,12 +135,12 @@ public class SearchFactoryTest {
 			{
 				final EntityProvider emptyProvider = new EntityProvider() {
 					@Override
-					public Object get(Class<?> entityClass, Object id) {
+					public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
 						return null;
 					}
 
 					@Override
-					public List getBatch(Class<?> entityClass, List<Object> id) {
+					public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
 						return Collections.emptyList();
 					}
 
@@ -166,7 +167,7 @@ public class SearchFactoryTest {
 				final EntityProvider dummyProvider = new EntityProvider() {
 
 					@Override
-					public Object get(Class<?> entityClass, Object id) {
+					public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
 						if ( TopLevel.class.equals( entityClass ) ) {
 							TopLevel ret = new TopLevel();
 							ret.setId( 1 );
@@ -179,7 +180,7 @@ public class SearchFactoryTest {
 					}
 
 					@Override
-					public List getBatch(Class<?> entityClass, List<Object> id) {
+					public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
 						return Collections.singletonList( this.get( entityClass, id.get( 0 ) ) );
 					}
 
@@ -258,12 +259,12 @@ public class SearchFactoryTest {
 			final EntityProvider dummyProvider = new EntityProvider() {
 
 				@Override
-				public Object get(Class<?> entityClass, Object id) {
+				public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
 					throw new AssertionError( "shoudn't try to load anything if the ids are null in the index" );
 				}
 
 				@Override
-				public List getBatch(Class<?> entityClass, List<Object> id) {
+				public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
 					throw new AssertionError( "shoudn't try to load anything if the ids are null in the index" );
 				}
 

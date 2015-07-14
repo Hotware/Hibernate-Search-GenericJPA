@@ -42,24 +42,29 @@ public class JPAReusableEntityProvider extends TransactionWrappedReusableEntityP
 	}
 
 	@Override
-	public Object get(Class<?> entityClass, Object id) {
+	public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
 		if ( this.provider == null ) {
 			throw new IllegalStateException( "not open!" );
 		}
 		if ( this.customEntityProviders.containsKey( entityClass ) ) {
-			return this.customEntityProviders.get( entityClass ).get( this.getEntityManager(), entityClass, id );
+			return this.customEntityProviders.get( entityClass ).get( this.getEntityManager(), entityClass, id, hints );
 		}
 		return this.provider.get( entityClass, id );
 	}
 
 	@Override
 	@SuppressWarnings("rawtypes")
-	public List getBatch(Class<?> entityClass, List<Object> ids) {
+	public List getBatch(Class<?> entityClass, List<Object> ids, Map<String, String> hints) {
 		if ( this.provider == null ) {
 			throw new IllegalStateException( "not open!" );
 		}
 		if ( this.customEntityProviders.containsKey( entityClass ) ) {
-			return this.customEntityProviders.get( entityClass ).getBatch( this.getEntityManager(), entityClass, ids );
+			return this.customEntityProviders.get( entityClass ).getBatch(
+					this.getEntityManager(),
+					entityClass,
+					ids,
+					hints
+			);
 		}
 		return this.provider.getBatch( entityClass, ids );
 	}

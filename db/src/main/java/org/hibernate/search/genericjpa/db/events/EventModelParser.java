@@ -12,13 +12,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
 import org.hibernate.search.genericjpa.annotations.Event;
+import org.hibernate.search.genericjpa.annotations.Hint;
 import org.hibernate.search.genericjpa.annotations.IdFor;
 import org.hibernate.search.genericjpa.annotations.Updates;
 import org.hibernate.search.genericjpa.db.id.ToOriginalIdBridge;
@@ -204,9 +206,13 @@ public class EventModelParser {
 									+ "match the count of Id-columns in the original"
 					);
 				}
+				Map<String, String> hints = new HashMap<>();
+				for ( Hint hint : idFor.hints() ) {
+					hints.put( hint.key(), hint.value() );
+				}
 				EventModelInfo.IdInfo idInfo = new EventModelInfo.IdInfo(
 						idAccessor, idFor.entityClass(), idFor.columns(), idFor.columnsInOriginal(), toOriginalBridge,
-						Collections.unmodifiableList( Arrays.asList( idFor.hints() ) )
+						Collections.unmodifiableMap( hints )
 				);
 				idInfos.add( idInfo );
 			}

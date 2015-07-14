@@ -26,11 +26,11 @@ public class TransactionWrappedEntityManagerEntityProvider extends BasicEntityPr
 	}
 
 	@Override
-	public Object get(Class<?> entityClass, Object id) {
+	public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
 		JPATransactionWrapper tx = JPATransactionWrapper.get( this.getEm(), this.transactionManager );
 		tx.begin();
 		try {
-			Object ret = super.get( entityClass, id );
+			Object ret = super.get( entityClass, id, hints );
 			tx.commit();
 			return ret;
 		}
@@ -42,11 +42,11 @@ public class TransactionWrappedEntityManagerEntityProvider extends BasicEntityPr
 
 	@SuppressWarnings("rawtypes")
 	@Override
-	public List getBatch(Class<?> entityClass, List<Object> ids) {
+	public List getBatch(Class<?> entityClass, List<Object> ids, Map<String, String> hints) {
 		JPATransactionWrapper tx = JPATransactionWrapper.get( this.getEm(), this.transactionManager );
 		tx.begin();
 		try {
-			List ret = super.getBatch( entityClass, ids );
+			List ret = super.getBatch( entityClass, ids, hints );
 			tx.commit();
 			return ret;
 		}

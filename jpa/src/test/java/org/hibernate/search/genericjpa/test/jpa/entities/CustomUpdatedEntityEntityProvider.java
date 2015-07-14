@@ -7,8 +7,8 @@
 package org.hibernate.search.genericjpa.test.jpa.entities;
 
 import javax.persistence.EntityManager;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
@@ -19,19 +19,27 @@ import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 public class CustomUpdatedEntityEntityProvider implements EntityManagerEntityProvider {
 
 	public static final String CUSTOM_TEXT = "customupdated";
+	public static final String CUSTOM_TEXT_HINTS = "customupdated_hints";
 
 	@Override
-	public Object get(EntityManager em, Class<?> entityClass, Object id) {
+	public Object get(EntityManager em, Class<?> entityClass, Object id, Map<String, String> hints) {
+
 		CustomUpdatedEntity ret = (CustomUpdatedEntity) em.find( entityClass, id );
 		em.detach( ret );
+
 		//we somehow have to check whether this class was used.
-		ret.setText( CUSTOM_TEXT );
+		if ( hints != null && hints.containsKey( "test" ) && hints.get( "test" ).equals( "toast" ) ) {
+			ret.setText( CUSTOM_TEXT_HINTS );
+		}
+		else {
+			ret.setText( CUSTOM_TEXT );
+		}
 		return ret;
 	}
 
 	@Override
-	public List getBatch(EntityManager em, Class<?> entityClass, List<Object> id) {
-		List ret = id.stream().map( id_ -> this.get( em, entityClass, id_ ) ).collect( Collectors.toList() );
+	public List getBatch(EntityManager em, Class<?> entityClass, List<Object> id, Map<String, String> hints) {
+		List ret = id.stream().map( id_ -> this.get( em, entityClass, id_, hints ) ).collect( Collectors.toList() );
 		return ret;
 	}
 

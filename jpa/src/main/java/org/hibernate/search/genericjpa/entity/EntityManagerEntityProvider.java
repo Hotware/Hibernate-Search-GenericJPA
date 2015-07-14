@@ -8,6 +8,7 @@ package org.hibernate.search.genericjpa.entity;
 
 import javax.persistence.EntityManager;
 import java.util.List;
+import java.util.Map;
 
 /**
  * if you are using the EntityManager passed to this interface, make sure to detach your entities!
@@ -16,8 +17,8 @@ import java.util.List;
  */
 public interface EntityManagerEntityProvider {
 
-	Object get(EntityManager em, Class<?> entityClass, Object id);
+	Object get(EntityManager em, Class<?> entityClass, Object id, Map<String, String> hints);
 
-	List getBatch(EntityManager em, Class<?> entityClass, List<Object> id);
+	List getBatch(EntityManager em, Class<?> entityClass, List<Object> id, Map<String, String> hints);
 
 }

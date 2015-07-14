@@ -8,6 +8,7 @@ package org.hibernate.search.genericjpa.test.jpa;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
@@ -62,12 +63,12 @@ public class NoJPAIntegrationTest {
 				.entityProvider(
 						new EntityProvider() {
 							@Override
-							public Object get(Class<?> entityClass, Object id) {
+							public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
 								return tmp;
 							}
 
 							@Override
-							public List getBatch(Class<?> entityClass, List<Object> id) {
+							public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
 								throw new AssertionError();
 							}
 

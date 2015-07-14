@@ -259,7 +259,7 @@ public abstract class IntegrationTest {
 									}
 
 									@Override
-									public List getBatch(Class<?> entityClass, List<Object> id) {
+									public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
 										// this should happen!
 										// an empty list is actually quite interesting for the backend.
 										// does it handle not finding anything for a given entityClass right?
@@ -267,7 +267,7 @@ public abstract class IntegrationTest {
 									}
 
 									@Override
-									public Object get(Class<?> entityClass, Object id) {
+									public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
 										throw new AssertionError( "should have used getBatch instead!" );
 									}
 
@@ -289,12 +289,12 @@ public abstract class IntegrationTest {
 									}
 
 									@Override
-									public List getBatch(Class<?> entityClass, List<Object> id) {
+									public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
 										throw new AssertionError( "should have used get instead!" );
 									}
 
 									@Override
-									public Object get(Class<?> entityClass, Object id) {
+									public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
 										return null;
 									}
 

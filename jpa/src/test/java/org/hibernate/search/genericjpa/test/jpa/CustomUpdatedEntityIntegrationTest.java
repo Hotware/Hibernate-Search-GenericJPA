@@ -72,7 +72,7 @@ public class CustomUpdatedEntityIntegrationTest {
 			assertEquals( ENT_NAME_SHOULD_NOT_FIND, ent.getText() );
 		}
 
-		this.assertEveryThingThere();
+		this.assertEveryThingThereHints();
 
 		this.searchFactory.getFullTextEntityManager( this.em )
 				.createIndexer( CustomUpdatedEntity.class )
@@ -95,6 +95,24 @@ public class CustomUpdatedEntityIntegrationTest {
 						)
 				).startAndWait();
 		this.assertEveryThingThere();
+	}
+
+	private void assertEveryThingThereHints() {
+		assertEquals(
+				ENTITY_COUNT, this.searchFactory.getFullTextEntityManager( this.em )
+						.createFullTextQuery(
+								this.searchFactory.getSearchFactory()
+										.buildQueryBuilder()
+										.forEntity(
+												CustomUpdatedEntity.class
+										)
+										.get()
+										.keyword()
+										.onField( "text" )
+										.matching( CustomUpdatedEntityEntityProvider.CUSTOM_TEXT_HINTS )
+										.createQuery()
+						).getResultSize()
+		);
 	}
 
 	private void assertEveryThingThere() {
