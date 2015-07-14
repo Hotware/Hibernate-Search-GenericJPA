@@ -106,7 +106,15 @@ public class IndexUpdaterTest {
 				System.out.println( entityClass );
 				System.out.println( updateInfoSet );
 				System.out.println( obj );
-				assertTrue( updateInfoSet.remove( new UpdateInfo( entityClass, (Integer) id, EventType.DELETE ) ) );
+				assertTrue(
+						updateInfoSet.remove(
+								new UpdateInfo(
+										entityClass,
+										(Integer) id,
+										EventType.DELETE
+								)
+						)
+				);
 			}
 
 			@Override
@@ -158,7 +166,8 @@ public class IndexUpdaterTest {
 		);
 		try {
 			updater.updateEvent( updateInfos );
-		} finally {
+		}
+		finally {
 			updater.close();
 		}
 	}

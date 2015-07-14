@@ -251,7 +251,8 @@ public class JPAUpdateSource implements UpdateSource {
 																	info.getIdAccessor()
 																			.apply( val ),
 																	evi.getEventTypeAccessor()
-																			.apply( val )
+																			.apply( val ),
+																	info.getHints()
 															)
 													)
 											);

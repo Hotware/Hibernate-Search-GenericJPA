@@ -12,6 +12,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -203,7 +205,8 @@ public class EventModelParser {
 					);
 				}
 				EventModelInfo.IdInfo idInfo = new EventModelInfo.IdInfo(
-						idAccessor, idFor.entityClass(), idFor.columns(), idFor.columnsInOriginal(), toOriginalBridge
+						idAccessor, idFor.entityClass(), idFor.columns(), idFor.columnsInOriginal(), toOriginalBridge,
+						Collections.unmodifiableList( Arrays.asList( idFor.hints() ) )
 				);
 				idInfos.add( idInfo );
 			}

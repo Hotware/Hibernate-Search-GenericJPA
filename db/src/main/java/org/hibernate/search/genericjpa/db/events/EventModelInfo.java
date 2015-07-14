@@ -101,16 +101,18 @@ public class EventModelInfo {
 		private final String[] columns;
 		private final String[] columnsInOriginal;
 		private final ToOriginalIdBridge toOriginalBridge;
+		private final List<String> hints;
 
 		public IdInfo(
 				Function<Object, Object> idAccessor, Class<?> entityClass, String[] columns, String[] columnsInOriginal,
-				ToOriginalIdBridge toOriginalBridge) {
+				ToOriginalIdBridge toOriginalBridge, List<String> hints) {
 			super();
 			this.idAccessor = idAccessor;
 			this.entityClass = entityClass;
 			this.columns = columns;
 			this.columnsInOriginal = columnsInOriginal;
 			this.toOriginalBridge = toOriginalBridge;
+			this.hints = hints;
 		}
 
 		/**
@@ -152,16 +154,20 @@ public class EventModelInfo {
 			return toOriginalBridge;
 		}
 
+		public List<String> getHints() {
+			return hints;
+		}
+
 		/*
-		 * (non-Javadoc)
-		 * @see java.lang.Object#toString()
-		 */
+				 * (non-Javadoc)
+				 * @see java.lang.Object#toString()
+				 */
 		@Override
 		public String toString() {
 			return "IdInfo [idAccessor=" + idAccessor + ", entityClass=" + entityClass + ", columns=" + Arrays.toString(
 					columns
 			) + ", columnsInOriginal="
-					+ Arrays.toString( columnsInOriginal ) + "]";
+					+ Arrays.toString( columnsInOriginal ) + ", hints" + hints + "]";
 		}
 
 	}

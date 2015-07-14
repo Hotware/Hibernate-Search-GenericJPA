@@ -45,4 +45,6 @@ public @interface IdFor {
 
 	Class<? extends ToOriginalIdBridge> bridge() default DefaultToOriginalIdBridge.class;
 
+	String[] hints() default {};
+
 }
