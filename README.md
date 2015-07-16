@@ -63,4 +63,4 @@ Examples
 ========
 
 An example on how to use this project can be found in the wiki: 
-https://github.com/Hotware/Hibernate-Search-JPA/wiki/How-To
+https://github.com/Hotware/Hibernate-Search-JPA/wiki/How-To 
