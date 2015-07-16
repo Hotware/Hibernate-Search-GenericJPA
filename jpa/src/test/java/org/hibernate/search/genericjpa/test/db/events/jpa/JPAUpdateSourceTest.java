@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.hibernate.search.genericjpa.db.events.AnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
@@ -39,7 +40,7 @@ public class JPAUpdateSourceTest {
 	 * this is needed in other tests because the query method of JPAUpdateSource has package access
 	 */
 	public static MultiQueryAccess query(EntityManagerFactory emf, EntityManager em) throws NoSuchFieldException {
-		EventModelParser parser = new EventModelParser();
+		EventModelParser parser = new AnnotationEventModelParser();
 		JPAUpdateSource updateSource = new JPAUpdateSource(
 				parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class, PlaceUpdates.class ) ) ),
 				emf, null, 1, TimeUnit.SECONDS, 2, 2
@@ -51,7 +52,7 @@ public class JPAUpdateSourceTest {
 	public void test() throws InterruptedException {
 		EntityManagerFactory emf = Persistence.createEntityManagerFactory( "EclipseLink" );
 		try {
-			EventModelParser parser = new EventModelParser();
+			EventModelParser parser = new AnnotationEventModelParser();
 			JPAUpdateSource updateSource = new JPAUpdateSource(
 					parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class, PlaceUpdates.class ) ) ),
 					emf,

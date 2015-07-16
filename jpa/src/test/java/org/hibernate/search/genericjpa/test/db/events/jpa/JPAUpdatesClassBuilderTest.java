@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
+import org.hibernate.search.genericjpa.db.events.AnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.jpa.JPAUpdatesClassBuilder;
@@ -36,7 +37,7 @@ public class JPAUpdatesClassBuilderTest {
 	public void testCompileAndAnnotations() throws Exception {
 		String asString = this.buildCode( "" );
 		Class<?> clazz = InMemoryCompiler.compile( asString, "MyUpdateClass" );
-		EventModelParser parser = new EventModelParser();
+		EventModelParser parser = new AnnotationEventModelParser();
 		List<EventModelInfo> infos = parser.parse( new HashSet<>( Arrays.asList( clazz ) ) );
 		EventModelInfo info = infos.get( 0 );
 		assertTrue( info.getEventTypeAccessor() != null );

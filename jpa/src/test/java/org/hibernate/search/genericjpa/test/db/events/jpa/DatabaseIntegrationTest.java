@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.hibernate.search.genericjpa.db.events.AnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventType;
@@ -51,7 +52,7 @@ public abstract class DatabaseIntegrationTest {
 	protected int helmsDeepId = 0;
 	protected Place valinor;
 	protected EntityManagerFactory emf;
-	protected EventModelParser parser = new EventModelParser();
+	protected EventModelParser parser = new AnnotationEventModelParser();
 	protected String exceptionString;
 	protected List<String> dropStrings;
 
