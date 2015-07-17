@@ -14,23 +14,23 @@ import org.hibernate.search.genericjpa.transaction.impl.JNDILookupTransactionMan
  */
 public class Constants {
 
-	public static final String USE_JTA_TRANSACTIONS_KEY = "org.hibernate.search.genericjpa.searchfactory.useJTATransactions";
+	public static final String USE_JTA_TRANSACTIONS_KEY = "hibernate.search.useJTATransactions";
 	public static final String USE_JTA_TRANSACTIONS_DEFAULT_VALUE = "false";
-	public static final String SEARCH_FACTORY_TYPE_KEY = "org.hibernate.search.genericjpa.searchfactory.type";
+	public static final String SEARCH_FACTORY_TYPE_KEY = "hibernate.search.searchfactory.type";
 	public static final String SEARCH_FACTORY_TYPE_DEFAULT_VALUE = "sql";
-	public static final String BATCH_SIZE_FOR_UPDATES_KEY = "org.hibernate.search.genericjpa.searchfactory.batchSizeForUpdates";
+	public static final String BATCH_SIZE_FOR_UPDATES_KEY = "hibernate.search.trigger.batchSizeForUpdates";
 	public static final String BATCH_SIZE_FOR_UPDATES_DEFAULT_VALUE = "5";
-	public static final String UPDATE_DELAY_KEY = "org.hibernate.search.genericjpa.searchfactory.updateDelay";
+	public static final String UPDATE_DELAY_KEY = "hibernate.search.trigger.updateDelay";
 	public static final String UPDATE_DELAY_DEFAULT_VALUE = "500";
-	public static final String TRIGGER_SOURCE_KEY = "org.hibernate.search.genericjpa.searchfactory.triggerSource";
-	public static final String ADDITIONAL_INDEXED_TYPES_KEY = "org.hibernate.search.genericjpa.searchfactory.additionalIndexedTypes";
+	public static final String TRIGGER_SOURCE_KEY = "hibernate.search.trigger.source";
+	public static final String ADDITIONAL_INDEXED_TYPES_KEY = "hibernate.search.additionalIndexedTypes";
 	public static final String SEARCH_FACTORY_NAME_KEY = SearchFactoryRegistry.NAME_PROPERTY;
 	public static final String SEARCH_FACTORY_NAME_DEFAULT_VALUE = SearchFactoryRegistry.DEFAULT_NAME;
-	public static final String TRANSACTION_MANAGER_PROVIDER_KEY = "org.hibernate.search.genericjpa.searchfactory.transactionManagerProvider";
+	public static final String TRANSACTION_MANAGER_PROVIDER_KEY = "hibernate.search.transactionManagerProvider";
 	public static final String TRANSACTION_MANAGER_PROVIDER_DEFAULT_VALUE = JNDILookupTransactionManagerProvider.class.getName();
-	public static final String TRANSACTION_MANAGER_JNDI_KEY = "org.hibernate.search.genericjpa.searchfactory.transactionManagerProvider.jndi";
+	public static final String TRANSACTION_MANAGER_JNDI_KEY = "hibernate.search.transactionManagerProvider.jndi";
 
-	public static final String TRIGGER_CREATION_STRATEGY_KEY = "org.hibernate.search.genericjpa.searchfactory.triggers.createstrategy";
+	public static final String TRIGGER_CREATION_STRATEGY_KEY = "hibernate.search.trigger.createstrategy";
 	public static final String TRIGGER_CREATION_STRATEGY_CREATE = "create";
 	public static final String TRIGGER_CREATION_STRATEGY_DROP_CREATE = "drop-create";
 	public static final String TRIGGER_CREATION_STRATEGY_DEFAULT_VALUE = TRIGGER_CREATION_STRATEGY_CREATE;

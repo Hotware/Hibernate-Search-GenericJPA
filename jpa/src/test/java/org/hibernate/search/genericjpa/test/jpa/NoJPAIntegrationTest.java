@@ -42,7 +42,7 @@ public class NoJPAIntegrationTest {
 		Properties properties = new Properties();
 		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.name", "test" );
 		properties.setProperty( Constants.ADDITIONAL_INDEXED_TYPES_KEY, NonJPAEntity.class.getName() );
-		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.type", "manual-updates" );
+		properties.setProperty( "hibernate.search.searchfactory.type", "manual-updates" );
 		this.searchFactory = (JPASearchFactoryAdapter) Setup.createSearchFactory( null, properties );
 		this.fem = this.searchFactory.getFullTextEntityManager( null );
 	}

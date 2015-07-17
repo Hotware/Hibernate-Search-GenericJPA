@@ -53,10 +53,10 @@ public class MultipleColumnsIdEntityIntegrationTest {
 		Properties properties = new Properties();
 		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.name", "test" );
 		properties.setProperty(
-				"org.hibernate.search.genericjpa.searchfactory.triggerSource",
+				"hibernate.search.trigger.source",
 				MySQLTriggerSQLStringSource.class.getName()
 		);
-		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.type", "sql" );
+		properties.setProperty( "hibernate.search.searchfactory.type", "sql" );
 		this.searchController = Setup.createSearchFactory( this.emf, properties );
 
 		FullTextEntityManager fem = this.searchController.getFullTextEntityManager( this.em );
