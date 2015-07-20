@@ -27,24 +27,24 @@ import org.hibernate.search.exception.AssertionFailure;
  */
 public class MultiQueryAccess {
 
-	private final Map<Class<?>, Long> currentCountMap;
-	private final Map<Class<?>, Query> queryMap;
-	private final Comparator<ObjectClassWrapper> comparator;
+	private final Map<String, Long> currentCountMap;
+	private final Map<String, Query> queryMap;
+	private final Comparator<ObjectIdentifierWrapper> comparator;
 	private final int batchSize;
 
-	private final Map<Class<?>, Long> processed;
-	private final Map<Class<?>, LinkedList<Object>> values;
+	private final Map<String, Long> processed;
+	private final Map<String, LinkedList<Object>> values;
 
 	private Object scheduled;
-	private Class<?> entityClass;
+	private String identifier;
 
 	/**
 	 * this doesn't do real batching as it has a batchSize of 1
 	 */
 	public MultiQueryAccess(
-			Map<Class<?>, Long> countMap,
-			Map<Class<?>, Query> queryMap,
-			Comparator<ObjectClassWrapper> comparator) {
+			Map<String, Long> countMap,
+			Map<String, Query> queryMap,
+			Comparator<ObjectIdentifierWrapper> comparator) {
 		this( countMap, queryMap, comparator, 1 );
 	}
 
@@ -52,9 +52,9 @@ public class MultiQueryAccess {
 	 * this does batching
 	 */
 	public MultiQueryAccess(
-			Map<Class<?>, Long> countMap,
-			Map<Class<?>, Query> queryMap,
-			Comparator<ObjectClassWrapper> comparator,
+			Map<String, Long> countMap,
+			Map<String, Query> queryMap,
+			Comparator<ObjectIdentifierWrapper> comparator,
 			int batchSize) {
 		if ( countMap.size() != queryMap.size() ) {
 			throw new IllegalArgumentException( "countMap.size() must be equal to queryMap.size()" );
@@ -65,9 +65,9 @@ public class MultiQueryAccess {
 		this.batchSize = batchSize;
 		this.processed = new HashMap<>();
 		this.values = new HashMap<>();
-		for ( Class<?> clazz : queryMap.keySet() ) {
-			this.values.put( clazz, new LinkedList<>() );
-			this.processed.put( clazz, 0L );
+		for ( String ident : queryMap.keySet() ) {
+			this.values.put( ident, new LinkedList<>() );
+			this.processed.put( ident, 0L );
 		}
 	}
 
@@ -82,40 +82,40 @@ public class MultiQueryAccess {
 	 */
 	public boolean next() {
 		this.scheduled = null;
-		this.entityClass = null;
-		List<ObjectClassWrapper> tmp = new ArrayList<>( this.queryMap.size() );
-		for ( Map.Entry<Class<?>, Query> entry : this.queryMap.entrySet() ) {
-			Class<?> entityClass = entry.getKey();
+		this.identifier = null;
+		List<ObjectIdentifierWrapper> tmp = new ArrayList<>( this.queryMap.size() );
+		for ( Map.Entry<String, Query> entry : this.queryMap.entrySet() ) {
+			String identifier = entry.getKey();
 			Query query = entry.getValue();
-			if ( !this.currentCountMap.get( entityClass ).equals( 0L ) ) {
-				if ( this.values.get( entityClass ).size() == 0 ) {
+			if ( !this.currentCountMap.get( identifier ).equals( 0L ) ) {
+				if ( this.values.get( identifier ).size() == 0 ) {
 					// the last batch is empty. get a new one
-					Long processed = this.processed.get( entityClass );
+					Long processed = this.processed.get( identifier );
 					// yay JPA...
 					query.setFirstResult( toInt( processed ) );
 					query.setMaxResults( this.batchSize );
 					@SuppressWarnings("unchecked")
 					List<Object> list = query.getResultList();
-					this.values.get( entityClass ).addAll( list );
+					this.values.get( identifier ).addAll( list );
 				}
-				Object val = this.values.get( entityClass ).getFirst();
-				tmp.add( new ObjectClassWrapper( val, entityClass ) );
+				Object val = this.values.get( identifier ).getFirst();
+				tmp.add( new ObjectIdentifierWrapper( val, identifier ) );
 			}
 		}
 		tmp.sort( this.comparator );
 		if ( tmp.size() > 0 ) {
-			ObjectClassWrapper arr = tmp.get( 0 );
+			ObjectIdentifierWrapper arr = tmp.get( 0 );
 			this.scheduled = arr.object;
-			this.entityClass = arr.clazz;
-			this.values.get( entityClass ).pop();
-			Long processed = this.processed.get( arr.clazz );
-			Long newProcessed = this.processed.computeIfPresent( arr.clazz, (clazz, old) -> old + 1 );
+			this.identifier = arr.identifier;
+			this.values.get( this.identifier ).pop();
+			Long processed = this.processed.get( arr.identifier );
+			Long newProcessed = this.processed.computeIfPresent( arr.identifier, (clazz, old) -> old + 1 );
 			if ( Math.abs( newProcessed - processed ) != 1L ) {
 				throw new AssertionFailure( "the new processed count should be exactly 1 " + "greater than the old one" );
 			}
-			Long count = this.currentCountMap.get( arr.clazz );
+			Long count = this.currentCountMap.get( arr.identifier );
 			Long newCount = this.currentCountMap.computeIfPresent(
-					arr.clazz, (clazz, old) -> old - 1
+					arr.identifier, (clazz, old) -> old - 1
 			);
 			if ( Math.abs( count - newCount ) != 1L ) {
 				throw new AssertionFailure( "the new old remaining count should be exactly 1 " + "greater than the new one" );
@@ -124,13 +124,13 @@ public class MultiQueryAccess {
 		return this.scheduled != null;
 	}
 
-	public void addToNextValuePosition(Class<?> clazz, Long change) {
-		Long oldValue = this.processed.get( clazz );
+	public void addToNextValuePosition(String identifier, Long change) {
+		Long oldValue = this.processed.get( identifier );
 		Long newValue = oldValue + change;
 		if ( newValue < 0L ) {
 			throw new IllegalArgumentException( "change would set the next values" + " position to something less than 0" );
 		}
-		this.processed.put( clazz, newValue );
+		this.processed.put( identifier, newValue );
 	}
 
 	/**
@@ -144,24 +144,24 @@ public class MultiQueryAccess {
 	}
 
 	/**
-	 * @return the entityClass of the current value
+	 * @return the identifier of the current value
 	 */
-	public Class<?> entityClass() {
-		if ( this.entityClass == null ) {
+	public String identifier() {
+		if ( this.identifier == null ) {
 			throw new IllegalStateException( "either empty or next() has not been called" );
 		}
-		return this.entityClass;
+		return this.identifier;
 	}
 
-	public static class ObjectClassWrapper {
+	public static class ObjectIdentifierWrapper {
 
 		public final Object object;
-		public final Class<?> clazz;
+		public final String identifier;
 
-		public ObjectClassWrapper(Object object, Class<?> clazz) {
+		public ObjectIdentifierWrapper(Object object, String identifier) {
 			super();
 			this.object = object;
-			this.clazz = clazz;
+			this.identifier = identifier;
 		}
 
 	}
