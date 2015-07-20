@@ -20,6 +20,7 @@ import org.hibernate.search.genericjpa.annotations.Hint;
 import org.hibernate.search.genericjpa.annotations.IdInfo;
 import org.hibernate.search.genericjpa.annotations.UpdateInfo;
 import org.hibernate.search.genericjpa.db.id.IdConverter;
+import org.hibernate.search.genericjpa.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.exception.SearchException;
 
 /**
@@ -38,20 +39,21 @@ public class AnnotationEventModelParser implements EventModelParser {
 	public List<EventModelInfo> parse(List<Class<?>> updateClasses) {
 		List<EventModelInfo> ret = new ArrayList<>( updateClasses.size() );
 		Set<String> handledOriginalTableNames = new HashSet<>( updateClasses.size() );
+		Set<String> updateTableNames = new HashSet<>( updateClasses.size() );
 		for ( Class<?> clazz : updateClasses ) {
 			{
 				UpdateInfo[] classUpdateInfos = clazz.getAnnotationsByType( UpdateInfo.class );
-				this.addUpdateInfosToList( ret, clazz, classUpdateInfos, handledOriginalTableNames );
+				this.addUpdateInfosToList( ret, clazz, classUpdateInfos, handledOriginalTableNames, updateTableNames );
 			}
 
 			for ( Method method : clazz.getDeclaredMethods() ) {
 				UpdateInfo[] methodUpdateInfos = method.getAnnotationsByType( UpdateInfo.class );
-				this.addUpdateInfosToList( ret, null, methodUpdateInfos, handledOriginalTableNames );
+				this.addUpdateInfosToList( ret, null, methodUpdateInfos, handledOriginalTableNames, updateTableNames );
 			}
 
 			for ( Field field : clazz.getDeclaredFields() ) {
 				UpdateInfo[] fieldUpdateInfos = field.getAnnotationsByType( UpdateInfo.class );
-				this.addUpdateInfosToList( ret, null, fieldUpdateInfos, handledOriginalTableNames );
+				this.addUpdateInfosToList( ret, null, fieldUpdateInfos, handledOriginalTableNames, updateTableNames );
 			}
 		}
 		return ret;
@@ -61,18 +63,36 @@ public class AnnotationEventModelParser implements EventModelParser {
 			List<EventModelInfo> eventModelInfos,
 			Class<?> classSpecifiedOn,
 			UpdateInfo[] infos,
-			Set<String> handledOriginalTableNames) {
+			Set<String> handledOriginalTableNames,
+			Set<String> updateTableNames) {
 		for ( UpdateInfo info : infos ) {
 			String originalTableName = info.tableName();
+
+			if ( updateTableNames.contains( originalTableName ) ) {
+				throw new SearchException( "naming conflict with table " + originalTableName + ". a table of this name was marked to be created" );
+			}
+
 			if ( handledOriginalTableNames.contains( originalTableName ) ) {
 				throw new SearchException( "multiple @UpdateInfo specified for table " + originalTableName );
 			}
-			else {
-				handledOriginalTableNames.add( originalTableName );
-			}
+			handledOriginalTableNames.add( originalTableName );
+
+
 			String updateTableName = info.updateTableName().equals( "" ) ?
 					originalTableName + "hsearchupdates" :
-					info.tableName();
+					info.updateTableName();
+
+			if ( handledOriginalTableNames.contains( updateTableName ) ) {
+				throw new SearchException( "naming conflict with table " + updateTableName + ". a table of this name was marked to be created" );
+			}
+
+			if ( updateTableNames.contains( updateTableName ) ) {
+				throw new AssertionFailure( "attempted to use the same UpdateTableName twice: " + updateTableName );
+			}
+
+			updateTableNames.add( updateTableName );
+
+
 			String eventCaseColumn = info.updateTableEventCaseColumn().equals( "" ) ?
 					"eventcasehsearchupdates" :
 					info.updateTableEventCaseColumn();
