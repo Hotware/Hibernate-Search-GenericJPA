@@ -9,7 +9,6 @@ package org.hibernate.search.genericjpa.db.events;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -93,9 +92,9 @@ public class AnnotationEventModelParser implements EventModelParser {
 			updateTableNames.add( updateTableName );
 
 
-			String eventCaseColumn = info.updateTableEventCaseColumn().equals( "" ) ?
+			String eventCaseColumn = info.updateTableEventTypeColumn().equals( "" ) ?
 					"eventcasehsearchupdates" :
-					info.updateTableEventCaseColumn();
+					info.updateTableEventTypeColumn();
 			String updateIdColumn = info.updateTableIdColumn().equals( "" ) ?
 					"updatetableidcolumnhsearchupdates" :
 					info.updateTableIdColumn();

@@ -20,9 +20,7 @@ import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.id.IdConverter;
 import org.hibernate.search.genericjpa.exception.SearchException;
-import org.hibernate.search.genericjpa.test.db.entities.PlaceSorcererUpdates;
 
-import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -99,7 +97,20 @@ public class AnnotationEventModelParserTest {
 	@Test
 	public void testManualValues() {
 		List<EventModelInfo> infos = parser.parse( new HashSet<>( Arrays.asList( ManualValues.class ) ) );
-		//FIXME: implement the rest here
+
+		EventModelInfo info = infos.get( 0 );
+
+		assertEquals( "manualvalues", info.getOriginalTableName() );
+		assertEquals( "manualvalues_updates", info.getUpdateTableName() );
+		assertEquals( "manualvalues_idcolumn", info.getUpdateIdColumn() );
+		assertEquals( "manualvalues_eventtypecolumn", info.getEventTypeColumn() );
+
+		assertEquals( Manual.class, info.getIdInfos().get( 0 ).getEntityClass() );
+		assertEquals( "manualcolumn", info.getIdInfos().get( 0 ).getColumnsInOriginal()[0] );
+		assertEquals( "manualcolumn_FOREIGN", info.getIdInfos().get( 0 ).getColumnsInUpdateTable()[0] );
+		assertTrue(
+				info.getIdInfos().get( 0 ).getIdConverter() instanceof ManualIdConverter
+		);
 	}
 
 	//this information doesn't make a whole lot of sense database wise, but we can test stuff properly still
@@ -157,7 +168,7 @@ public class AnnotationEventModelParserTest {
 
 	}
 
-	@UpdateInfo(tableName = "manualvalues", updateTableName = "manualvalues_updates", updateTableIdColumn = "manualUpdateIdColumn", updateTableEventCaseColumn = "manualEventCaseColumn", idInfos = @IdInfo(
+	@UpdateInfo(tableName = "manualvalues", updateTableName = "manualvalues_updates", updateTableIdColumn = "manualvalues_idcolumn", updateTableEventTypeColumn = "manualvalues_eventtypecolumn", idInfos = @IdInfo(
 			entity = Manual.class, columns = "manualcolumn", updateTableColumns = "manualcolumn_FOREIGN", idConverter = ManualIdConverter.class
 	))
 	public static class ManualValues {
