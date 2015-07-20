@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.hibernate.search.genericjpa.db.events.AnnotationEventModelParser;
+import org.hibernate.search.genericjpa.db.events.UpdateClassAnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventType;
@@ -57,7 +57,7 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 
 	@Override
 	public UpdateSource getUpdateSource(long delay, TimeUnit timeUnit, int batchSizeForUpdates) {
-		EventModelParser eventModelParser = new AnnotationEventModelParser();
+		EventModelParser eventModelParser = new UpdateClassAnnotationEventModelParser();
 		List<EventModelInfo> eventModelInfos = eventModelParser.parse( new ArrayList<>( this.updateClasses ) );
 		this.setupTriggers( eventModelInfos );
 		return new JPAUpdateSource(

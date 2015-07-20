@@ -6,268 +6,156 @@
  */
 package org.hibernate.search.genericjpa.db.events;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
-import org.hibernate.search.genericjpa.annotations.Event;
 import org.hibernate.search.genericjpa.annotations.Hint;
-import org.hibernate.search.genericjpa.annotations.IdFor;
-import org.hibernate.search.genericjpa.annotations.Updates;
-import org.hibernate.search.genericjpa.db.id.ToOriginalIdBridge;
-import org.hibernate.search.genericjpa.exception.AssertionFailure;
+import org.hibernate.search.genericjpa.annotations.IdInfo;
+import org.hibernate.search.genericjpa.annotations.UpdateInfo;
+import org.hibernate.search.genericjpa.db.id.IdConverter;
 import org.hibernate.search.genericjpa.exception.SearchException;
 
 /**
- * This class has means to parse Classes annotated with {@link Updates} into their respective representation as a
- * {@link EventModelInfo}. <br>
- * <br>
- * It also checks the classes for the right annotations and does basic integrity checking of this information
- *
- * @author Martin
+ * Created by Martin on 20.07.2015.
  */
 public class AnnotationEventModelParser implements EventModelParser {
 
-	/**
-	 * @return EventModelInfos in "random" order
-	 */
 	@Override
 	public List<EventModelInfo> parse(Set<Class<?>> updateClasses) {
-		ArrayList<Class<?>> l = new ArrayList<>();
+		ArrayList<Class<?>> l = new ArrayList<>( updateClasses.size() );
 		l.addAll( updateClasses );
 		return this.parse( l );
 	}
 
-	/**
-	 * @return EventModelInfos in the same order as in the list argument
-	 */
 	@Override
 	public List<EventModelInfo> parse(List<Class<?>> updateClasses) {
-		List<EventModelInfo> ret = new ArrayList<>();
+		List<EventModelInfo> ret = new ArrayList<>( updateClasses.size() );
+		Set<String> handledOriginalTableNames = new HashSet<>( updateClasses.size() );
 		for ( Class<?> clazz : updateClasses ) {
-			Updates updates = clazz.getAnnotation( Updates.class );
-			java.lang.reflect.Member eventTypeMember = null;
-			String eventTypeColumn = null;
-			List<EventModelInfo.IdInfo> idInfos = new ArrayList<>();
-			if ( updates != null ) {
-				ParseMembersReturn forFields;
-				{
-					List<Field> fields = new ArrayList<>();
-					for ( Field field : clazz.getDeclaredFields() ) {
-						field.setAccessible( true );
-						fields.add( field );
-					}
-					ParseMembersReturn pmr = this.parseMembers( clazz, fields, idInfos );
-					forFields = pmr;
-					if ( forFields.foundAnything() ) {
-						if ( !forFields.foundBoth() ) {
-							throw new IllegalArgumentException(
-									"you have to annotate either Fields OR Methods with both @IdFor AND @Event"
-							);
-						}
-						if ( pmr.eventTypeMember != null ) {
-							eventTypeMember = pmr.eventTypeMember;
-							eventTypeColumn = pmr.eventTypeColumn;
-						}
-					}
-				}
-				{
-					List<Method> methods = new ArrayList<>();
-					for ( Method method : clazz.getDeclaredMethods() ) {
-						method.setAccessible( true );
-						methods.add( method );
-					}
-					ParseMembersReturn pmr = this.parseMembers( clazz, methods, idInfos );
-					if ( forFields.foundAnything() && pmr.foundAnything() ) {
-						throw new IllegalArgumentException( "you have to either annotate Fields or Methods with @Event " + "and @IdFor, not both" );
-					}
-					if ( pmr.foundAnything() ) {
-						if ( !pmr.foundBoth() ) {
-							throw new IllegalArgumentException(
-									"you have to annotate either Fields OR Methods with both @IdFor AND @Event"
-							);
-						}
-						if ( pmr.eventTypeMember != null ) {
-							eventTypeMember = pmr.eventTypeMember;
-							eventTypeColumn = pmr.eventTypeColumn;
-						}
-					}
-				}
+			{
+				UpdateInfo[] classUpdateInfos = clazz.getAnnotationsByType( UpdateInfo.class );
+				this.addUpdateInfosToList( ret, clazz, classUpdateInfos, handledOriginalTableNames );
+			}
+
+			for ( Method method : clazz.getDeclaredMethods() ) {
+				UpdateInfo[] methodUpdateInfos = method.getAnnotationsByType( UpdateInfo.class );
+				this.addUpdateInfosToList( ret, null, methodUpdateInfos, handledOriginalTableNames );
+			}
+
+			for ( Field field : clazz.getDeclaredFields() ) {
+				UpdateInfo[] fieldUpdateInfos = field.getAnnotationsByType( UpdateInfo.class );
+				this.addUpdateInfosToList( ret, null, fieldUpdateInfos, handledOriginalTableNames );
+			}
+		}
+		return ret;
+	}
+
+	private void addUpdateInfosToList(
+			List<EventModelInfo> eventModelInfos,
+			Class<?> classSpecifiedOn,
+			UpdateInfo[] infos,
+			Set<String> handledOriginalTableNames) {
+		for ( UpdateInfo info : infos ) {
+			String originalTableName = info.tableName();
+			if ( handledOriginalTableNames.contains( originalTableName ) ) {
+				throw new SearchException( "multiple @UpdateInfo specified for table " + originalTableName );
 			}
 			else {
-				throw new IllegalArgumentException( "Updates class does not host @Updates. Class: " + clazz );
+				handledOriginalTableNames.add( originalTableName );
 			}
-			if ( eventTypeMember == null ) {
-				throw new IllegalArgumentException(
-						"no Integer Field found hosting @Event in Class: " + clazz
-								+ ". check if your Fields OR Methods are correctly annotated!"
-				);
-			}
-			if ( idInfos.size() == 0 ) {
-				throw new IllegalArgumentException(
-						"@Updates-class does not host @IdInfo: " + clazz
-								+ ". check if your Fields OR Methods are correctly annotated!"
-				);
-			}
+			String updateTableName = info.updateTableName().equals( "" ) ?
+					originalTableName + "hsearchupdates" :
+					info.tableName();
+			String eventCaseColumn = info.updateTableEventCaseColumn().equals( "" ) ?
+					"eventcasehsearchupdates" :
+					info.updateTableEventCaseColumn();
+			String updateIdColumn = info.updateTableIdColumn().equals( "" ) ?
+					"updatetableidcolumnhsearchupdates" :
+					info.updateTableIdColumn();
 
-			// TODO: Exception for wrong values
-			final Member eventTypeMemberFinal = eventTypeMember;
-			Function<Object, Integer> eventTypeAccessor = (Object object) -> {
-				try {
-					if ( eventTypeMemberFinal instanceof Method ) {
-						return (Integer) ((Method) eventTypeMemberFinal).invoke( object );
+			IdInfo[] annotationIdInfos = info.idInfos();
+			List<EventModelInfo.IdInfo> idInfos = new ArrayList<>( annotationIdInfos.length );
+			//now handle all the IdInfos
+			for ( IdInfo annotationIdInfo : annotationIdInfos ) {
+				final Class<?> idInfoEntityClass;
+				if ( annotationIdInfo.entity().equals( void.class ) ) {
+					if ( classSpecifiedOn == null ) {
+						throw new SearchException( "IdInfo.entity must be specified for the member level!" );
 					}
-					else if ( eventTypeMemberFinal instanceof Field ) {
-						return (Integer) ((Field) eventTypeMemberFinal).get( object );
-					}
-					else {
-						throw new AssertionFailure( "" );
-					}
-				}
-				catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-					throw new SearchException( e );
-				}
-			};
-			ret.add(
-					new EventModelInfo(
-							clazz,
-							updates.tableName(),
-							updates.originalTableName(),
-							eventTypeAccessor,
-							eventTypeColumn,
-							idInfos
-					)
-			);
-
-		}
-		return ret;
-	}
-
-	private ParseMembersReturn parseMembers(
-			Class<?> clazz,
-			List<? extends Member> members,
-			List<EventModelInfo.IdInfo> idInfos) {
-		ParseMembersReturn ret = new ParseMembersReturn();
-		for ( Member member : members ) {
-			IdFor idFor = this.getAnnotation( member, IdFor.class );
-			Event event = this.getAnnotation( member, Event.class );
-			if ( idFor != null && event != null ) {
-				throw new IllegalArgumentException( "@IdFor and @Event can not be on the same Field. Class: " + clazz + ". Member: " + member );
-			}
-			if ( event != null ) {
-				if ( !this.getType( member ).equals( Integer.class ) ) {
-					throw new IllegalArgumentException( "Field hosting @Event is no Field of type Integer.  Class: " + clazz + ". Field: " + member );
-				}
-				if ( ret.eventTypeMember == null ) {
-					ret.eventTypeMember = member;
-					ret.eventTypeColumn = event.column();
+					idInfoEntityClass = classSpecifiedOn;
 				}
 				else {
-					throw new IllegalArgumentException( "class cannot have two @Event members. Class: " + clazz );
+					idInfoEntityClass = annotationIdInfo.entity();
 				}
-			}
-			if ( idFor != null ) {
-				ret.foundIdInfos = true;
-				ToOriginalIdBridge toOriginalBridge;
-				try {
-					toOriginalBridge = idFor.bridge().newInstance();
-				}
-				catch (IllegalAccessException | InstantiationException e) {
-					throw new SearchException( e );
-				}
-				Function<Object, Object> idAccessor = (Object object) -> {
-					Object val;
-					try {
-						if ( member instanceof Method ) {
-							val = ((Method) member).invoke( object );
-						}
-						else if ( member instanceof Field ) {
-							val = ((Field) member).get( object );
-						}
-						else {
-							throw new AssertionFailure( "" );
-						}
+
+				final String[] columns = annotationIdInfo.columns();
+				final String[] updateTableColumns;
+				if ( annotationIdInfo.updateTableColumns().length != 0 ) {
+					if ( annotationIdInfo.updateTableColumns().length != columns.length ) {
+						throw new SearchException(
+								"the length of IdInfo.updateTableColumns must be equal to IdInfo.columns"
+						);
 					}
-					catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+					updateTableColumns = annotationIdInfo.updateTableColumns();
+				}
+				else {
+					updateTableColumns = new String[columns.length];
+					for ( int i = 0; i < columns.length; ++i ) {
+						updateTableColumns[i] = columns[i] + "fk";
+					}
+				}
+
+				IdConverter idConverter = null;
+				if ( annotationIdInfo.type() != IdInfo.IdType.NONE ) {
+					if ( !annotationIdInfo.idConverter().equals( IdConverter.class ) ) {
+						throw new SearchException( "please specify either IdInfo.type OR IdInfo.idConverter" );
+					}
+					idConverter = annotationIdInfo.type();
+				}
+				else {
+					if ( annotationIdInfo.idConverter().equals( IdConverter.class ) ) {
+						throw new SearchException( "please specify either IdInfo.type OR IdInfo.idConverter" );
+					}
+					try {
+						idConverter = annotationIdInfo.idConverter().newInstance();
+					}
+					catch (InstantiationException | IllegalAccessException e) {
 						throw new SearchException( e );
 					}
-					return toOriginalBridge.toOriginal( val );
-				};
-				if ( idFor.columns().length != idFor.columnsInOriginal().length ) {
-					throw new IllegalArgumentException(
-							"the count of IdFor-columns in the update table has to "
-									+ "match the count of Id-columns in the original"
-					);
 				}
+
 				Map<String, String> hints = new HashMap<>();
-				for ( Hint hint : idFor.hints() ) {
+				for ( Hint hint : annotationIdInfo.hints() ) {
 					hints.put( hint.key(), hint.value() );
 				}
-				EventModelInfo.IdInfo idInfo = new EventModelInfo.IdInfo(
-						idAccessor, idFor.entityClass(), idFor.columns(), idFor.columnsInOriginal(), toOriginalBridge,
-						Collections.unmodifiableMap( hints )
+
+				idInfos.add(
+						new EventModelInfo.IdInfo(
+								idInfoEntityClass,
+								updateTableColumns,
+								columns,
+								idConverter,
+								hints
+						)
 				);
-				idInfos.add( idInfo );
 			}
-		}
-		return ret;
-	}
 
-	private <T extends Annotation> T getAnnotation(Member member, Class<T> annotationClass) {
-		T ret;
-		if ( member instanceof Method ) {
-			Method method = (Method) member;
-			ret = method.getAnnotation( annotationClass );
+			EventModelInfo evi = new EventModelInfo(
+					updateTableName,
+					originalTableName,
+					eventCaseColumn,
+					updateIdColumn,
+					idInfos
+			);
+			eventModelInfos.add( evi );
 		}
-		else if ( member instanceof Field ) {
-			Field field = (Field) member;
-			ret = field.getAnnotation( annotationClass );
-		}
-		else {
-			throw new AssertionFailure( "member should either be Field or Member" );
-		}
-		return ret;
-	}
-
-	private Class<?> getType(Member member) {
-		Class<?> ret;
-		if ( member instanceof Method ) {
-			Method method = (Method) member;
-			ret = method.getReturnType();
-		}
-		else if ( member instanceof Field ) {
-			Field field = (Field) member;
-			ret = field.getType();
-		}
-		else {
-			throw new AssertionFailure( "member should either be Field or Member" );
-		}
-		return ret;
-	}
-
-	private static class ParseMembersReturn {
-
-		Member eventTypeMember;
-		boolean foundIdInfos;
-		String eventTypeColumn;
-
-		public boolean foundAnything() {
-			return this.eventTypeMember != null || this.foundIdInfos;
-		}
-
-		public boolean foundBoth() {
-			return this.eventTypeMember != null && this.foundIdInfos;
-		}
-
 	}
 
 }

@@ -35,7 +35,6 @@ import org.hibernate.search.genericjpa.batchindexing.impl.IdProducerTask;
 import org.hibernate.search.genericjpa.batchindexing.impl.ObjectHandlerTask;
 import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
-import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
 import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.entity.impl.BasicEntityProvider;
@@ -108,7 +107,7 @@ public abstract class IntegrationTest {
 			private boolean hadOne = false;
 
 			@Override
-			public void updateEvent(List<UpdateInfo> batch) {
+			public void updateEvent(List<UpdateEventInfo> batch) {
 				if ( !hadOne ) {
 					assertEquals(
 							"Helm's Deep", IntegrationTest.this.em.find( Place.class, batch.get( 0 ).getId() )
@@ -216,9 +215,9 @@ public abstract class IntegrationTest {
 		}, this.emf.getPersistenceUnitUtil()
 		);
 
-		List<UpdateInfo> batch = new ArrayList<>();
-		batch.add( new UpdateInfo( Place.class, this.valinorId, EventType.INSERT ) );
-		batch.add( new UpdateInfo( Place.class, this.helmsDeepId, EventType.INSERT ) );
+		List<UpdateConsumer.UpdateEventInfo> batch = new ArrayList<>();
+		batch.add( new UpdateConsumer.UpdateEventInfo( Place.class, this.valinorId, EventType.INSERT ) );
+		batch.add( new UpdateConsumer.UpdateEventInfo( Place.class, this.helmsDeepId, EventType.INSERT ) );
 
 		handler.batch( batch );
 		handler.run();

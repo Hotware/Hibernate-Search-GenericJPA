@@ -13,7 +13,7 @@ import java.util.List;
 import org.hibernate.search.genericjpa.annotations.Event;
 import org.hibernate.search.genericjpa.annotations.IdFor;
 import org.hibernate.search.genericjpa.annotations.Updates;
-import org.hibernate.search.genericjpa.db.events.AnnotationEventModelParser;
+import org.hibernate.search.genericjpa.db.events.UpdateClassAnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventType;
@@ -37,7 +37,7 @@ public class EventModelParserTest {
 	public void test() throws IllegalAccessException {
 
 		{
-			EventModelParser parser = new AnnotationEventModelParser();
+			EventModelParser parser = new UpdateClassAnnotationEventModelParser();
 			List<EventModelInfo> infos = parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class ) ) );
 			System.out.println( infos );
 			PlaceSorcererUpdates placeUpdate = new PlaceSorcererUpdates();
@@ -48,19 +48,19 @@ public class EventModelParserTest {
 
 			List<EventModelInfo.IdInfo> idInfos = infos.get( 0 ).getIdInfos();
 			idInfos.sort(
-					(o1, o2) -> o1.getColumns()[0].compareTo( o2.getColumns()[0] )
+					(o1, o2) -> o1.getColumnsInUpdateTable()[0].compareTo( o2.getColumnsInUpdateTable()[0] )
 			);
 
 			assertEquals( PlaceSorcererUpdates.class, infos.get( 0 ).getUpdateClass() );
-			assertEquals( "PlaceSorcererUpdates", infos.get( 0 ).getTableName() );
+			assertEquals( "PlaceSorcererUpdates", infos.get( 0 ).getUpdateTableName() );
 			assertEquals( "Place_Sorcerer", infos.get( 0 ).getOriginalTableName() );
 
 			assertEquals( Place.class, idInfos.get( 0 ).getEntityClass() );
-			assertEquals( "placeId", idInfos.get( 0 ).getColumns()[0] );
+			assertEquals( "placeId", idInfos.get( 0 ).getColumnsInUpdateTable()[0] );
 			assertEquals( "id", idInfos.get( 0 ).getColumnsInOriginal()[0] );
 
 			assertEquals( Sorcerer.class, idInfos.get( 1 ).getEntityClass() );
-			assertEquals( "sorcererId", idInfos.get( 1 ).getColumns()[0] );
+			assertEquals( "sorcererId", idInfos.get( 1 ).getColumnsInUpdateTable()[0] );
 			assertEquals( "sorc_id", idInfos.get( 1 ).getColumnsInOriginal()[0] );
 
 			assertEquals( 1, idInfos.get( 0 ).getIdAccessor().apply( placeUpdate ) );
@@ -70,7 +70,7 @@ public class EventModelParserTest {
 		}
 
 		{
-			EventModelParser parser = new AnnotationEventModelParser();
+			EventModelParser parser = new UpdateClassAnnotationEventModelParser();
 			List<EventModelInfo> infos = parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdatesMethod.class ) ) );
 			System.out.println( infos );
 			PlaceSorcererUpdatesMethod placeUpdate = new PlaceSorcererUpdatesMethod();
@@ -81,19 +81,19 @@ public class EventModelParserTest {
 
 			List<EventModelInfo.IdInfo> idInfos = infos.get( 0 ).getIdInfos();
 			idInfos.sort(
-					(o1, o2) -> o1.getColumns()[0].compareTo( o2.getColumns()[0] )
+					(o1, o2) -> o1.getColumnsInUpdateTable()[0].compareTo( o2.getColumnsInUpdateTable()[0] )
 			);
 
 			assertEquals( PlaceSorcererUpdatesMethod.class, infos.get( 0 ).getUpdateClass() );
-			assertEquals( "PlaceSorcererUpdates", infos.get( 0 ).getTableName() );
+			assertEquals( "PlaceSorcererUpdates", infos.get( 0 ).getUpdateTableName() );
 			assertEquals( "Place_Sorcerer", infos.get( 0 ).getOriginalTableName() );
 
 			assertEquals( Place.class, idInfos.get( 0 ).getEntityClass() );
-			assertEquals( "placeId", idInfos.get( 0 ).getColumns()[0] );
+			assertEquals( "placeId", idInfos.get( 0 ).getColumnsInUpdateTable()[0] );
 			assertEquals( "id", idInfos.get( 0 ).getColumnsInOriginal()[0] );
 
 			assertEquals( Sorcerer.class, idInfos.get( 1 ).getEntityClass() );
-			assertEquals( "sorcererId", idInfos.get( 1 ).getColumns()[0] );
+			assertEquals( "sorcererId", idInfos.get( 1 ).getColumnsInUpdateTable()[0] );
 			assertEquals( "sorc_id", idInfos.get( 1 ).getColumnsInOriginal()[0] );
 
 			assertEquals( 1, idInfos.get( 0 ).getIdAccessor().apply( placeUpdate ) );
@@ -103,7 +103,7 @@ public class EventModelParserTest {
 		}
 
 		{
-			EventModelParser parser = new AnnotationEventModelParser();
+			EventModelParser parser = new UpdateClassAnnotationEventModelParser();
 			try {
 				parser.parse( new HashSet<>( Arrays.asList( Mixed.class ) ) );
 				fail( "Exception expected" );
@@ -114,7 +114,7 @@ public class EventModelParserTest {
 		}
 
 		{
-			EventModelParser parser = new AnnotationEventModelParser();
+			EventModelParser parser = new UpdateClassAnnotationEventModelParser();
 			try {
 				parser.parse( new HashSet<>( Arrays.asList( Mixed2.class ) ) );
 				fail( "Exception expected" );
@@ -125,7 +125,7 @@ public class EventModelParserTest {
 		}
 
 		{
-			EventModelParser parser = new AnnotationEventModelParser();
+			EventModelParser parser = new UpdateClassAnnotationEventModelParser();
 			try {
 				parser.parse( new HashSet<>( Arrays.asList( ForgotUpdates.class ) ) );
 				fail( "Exception expected" );
@@ -136,7 +136,7 @@ public class EventModelParserTest {
 		}
 
 		{
-			EventModelParser parser = new AnnotationEventModelParser();
+			EventModelParser parser = new UpdateClassAnnotationEventModelParser();
 			try {
 				parser.parse( new HashSet<>( Arrays.asList( ForgotEvent.class ) ) );
 				fail( "Exception expected" );
@@ -147,7 +147,7 @@ public class EventModelParserTest {
 		}
 
 		{
-			EventModelParser parser = new AnnotationEventModelParser();
+			EventModelParser parser = new UpdateClassAnnotationEventModelParser();
 			try {
 				parser.parse( new HashSet<>( Arrays.asList( ForgotIds.class ) ) );
 				fail( "Exception expected" );
@@ -160,7 +160,7 @@ public class EventModelParserTest {
 
 	@Test
 	public void testMultiColumnsIdUpdates() {
-		EventModelParser parser = new AnnotationEventModelParser();
+		EventModelParser parser = new UpdateClassAnnotationEventModelParser();
 
 		MultipleColumnsIdUpdates update = new MultipleColumnsIdUpdates();
 		update.eventType = EventType.INSERT;

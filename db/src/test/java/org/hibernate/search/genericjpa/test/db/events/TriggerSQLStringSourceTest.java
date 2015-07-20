@@ -9,7 +9,7 @@ package org.hibernate.search.genericjpa.test.db.events;
 import java.util.Arrays;
 import java.util.HashSet;
 
-import org.hibernate.search.genericjpa.db.events.AnnotationEventModelParser;
+import org.hibernate.search.genericjpa.db.events.UpdateClassAnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventType;
@@ -36,7 +36,7 @@ public class TriggerSQLStringSourceTest {
 	}
 
 	private void test(TriggerSQLStringSource triggerSource) {
-		EventModelParser parser = new AnnotationEventModelParser();
+		EventModelParser parser = new UpdateClassAnnotationEventModelParser();
 		EventModelInfo info = parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class ) ) ).get( 0 );
 		System.out.println( Arrays.asList( triggerSource.getSetupCode() ) );
 		for ( int eventType : EventType.values() ) {

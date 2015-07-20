@@ -20,20 +20,20 @@ public interface UpdateConsumer {
 	 *
 	 * @param updateInfo a list of objects describing the several updates in the order they occured in the database
 	 */
-	void updateEvent(List<UpdateInfo> updateInfo);
+	void updateEvent(List<UpdateEventInfo> updateInfo);
 
-	class UpdateInfo {
+	class UpdateEventInfo {
 
 		private final Class<?> entityClass;
 		private final Object id;
 		private final int eventType;
 		private final Map<String, String> hints;
 
-		public UpdateInfo(Class<?> entityClass, Object id, int eventType) {
+		public UpdateEventInfo(Class<?> entityClass, Object id, int eventType) {
 			this( entityClass, id, eventType, Collections.emptyMap() );
 		}
 
-		public UpdateInfo(Class<?> entityClass, Object id, int eventType, Map<String, String> hints) {
+		public UpdateEventInfo(Class<?> entityClass, Object id, int eventType, Map<String, String> hints) {
 			super();
 			this.entityClass = entityClass;
 			this.id = id;
@@ -75,7 +75,7 @@ public interface UpdateConsumer {
 				return false;
 			}
 
-			UpdateInfo that = (UpdateInfo) o;
+			UpdateEventInfo that = (UpdateEventInfo) o;
 
 			if ( eventType != that.eventType ) {
 				return false;
@@ -101,7 +101,7 @@ public interface UpdateConsumer {
 
 		@Override
 		public String toString() {
-			return "UpdateInfo{" +
+			return "UpdateEventInfo{" +
 					"entityClass=" + entityClass +
 					", id=" + id +
 					", eventType=" + eventType +

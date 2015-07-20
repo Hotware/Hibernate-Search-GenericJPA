@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
-import org.hibernate.search.genericjpa.db.events.AnnotationEventModelParser;
+import org.hibernate.search.genericjpa.db.events.UpdateClassAnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.jpa.JPAUpdatesClassBuilder;
@@ -37,17 +37,17 @@ public class JPAUpdatesClassBuilderTest {
 	public void testCompileAndAnnotations() throws Exception {
 		String asString = this.buildCode( "" );
 		Class<?> clazz = InMemoryCompiler.compile( asString, "MyUpdateClass" );
-		EventModelParser parser = new AnnotationEventModelParser();
+		EventModelParser parser = new UpdateClassAnnotationEventModelParser();
 		List<EventModelInfo> infos = parser.parse( new HashSet<>( Arrays.asList( clazz ) ) );
 		EventModelInfo info = infos.get( 0 );
 		assertTrue( info.getEventTypeAccessor() != null );
 		assertEquals( "hsearchEventCase", info.getEventTypeColumn() );
 		assertEquals( "originalTableName", info.getOriginalTableName() );
-		assertEquals( "tableName", info.getTableName() );
+		assertEquals( "tableName", info.getUpdateTableName() );
 		assertEquals( clazz, info.getUpdateClass() );
 
 		EventModelInfo.IdInfo idInfo = info.getIdInfos().get( 0 );
-		assertEquals( "placeId", idInfo.getColumns()[0] );
+		assertEquals( "placeId", idInfo.getColumnsInUpdateTable()[0] );
 		assertEquals( "Place_ID", idInfo.getColumnsInOriginal()[0] );
 		assertEquals( Place.class, idInfo.getEntityClass() );
 		assertEquals( DefaultToOriginalIdBridge.class, idInfo.getToOriginalBridge().getClass() );

@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.hibernate.search.genericjpa.db.events.AnnotationEventModelParser;
+import org.hibernate.search.genericjpa.db.events.UpdateClassAnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventType;
@@ -52,7 +52,7 @@ public abstract class DatabaseIntegrationTest {
 	protected int helmsDeepId = 0;
 	protected Place valinor;
 	protected EntityManagerFactory emf;
-	protected EventModelParser parser = new AnnotationEventModelParser();
+	protected EventModelParser parser = new UpdateClassAnnotationEventModelParser();
 	protected String exceptionString;
 	protected List<String> dropStrings;
 
@@ -344,7 +344,7 @@ public abstract class DatabaseIntegrationTest {
 							new UpdateConsumer() {
 
 								@Override
-								public void updateEvent(List<UpdateInfo> arg0) {
+								public void updateEvent(List<UpdateEventInfo> arg0) {
 
 								}
 

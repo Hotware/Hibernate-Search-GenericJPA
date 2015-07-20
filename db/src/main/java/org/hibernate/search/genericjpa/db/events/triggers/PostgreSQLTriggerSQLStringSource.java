@@ -63,13 +63,13 @@ public class PostgreSQLTriggerSQLStringSource implements TriggerSQLStringSource 
 				eventModelInfo.getOriginalTableName(),
 				eventType
 		);
-		String tableName = eventModelInfo.getTableName();
+		String tableName = eventModelInfo.getUpdateTableName();
 		String eventTypeColumn = eventModelInfo.getEventTypeColumn();
 		StringBuilder valuesFromOriginal = new StringBuilder();
 		StringBuilder idColumnNames = new StringBuilder();
 		int addedVals = 0;
 		for ( EventModelInfo.IdInfo idInfo : eventModelInfo.getIdInfos() ) {
-			for ( int i = 0; i < idInfo.getColumns().length; ++i ) {
+			for ( int i = 0; i < idInfo.getColumnsInUpdateTable().length; ++i ) {
 				if ( addedVals > 0 ) {
 					valuesFromOriginal.append( ", " );
 					idColumnNames.append( ", " );
@@ -81,7 +81,7 @@ public class PostgreSQLTriggerSQLStringSource implements TriggerSQLStringSource 
 					valuesFromOriginal.append( "NEW." );
 				}
 				valuesFromOriginal.append( idInfo.getColumnsInOriginal()[i] );
-				idColumnNames.append( idInfo.getColumns()[i] );
+				idColumnNames.append( idInfo.getColumnsInUpdateTable()[i] );
 				++addedVals;
 			}
 		}

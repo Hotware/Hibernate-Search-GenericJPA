@@ -78,11 +78,11 @@ public class IndexUpdater implements UpdateConsumer {
 	}
 
 	@Override
-	public void updateEvent(List<UpdateInfo> updateInfos) {
+	public void updateEvent(List<UpdateEventInfo> updateInfos) {
 		this.updateEvent( updateInfos, this.entityProvider );
 	}
 
-	public void updateEvent(List<UpdateInfo> updateInfos, ReusableEntityProvider provider) {
+	public void updateEvent(List<UpdateEventInfo> updateInfos, ReusableEntityProvider provider) {
 		//this is a hack so we can start/end our transactions properly in JTA
 		//as transactions are bound to threads
 		final SearchException[] exception = {null};
@@ -94,7 +94,7 @@ public class IndexUpdater implements UpdateConsumer {
 						provider.open();
 						Transaction tx = new Transaction();
 						try {
-							for ( UpdateInfo updateInfo : updateInfos ) {
+							for ( UpdateEventInfo updateInfo : updateInfos ) {
 								Class<?> entityClass = updateInfo.getEntityClass();
 								Map<String, String> hints = Collections.unmodifiableMap( updateInfo.getHints() );
 								List<Class<?>> inIndexOf = IndexUpdater.this.containedInIndexOf.get( entityClass );

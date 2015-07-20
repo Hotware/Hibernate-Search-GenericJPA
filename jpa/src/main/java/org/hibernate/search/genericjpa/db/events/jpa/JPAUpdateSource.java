@@ -29,7 +29,7 @@ import java.util.logging.Logger;
 
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
-import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
+import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateEventInfo;
 import org.hibernate.search.genericjpa.db.events.UpdateSource;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
@@ -235,7 +235,7 @@ public class JPAUpdateSource implements UpdateSource {
 							try {
 								MultiQueryAccess query = query( this, em );
 								List<Object[]> toRemove = new ArrayList<>( this.batchSizeForUpdates );
-								List<UpdateInfo> updateInfos = new ArrayList<>( this.batchSizeForUpdates );
+								List<UpdateEventInfo> updateInfos = new ArrayList<>( this.batchSizeForUpdates );
 								long processed = 0;
 								while ( query.next() ) {
 									// we have no order problems here since
@@ -246,7 +246,7 @@ public class JPAUpdateSource implements UpdateSource {
 									evi.getIdInfos()
 											.forEach(
 													(info) -> updateInfos.add(
-															new UpdateInfo(
+															new UpdateEventInfo(
 																	info.getEntityClass(),
 																	info.getIdAccessor()
 																			.apply( val ),

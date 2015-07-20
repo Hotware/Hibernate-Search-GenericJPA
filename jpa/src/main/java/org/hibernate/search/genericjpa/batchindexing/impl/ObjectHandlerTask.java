@@ -21,7 +21,7 @@ import org.hibernate.search.bridge.spi.ConversionContext;
 import org.hibernate.search.bridge.util.impl.ContextualExceptionBridgeHelper;
 import org.hibernate.search.engine.spi.DocumentBuilderIndexedEntity;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
-import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
+import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateEventInfo;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.factory.SubClassSupportInstanceInitializer;
@@ -43,7 +43,7 @@ public class ObjectHandlerTask implements Runnable {
 	private final PersistenceUnitUtil peristenceUnitUtil;
 	private final NumberCondition condition;
 	private final Consumer<Exception> exceptionConsumer;
-	List<UpdateInfo> batch;
+	List<UpdateEventInfo> batch;
 	private BiConsumer<Class<?>, Integer> objectLoadedProgressMonitor;
 	private BiConsumer<Class<?>, Integer> documentBuiltProgressMonitor;
 	private Runnable finishConsumer;
@@ -78,7 +78,7 @@ public class ObjectHandlerTask implements Runnable {
 		this.exceptionConsumer = exceptionConsumer;
 	}
 
-	public ObjectHandlerTask batch(List<UpdateInfo> batch) {
+	public ObjectHandlerTask batch(List<UpdateEventInfo> batch) {
 		this.batch = batch;
 		return this;
 	}
@@ -90,7 +90,7 @@ public class ObjectHandlerTask implements Runnable {
 			try {
 				try {
 					List<Object> ids = this.batch.stream().map(
-							UpdateInfo::getId
+							UpdateEventInfo::getId
 					).collect( Collectors.toList() );
 
 					List<?> entities = entityProvider.getBatch(

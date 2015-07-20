@@ -94,7 +94,7 @@ public final class JPASearchFactoryAdapter
 	private TransactionManager transactionManager;
 
 	@Override
-	public void updateEvent(List<UpdateInfo> updateInfo) {
+	public void updateEvent(List<UpdateEventInfo> updateInfo) {
 		this.lock.lock();
 		try {
 			for ( UpdateConsumer updateConsumer : this.updateConsumers ) {

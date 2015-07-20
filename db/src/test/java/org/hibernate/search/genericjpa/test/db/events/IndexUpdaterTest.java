@@ -22,7 +22,8 @@ import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.metadata.impl.MetadataProvider;
 import org.hibernate.search.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.db.events.EventType;
-import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
+import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
+import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateEventInfo;
 import org.hibernate.search.genericjpa.db.events.index.IndexUpdater;
 import org.hibernate.search.genericjpa.db.events.index.IndexUpdater.IndexWrapper;
 import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
@@ -49,7 +50,7 @@ public class IndexUpdaterTest {
 	Map<Class<?>, List<Class<?>>> containedInIndexOf;
 	Map<Class<?>, RehashedTypeMetadata> rehashedTypeMetadataPerIndexRoot;
 	ReusableEntityProvider entityProvider;
-	List<UpdateInfo> updateInfos;
+	List<UpdateEventInfo> updateInfos;
 	boolean changed;
 	boolean deletedSorcerer;
 
@@ -96,8 +97,8 @@ public class IndexUpdaterTest {
 
 	@Test
 	public void testWithoutIndex() {
-		List<UpdateInfo> updateInfos = this.createUpdateInfos();
-		Set<UpdateInfo> updateInfoSet = new HashSet<>( updateInfos );
+		List<UpdateConsumer.UpdateEventInfo> updateInfos = this.createUpdateInfos();
+		Set<UpdateEventInfo> updateInfoSet = new HashSet<>( updateInfos );
 		IndexWrapper indexWrapper = new IndexWrapper() {
 
 			@Override
@@ -108,7 +109,7 @@ public class IndexUpdaterTest {
 				System.out.println( obj );
 				assertTrue(
 						updateInfoSet.remove(
-								new UpdateInfo(
+								new UpdateEventInfo(
 										entityClass,
 										(Integer) id,
 										EventType.DELETE
@@ -123,7 +124,7 @@ public class IndexUpdaterTest {
 					try {
 						assertTrue(
 								updateInfoSet.remove(
-										new UpdateInfo(
+										new UpdateConsumer.UpdateEventInfo(
 												entity.getClass(),
 												(Integer) entity.getClass().getMethod( "getId" ).invoke( entity ),
 												EventType.UPDATE
@@ -143,7 +144,7 @@ public class IndexUpdaterTest {
 					try {
 						assertTrue(
 								updateInfoSet.remove(
-										new UpdateInfo(
+										new UpdateConsumer.UpdateEventInfo(
 												entity.getClass(),
 												(Integer) entity.getClass().getMethod( "getId" ).invoke( entity ),
 												EventType.INSERT
@@ -218,7 +219,7 @@ public class IndexUpdaterTest {
 			this.assertCount( impl, 0 );
 		}
 
-		updater.updateEvent( Arrays.asList( new UpdateInfo( Sorcerer.class, 2, EventType.INSERT ) ) );
+		updater.updateEvent( Arrays.asList( new UpdateEventInfo( Sorcerer.class, 2, EventType.INSERT ) ) );
 		this.assertCount( impl, 1 );
 
 		{
@@ -228,7 +229,7 @@ public class IndexUpdaterTest {
 			this.assertCount( impl, 0 );
 		}
 
-		updater.updateEvent( Arrays.asList( new UpdateInfo( Place.class, 1, EventType.INSERT ) ) );
+		updater.updateEvent( Arrays.asList( new UpdateEventInfo( Place.class, 1, EventType.INSERT ) ) );
 		this.assertCount( impl, 1 );
 
 		{
@@ -258,7 +259,7 @@ public class IndexUpdaterTest {
 			int expectedCount,
 			Object id,
 			Class<?> clazz) {
-		updater.updateEvent( Arrays.asList( new UpdateInfo( clazz, id, EventType.DELETE ) ) );
+		updater.updateEvent( Arrays.asList( new UpdateEventInfo( clazz, id, EventType.DELETE ) ) );
 		assertEquals(
 				expectedCount,
 				impl.createHSQuery()
@@ -273,7 +274,7 @@ public class IndexUpdaterTest {
 			IndexUpdater updater, ExtendedSearchIntegrator impl, int expectedCount, Object id, Class<?> clazz,
 			String fieldToCheckCount, String originalMatch) {
 		this.deletedSorcerer = true;
-		updater.updateEvent( Arrays.asList( new UpdateInfo( clazz, id, EventType.DELETE ) ) );
+		updater.updateEvent( Arrays.asList( new UpdateEventInfo( clazz, id, EventType.DELETE ) ) );
 		assertEquals(
 				expectedCount,
 				impl.createHSQuery()
@@ -298,7 +299,7 @@ public class IndexUpdaterTest {
 			String field,
 			String originalMatch) {
 		this.changed = true;
-		updater.updateEvent( Arrays.asList( new UpdateInfo( clazz, id, EventType.UPDATE ) ) );
+		updater.updateEvent( Arrays.asList( new UpdateEventInfo( clazz, id, EventType.UPDATE ) ) );
 		assertEquals(
 				expectedCount,
 				impl.createHSQuery()
@@ -352,24 +353,24 @@ public class IndexUpdaterTest {
 		return null;
 	}
 
-	private List<UpdateInfo> createUpdateInfos() {
-		List<UpdateInfo> ret = new ArrayList<>();
+	private List<UpdateEventInfo> createUpdateInfos() {
+		List<UpdateEventInfo> ret = new ArrayList<>();
 
 		ret.addAll( this.createUpdateInfoForInsert() );
 
-		ret.add( new UpdateInfo( Place.class, 1, EventType.UPDATE ) );
-		ret.add( new UpdateInfo( Place.class, 1, EventType.DELETE ) );
+		ret.add( new UpdateEventInfo( Place.class, 1, EventType.UPDATE ) );
+		ret.add( new UpdateConsumer.UpdateEventInfo( Place.class, 1, EventType.DELETE ) );
 
-		ret.add( new UpdateInfo( Sorcerer.class, 2, EventType.UPDATE ) );
-		ret.add( new UpdateInfo( Sorcerer.class, 2, EventType.DELETE ) );
+		ret.add( new UpdateEventInfo( Sorcerer.class, 2, EventType.UPDATE ) );
+		ret.add( new UpdateConsumer.UpdateEventInfo( Sorcerer.class, 2, EventType.DELETE ) );
 
 		return ret;
 	}
 
-	private List<UpdateInfo> createUpdateInfoForInsert() {
-		List<UpdateInfo> ret = new ArrayList<>();
-		ret.add( new UpdateInfo( Place.class, 1, EventType.INSERT ) );
-		ret.add( new UpdateInfo( Sorcerer.class, 2, EventType.INSERT ) );
+	private List<UpdateEventInfo> createUpdateInfoForInsert() {
+		List<UpdateConsumer.UpdateEventInfo> ret = new ArrayList<>();
+		ret.add( new UpdateEventInfo( Place.class, 1, EventType.INSERT ) );
+		ret.add( new UpdateEventInfo( Sorcerer.class, 2, EventType.INSERT ) );
 		return ret;
 	}
 

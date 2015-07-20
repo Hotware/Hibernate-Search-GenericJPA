@@ -20,7 +20,6 @@ import java.util.logging.Logger;
 
 import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
-import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateInfo;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 
@@ -38,7 +37,7 @@ public class IdProducerTask implements Runnable {
 	private final int batchSizeToLoadIds;
 	private final int batchSizeToLoadObjects;
 	private final UpdateConsumer updateConsumer;
-	private final List<UpdateInfo> updateInfoBatch;
+	private final List<UpdateConsumer.UpdateEventInfo> updateInfoBatch;
 	private final NumberCondition numberCondition;
 	private final Consumer<Exception> exceptionConsumer;
 	private BiConsumer<Class<?>, Integer> progressMonitor;
@@ -139,7 +138,7 @@ public class IdProducerTask implements Runnable {
 
 	private void enlistToBatch(@SuppressWarnings("rawtypes") List ids) {
 		for ( Object id : ids ) {
-			this.updateInfoBatch.add( new UpdateInfo( this.entityClass, id, EventType.INSERT ) );
+			this.updateInfoBatch.add( new UpdateConsumer.UpdateEventInfo( this.entityClass, id, EventType.INSERT ) );
 			if ( this.updateInfoBatch.size() >= this.batchSizeToLoadObjects ) {
 				this.flushBatch();
 			}

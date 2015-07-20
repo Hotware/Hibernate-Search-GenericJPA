@@ -97,13 +97,13 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 	public String[] getTriggerCreationCode(EventModelInfo eventModelInfo, int eventType) {
 		String originalTableName = eventModelInfo.getOriginalTableName();
 		String triggerName = this.getTriggerName( eventModelInfo.getOriginalTableName(), eventType );
-		String tableName = eventModelInfo.getTableName();
+		String tableName = eventModelInfo.getUpdateTableName();
 		String eventTypeColumn = eventModelInfo.getEventTypeColumn();
 		StringBuilder valuesFromOriginal = new StringBuilder();
 		StringBuilder idColumnNames = new StringBuilder();
 		int addedVals = 0;
 		for ( IdInfo idInfo : eventModelInfo.getIdInfos() ) {
-			for ( int i = 0; i < idInfo.getColumns().length; ++i ) {
+			for ( int i = 0; i < idInfo.getColumnsInUpdateTable().length; ++i ) {
 				if ( addedVals > 0 ) {
 					valuesFromOriginal.append( ", " );
 					idColumnNames.append( ", " );
@@ -115,7 +115,7 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 					valuesFromOriginal.append( "NEW." );
 				}
 				valuesFromOriginal.append( idInfo.getColumnsInOriginal()[i] );
-				idColumnNames.append( idInfo.getColumns()[i] );
+				idColumnNames.append( idInfo.getColumnsInUpdateTable()[i] );
 				++addedVals;
 			}
 		}
@@ -162,8 +162,8 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 	@Override
 	public String[] getSpecificSetupCode(EventModelInfo eventModelInfo) {
 		String createTriggerCleanUpSQL = String.format(
-				this.createTriggerCleanUpSQLFormat, this.getCleanUpTriggerName( eventModelInfo.getTableName() ),
-				eventModelInfo.getTableName()
+				this.createTriggerCleanUpSQLFormat, this.getCleanUpTriggerName( eventModelInfo.getUpdateTableName() ),
+				eventModelInfo.getUpdateTableName()
 		);
 		return new String[] {createTriggerCleanUpSQL};
 	}
@@ -173,7 +173,7 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 		return new String[] {
 				String.format(
 						DROP_TRIGGER_SQL_FORMAT,
-						this.getCleanUpTriggerName( eventModelInfo.getTableName() )
+						this.getCleanUpTriggerName( eventModelInfo.getUpdateTableName() )
 				)
 		};
 	}

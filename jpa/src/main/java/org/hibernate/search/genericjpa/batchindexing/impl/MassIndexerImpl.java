@@ -214,7 +214,7 @@ public class MassIndexerImpl implements MassIndexer {
 		}
 	}
 
-	public void updateEvent(List<UpdateConsumer.UpdateInfo> updateInfo) {
+	public void updateEvent(List<UpdateConsumer.UpdateEventInfo> updateInfo) {
 		try {
 			// check if we should wait with submitting
 			this.objectHandlerTaskCondition.check();

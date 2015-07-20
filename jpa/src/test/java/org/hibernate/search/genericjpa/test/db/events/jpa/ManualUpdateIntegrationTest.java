@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.metadata.impl.MetadataProvider;
-import org.hibernate.search.genericjpa.db.events.AnnotationEventModelParser;
+import org.hibernate.search.genericjpa.db.events.UpdateClassAnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.index.IndexUpdater;
@@ -104,7 +104,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 					impl
 			);
 			try {
-				EventModelParser eventModelParser = new AnnotationEventModelParser();
+				EventModelParser eventModelParser = new UpdateClassAnnotationEventModelParser();
 				List<EventModelInfo> eventModelInfos = eventModelParser.parse(
 						new HashSet<>(
 								Arrays.asList(

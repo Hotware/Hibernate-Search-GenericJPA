@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import org.hibernate.search.genericjpa.db.id.IdConverter;
 import org.hibernate.search.genericjpa.db.id.ToOriginalIdBridge;
 
 /**
@@ -20,12 +21,14 @@ import org.hibernate.search.genericjpa.db.id.ToOriginalIdBridge;
  */
 public class EventModelInfo {
 
-	private final Class<?> updateClass;
-	private final String tableName;
+	private final String updateTableName;
 	private final String originalTableName;
-	private final Function<Object, Integer> eventTypeAccessor;
 	private final String eventTypeColumn;
 	private final List<IdInfo> idInfos;
+	private final String updateIdColumn;
+
+	private final Class<?> updateClass;
+	private final Function<Object, Integer> eventTypeAccessor;
 
 	public EventModelInfo(
 			Class<?> updateClass,
@@ -36,11 +39,33 @@ public class EventModelInfo {
 			List<IdInfo> idInfos) {
 		super();
 		this.updateClass = updateClass;
-		this.tableName = tableName;
+		this.updateTableName = tableName;
 		this.originalTableName = originalTableName;
 		this.eventTypeAccessor = eventTypeAccessor;
 		this.eventTypeColumn = eventTypeColumn;
 		this.idInfos = idInfos;
+
+		this.updateIdColumn = null;
+	}
+
+
+	public EventModelInfo(
+			String tableName,
+			String originalTableName,
+			String eventTypeColumn, String updateIdColumn,
+			List<IdInfo> idInfos) {
+		this.updateTableName = tableName;
+		this.originalTableName = originalTableName;
+		this.eventTypeColumn = eventTypeColumn;
+		this.idInfos = idInfos;
+		this.updateIdColumn = updateIdColumn;
+
+		this.updateClass = null;
+		this.eventTypeAccessor = null;
+	}
+
+	public String getUpdateIdColumn() {
+		return updateIdColumn;
 	}
 
 	/**
@@ -51,10 +76,10 @@ public class EventModelInfo {
 	}
 
 	/**
-	 * @return the tableName
+	 * @return the updateTableName
 	 */
-	public String getTableName() {
-		return tableName;
+	public String getUpdateTableName() {
+		return updateTableName;
 	}
 
 	/**
@@ -85,24 +110,29 @@ public class EventModelInfo {
 		return eventTypeColumn;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
-		return "EventModelInfo [updateClass=" + updateClass + ", tableName=" + tableName + ", originalTableName=" + originalTableName + ", eventTypeAccessor="
-				+ eventTypeAccessor + ", eventTypeColumn=" + eventTypeColumn + ", idInfos=" + idInfos + "]";
+		return "EventModelInfo{" +
+				"updateTableName='" + updateTableName + '\'' +
+				", originalTableName='" + originalTableName + '\'' +
+				", eventTypeColumn='" + eventTypeColumn + '\'' +
+				", idInfos=" + idInfos +
+				", updateIdColumn='" + updateIdColumn + '\'' +
+				", updateClass=" + updateClass +
+				", eventTypeAccessor=" + eventTypeAccessor +
+				'}';
 	}
 
 	public static class IdInfo {
 
-		private final Function<Object, Object> idAccessor;
 		private final Class<?> entityClass;
-		private final String[] columns;
+		private final String[] columnsInUpdateTable;
 		private final String[] columnsInOriginal;
-		private final ToOriginalIdBridge toOriginalBridge;
+		private final IdConverter idConverter;
 		private final Map<String, String> hints;
+
+		private final Function<Object, Object> idAccessor;
+		private final ToOriginalIdBridge toOriginalBridge;
 
 		public IdInfo(
 				Function<Object, Object> idAccessor, Class<?> entityClass, String[] columns, String[] columnsInOriginal,
@@ -110,10 +140,31 @@ public class EventModelInfo {
 			super();
 			this.idAccessor = idAccessor;
 			this.entityClass = entityClass;
-			this.columns = columns;
+			this.columnsInUpdateTable = columns;
 			this.columnsInOriginal = columnsInOriginal;
 			this.toOriginalBridge = toOriginalBridge;
 			this.hints = hints;
+
+			this.idConverter = null;
+		}
+
+		public IdInfo(
+				Class<?> entityClass,
+				String[] columnsInUpdateTable,
+				String[] columnsInOriginal,
+				IdConverter idConverter, Map<String, String> hints) {
+			this.entityClass = entityClass;
+			this.columnsInUpdateTable = columnsInUpdateTable;
+			this.idConverter = idConverter;
+			this.hints = hints;
+			this.columnsInOriginal = columnsInOriginal;
+
+			this.idAccessor = null;
+			this.toOriginalBridge = null;
+		}
+
+		public IdConverter getIdConverter() {
+			return idConverter;
 		}
 
 		/**
@@ -133,10 +184,10 @@ public class EventModelInfo {
 		}
 
 		/**
-		 * @return the columns
+		 * @return the columnsInUpdateTable
 		 */
-		public String[] getColumns() {
-			return columns;
+		public String[] getColumnsInUpdateTable() {
+			return columnsInUpdateTable;
 		}
 
 		/**
@@ -159,18 +210,18 @@ public class EventModelInfo {
 			return hints;
 		}
 
-		/*
-				 * (non-Javadoc)
-				 * @see java.lang.Object#toString()
-				 */
 		@Override
 		public String toString() {
-			return "IdInfo [idAccessor=" + idAccessor + ", entityClass=" + entityClass + ", columns=" + Arrays.toString(
-					columns
-			) + ", columnsInOriginal="
-					+ Arrays.toString( columnsInOriginal ) + ", hints" + hints + "]";
+			return "IdInfo{" +
+					"entityClass=" + entityClass +
+					", columnsInUpdateTable=" + Arrays.toString( columnsInUpdateTable ) +
+					", columnsInOriginal=" + Arrays.toString( columnsInOriginal ) +
+					", idConverter=" + idConverter +
+					", hints=" + hints +
+					", idAccessor=" + idAccessor +
+					", toOriginalBridge=" + toOriginalBridge +
+					'}';
 		}
-
 	}
 
 }
