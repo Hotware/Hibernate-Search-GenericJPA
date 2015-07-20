@@ -12,7 +12,7 @@ Currently supported JPA providers:
 
 Currently supported Databases (others work as well, but don't have automatic updating support):
 
-* MySQL/MariaDB
+* MySQL/MariaDB (only with InnoDB/XtraDB as they support full transactional behaviour)
 * PostgreSQL
 
 http://hibernatesearchandjpa.blogspot.de/
