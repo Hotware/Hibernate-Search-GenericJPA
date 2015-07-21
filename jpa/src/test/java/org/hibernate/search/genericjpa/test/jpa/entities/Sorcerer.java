@@ -6,6 +6,7 @@
  */
 package org.hibernate.search.genericjpa.test.jpa.entities;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -19,12 +20,19 @@ import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
 import org.hibernate.search.annotations.Store;
+import org.hibernate.search.genericjpa.annotations.IdColumn;
+import org.hibernate.search.genericjpa.annotations.IdInfo;
 import org.hibernate.search.genericjpa.annotations.InIndex;
+import org.hibernate.search.genericjpa.annotations.UpdateInfo;
+import org.hibernate.search.genericjpa.db.events.ColumnType;
 
 @Entity
 @Table(name = "SORCERER")
 @InIndex
 @Indexed
+@UpdateInfo(tableName = "SORCERER", idInfos = {
+		@IdInfo(columns = @IdColumn(column = "ID", columnType = ColumnType.INTEGER))
+})
 public class Sorcerer {
 
 	private Integer id;
@@ -32,6 +40,7 @@ public class Sorcerer {
 	private Place place;
 
 	@Id
+	@Column(name = "ID")
 	@GeneratedValue(strategy = GenerationType.TABLE)
 	public Integer getId() {
 		return id;

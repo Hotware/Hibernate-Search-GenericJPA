@@ -8,7 +8,7 @@ package org.hibernate.search.genericjpa.annotations;
 
 import java.lang.annotation.Retention;
 
-import org.hibernate.search.genericjpa.db.events.IdType;
+import org.hibernate.search.genericjpa.db.events.ColumnType;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
@@ -22,6 +22,6 @@ public @interface IdColumn {
 
 	String updateTableColumn() default "";
 
-	IdType columnType();
+	ColumnType columnType();
 
 }

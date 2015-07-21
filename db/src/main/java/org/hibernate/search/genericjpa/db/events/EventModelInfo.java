@@ -128,7 +128,7 @@ public class EventModelInfo {
 		private final Class<?> entityClass;
 		private final String[] columnsInUpdateTable;
 		private final String[] columnsInOriginal;
-		private final IdType[] idTypes;
+		private final ColumnType[] columnTypes;
 		private final IdConverter idConverter;
 		private final Map<String, String> hints;
 
@@ -147,24 +147,28 @@ public class EventModelInfo {
 			this.hints = hints;
 
 			this.idConverter = null;
-			this.idTypes = null;
+			this.columnTypes = null;
 		}
 
 		public IdInfo(
 				Class<?> entityClass,
 				String[] columnsInUpdateTable,
 				String[] columnsInOriginal,
-				IdType[] idTypes,
+				ColumnType[] columnTypes,
 				IdConverter idConverter, Map<String, String> hints) {
 			this.entityClass = entityClass;
 			this.columnsInUpdateTable = columnsInUpdateTable;
 			this.idConverter = idConverter;
 			this.hints = hints;
 			this.columnsInOriginal = columnsInOriginal;
-			this.idTypes = idTypes;
+			this.columnTypes = columnTypes;
 
 			this.idAccessor = null;
 			this.toOriginalBridge = null;
+		}
+
+		public ColumnType[] getColumnTypes() {
+			return columnTypes;
 		}
 
 		public IdConverter getIdConverter() {
@@ -220,6 +224,7 @@ public class EventModelInfo {
 					"entityClass=" + entityClass +
 					", columnsInUpdateTable=" + Arrays.toString( columnsInUpdateTable ) +
 					", columnsInOriginal=" + Arrays.toString( columnsInOriginal ) +
+					", columnTypes=" + Arrays.toString( columnTypes ) +
 					", idConverter=" + idConverter +
 					", hints=" + hints +
 					", idAccessor=" + idAccessor +

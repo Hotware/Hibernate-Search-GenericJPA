@@ -94,10 +94,10 @@ public class AnnotationEventModelParser implements EventModelParser {
 
 
 			String eventCaseColumn = info.updateTableEventTypeColumn().equals( "" ) ?
-					"eventcasehsearchupdates" :
+					"eventcasehsearch" :
 					info.updateTableEventTypeColumn();
 			String updateIdColumn = info.updateTableIdColumn().equals( "" ) ?
-					"updatetableidcolumnhsearchupdates" :
+					"updateidhsearch" :
 					info.updateTableIdColumn();
 
 			IdInfo[] annotationIdInfos = info.idInfos();
@@ -117,7 +117,7 @@ public class AnnotationEventModelParser implements EventModelParser {
 
 				final String[] columns = new String[annotationIdInfo.columns().length];
 				final String[] updateTableColumns = new String[columns.length];
-				final IdType[] idTypes = new IdType[columns.length];
+				final ColumnType[] columnTypes = new ColumnType[columns.length];
 				IdColumn[] idColumns = annotationIdInfo.columns();
 				for ( int i = 0; i < idColumns.length; ++i ) {
 					IdColumn cur = idColumns[i];
@@ -128,12 +128,12 @@ public class AnnotationEventModelParser implements EventModelParser {
 					else {
 						updateTableColumns[i] = cur.column() + "fk";
 					}
-					idTypes[i] = cur.columnType();
+					columnTypes[i] = cur.columnType();
 				}
 
-				IdConverter idConverter = null;
-				if ( IdConverter.class.equals( annotationIdInfo.idConverter() ) && idTypes.length == 1 ) {
-					idConverter = idTypes[0];
+				final IdConverter idConverter;
+				if ( IdConverter.class.equals( annotationIdInfo.idConverter() ) && columnTypes.length == 1 ) {
+					idConverter = columnTypes[0];
 				}
 				else {
 					if ( IdConverter.class.equals( annotationIdInfo.idConverter() ) ) {
@@ -159,7 +159,7 @@ public class AnnotationEventModelParser implements EventModelParser {
 								idInfoEntityClass,
 								updateTableColumns,
 								columns,
-								idTypes,
+								columnTypes,
 								idConverter,
 								hints
 						)

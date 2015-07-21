@@ -9,6 +9,7 @@ package org.hibernate.search.genericjpa.test.db.events;
 import java.util.Arrays;
 import java.util.HashSet;
 
+import org.hibernate.search.genericjpa.db.events.AnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.UpdateClassAnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
@@ -16,6 +17,7 @@ import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.triggers.PostgreSQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource;
+import org.hibernate.search.genericjpa.test.db.entities.Place;
 import org.hibernate.search.genericjpa.test.db.entities.PlaceSorcererUpdates;
 
 import org.junit.Test;
@@ -36,14 +38,18 @@ public class TriggerSQLStringSourceTest {
 	}
 
 	private void test(TriggerSQLStringSource triggerSource) {
-		EventModelParser parser = new UpdateClassAnnotationEventModelParser();
-		EventModelInfo info = parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class ) ) ).get( 0 );
-		System.out.println( Arrays.asList( triggerSource.getSetupCode() ) );
+		EventModelParser parser = new AnnotationEventModelParser();
+		EventModelInfo info = parser.parse( new HashSet<>( Arrays.asList( Place.class ) ) ).get( 0 );
+		System.out.println( "SETUP CODE: " + Arrays.asList( triggerSource.getSetupCode() ) );
 		for ( int eventType : EventType.values() ) {
+			String[] updateTableCreationString = triggerSource.getUpdateTableCreationCode( info );
+			String[] updateTableDropString = triggerSource.getUpdateTableDropCode( info );
 			String[] triggerCreationString = triggerSource.getTriggerCreationCode( info, eventType );
 			String[] triggerDropString = triggerSource.getTriggerDropCode( info, eventType );
-			System.out.println( "CREATE: " + Arrays.asList( triggerCreationString ) );
-			System.out.println( "DROP: " + Arrays.asList( triggerDropString ) );
+			System.out.println( "CREATE TABLES: " + Arrays.asList( updateTableCreationString ) );
+			System.out.println( "DROP TABLES: " + Arrays.asList( updateTableDropString ) );
+			System.out.println( "CREATE TRIGGERS: " + Arrays.asList( triggerCreationString ) );
+			System.out.println( "DROP TRIGGERS: " + Arrays.asList( triggerDropString ) );
 		}
 	}
 

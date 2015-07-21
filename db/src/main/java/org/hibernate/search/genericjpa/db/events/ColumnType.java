@@ -13,10 +13,13 @@ import org.hibernate.search.genericjpa.exception.SearchException;
 /**
  * Created by Martin on 21.07.2015.
  */
-public enum IdType implements IdConverter {
+public enum ColumnType implements IdConverter {
 	STRING {
 		@Override
-		public Object convert(Object[] values, String[] fieldNames, IdType[] idTypes) {
+		public Object convert(Object[] values, String[] fieldNames, ColumnType[] columnTypes) {
+			if ( columnTypes[0] != this ) {
+				throw new AssertionFailure( "passed idType was not equal to this" );
+			}
 			if ( values.length != 1 && fieldNames.length != 1 ) {
 				throw new AssertionFailure( "values.length and fieldNames.length should be equal to 1" );
 			}
@@ -25,7 +28,10 @@ public enum IdType implements IdConverter {
 	},
 	INTEGER {
 		@Override
-		public Object convert(Object[] values, String[] fieldNames, IdType[] idTypes) {
+		public Object convert(Object[] values, String[] fieldNames, ColumnType[] columnTypes) {
+			if ( columnTypes[0] != this ) {
+				throw new AssertionFailure( "passed idType was not equal to this" );
+			}
 			if ( values.length != 1 && fieldNames.length != 1 ) {
 				throw new AssertionFailure( "values.length and fieldNames.length should be equal to 1" );
 			}
@@ -40,7 +46,10 @@ public enum IdType implements IdConverter {
 	},
 	LONG {
 		@Override
-		public Object convert(Object[] values, String[] fieldNames, IdType[] idTypes) {
+		public Object convert(Object[] values, String[] fieldNames, ColumnType[] columnTypes) {
+			if ( columnTypes[0] != this ) {
+				throw new AssertionFailure( "passed idType was not equal to this" );
+			}
 			if ( values.length != 1 && fieldNames.length != 1 ) {
 				throw new AssertionFailure( "values.length and fieldNames.length should be equal to 1" );
 			}

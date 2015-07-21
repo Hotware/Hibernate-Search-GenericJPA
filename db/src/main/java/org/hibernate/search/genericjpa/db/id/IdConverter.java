@@ -6,13 +6,13 @@
  */
 package org.hibernate.search.genericjpa.db.id;
 
-import org.hibernate.search.genericjpa.db.events.IdType;
+import org.hibernate.search.genericjpa.db.events.ColumnType;
 
 /**
  * Created by Martin on 20.07.2015.
  */
 public interface IdConverter {
 
-	Object convert(Object[] values, String[] fieldNames, IdType[] idTypes);
+	Object convert(Object[] values, String[] fieldNames, ColumnType[] columnTypes);
 
 }

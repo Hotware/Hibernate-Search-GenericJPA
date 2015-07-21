@@ -8,7 +8,6 @@ package org.hibernate.search.genericjpa.annotations;
 
 import java.lang.annotation.Retention;
 
-import org.hibernate.search.genericjpa.db.events.IdType;
 import org.hibernate.search.genericjpa.db.id.IdConverter;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
