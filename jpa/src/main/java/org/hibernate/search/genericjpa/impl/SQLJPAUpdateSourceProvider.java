@@ -166,7 +166,7 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 			catch (Exception e) {
 				if ( tx != null ) {
 					tx.rollback();
-					LOGGER.warning( "rolling back trigger setup!" );
+					LOGGER.log( Level.WARNING, "rolling back trigger setup!", e );
 				}
 				throw new SearchException( e );
 			}
