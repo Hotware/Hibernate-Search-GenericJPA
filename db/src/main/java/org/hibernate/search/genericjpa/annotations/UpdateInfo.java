@@ -29,7 +29,7 @@ public @interface UpdateInfo {
 
 	String updateTableIdColumn() default "";
 
-	String updateTableEventCaseColumn()  default "";
+	String updateTableEventTypeColumn()  default "";
 
 	IdInfo[] idInfos();
 

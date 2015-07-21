@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.hibernate.search.genericjpa.db.events.UpdateClassAnnotationEventModelParser;
+import org.hibernate.search.genericjpa.db.events.AnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventType;
@@ -57,7 +57,7 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 
 	@Override
 	public UpdateSource getUpdateSource(long delay, TimeUnit timeUnit, int batchSizeForUpdates) {
-		EventModelParser eventModelParser = new UpdateClassAnnotationEventModelParser();
+		EventModelParser eventModelParser = new AnnotationEventModelParser();
 		List<EventModelInfo> eventModelInfos = eventModelParser.parse( new ArrayList<>( this.updateClasses ) );
 		this.setupTriggers( eventModelInfos );
 		return new JPAUpdateSource(
@@ -80,13 +80,39 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 				tx.begin();
 			}
 
+			for ( EventModelInfo info : eventModelInfos ) {
+				if ( tx != null ) {
+					tx.commitIgnoreExceptions();
+					tx.begin();
+				}
+				if ( TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy ) ) {
+					for ( String str : triggerSource.getUpdateTableDropCode( info ) ) {
+						LOGGER.info( str );
+						em.createNativeQuery( str ).executeUpdate();
+					}
+				}
+				if ( tx != null ) {
+					tx.commitIgnoreExceptions();
+					tx.begin();
+				}
+
+				for ( String str : triggerSource.getUpdateTableCreationCode( info ) ) {
+					LOGGER.info( str );
+					this.doQueryOrLogException( em, str );
+				}
+				if ( tx != null ) {
+					tx.commitIgnoreExceptions();
+					tx.begin();
+				}
+			}
+
 			try {
 				for ( String str : triggerSource.getSetupCode() ) {
 					LOGGER.info( str );
 					em.createNativeQuery( str ).executeUpdate();
 					if ( tx != null ) {
 						LOGGER.info( "commiting setup code!" );
-						tx.commit();
+						tx.commitIgnoreExceptions();
 						tx.begin();
 					}
 				}
@@ -95,12 +121,20 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 						for ( String unSetupCode : this.triggerSource.getSpecificUnSetupCode( info ) ) {
 							LOGGER.info( unSetupCode );
 							em.createNativeQuery( unSetupCode ).executeUpdate();
+							if ( tx != null ) {
+								tx.commitIgnoreExceptions();
+								tx.begin();
+							}
 						}
 					}
 
 					for ( String setupCode : this.triggerSource.getSpecificSetupCode( info ) ) {
 						LOGGER.info( setupCode );
 						this.doQueryOrLogException( em, setupCode );
+						if ( tx != null ) {
+							tx.commitIgnoreExceptions();
+							tx.begin();
+						}
 					}
 
 					if ( TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy ) ) {
@@ -109,6 +143,10 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 							for ( String triggerCreationString : triggerDropStrings ) {
 								LOGGER.info( triggerCreationString );
 								em.createNativeQuery( triggerCreationString ).executeUpdate();
+								if ( tx != null ) {
+									tx.commitIgnoreExceptions();
+									tx.begin();
+								}
 							}
 						}
 					}
@@ -118,6 +156,10 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 						for ( String triggerCreationString : triggerCreationStrings ) {
 							LOGGER.info( triggerCreationString );
 							this.doQueryOrLogException( em, triggerCreationString );
+							if ( tx != null ) {
+								tx.commitIgnoreExceptions();
+								tx.begin();
+							}
 						}
 					}
 				}
@@ -130,7 +172,7 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 				throw new SearchException( e );
 			}
 			if ( tx != null ) {
-				tx.commit();
+				tx.commitIgnoreExceptions();
 				LOGGER.info( "commited trigger setup!" );
 			}
 			//TODO: what is this doing here? :D

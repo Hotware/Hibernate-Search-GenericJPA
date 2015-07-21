@@ -27,28 +27,6 @@ public class EventModelInfo {
 	private final List<IdInfo> idInfos;
 	private final String updateIdColumn;
 
-	private final Class<?> updateClass;
-	private final Function<Object, Integer> eventTypeAccessor;
-
-	public EventModelInfo(
-			Class<?> updateClass,
-			String tableName,
-			String originalTableName,
-			Function<Object, Integer> eventTypeAccessor,
-			String eventTypeColumn,
-			List<IdInfo> idInfos) {
-		super();
-		this.updateClass = updateClass;
-		this.updateTableName = tableName;
-		this.originalTableName = originalTableName;
-		this.eventTypeAccessor = eventTypeAccessor;
-		this.eventTypeColumn = eventTypeColumn;
-		this.idInfos = idInfos;
-
-		this.updateIdColumn = null;
-	}
-
-
 	public EventModelInfo(
 			String tableName,
 			String originalTableName,
@@ -59,20 +37,10 @@ public class EventModelInfo {
 		this.eventTypeColumn = eventTypeColumn;
 		this.idInfos = idInfos;
 		this.updateIdColumn = updateIdColumn;
-
-		this.updateClass = null;
-		this.eventTypeAccessor = null;
 	}
 
 	public String getUpdateIdColumn() {
 		return updateIdColumn;
-	}
-
-	/**
-	 * @return the updateClass
-	 */
-	public Class<?> getUpdateClass() {
-		return updateClass;
 	}
 
 	/**
@@ -87,13 +55,6 @@ public class EventModelInfo {
 	 */
 	public String getOriginalTableName() {
 		return originalTableName;
-	}
-
-	/**
-	 * @return the eventTypeAccessor
-	 */
-	public Function<Object, Integer> getEventTypeAccessor() {
-		return eventTypeAccessor;
 	}
 
 	/**
@@ -118,8 +79,6 @@ public class EventModelInfo {
 				", eventTypeColumn='" + eventTypeColumn + '\'' +
 				", idInfos=" + idInfos +
 				", updateIdColumn='" + updateIdColumn + '\'' +
-				", updateClass=" + updateClass +
-				", eventTypeAccessor=" + eventTypeAccessor +
 				'}';
 	}
 
@@ -128,52 +87,43 @@ public class EventModelInfo {
 		private final Class<?> entityClass;
 		private final String[] columnsInUpdateTable;
 		private final String[] columnsInOriginal;
+		private final ColumnType[] columnTypes;
 		private final IdConverter idConverter;
 		private final Map<String, String> hints;
-
-		private final Function<Object, Object> idAccessor;
-		private final ToOriginalIdBridge toOriginalBridge;
 
 		public IdInfo(
 				Function<Object, Object> idAccessor, Class<?> entityClass, String[] columns, String[] columnsInOriginal,
 				ToOriginalIdBridge toOriginalBridge, Map<String, String> hints) {
 			super();
-			this.idAccessor = idAccessor;
 			this.entityClass = entityClass;
 			this.columnsInUpdateTable = columns;
 			this.columnsInOriginal = columnsInOriginal;
-			this.toOriginalBridge = toOriginalBridge;
 			this.hints = hints;
 
 			this.idConverter = null;
+			this.columnTypes = null;
 		}
 
 		public IdInfo(
 				Class<?> entityClass,
 				String[] columnsInUpdateTable,
 				String[] columnsInOriginal,
+				ColumnType[] columnTypes,
 				IdConverter idConverter, Map<String, String> hints) {
 			this.entityClass = entityClass;
 			this.columnsInUpdateTable = columnsInUpdateTable;
 			this.idConverter = idConverter;
 			this.hints = hints;
 			this.columnsInOriginal = columnsInOriginal;
+			this.columnTypes = columnTypes;
+		}
 
-			this.idAccessor = null;
-			this.toOriginalBridge = null;
+		public ColumnType[] getColumnTypes() {
+			return columnTypes;
 		}
 
 		public IdConverter getIdConverter() {
 			return idConverter;
-		}
-
-		/**
-		 * id accessor that applies all the logic to get an id for the updated entity from the Updates class
-		 *
-		 * @return the idAccessor
-		 */
-		public Function<Object, Object> getIdAccessor() {
-			return idAccessor;
 		}
 
 		/**
@@ -197,15 +147,6 @@ public class EventModelInfo {
 			return columnsInOriginal;
 		}
 
-		/**
-		 * <b>internal method used for debugging</b>
-		 *
-		 * @return the toOriginalBridge
-		 */
-		public ToOriginalIdBridge getToOriginalBridge() {
-			return toOriginalBridge;
-		}
-
 		public Map<String, String> getHints() {
 			return hints;
 		}
@@ -216,10 +157,9 @@ public class EventModelInfo {
 					"entityClass=" + entityClass +
 					", columnsInUpdateTable=" + Arrays.toString( columnsInUpdateTable ) +
 					", columnsInOriginal=" + Arrays.toString( columnsInOriginal ) +
+					", columnTypes=" + Arrays.toString( columnTypes ) +
 					", idConverter=" + idConverter +
 					", hints=" + hints +
-					", idAccessor=" + idAccessor +
-					", toOriginalBridge=" + toOriginalBridge +
 					'}';
 		}
 	}

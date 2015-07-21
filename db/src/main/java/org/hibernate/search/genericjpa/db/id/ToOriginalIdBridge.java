@@ -10,7 +10,7 @@ package org.hibernate.search.genericjpa.db.id;
  * interface used to specify a custom bridge between the id used in an Update class to the original entity's id.
  * <br>
  * <br>
- * If your Update class has the same id type, you probably won't need this
+ * If your Update class has the same id columnTypes, you probably won't need this
  *
  * @author Martin Braun
  */

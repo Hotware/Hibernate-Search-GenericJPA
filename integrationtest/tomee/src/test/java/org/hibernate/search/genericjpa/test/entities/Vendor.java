@@ -20,11 +20,16 @@ import org.hibernate.search.annotations.ContainedIn;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Store;
+import org.hibernate.search.genericjpa.annotations.IdColumn;
+import org.hibernate.search.genericjpa.annotations.IdInfo;
 import org.hibernate.search.genericjpa.annotations.InIndex;
+import org.hibernate.search.genericjpa.annotations.UpdateInfo;
+import org.hibernate.search.genericjpa.db.events.ColumnType;
 
 @InIndex
 @Entity
 @Table(name = "Vendor")
+@UpdateInfo(tableName = "Vendor", idInfos = @IdInfo(columns = @IdColumn(column = "ID", columnType = ColumnType.LONG)))
 public class Vendor implements Serializable {
 
 	private static final long serialVersionUID = 1L;

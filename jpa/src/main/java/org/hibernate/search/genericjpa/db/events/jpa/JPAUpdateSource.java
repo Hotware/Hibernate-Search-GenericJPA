@@ -10,9 +10,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
 import javax.transaction.TransactionManager;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,10 +21,11 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.hibernate.search.genericjpa.annotations.IdInfo;
+import org.hibernate.search.genericjpa.db.events.ColumnType;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateEventInfo;
@@ -34,7 +33,7 @@ import org.hibernate.search.genericjpa.db.events.UpdateSource;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess;
-import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess.ObjectClassWrapper;
+import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess.ObjectIdentifierWrapper;
 import org.hibernate.search.genericjpa.util.NamingThreadFactory;
 
 /**
@@ -54,8 +53,7 @@ public class JPAUpdateSource implements UpdateSource {
 	private final int batchSizeForUpdates;
 	private final int batchSizeForDatabaseQueries;
 
-	private final Map<Class<?>, EventModelInfo> updateClassToEventModelInfo;
-	private final Map<Class<?>, Function<Object, Object>> idAccessorMap;
+	private final Map<String, EventModelInfo> updateTableToEventModelInfo;
 	private final ScheduledExecutorService exec;
 	private final TransactionManager transactionManager;
 	private final ReentrantLock lock = new ReentrantLock();
@@ -134,29 +132,9 @@ public class JPAUpdateSource implements UpdateSource {
 		}
 		this.batchSizeForUpdates = batchSizeForUpdates;
 		this.batchSizeForDatabaseQueries = batchSizeForDatabaseQueries;
-		this.updateClassToEventModelInfo = new HashMap<>();
+		this.updateTableToEventModelInfo = new HashMap<>();
 		for ( EventModelInfo info : eventModelInfos ) {
-			this.updateClassToEventModelInfo.put( info.getUpdateClass(), info );
-		}
-		this.idAccessorMap = new HashMap<>();
-		for ( EventModelInfo evi : eventModelInfos ) {
-			try {
-				Method idMethod = evi.getUpdateClass().getDeclaredMethod( "getId" );
-				idMethod.setAccessible( true );
-				idAccessorMap.put(
-						evi.getUpdateClass(), (obj) -> {
-							try {
-								return idMethod.invoke( obj );
-							}
-							catch (Exception e) {
-								throw new SearchException( e );
-							}
-						}
-				);
-			}
-			catch (SecurityException | NoSuchMethodException e) {
-				throw new SearchException( "could not access the \"getId()\" method of class: " + evi.getUpdateClass() );
-			}
+			this.updateTableToEventModelInfo.put( info.getUpdateTableName(), info );
 		}
 		if ( exec == null ) {
 			throw new IllegalArgumentException( "the ScheduledExecutorService may not be null!" );
@@ -169,27 +147,38 @@ public class JPAUpdateSource implements UpdateSource {
 		return new NamingThreadFactory( "JPAUpdateSource Thread" );
 	}
 
-	public static MultiQueryAccess query(JPAUpdateSource updateSource, EntityManager em) {
-		Map<Class<?>, Long> countMap = new HashMap<>();
-		Map<Class<?>, Query> queryMap = new HashMap<>();
+	public static MultiQueryAccess query(
+			JPAUpdateSource updateSource,
+			EntityManager em) {
+		Map<String, Long> countMap = new HashMap<>();
+		Map<String, Query> queryMap = new HashMap<>();
 		for ( EventModelInfo evi : updateSource.eventModelInfos ) {
 			CriteriaBuilder cb = em.getCriteriaBuilder();
 			long count;
 			{
-				CriteriaQuery<Long> countQuery = cb.createQuery( Long.class );
-				countQuery.select( cb.count( countQuery.from( evi.getUpdateClass() ) ) );
-				count = em.createQuery( countQuery ).getSingleResult();
+				count = ((Number) em.createNativeQuery( "SELECT count(*) FROM " + evi.getUpdateTableName() )
+						.getSingleResult()).longValue();
 			}
-			countMap.put( evi.getUpdateClass(), count );
+			countMap.put( evi.getUpdateTableName(), count );
 
 			{
-				Query query = em.createQuery(
-						new StringBuilder().append( "SELECT obj FROM " )
-								.append( em.getMetamodel().entity( evi.getUpdateClass() ).getName() ).append(
-								" obj ORDER BY obj.id"
-						).toString()
+				StringBuilder queryString = new StringBuilder().append( "SELECT " )
+						.append( evi.getUpdateIdColumn() )
+						.append( ", " )
+						.append( evi.getEventTypeColumn() );
+				for ( EventModelInfo.IdInfo idInfo : evi.getIdInfos() ) {
+					for ( String column : idInfo.getColumnsInUpdateTable() ) {
+						queryString.append( ", " ).append( column );
+					}
+				}
+				queryString.append( " FROM " ).append( evi.getUpdateTableName() ).append(
+						" ORDER BY "
+				).append( evi.getUpdateIdColumn() );
+
+				Query query = em.createNativeQuery(
+						queryString.toString()
 				);
-				queryMap.put( evi.getUpdateClass(), query );
+				queryMap.put( evi.getUpdateTableName(), query );
 			}
 		}
 		return new MultiQueryAccess(
@@ -240,22 +229,40 @@ public class JPAUpdateSource implements UpdateSource {
 								while ( query.next() ) {
 									// we have no order problems here since
 									// the query does the ordering for us
-									Object val = query.get();
-									toRemove.add( new Object[] {query.entityClass(), val} );
-									EventModelInfo evi = this.updateClassToEventModelInfo.get( query.entityClass() );
-									evi.getIdInfos()
-											.forEach(
-													(info) -> updateInfos.add(
-															new UpdateEventInfo(
-																	info.getEntityClass(),
-																	info.getIdAccessor()
-																			.apply( val ),
-																	evi.getEventTypeAccessor()
-																			.apply( val ),
-																	info.getHints()
-															)
-													)
-											);
+									Object[] valuesFromQuery = (Object[]) query.get();
+
+									Long updateId = ((Number) valuesFromQuery[0]).longValue();
+									Integer eventType = ((Number) valuesFromQuery[1]).intValue();
+
+									EventModelInfo evi = this.updateTableToEventModelInfo.get( query.identifier() );
+
+									toRemove.add(
+											new Object[] {
+													evi.getUpdateTableName(),
+													evi.getUpdateIdColumn(),
+													updateId,
+											}
+									);
+
+									//we skip the id and eventtype
+									int currentIndex = 2;
+									for ( EventModelInfo.IdInfo info : evi.getIdInfos() ) {
+										ColumnType[] columnTypes = info.getColumnTypes();
+										String[] columnNames = info.getColumnsInUpdateTable();
+										Object val[] = new Object[columnTypes.length];
+										for ( int i = 0; i < columnTypes.length; ++i ) {
+											val[i] = valuesFromQuery[currentIndex++];
+										}
+										Object entityId = info.getIdConverter().convert( val, columnNames, columnTypes );
+										updateInfos.add(
+												new UpdateEventInfo(
+														info.getEntityClass(),
+														entityId,
+														eventType,
+														info.getHints()
+												)
+										);
+									}
 									// TODO: maybe move this to a method as
 									// it is getting reused
 									if ( ++processed % this.batchSizeForUpdates == 0 ) {
@@ -264,11 +271,12 @@ public class JPAUpdateSource implements UpdateSource {
 											LOGGER.fine( "handled update-event: " + updateInfos );
 										}
 										for ( Object[] rem : toRemove ) {
-											// the class is in rem[0], the
-											// entity is in
-											// rem[1]
-											query.addToNextValuePosition( (Class<?>) rem[0], -1L );
-											em.remove( rem[1] );
+											// the table is in rem[0], the
+											// id column for the update is in
+											// rem[1] and the id is in rem[2]
+											query.addToNextValuePosition( rem[0].toString(), -1L );
+											em.createNativeQuery( "DELETE FROM " + rem[0] + " WHERE " + rem[1] + " = " + rem[2] )
+													.executeUpdate();
 										}
 										toRemove.clear();
 										updateInfos.clear();
@@ -280,10 +288,12 @@ public class JPAUpdateSource implements UpdateSource {
 										LOGGER.fine( "handled update-event: " + updateInfos );
 									}
 									for ( Object[] rem : toRemove ) {
-										// the class is in rem[0], the
-										// entity is in rem[1]
-										query.addToNextValuePosition( (Class<?>) rem[0], -1L );
-										em.remove( rem[1] );
+										// the table is in rem[0], the
+										// id column for the update is in
+										// rem[1] and the id is in rem[2]
+										query.addToNextValuePosition( rem[0].toString(), -1L );
+										em.createNativeQuery( "DELETE FROM " + rem[0] + " WHERE " + rem[1] + " = " + rem[2] )
+												.executeUpdate();
 									}
 									toRemove.clear();
 									updateInfos.clear();
@@ -323,8 +333,8 @@ public class JPAUpdateSource implements UpdateSource {
 		);
 	}
 
-	private Long id(ObjectClassWrapper val) {
-		return ((Number) this.idAccessorMap.get( val.clazz ).apply( val.object )).longValue();
+	private Long id(ObjectIdentifierWrapper val) {
+		return ((Number) ((Object[]) val.object)[0]).longValue();
 	}
 
 	@Override

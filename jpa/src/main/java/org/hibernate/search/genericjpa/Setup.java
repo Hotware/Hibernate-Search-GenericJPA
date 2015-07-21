@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.genericjpa.annotations.CustomUpdateEntityProvider;
 import org.hibernate.search.genericjpa.annotations.InIndex;
-import org.hibernate.search.genericjpa.annotations.Updates;
 import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource;
 import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.exception.SearchException;
@@ -68,13 +67,20 @@ public final class Setup {
 			LOGGER.info( "using EntityManagerFactory: " + emf );
 
 			List<Class<?>> jpaRootTypes = new ArrayList<>();
+			List<Class<?>> entities = new ArrayList<>();
 			if ( emf != null ) {
 				// hack... but OpenJPA wants this so it can enhance the classes.
 				emf.createEntityManager().close();
 
 				// get all the root types marked by an @InIndex and @Indexed (@Indexed isn't sufficient here!)
 
-				emf.getMetamodel().getEntities().stream().map( EntityType::getBindableJavaType ).filter(
+				emf.getMetamodel()
+						.getEntities()
+						.stream()
+						.map( EntityType::getBindableJavaType )
+						.forEach( entities::add );
+
+				entities.stream().filter(
 						(entityClass) -> entityClass.isAnnotationPresent( InIndex.class ) && entityClass.isAnnotationPresent(
 								Indexed.class
 						)
@@ -89,11 +95,11 @@ public final class Setup {
 			if ( additionalIndexedTypesValue != null ) {
 				for ( String entityClassName : additionalIndexedTypesValue.split( "," ) ) {
 					entityClassName = entityClassName.trim();
-					LOGGER.info( "using additional indexed type: " + entityClassName );
+					LOGGER.info( "using additional indexed columnTypes: " + entityClassName );
 					Class<?> entityClass = Class.forName( entityClassName );
 					if ( !entityClass.isAnnotationPresent( InIndex.class ) || !entityClass.isAnnotationPresent( Indexed.class ) ) {
 						throw new SearchException(
-								"additional indexed type specified that doesn't host both @InIndex and @Indexed!"
+								"additional indexed columnTypes specified that doesn't host both @InIndex and @Indexed!"
 						);
 					}
 					indexRootTypes.add( entityClass );
@@ -137,18 +143,6 @@ public final class Setup {
 					SEARCH_FACTORY_TYPE_KEY,
 					SEARCH_FACTORY_TYPE_DEFAULT_VALUE
 			);
-			// get all the updates classes marked by an @Updates annotation
-			List<Class<?>> updateClasses;
-			if ( emf != null ) {
-				updateClasses = emf.getMetamodel().getEntities().stream().map(
-						EntityType::getBindableJavaType
-				).filter(
-						(entityClass) -> entityClass.isAnnotationPresent( Updates.class )
-				).collect( Collectors.toList() );
-			}
-			else {
-				updateClasses = Collections.emptyList();
-			}
 			//what UpdateSource to be used
 			UpdateSourceProvider updateSourceProvider;
 			if ( "sql".equals( type ) ) {
@@ -173,7 +167,7 @@ public final class Setup {
 
 				updateSourceProvider = new SQLJPAUpdateSourceProvider(
 						emf, transactionManager, (TriggerSQLStringSource) triggerSourceClass.newInstance(),
-						updateClasses, createTriggerStrategy
+						entities, createTriggerStrategy
 				);
 			}
 			else if ( "manual-updates".equals( type ) ) {

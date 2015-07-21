@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.hibernate.search.genericjpa.db.events.UpdateClassAnnotationEventModelParser;
+import org.hibernate.search.genericjpa.db.events.AnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventType;
@@ -32,10 +32,7 @@ import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringS
 import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.test.jpa.entities.Place;
-import org.hibernate.search.genericjpa.test.jpa.entities.PlaceSorcererUpdates;
-import org.hibernate.search.genericjpa.test.jpa.entities.PlaceUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
-import org.hibernate.search.genericjpa.test.jpa.entities.SorcererUpdates;
 import org.hibernate.search.genericjpa.util.Sleep;
 
 import org.junit.After;
@@ -52,14 +49,40 @@ public abstract class DatabaseIntegrationTest {
 	protected int helmsDeepId = 0;
 	protected Place valinor;
 	protected EntityManagerFactory emf;
-	protected EventModelParser parser = new UpdateClassAnnotationEventModelParser();
+	protected EventModelParser parser = new AnnotationEventModelParser();
 	protected String exceptionString;
 	protected List<String> dropStrings;
 
-	public void setup(String persistence) throws SQLException {
+
+	private List<String> updateTableNames;
+
+	public void setup(String persistence, TriggerSQLStringSource triggerSource) throws SQLException {
 		this.emf = Persistence.createEntityManagerFactory( persistence );
 		EntityManager em = emf.createEntityManager();
 		try {
+			this.updateTableNames = new ArrayList<>();
+			List<EventModelInfo> infos = parser.parse(
+					new HashSet<>(
+							Arrays.asList(
+									Place.class,
+									Sorcerer.class
+							)
+					)
+			);
+			em.getTransaction().begin();
+			for ( EventModelInfo info : infos ) {
+				this.updateTableNames.add( info.getUpdateTableName() );
+				for ( String str : triggerSource.getUpdateTableDropCode( info ) ) {
+					System.out.println( str );
+					em.createNativeQuery( str ).executeUpdate();
+				}
+				for ( String str : triggerSource.getUpdateTableCreationCode( info ) ) {
+					System.out.println( str );
+					em.createNativeQuery( str ).executeUpdate();
+				}
+			}
+			em.getTransaction().commit();
+
 			this.deleteAllData( em );
 			this.setupData( em );
 		}
@@ -141,17 +164,16 @@ public abstract class DatabaseIntegrationTest {
 			em.flush();
 		}
 
+		tx.commit();
+
+		tx.begin();
 		{
-			@SuppressWarnings("unchecked")
-			List<PlaceSorcererUpdates> toDelete2 = new ArrayList<>(
-					em.createQuery(
-							"SELECT a FROM PlaceSorcererUpdates a"
-					).getResultList()
-			);
-			for ( PlaceSorcererUpdates val : toDelete2 ) {
-				em.remove( val );
+			if ( this.updateTableNames != null ) {
+				for ( String updateTableName : this.updateTableNames ) {
+					em.createNativeQuery( "DELETE FROM " + updateTableName ).executeUpdate();
+					em.flush();
+				}
 			}
-			em.flush();
 		}
 		tx.commit();
 	}
@@ -181,12 +203,13 @@ public abstract class DatabaseIntegrationTest {
 			List<EventModelInfo> infos = parser.parse(
 					new HashSet<>(
 							Arrays.asList(
-									PlaceSorcererUpdates.class,
-									PlaceUpdates.class,
-									SorcererUpdates.class
+									Place.class,
+									Sorcerer.class
 							)
 					)
 			);
+
+			this.updateTableNames = new ArrayList<>();
 
 			try {
 				for ( String str : triggerSource.getSetupCode() ) {
@@ -279,7 +302,9 @@ public abstract class DatabaseIntegrationTest {
 			EntityTransaction tx = em.getTransaction();
 			tx.begin();
 
-			int countBefore = em.createQuery( "SELECT a FROM PlaceSorcererUpdates a" ).getResultList().size();
+			int countBefore = em.createNativeQuery( "SELECT * FROM PlaceSorcererUpdatesHsearch" )
+					.getResultList()
+					.size();
 			em.flush();
 			tx.commit();
 
@@ -296,16 +321,14 @@ public abstract class DatabaseIntegrationTest {
 			tx.begin();
 			assertEquals(
 					countBefore + 1,
-					em.createQuery( "SELECT a FROM PlaceSorcererUpdates a" ).getResultList().size()
+					em.createNativeQuery( "SELECT * FROM PlaceSorcererUpdatesHsearch" ).getResultList().size()
 			);
 			tx.commit();
 
 			tx.begin();
 			assertEquals(
 					1,
-					em.createQuery( "SELECT a FROM PlaceSorcererUpdates a WHERE a.eventType = " + EventType.INSERT )
-							.getResultList()
-							.size()
+					em.createNativeQuery( "SELECT * FROM PlaceSorcererUpdatesHsearch" ).getResultList().size()
 			);
 			tx.commit();
 
@@ -317,21 +340,21 @@ public abstract class DatabaseIntegrationTest {
 			tx.begin();
 			assertEquals(
 					countBefore + 2,
-					em.createQuery( "SELECT a FROM PlaceSorcererUpdates a" ).getResultList().size()
+					em.createNativeQuery( "SELECT * FROM PlaceSorcererUpdatesHsearch" ).getResultList().size()
 			);
 			tx.commit();
 
 			tx.begin();
 			assertEquals(
 					1,
-					em.createQuery( "SELECT a FROM PlaceSorcererUpdates a WHERE a.eventType = " + EventType.DELETE )
+					em.createNativeQuery( "SELECT * FROM PlaceSorcererUpdatesHsearch WHERE eventCase = " + EventType.DELETE )
 							.getResultList()
 							.size()
 			);
 			tx.commit();
 
 			JPAUpdateSource updateSource = new JPAUpdateSource(
-					parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class, PlaceUpdates.class ) ) ),
+					parser.parse( new HashSet<>( Arrays.asList( Place.class, Sorcerer.class ) ) ),
 					emf,
 					null,
 					1,
@@ -357,7 +380,9 @@ public abstract class DatabaseIntegrationTest {
 					100_000, () -> {
 						tx.begin();
 						try {
-							return em.createQuery( "SELECT a FROM PlaceSorcererUpdates a" ).getResultList().size() == 0;
+							return em.createNativeQuery( "SELECT * FROM PlaceSorcererUpdatesHsearch" )
+									.getResultList()
+									.size() == 0;
 						}
 						finally {
 							tx.commit();

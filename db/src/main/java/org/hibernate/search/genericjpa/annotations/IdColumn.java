@@ -7,26 +7,21 @@
 package org.hibernate.search.genericjpa.annotations;
 
 import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
 
-import static java.lang.annotation.ElementType.TYPE;
+import org.hibernate.search.genericjpa.db.events.ColumnType;
+
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * @author Martin
+ * Created by Martin on 21.07.2015.
  */
-@Target({TYPE})
 @Retention(RUNTIME)
-public @interface Updates {
+public @interface IdColumn {
 
-	/**
-	 * @return the name of the updates-table
-	 */
-	String tableName();
+	String column();
 
-	/**
-	 * @return the name of the table the updates correspond to
-	 */
-	String originalTableName();
+	String updateTableColumn() default "";
+
+	ColumnType columnType();
 
 }

@@ -10,6 +10,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 import java.io.Serializable;
@@ -21,12 +22,17 @@ import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
 import org.hibernate.search.annotations.Store;
+import org.hibernate.search.genericjpa.annotations.IdColumn;
+import org.hibernate.search.genericjpa.annotations.IdInfo;
 import org.hibernate.search.genericjpa.annotations.InIndex;
+import org.hibernate.search.genericjpa.annotations.UpdateInfo;
+import org.hibernate.search.genericjpa.db.events.ColumnType;
 
 @InIndex
 @Indexed
 @Entity
 @Table(name = "Game")
+@UpdateInfo(tableName = "Game", idInfos = @IdInfo(columns = @IdColumn(column = "ID", columnType = ColumnType.LONG)))
 public class Game implements Serializable {
 
 	private static final long serialVersionUID = 1L;
@@ -44,6 +50,7 @@ public class Game implements Serializable {
 	}
 
 	@Id
+	@Column(name = "ID")
 	@GeneratedValue
 	public Long getId() {
 		return id;
@@ -65,6 +72,11 @@ public class Game implements Serializable {
 
 	@IndexedEmbedded(includeEmbeddedObjectId = true, targetElement = Vendor.class)
 	@ManyToMany
+	@JoinTable(name = "Game_Vendor")
+	@UpdateInfo(tableName = "Game_Vendor", idInfos = {
+			@IdInfo(entity = Game.class, columns = @IdColumn(column = "Game_ID", columnType = ColumnType.LONG)),
+			@IdInfo(entity = Vendor.class, columns = @IdColumn(column = "vendors_ID", columnType = ColumnType.LONG))
+	})
 	public List<Vendor> getVendors() {
 		return vendors;
 	}

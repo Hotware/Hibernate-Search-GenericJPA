@@ -10,6 +10,9 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
 import javax.transaction.TransactionManager;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.hibernate.search.genericjpa.exception.SearchException;
 
 /**
@@ -18,6 +21,8 @@ import org.hibernate.search.genericjpa.exception.SearchException;
  * @author Martin Braun
  */
 public class JPATransactionWrapper {
+
+	private static final Logger LOGGER = Logger.getLogger( JPATransactionWrapper.class.getName() );
 
 	private final EntityTransaction tx;
 	private final EntityManager em;
@@ -75,6 +80,15 @@ public class JPATransactionWrapper {
 					throw new SearchException( e );
 				}
 			}
+		}
+	}
+
+	public void commitIgnoreExceptions() {
+		try {
+			this.commit();
+		}
+		catch (Exception e) {
+			LOGGER.log( Level.WARNING, "Exception", e );
 		}
 	}
 

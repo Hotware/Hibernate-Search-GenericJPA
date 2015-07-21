@@ -158,7 +158,7 @@ public class ObjectHandlerTask implements Runnable {
 		Serializable id = (Serializable) this.peristenceUnitUtil.getIdentifier( entity );
 
 		if ( entityIndexBinding == null ) {
-			// it might be possible to receive not-indexes subclasses of the currently indexed type;
+			// it might be possible to receive not-indexes subclasses of the currently indexed columnTypes;
 			// being not-indexed, we skip them.
 			// FIXME for improved performance: avoid loading them in an early phase.
 			return;

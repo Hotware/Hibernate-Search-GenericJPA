@@ -6,8 +6,10 @@
  */
 package org.hibernate.search.genericjpa.db.events.triggers;
 
+import org.hibernate.search.genericjpa.db.events.ColumnType;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventType;
+import org.hibernate.search.genericjpa.exception.AssertionFailure;
 
 /**
  * Created by Martin on 30.06.2015.
@@ -26,7 +28,7 @@ public class PostgreSQLTriggerSQLStringSource implements TriggerSQLStringSource 
 
 	private static final String CREATE_FUNCTION_FORMAT_SQL = "CREATE OR REPLACE FUNCTION %s() RETURNS TRIGGER AS $$\n" +
 			"    BEGIN\n" +
-			"        INSERT INTO %s(id, %s, %s)\n" +
+			"        INSERT INTO %s(%s, %s, %s)\n" +
 			"        VALUES(nextval('" + UNIQUE_ID_SEQUENCE_NAME + "'), %s, %s);\n" +
 			"        RETURN NEW;\n" +
 			"    END\n" +
@@ -94,6 +96,7 @@ public class PostgreSQLTriggerSQLStringSource implements TriggerSQLStringSource 
 						CREATE_FUNCTION_FORMAT_SQL,
 						functionName,
 						tableName,
+						eventModelInfo.getUpdateIdColumn(),
 						eventTypeColumn,
 						idColumnNames.toString(),
 						eventTypeValue,
@@ -124,6 +127,49 @@ public class PostgreSQLTriggerSQLStringSource implements TriggerSQLStringSource 
 								eventType
 						)
 				)
+		};
+	}
+
+	@Override
+	public String[] getUpdateTableCreationCode(EventModelInfo info) {
+		String tableName = info.getUpdateTableName();
+		String updateIdColumn = info.getUpdateIdColumn();
+		String eventTypeColumn = info.getEventTypeColumn();
+		String sql =
+				"CREATE TABLE IF NOT EXISTS " + tableName + " (\n" +
+						"    " + updateIdColumn + " BIGINT NOT NULL,\n" +
+						"    " + eventTypeColumn + " INT NOT NULL,\n";
+		for ( EventModelInfo.IdInfo idInfo : info.getIdInfos() ) {
+			String[] columnsInUpdateTable = idInfo.getColumnsInUpdateTable();
+			ColumnType[] columnTypes = idInfo.getColumnTypes();
+			for(int i = 0; i < columnsInUpdateTable.length; ++i) {
+				sql += "    " + columnsInUpdateTable[i] + " " + toMySQLType( columnTypes[i] )+ " NOT NULL,\n";
+			}
+		}
+		sql += "    PRIMARY KEY (" + updateIdColumn + ")\n" +
+				");";
+		return new String[] {
+				sql
+		};
+	}
+
+	private static String toMySQLType(ColumnType columnType) {
+		switch(columnType) {
+			case INTEGER:
+				return "INT";
+			case LONG:
+				return "BIGINT";
+			case STRING:
+				return "VARCHAR(255)";
+			default:
+				throw new AssertionFailure("unexpected columnType: " + columnType);
+		}
+	}
+
+	@Override
+	public String[] getUpdateTableDropCode(EventModelInfo info) {
+		return new String[] {
+				String.format( "DROP TABLE IF EXISTS %s;", info.getUpdateTableName() )
 		};
 	}
 

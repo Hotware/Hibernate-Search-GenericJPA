@@ -261,7 +261,7 @@ public abstract class IntegrationTest {
 									public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
 										// this should happen!
 										// an empty list is actually quite interesting for the backend.
-										// does it handle not finding anything for a given entityClass right?
+										// does it handle not finding anything for a given identifier right?
 										return Collections.emptyList();
 									}
 

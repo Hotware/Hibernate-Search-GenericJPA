@@ -6,9 +6,13 @@
  */
 package org.hibernate.search.genericjpa.db.events.triggers;
 
+import org.h2.table.Column;
+
+import org.hibernate.search.genericjpa.db.events.ColumnType;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo.IdInfo;
 import org.hibernate.search.genericjpa.db.events.EventType;
+import org.hibernate.search.genericjpa.exception.AssertionFailure;
 
 /**
  * Implementation of a {@link TriggerSQLStringSource} that can be used with MySQL (or compatible) Databases. <br>
@@ -28,13 +32,13 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 			+ "FOR EACH ROW                                                                                                       \n"
 			+ "BEGIN                                                                                                              \n"
 			+ "    CALL %s(@unique_id);                                                                                           \n"
-			+ "    INSERT INTO %s(id, %s, %s)                                                                                     \n"
+			+ "    INSERT INTO %s(%s, %s, %s)                                                                                     \n"
 			+ "		VALUES(@unique_id, %s, %s);                                                                                   \n"
 			+ "END;                                                                                                               \n";
 	private static final String CREATE_TRIGGER_CLEANUP_SQL_FORMAT = "" + "CREATE TRIGGER %s AFTER DELETE ON %s                    \n"
 			+ "FOR EACH ROW                                                                                                       \n"
 			+ "BEGIN                                                                                                              \n"
-			+ "DELETE FROM #UNIQUE_ID_TABLE_NAME# WHERE id = OLD.id;                                                              \n"
+			+ "DELETE FROM #UNIQUE_ID_TABLE_NAME# WHERE id = OLD.#updatetableidcolumn#;                                           \n"
 			+ "END;                                                                                                               \n";
 	private static final String DROP_TRIGGER_SQL_FORMAT = "" + "DROP TRIGGER IF EXISTS %s;\n";
 
@@ -129,8 +133,9 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 						triggerName,
 						EventType.toString( eventType ),
 						originalTableName,
-						uniqueIdProcedureName,
+						this.uniqueIdProcedureName,
 						tableName,
+						eventModelInfo.getUpdateIdColumn(),
 						eventTypeColumn,
 						idColumnNames.toString(),
 						eventTypeValue,
@@ -162,7 +167,10 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 	@Override
 	public String[] getSpecificSetupCode(EventModelInfo eventModelInfo) {
 		String createTriggerCleanUpSQL = String.format(
-				this.createTriggerCleanUpSQLFormat, this.getCleanUpTriggerName( eventModelInfo.getUpdateTableName() ),
+				this.createTriggerCleanUpSQLFormat.replaceAll(
+						"#updatetableidcolumn#",
+						eventModelInfo.getUpdateIdColumn()
+				), this.getCleanUpTriggerName( eventModelInfo.getUpdateTableName() ),
 				eventModelInfo.getUpdateTableName()
 		);
 		return new String[] {createTriggerCleanUpSQL};
@@ -175,6 +183,49 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 						DROP_TRIGGER_SQL_FORMAT,
 						this.getCleanUpTriggerName( eventModelInfo.getUpdateTableName() )
 				)
+		};
+	}
+
+	@Override
+	public String[] getUpdateTableCreationCode(EventModelInfo info) {
+		String tableName = info.getUpdateTableName();
+		String updateIdColumn = info.getUpdateIdColumn();
+		String eventTypeColumn = info.getEventTypeColumn();
+		String sql =
+				"CREATE TABLE IF NOT EXISTS " + tableName + " (\n" +
+						"    " + updateIdColumn + " BIGINT(64) NOT NULL,\n" +
+						"    " + eventTypeColumn + " INT NOT NULL,\n";
+		for ( EventModelInfo.IdInfo idInfo : info.getIdInfos() ) {
+			String[] columnsInUpdateTable = idInfo.getColumnsInUpdateTable();
+			ColumnType[] columnTypes = idInfo.getColumnTypes();
+			for ( int i = 0; i < columnsInUpdateTable.length; ++i ) {
+				sql += "    " + columnsInUpdateTable[i] + " " + toMySQLType( columnTypes[i] ) + " NOT NULL,\n";
+			}
+		}
+		sql += "    PRIMARY KEY (" + updateIdColumn + ")\n" +
+				");";
+		return new String[] {
+				sql
+		};
+	}
+
+	private static String toMySQLType(ColumnType columnType) {
+		switch ( columnType ) {
+			case INTEGER:
+				return "INT";
+			case LONG:
+				return "BIGINT(64)";
+			case STRING:
+				return "VARCHAR(255)";
+			default:
+				throw new AssertionFailure( "unexpected columnType: " + columnType );
+		}
+	}
+
+	@Override
+	public String[] getUpdateTableDropCode(EventModelInfo info) {
+		return new String[] {
+				String.format( "DROP TABLE IF EXISTS %s;", info.getUpdateTableName() )
 		};
 	}
 

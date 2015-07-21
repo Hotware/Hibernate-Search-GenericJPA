@@ -16,13 +16,21 @@ import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.FieldBridge;
 import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.genericjpa.annotations.IdColumn;
+import org.hibernate.search.genericjpa.annotations.IdInfo;
 import org.hibernate.search.genericjpa.annotations.InIndex;
+import org.hibernate.search.genericjpa.annotations.UpdateInfo;
+import org.hibernate.search.genericjpa.db.events.ColumnType;
 
 @Entity
 @Table(name = "MultipleColumnsIdEntity")
 @InIndex
 @Indexed
 @IdClass(ID.class)
+@UpdateInfo(tableName = "MultipleColumnsIdEntity", idInfos = @IdInfo(columns = {
+		@IdColumn( column = "firstId", columnType = ColumnType.STRING),
+		@IdColumn( column = "secondId", columnType = ColumnType.STRING)
+}, idConverter = MultipleColumnsIdEntityIdConverter.class))
 public class MultipleColumnsIdEntity {
 
 	@Id

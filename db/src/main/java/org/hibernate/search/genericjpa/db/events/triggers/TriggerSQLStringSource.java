@@ -25,21 +25,21 @@ public interface TriggerSQLStringSource {
 	/**
 	 * this has to be executed before every call to getTriggerCreationCode
 	 *
-	 * @param eventModelInfo the EventModelInfo/type this corresponds to
+	 * @param eventModelInfo the EventModelInfo/columnTypes this corresponds to
 	 */
 	String[] getSpecificSetupCode(EventModelInfo eventModelInfo);
 
 	/**
 	 * this removes all changes made by {@link #getSpecificSetupCode(EventModelInfo)}
 	 *
-	 * @param eventModelInfo the EventModelInfo/type this corresponds to
+	 * @param eventModelInfo the EventModelInfo/columnTypes this corresponds to
 	 */
 	String[] getSpecificUnSetupCode(EventModelInfo eventModelInfo);
 
 	/**
 	 * this creates a specific trigger
 	 *
-	 * @param eventModelInfo the EventModelInfo/type this corresponds to
+	 * @param eventModelInfo the EventModelInfo/columnTypes this corresponds to
 	 * @param eventType see {@link EventType}
 	 */
 	String[] getTriggerCreationCode(EventModelInfo eventModelInfo, int eventType);
@@ -47,9 +47,13 @@ public interface TriggerSQLStringSource {
 	/**
 	 * this removes a specific trigger created by {@link #getTriggerCreationCode(EventModelInfo, int)}
 	 *
-	 * @param eventModelInfo the EventModelInfo/type this corresponds to
+	 * @param eventModelInfo the EventModelInfo/columnTypes this corresponds to
 	 * @param eventType see {@link EventType}
 	 */
 	String[] getTriggerDropCode(EventModelInfo eventModelInfo, int eventType);
+
+	String[] getUpdateTableCreationCode(EventModelInfo info);
+
+	String[] getUpdateTableDropCode(EventModelInfo info);
 
 }

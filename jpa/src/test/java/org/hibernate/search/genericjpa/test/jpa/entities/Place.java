@@ -30,12 +30,19 @@ import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
 import org.hibernate.search.annotations.Store;
+import org.hibernate.search.genericjpa.annotations.IdColumn;
+import org.hibernate.search.genericjpa.annotations.IdInfo;
 import org.hibernate.search.genericjpa.annotations.InIndex;
+import org.hibernate.search.genericjpa.annotations.UpdateInfo;
+import org.hibernate.search.genericjpa.db.events.ColumnType;
 
 @Entity
 @Table(name = "PLACE")
 @Indexed
 @InIndex
+@UpdateInfo(tableName = "PLACE", updateTableIdColumn = "updateid", updateTableEventTypeColumn = "eventCase", updateTableName = "PlaceUpdatesHsearch", idInfos = {
+		@IdInfo(columns = @IdColumn(column = "ID", updateTableColumn = "placefk", columnType = ColumnType.INTEGER))
+})
 public class Place {
 
 	private Integer id;
@@ -48,6 +55,7 @@ public class Place {
 	private JoinTableOneToOne jtoto;
 
 	@Id
+	@Column(name = "ID")
 	@DocumentId
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	public Integer getId() {
@@ -79,6 +87,11 @@ public class Place {
 	@IndexedEmbedded(depth = 3, includeEmbeddedObjectId = true)
 	@ContainedIn
 	@OneToMany(cascade = CascadeType.ALL)
+	@JoinTable(name = "Place_Sorcerer")
+	@UpdateInfo(tableName = "Place_Sorcerer", updateTableName = "PlaceSorcererUpdatesHsearch", updateTableIdColumn = "updateid", updateTableEventTypeColumn = "eventCase", idInfos = {
+			@IdInfo(entity = Place.class, columns = @IdColumn(column = "Place_ID", updateTableColumn = "placefk", columnType = ColumnType.INTEGER)),
+			@IdInfo(entity = Sorcerer.class, columns = @IdColumn(column = "sorcerers_ID", updateTableColumn = "sorcererfk", columnType = ColumnType.INTEGER))
+	})
 	public Set<Sorcerer> getSorcerers() {
 		return sorcerers;
 	}

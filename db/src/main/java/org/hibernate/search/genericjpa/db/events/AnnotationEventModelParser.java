@@ -9,7 +9,6 @@ package org.hibernate.search.genericjpa.db.events;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -17,9 +16,11 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.search.genericjpa.annotations.Hint;
+import org.hibernate.search.genericjpa.annotations.IdColumn;
 import org.hibernate.search.genericjpa.annotations.IdInfo;
 import org.hibernate.search.genericjpa.annotations.UpdateInfo;
 import org.hibernate.search.genericjpa.db.id.IdConverter;
+import org.hibernate.search.genericjpa.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.exception.SearchException;
 
 /**
@@ -38,46 +39,65 @@ public class AnnotationEventModelParser implements EventModelParser {
 	public List<EventModelInfo> parse(List<Class<?>> updateClasses) {
 		List<EventModelInfo> ret = new ArrayList<>( updateClasses.size() );
 		Set<String> handledOriginalTableNames = new HashSet<>( updateClasses.size() );
+		Set<String> updateTableNames = new HashSet<>( updateClasses.size() );
 		for ( Class<?> clazz : updateClasses ) {
 			{
 				UpdateInfo[] classUpdateInfos = clazz.getAnnotationsByType( UpdateInfo.class );
-				this.addUpdateInfosToList( ret, clazz, classUpdateInfos, handledOriginalTableNames );
+				this.addUpdateInfosToList( clazz, ret, clazz, classUpdateInfos, handledOriginalTableNames, updateTableNames );
 			}
 
 			for ( Method method : clazz.getDeclaredMethods() ) {
 				UpdateInfo[] methodUpdateInfos = method.getAnnotationsByType( UpdateInfo.class );
-				this.addUpdateInfosToList( ret, null, methodUpdateInfos, handledOriginalTableNames );
+				this.addUpdateInfosToList( method, ret, null, methodUpdateInfos, handledOriginalTableNames, updateTableNames );
 			}
 
 			for ( Field field : clazz.getDeclaredFields() ) {
 				UpdateInfo[] fieldUpdateInfos = field.getAnnotationsByType( UpdateInfo.class );
-				this.addUpdateInfosToList( ret, null, fieldUpdateInfos, handledOriginalTableNames );
+				this.addUpdateInfosToList( field, ret, null, fieldUpdateInfos, handledOriginalTableNames, updateTableNames );
 			}
 		}
 		return ret;
 	}
 
 	private void addUpdateInfosToList(
+			Object specifiedOn,
 			List<EventModelInfo> eventModelInfos,
-			Class<?> classSpecifiedOn,
+			Class<?> classSpecifiedOnClass,
 			UpdateInfo[] infos,
-			Set<String> handledOriginalTableNames) {
+			Set<String> handledOriginalTableNames,
+			Set<String> updateTableNames) {
 		for ( UpdateInfo info : infos ) {
 			String originalTableName = info.tableName();
+
+			if ( updateTableNames.contains( originalTableName ) ) {
+				throw new SearchException( "naming conflict with table " + originalTableName + ". a table of this name was marked to be created" );
+			}
+
 			if ( handledOriginalTableNames.contains( originalTableName ) ) {
 				throw new SearchException( "multiple @UpdateInfo specified for table " + originalTableName );
 			}
-			else {
-				handledOriginalTableNames.add( originalTableName );
-			}
+			handledOriginalTableNames.add( originalTableName );
+
+
 			String updateTableName = info.updateTableName().equals( "" ) ?
 					originalTableName + "hsearchupdates" :
-					info.tableName();
-			String eventCaseColumn = info.updateTableEventCaseColumn().equals( "" ) ?
-					"eventcasehsearchupdates" :
-					info.updateTableEventCaseColumn();
+					info.updateTableName();
+
+			if ( handledOriginalTableNames.contains( updateTableName ) ) {
+				throw new SearchException( "naming conflict with table " + updateTableName + ". a table of this name was marked to be created" );
+			}
+
+			if ( updateTableNames.contains( updateTableName ) ) {
+				throw new AssertionFailure( "attempted to use the same UpdateTableName twice: " + updateTableName );
+			}
+
+			updateTableNames.add( updateTableName );
+
+			String eventCaseColumn = info.updateTableEventTypeColumn().equals( "" ) ?
+					"eventcasehsearch" :
+					info.updateTableEventTypeColumn();
 			String updateIdColumn = info.updateTableIdColumn().equals( "" ) ?
-					"updatetableidcolumnhsearchupdates" :
+					"updateidhsearch" :
 					info.updateTableIdColumn();
 
 			IdInfo[] annotationIdInfos = info.idInfos();
@@ -86,42 +106,40 @@ public class AnnotationEventModelParser implements EventModelParser {
 			for ( IdInfo annotationIdInfo : annotationIdInfos ) {
 				final Class<?> idInfoEntityClass;
 				if ( annotationIdInfo.entity().equals( void.class ) ) {
-					if ( classSpecifiedOn == null ) {
+					if ( classSpecifiedOnClass == null ) {
 						throw new SearchException( "IdInfo.entity must be specified for the member level!" );
 					}
-					idInfoEntityClass = classSpecifiedOn;
+					idInfoEntityClass = classSpecifiedOnClass;
 				}
 				else {
 					idInfoEntityClass = annotationIdInfo.entity();
 				}
 
-				final String[] columns = annotationIdInfo.columns();
-				final String[] updateTableColumns;
-				if ( annotationIdInfo.updateTableColumns().length != 0 ) {
-					if ( annotationIdInfo.updateTableColumns().length != columns.length ) {
-						throw new SearchException(
-								"the length of IdInfo.updateTableColumns must be equal to IdInfo.columns"
-						);
+				final String[] columns = new String[annotationIdInfo.columns().length];
+				final String[] updateTableColumns = new String[columns.length];
+				final ColumnType[] columnTypes = new ColumnType[columns.length];
+				IdColumn[] idColumns = annotationIdInfo.columns();
+				for ( int i = 0; i < idColumns.length; ++i ) {
+					IdColumn cur = idColumns[i];
+					columns[i] = cur.column();
+					if ( !"".equals( cur.updateTableColumn() ) ) {
+						updateTableColumns[i] = cur.updateTableColumn();
 					}
-					updateTableColumns = annotationIdInfo.updateTableColumns();
-				}
-				else {
-					updateTableColumns = new String[columns.length];
-					for ( int i = 0; i < columns.length; ++i ) {
-						updateTableColumns[i] = columns[i] + "fk";
+					else {
+						updateTableColumns[i] = cur.column() + "fk";
 					}
+					columnTypes[i] = cur.columnType();
 				}
 
-				IdConverter idConverter = null;
-				if ( annotationIdInfo.type() != IdInfo.IdType.NONE ) {
-					if ( !annotationIdInfo.idConverter().equals( IdConverter.class ) ) {
-						throw new SearchException( "please specify either IdInfo.type OR IdInfo.idConverter" );
-					}
-					idConverter = annotationIdInfo.type();
+				final IdConverter idConverter;
+				if ( IdConverter.class.equals( annotationIdInfo.idConverter() ) && columnTypes.length == 1 ) {
+					idConverter = columnTypes[0];
 				}
 				else {
-					if ( annotationIdInfo.idConverter().equals( IdConverter.class ) ) {
-						throw new SearchException( "please specify either IdInfo.type OR IdInfo.idConverter" );
+					if ( IdConverter.class.equals( annotationIdInfo.idConverter() ) ) {
+						throw new SearchException(
+								specifiedOn + ": if more than one column is specified, you have to specify an IdConverter"
+						);
 					}
 					try {
 						idConverter = annotationIdInfo.idConverter().newInstance();
@@ -141,6 +159,7 @@ public class AnnotationEventModelParser implements EventModelParser {
 								idInfoEntityClass,
 								updateTableColumns,
 								columns,
+								columnTypes,
 								idConverter,
 								hints
 						)

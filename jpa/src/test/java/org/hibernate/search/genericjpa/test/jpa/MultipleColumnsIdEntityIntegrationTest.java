@@ -13,6 +13,7 @@ import java.util.Properties;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
 
+import org.hibernate.search.genericjpa.Constants;
 import org.hibernate.search.genericjpa.JPASearchFactoryController;
 import org.hibernate.search.genericjpa.Setup;
 import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringSource;
@@ -55,6 +56,10 @@ public class MultipleColumnsIdEntityIntegrationTest {
 		properties.setProperty(
 				"hibernate.search.trigger.source",
 				MySQLTriggerSQLStringSource.class.getName()
+		);
+		properties.setProperty(
+				Constants.TRIGGER_CREATION_STRATEGY_KEY,
+				Constants.TRIGGER_CREATION_STRATEGY_DROP_CREATE
 		);
 		properties.setProperty( "hibernate.search.searchfactory.type", "sql" );
 		this.searchController = Setup.createSearchFactory( this.emf, properties );
