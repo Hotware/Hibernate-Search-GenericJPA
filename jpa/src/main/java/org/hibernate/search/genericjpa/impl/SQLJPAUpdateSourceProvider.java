@@ -72,7 +72,7 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 	}
 
 	private void setupTriggers(List<EventModelInfo> eventModelInfos) {
-		if(TRIGGER_CREATION_STRATEGY_DONT_CREATE.equals(this.triggerCreateStrategy)) {
+		if ( TRIGGER_CREATION_STRATEGY_DONT_CREATE.equals( this.triggerCreateStrategy ) ) {
 			return;
 		}
 		EntityManager em = null;
@@ -199,13 +199,11 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 		//FIXME: better Exception, will this ever throw an Exception? even if triggers are not present
 		//this doesn't seem to throw anything (for MySQL at least, I think it's best to keep it for now)
 		catch (Exception e) {
-			if ( TRIGGER_CREATION_STRATEGY_CREATE.equals( this.triggerCreateStrategy ) ) {
-				LOGGER.log(
-						Level.WARNING,
-						"Exception while trying to create trigger (if triggers are not dropped before creating this might be okay)",
-						e
-				);
-			}
+			LOGGER.log(
+					Level.WARNING,
+					"Exception while trying to create trigger (if triggers are not dropped before creating this might be okay)",
+					e
+			);
 		}
 	}
 
