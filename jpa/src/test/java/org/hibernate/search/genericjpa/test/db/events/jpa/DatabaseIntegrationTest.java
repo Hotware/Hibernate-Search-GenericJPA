@@ -31,6 +31,7 @@ import org.hibernate.search.genericjpa.db.events.jpa.JPAUpdateSource;
 import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource;
 import org.hibernate.search.genericjpa.exception.SearchException;
+import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 import org.hibernate.search.genericjpa.test.jpa.entities.Place;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
 import org.hibernate.search.genericjpa.util.Sleep;
@@ -60,6 +61,7 @@ public abstract class DatabaseIntegrationTest {
 		this.emf = Persistence.createEntityManagerFactory( persistence );
 		EntityManager em = emf.createEntityManager();
 		try {
+
 			this.updateTableNames = new ArrayList<>();
 			List<EventModelInfo> infos = parser.parse(
 					new HashSet<>(
@@ -181,11 +183,8 @@ public abstract class DatabaseIntegrationTest {
 	public void setupTriggers(TriggerSQLStringSource triggerSource) throws SQLException {
 		EntityManager em = this.emf.createEntityManager();
 		try {
-			EntityTransaction tx = em.getTransaction();
+			JPATransactionWrapper tx = JPATransactionWrapper.get( em, null );
 			tx.begin();
-
-			java.sql.Connection connection = em.unwrap( java.sql.Connection.class );
-			connection.setAutoCommit( false );
 
 			dropStrings = new ArrayList<>();
 			// this is just for the unit tests to work properly.
@@ -193,10 +192,8 @@ public abstract class DatabaseIntegrationTest {
 			// into trouble
 			{
 				if ( triggerSource instanceof MySQLTriggerSQLStringSource ) {
-					Statement statement = connection.createStatement();
-					statement.addBatch( connection.nativeSQL( "DROP TABLE IF EXISTS " + MySQLTriggerSQLStringSource.DEFAULT_UNIQUE_ID_TABLE_NAME ) );
-					statement.executeBatch();
-					connection.commit();
+					em.createNativeQuery( "DROP TABLE IF EXISTS " + MySQLTriggerSQLStringSource.DEFAULT_UNIQUE_ID_TABLE_NAME )
+							.executeUpdate();
 				}
 			}
 
@@ -217,7 +214,7 @@ public abstract class DatabaseIntegrationTest {
 					em.createNativeQuery( str ).executeUpdate();
 					if ( tx != null ) {
 						System.out.println( "commiting setup code!" );
-						tx.commit();
+						tx.commitIgnoreExceptions();
 						tx.begin();
 					}
 				}
@@ -225,16 +222,31 @@ public abstract class DatabaseIntegrationTest {
 					for ( String unSetupCode : triggerSource.getSpecificUnSetupCode( info ) ) {
 						System.out.println( unSetupCode );
 						em.createNativeQuery( unSetupCode ).executeUpdate();
+						if ( tx != null ) {
+							System.out.println( "commiting setup code!" );
+							tx.commitIgnoreExceptions();
+							tx.begin();
+						}
 					}
 					for ( String setupCode : triggerSource.getSpecificSetupCode( info ) ) {
 						System.out.println( setupCode );
 						em.createNativeQuery( setupCode ).executeUpdate();
+						if ( tx != null ) {
+							System.out.println( "commiting setup code!" );
+							tx.commitIgnoreExceptions();
+							tx.begin();
+						}
 					}
 					for ( int eventType : EventType.values() ) {
 						String[] triggerDropStrings = triggerSource.getTriggerDropCode( info, eventType );
 						for ( String triggerCreationString : triggerDropStrings ) {
 							System.out.println( triggerCreationString );
 							em.createNativeQuery( triggerCreationString ).executeUpdate();
+							if ( tx != null ) {
+								System.out.println( "commiting setup code!" );
+								tx.commitIgnoreExceptions();
+								tx.begin();
+							}
 						}
 					}
 					for ( int eventType : EventType.values() ) {
@@ -242,6 +254,11 @@ public abstract class DatabaseIntegrationTest {
 						for ( String triggerCreationString : triggerCreationStrings ) {
 							System.out.println( triggerCreationString );
 							em.createNativeQuery( triggerCreationString ).executeUpdate();
+							if ( tx != null ) {
+								System.out.println( "commiting setup code!" );
+								tx.commitIgnoreExceptions();
+								tx.begin();
+							}
 						}
 					}
 
@@ -254,7 +271,7 @@ public abstract class DatabaseIntegrationTest {
 				}
 				throw new SearchException( e );
 			}
-			tx.commit();
+			tx.commitIgnoreExceptions();
 		}
 		finally {
 			if ( em != null ) {
