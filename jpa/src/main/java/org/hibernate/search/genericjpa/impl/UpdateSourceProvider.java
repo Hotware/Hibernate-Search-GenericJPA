@@ -6,6 +6,7 @@
  */
 package org.hibernate.search.genericjpa.impl;
 
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import org.hibernate.search.genericjpa.db.events.UpdateSource;
@@ -16,6 +17,6 @@ import org.hibernate.search.genericjpa.db.events.UpdateSource;
  */
 public interface UpdateSourceProvider {
 
-	UpdateSource getUpdateSource(long delay, TimeUnit timeUnit, int batchSizeForUpdates);
+	UpdateSource getUpdateSource(long delay, TimeUnit timeUnit, int batchSizeForUpdates, Properties properties);
 
 }

@@ -171,7 +171,7 @@ public final class Setup {
 				);
 			}
 			else if ( "manual-updates".equals( type ) ) {
-				updateSourceProvider = (a, b, c) -> null;
+				updateSourceProvider = (a, b, c, d) -> null;
 			}
 			else {
 				throw new SearchException( "unrecognized " + SEARCH_FACTORY_TYPE_KEY + ": " + type );

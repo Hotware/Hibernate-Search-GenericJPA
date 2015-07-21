@@ -20,6 +20,8 @@ public class Constants {
 	public static final String SEARCH_FACTORY_TYPE_DEFAULT_VALUE = "sql";
 	public static final String BATCH_SIZE_FOR_UPDATES_KEY = "hibernate.search.trigger.batchSizeForUpdates";
 	public static final String BATCH_SIZE_FOR_UPDATES_DEFAULT_VALUE = "5";
+	public static final String BATCH_SIZE_FOR_UPDATE_QUERIES_KEY = "hibernate.search.trigger.batchSizeForUpdateQueries";
+	public static final String BATCH_SIZE_FOR_UPDATE_QUERIES_DEFAULT_VALUE = "20";
 	public static final String UPDATE_DELAY_KEY = "hibernate.search.trigger.updateDelay";
 	public static final String UPDATE_DELAY_DEFAULT_VALUE = "500";
 	public static final String TRIGGER_SOURCE_KEY = "hibernate.search.trigger.source";

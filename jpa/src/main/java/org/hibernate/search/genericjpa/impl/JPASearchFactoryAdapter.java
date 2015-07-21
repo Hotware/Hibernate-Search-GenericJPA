@@ -160,7 +160,8 @@ public final class JPASearchFactoryAdapter
 		this.updateSource = this.updateSourceProvider.getUpdateSource(
 				this.updateDelay,
 				TimeUnit.MILLISECONDS,
-				this.batchSizeForUpdates
+				this.batchSizeForUpdates,
+				this.properties
 		);
 		if ( this.updateSource != null ) {
 			//TODO: we could allow this, but then we would need to change

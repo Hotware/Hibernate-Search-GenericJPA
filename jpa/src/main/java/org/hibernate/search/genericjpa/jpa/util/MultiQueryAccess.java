@@ -32,7 +32,7 @@ public class MultiQueryAccess {
 	private final Comparator<ObjectIdentifierWrapper> comparator;
 	private final int batchSize;
 
-	private final Map<String, Long> processed;
+	private final Map<String, Long> currentPosition;
 	private final Map<String, LinkedList<Object>> values;
 
 	private Object scheduled;
@@ -63,11 +63,11 @@ public class MultiQueryAccess {
 		this.queryMap = queryMap;
 		this.comparator = comparator;
 		this.batchSize = batchSize;
-		this.processed = new HashMap<>();
+		this.currentPosition = new HashMap<>();
 		this.values = new HashMap<>();
 		for ( String ident : queryMap.keySet() ) {
 			this.values.put( ident, new LinkedList<>() );
-			this.processed.put( ident, 0L );
+			this.currentPosition.put( ident, 0L );
 		}
 	}
 
@@ -90,7 +90,7 @@ public class MultiQueryAccess {
 			if ( !this.currentCountMap.get( identifier ).equals( 0L ) ) {
 				if ( this.values.get( identifier ).size() == 0 ) {
 					// the last batch is empty. get a new one
-					Long processed = this.processed.get( identifier );
+					Long processed = this.currentPosition.get( identifier );
 					// yay JPA...
 					query.setFirstResult( toInt( processed ) );
 					//FIXME: re-implement proper batching again
@@ -109,10 +109,10 @@ public class MultiQueryAccess {
 			this.scheduled = arr.object;
 			this.identifier = arr.identifier;
 			this.values.get( this.identifier ).pop();
-			Long processed = this.processed.get( arr.identifier );
-			Long newProcessed = this.processed.computeIfPresent( arr.identifier, (clazz, old) -> old + 1 );
-			if ( Math.abs( newProcessed - processed ) != 1L ) {
-				throw new AssertionFailure( "the new processed count should be exactly 1 " + "greater than the old one" );
+			Long currentPosition = this.currentPosition.get( arr.identifier );
+			Long newCurrentPosition = this.currentPosition.computeIfPresent( arr.identifier, (clazz, old) -> old + 1 );
+			if ( Math.abs( newCurrentPosition - currentPosition ) != 1L ) {
+				throw new AssertionFailure( "the new currentPosition count should be exactly 1 " + "greater than the old one" );
 			}
 			Long count = this.currentCountMap.get( arr.identifier );
 			Long newCount = this.currentCountMap.computeIfPresent(
@@ -126,12 +126,12 @@ public class MultiQueryAccess {
 	}
 
 	public void addToNextValuePosition(String identifier, Long change) {
-		Long oldValue = this.processed.get( identifier );
+		Long oldValue = this.currentPosition.get( identifier );
 		Long newValue = oldValue + change;
 		if ( newValue < 0L ) {
 			throw new IllegalArgumentException( "change would set the next values" + " position to something less than 0" );
 		}
-		this.processed.put( identifier, newValue );
+		this.currentPosition.put( identifier, newValue );
 	}
 
 	/**

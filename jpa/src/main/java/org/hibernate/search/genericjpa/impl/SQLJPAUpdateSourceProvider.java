@@ -12,6 +12,7 @@ import javax.persistence.FlushModeType;
 import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -26,6 +27,8 @@ import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 
+import static org.hibernate.search.genericjpa.Constants.BATCH_SIZE_FOR_UPDATE_QUERIES_DEFAULT_VALUE;
+import static org.hibernate.search.genericjpa.Constants.BATCH_SIZE_FOR_UPDATE_QUERIES_KEY;
 import static org.hibernate.search.genericjpa.Constants.TRIGGER_CREATION_STRATEGY_CREATE;
 import static org.hibernate.search.genericjpa.Constants.TRIGGER_CREATION_STRATEGY_DONT_CREATE;
 import static org.hibernate.search.genericjpa.Constants.TRIGGER_CREATION_STRATEGY_DROP_CREATE;
@@ -57,7 +60,7 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 	}
 
 	@Override
-	public UpdateSource getUpdateSource(long delay, TimeUnit timeUnit, int batchSizeForUpdates) {
+	public UpdateSource getUpdateSource(long delay, TimeUnit timeUnit, int batchSizeForUpdates, Properties properties) {
 		EventModelParser eventModelParser = new AnnotationEventModelParser();
 		List<EventModelInfo> eventModelInfos = eventModelParser.parse( new ArrayList<>( this.updateClasses ) );
 		this.setupTriggers( eventModelInfos );
@@ -67,12 +70,19 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 				this.transactionManager,
 				delay,
 				timeUnit,
-				batchSizeForUpdates
+				batchSizeForUpdates,
+				Integer.parseInt(
+						properties.getProperty(
+								BATCH_SIZE_FOR_UPDATE_QUERIES_KEY,
+								BATCH_SIZE_FOR_UPDATE_QUERIES_DEFAULT_VALUE
+						)
+				)
 		);
 	}
 
 	private void setupTriggers(List<EventModelInfo> eventModelInfos) {
-		if ( TRIGGER_CREATION_STRATEGY_DONT_CREATE.equals( this.triggerCreateStrategy ) ) {
+		if ( TRIGGER_CREATION_STRATEGY_DONT_CREATE.equals( this.triggerCreateStrategy ) || (!TRIGGER_CREATION_STRATEGY_CREATE
+				.equals( this.triggerCreateStrategy ) && !TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy )) ) {
 			return;
 		}
 		EntityManager em = null;
