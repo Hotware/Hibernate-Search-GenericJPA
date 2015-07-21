@@ -15,7 +15,11 @@ import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.genericjpa.annotations.CustomUpdateEntityProvider;
+import org.hibernate.search.genericjpa.annotations.IdColumn;
+import org.hibernate.search.genericjpa.annotations.IdInfo;
 import org.hibernate.search.genericjpa.annotations.InIndex;
+import org.hibernate.search.genericjpa.annotations.UpdateInfo;
+import org.hibernate.search.genericjpa.db.events.ColumnType;
 
 /**
  * Created by Martin on 08.07.2015.
@@ -23,8 +27,11 @@ import org.hibernate.search.genericjpa.annotations.InIndex;
 @Entity
 @InIndex
 @Indexed
-@CustomUpdateEntityProvider( impl = CustomUpdatedEntityEntityProvider.class )
+@CustomUpdateEntityProvider(impl = CustomUpdatedEntityEntityProvider.class)
 @Table(name = "CustomUpdatedEntity")
+@UpdateInfo(tableName = "CustomUpdatedEntity", idInfos = @IdInfo(columns =
+	@IdColumn(column = "id", columnType = ColumnType.INTEGER)
+))
 public class CustomUpdatedEntity {
 
 	@Id

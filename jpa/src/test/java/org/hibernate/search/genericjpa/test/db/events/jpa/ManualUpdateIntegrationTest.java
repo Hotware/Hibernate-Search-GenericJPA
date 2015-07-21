@@ -21,23 +21,20 @@ import java.util.stream.Collectors;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.metadata.impl.MetadataProvider;
-import org.hibernate.search.genericjpa.db.events.UpdateClassAnnotationEventModelParser;
+import org.hibernate.search.genericjpa.db.events.AnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.index.IndexUpdater;
 import org.hibernate.search.genericjpa.db.events.jpa.JPAUpdateSource;
 import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringSource;
-import org.hibernate.search.genericjpa.entity.impl.JPAReusableEntityProvider;
 import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
+import org.hibernate.search.genericjpa.entity.impl.JPAReusableEntityProvider;
 import org.hibernate.search.genericjpa.factory.SearchConfigurationImpl;
 import org.hibernate.search.genericjpa.metadata.MetadataRehasher;
 import org.hibernate.search.genericjpa.metadata.MetadataUtil;
 import org.hibernate.search.genericjpa.metadata.RehashedTypeMetadata;
 import org.hibernate.search.genericjpa.test.jpa.entities.Place;
-import org.hibernate.search.genericjpa.test.jpa.entities.PlaceSorcererUpdates;
-import org.hibernate.search.genericjpa.test.jpa.entities.PlaceUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
-import org.hibernate.search.genericjpa.test.jpa.entities.SorcererUpdates;
 import org.hibernate.search.genericjpa.util.Sleep;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
 
@@ -104,12 +101,11 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 					impl
 			);
 			try {
-				EventModelParser eventModelParser = new UpdateClassAnnotationEventModelParser();
+				EventModelParser eventModelParser = new AnnotationEventModelParser();
 				List<EventModelInfo> eventModelInfos = eventModelParser.parse(
 						new HashSet<>(
 								Arrays.asList(
-										PlaceUpdates.class, SorcererUpdates.class,
-										PlaceSorcererUpdates.class
+										Place.class, Sorcerer.class
 								)
 						)
 				);

@@ -15,15 +15,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.hibernate.search.genericjpa.db.events.UpdateClassAnnotationEventModelParser;
+import org.hibernate.search.genericjpa.db.events.AnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.jpa.JPAUpdateSource;
 import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess;
 import org.hibernate.search.genericjpa.test.jpa.entities.Place;
-import org.hibernate.search.genericjpa.test.jpa.entities.PlaceSorcererUpdates;
-import org.hibernate.search.genericjpa.test.jpa.entities.PlaceUpdates;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
 import org.hibernate.search.genericjpa.util.Sleep;
 
@@ -40,9 +38,9 @@ public class JPAUpdateSourceTest {
 	 * this is needed in other tests because the query method of JPAUpdateSource has package access
 	 */
 	public static MultiQueryAccess query(EntityManagerFactory emf, EntityManager em) throws NoSuchFieldException {
-		EventModelParser parser = new UpdateClassAnnotationEventModelParser();
+		EventModelParser parser = new AnnotationEventModelParser();
 		JPAUpdateSource updateSource = new JPAUpdateSource(
-				parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class, PlaceUpdates.class ) ) ),
+				parser.parse( new HashSet<>( Arrays.asList( Place.class, Sorcerer.class ) ) ),
 				emf, null, 1, TimeUnit.SECONDS, 2, 2
 		);
 		return JPAUpdateSource.query( updateSource, em );
@@ -52,9 +50,9 @@ public class JPAUpdateSourceTest {
 	public void test() throws InterruptedException {
 		EntityManagerFactory emf = Persistence.createEntityManagerFactory( "EclipseLink" );
 		try {
-			EventModelParser parser = new UpdateClassAnnotationEventModelParser();
+			EventModelParser parser = new AnnotationEventModelParser();
 			JPAUpdateSource updateSource = new JPAUpdateSource(
-					parser.parse( new HashSet<>( Arrays.asList( PlaceSorcererUpdates.class, PlaceUpdates.class ) ) ),
+					parser.parse( new HashSet<>( Arrays.asList( Place.class, Sorcerer.class ) ) ),
 					emf,
 					null,
 					1,
@@ -69,12 +67,12 @@ public class JPAUpdateSourceTest {
 					em = emf.createEntityManager();
 					EntityTransaction tx = em.getTransaction();
 					tx.begin();
-					PlaceSorcererUpdates update = new PlaceSorcererUpdates();
-					update.setEventType( EventType.INSERT );
-					update.setId( 1L );
-					update.setPlaceId( 2 );
-					update.setSorcererId( 3 );
-					em.persist( update );
+					em.createNativeQuery(
+							String.format(
+									"INSERT INTO PlaceSorcererUpdatesHsearch(updateid, eventCase, placefk, sorcererfk) VALUES (1, %s, 2, 3",
+									String.valueOf( EventType.INSERT )
+							)
+					).executeUpdate();
 					tx.commit();
 
 				}
@@ -128,8 +126,8 @@ public class JPAUpdateSourceTest {
 				tx.begin();
 				assertEquals(
 						"UpdateSource should delete all things after it has processed the updates but didn't do so",
-						null,
-						em.find( PlaceSorcererUpdates.class, 1L )
+						0,
+						em.createNativeQuery( "SELECT * FROM PlaceSorcererUpdatesHsearch" ).getResultList().size()
 				);
 				tx.commit();
 			}

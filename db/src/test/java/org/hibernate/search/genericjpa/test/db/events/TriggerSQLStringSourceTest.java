@@ -10,7 +10,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 
 import org.hibernate.search.genericjpa.db.events.AnnotationEventModelParser;
-import org.hibernate.search.genericjpa.db.events.UpdateClassAnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventType;
@@ -18,7 +17,6 @@ import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringS
 import org.hibernate.search.genericjpa.db.events.triggers.PostgreSQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource;
 import org.hibernate.search.genericjpa.test.db.entities.Place;
-import org.hibernate.search.genericjpa.test.db.entities.PlaceSorcererUpdates;
 
 import org.junit.Test;
 

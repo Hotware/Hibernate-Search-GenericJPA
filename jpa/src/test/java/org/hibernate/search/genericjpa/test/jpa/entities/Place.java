@@ -88,9 +88,9 @@ public class Place {
 	@ContainedIn
 	@OneToMany(cascade = CascadeType.ALL)
 	@JoinTable(name = "Place_Sorcerer")
-	@UpdateInfo(tableName = "Place_Sorcerer", idInfos = {
-			@IdInfo(entity = Place.class, columns = @IdColumn(column = "Place_ID", columnType = ColumnType.INTEGER)),
-			@IdInfo(entity = Sorcerer.class, columns = @IdColumn(column = "Sorcerer_ID", columnType = ColumnType.INTEGER))
+	@UpdateInfo(tableName = "Place_Sorcerer", updateTableName = "PlaceSorcererUpdatesHsearch", updateTableIdColumn = "updateid", updateTableEventTypeColumn = "eventCase", idInfos = {
+			@IdInfo(entity = Place.class, columns = @IdColumn(column = "Place_ID", updateTableColumn = "placefk", columnType = ColumnType.INTEGER)),
+			@IdInfo(entity = Sorcerer.class, columns = @IdColumn(column = "Sorcerer_ID", updateTableColumn = "sorcererfk", columnType = ColumnType.INTEGER))
 	})
 	public Set<Sorcerer> getSorcerers() {
 		return sorcerers;

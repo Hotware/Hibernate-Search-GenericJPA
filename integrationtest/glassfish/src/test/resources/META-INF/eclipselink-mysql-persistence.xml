@@ -7,10 +7,7 @@
 		transaction-type="JTA">
 		<jta-data-source>jdbc/mysql</jta-data-source>
 		<class>org.hibernate.search.genericjpa.test.entities.Game</class>
-		<class>org.hibernate.search.genericjpa.test.entities.GameUpdates</class>
 		<class>org.hibernate.search.genericjpa.test.entities.Vendor</class>
-		<class>org.hibernate.search.genericjpa.test.entities.VendorUpdates</class>
-		<class>org.hibernate.search.genericjpa.test.entities.GameVendorUpdates</class>
 		<properties>
 			<property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver" />
 			<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/testingdb" />

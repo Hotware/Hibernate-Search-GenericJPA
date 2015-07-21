@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.hibernate.search.genericjpa.db.events.UpdateClassAnnotationEventModelParser;
+import org.hibernate.search.genericjpa.db.events.AnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventType;
@@ -57,7 +57,7 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 
 	@Override
 	public UpdateSource getUpdateSource(long delay, TimeUnit timeUnit, int batchSizeForUpdates) {
-		EventModelParser eventModelParser = new UpdateClassAnnotationEventModelParser();
+		EventModelParser eventModelParser = new AnnotationEventModelParser();
 		List<EventModelInfo> eventModelInfos = eventModelParser.parse( new ArrayList<>( this.updateClasses ) );
 		this.setupTriggers( eventModelInfos );
 		return new JPAUpdateSource(
@@ -91,6 +91,18 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 					}
 				}
 				for ( EventModelInfo info : eventModelInfos ) {
+					if ( TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy ) ) {
+						for ( String str : triggerSource.getUpdateTableDropCode( info ) ) {
+							System.out.println( str );
+							em.createNativeQuery( str ).executeUpdate();
+						}
+					}
+
+					for ( String str : triggerSource.getUpdateTableCreationCode( info ) ) {
+						System.out.println( str );
+						em.createNativeQuery( str ).executeUpdate();
+					}
+
 					if ( TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy ) ) {
 						for ( String unSetupCode : this.triggerSource.getSpecificUnSetupCode( info ) ) {
 							LOGGER.info( unSetupCode );
