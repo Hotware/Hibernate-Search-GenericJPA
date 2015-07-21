@@ -25,6 +25,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.hibernate.search.genericjpa.annotations.IdInfo;
+import org.hibernate.search.genericjpa.db.events.ColumnType;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateEventInfo;
@@ -51,10 +52,6 @@ public class JPAUpdateSource implements UpdateSource {
 	private final TimeUnit timeUnit;
 	private final int batchSizeForUpdates;
 	private final int batchSizeForDatabaseQueries;
-
-	//we store the order of the data fields mapped to the
-	//table name in here
-	private final Map<String, List<String>> dataFields;
 
 	private final Map<String, EventModelInfo> updateTableToEventModelInfo;
 	private final ScheduledExecutorService exec;
@@ -144,18 +141,6 @@ public class JPAUpdateSource implements UpdateSource {
 		}
 		this.exec = exec;
 		this.transactionManager = transactionManager;
-
-		{
-			final Map<String, List<String>> dataFields = new HashMap<>();
-			for ( EventModelInfo evi : eventModelInfos ) {
-				String tableName = evi.getUpdateTableName();
-				dataFields.put( tableName, new ArrayList<>() );
-				for ( EventModelInfo.IdInfo idInfo : evi.getIdInfos() ) {
-					dataFields.get(tableName).add(idInfo.getColumnsInUpdateTable());
-				}
-			}
-			this.dataFields = dataFields;
-		}
 	}
 
 	private static ThreadFactory tf() {
@@ -171,8 +156,8 @@ public class JPAUpdateSource implements UpdateSource {
 			CriteriaBuilder cb = em.getCriteriaBuilder();
 			long count;
 			{
-				count = ((Number) ((Object[]) em.createNativeQuery( "SELECT count(*) FROM " + evi.getUpdateTableName() )
-						.getSingleResult())[0]).longValue();
+				count = ((Number) em.createNativeQuery( "SELECT count(*) FROM " + evi.getUpdateTableName() )
+						.getSingleResult()).longValue();
 			}
 			countMap.put( evi.getUpdateTableName(), count );
 
@@ -181,15 +166,16 @@ public class JPAUpdateSource implements UpdateSource {
 						.append( evi.getUpdateIdColumn() )
 						.append( ", " )
 						.append( evi.getEventTypeColumn() );
-				List<String> dataFieldsCurUpdateTable = updateSource.dataFields.get( evi.getUpdateTableName() );
-				for ( String field : dataFieldsCurUpdateTable ) {
-					queryString.append( ", " ).append( field );
+				for ( EventModelInfo.IdInfo idInfo : evi.getIdInfos() ) {
+					for ( String column : idInfo.getColumnsInUpdateTable() ) {
+						queryString.append( ", " ).append( column );
+					}
 				}
 				queryString.append( " FROM " ).append( evi.getUpdateTableName() ).append(
 						" ORDER BY "
 				).append( evi.getUpdateIdColumn() );
 
-				Query query = em.createQuery(
+				Query query = em.createNativeQuery(
 						queryString.toString()
 				);
 				queryMap.put( evi.getUpdateTableName(), query );
@@ -243,25 +229,40 @@ public class JPAUpdateSource implements UpdateSource {
 								while ( query.next() ) {
 									// we have no order problems here since
 									// the query does the ordering for us
-									Object[] values = (Object[]) query.get();
-									toRemove.add( new Object[] {query.identifier(), values[0]} );
+									Object[] valuesFromQuery = (Object[]) query.get();
+
+									Long updateId = ((Number) valuesFromQuery[0]).longValue();
+									Integer eventType = ((Number) valuesFromQuery[1]).intValue();
+
 									EventModelInfo evi = this.updateTableToEventModelInfo.get( query.identifier() );
-									evi.getIdInfos()
-											.forEach(
-													(info) -> {
-														info.get
-														updateInfos.add(
-																new UpdateEventInfo(
-																		info.getEntityClass(),
-																		info.getIdAccessor()
-																				.apply( val ),
-																		evi.getEventTypeAccessor()
-																				.apply( val ),
-																		info.getHints()
-																)
-														);
-													}
-											);
+
+									toRemove.add(
+											new Object[] {
+													evi.getUpdateTableName(),
+													evi.getUpdateIdColumn(),
+													updateId,
+											}
+									);
+
+									//we skip the id and eventtype
+									int currentIndex = 2;
+									for ( EventModelInfo.IdInfo info : evi.getIdInfos() ) {
+										ColumnType[] columnTypes = info.getColumnTypes();
+										String[] columnNames = info.getColumnsInUpdateTable();
+										Object val[] = new Object[columnTypes.length];
+										for ( int i = 0; i < columnTypes.length; ++i ) {
+											val[i] = valuesFromQuery[currentIndex++];
+										}
+										Object entityId = info.getIdConverter().convert( val, columnNames, columnTypes );
+										updateInfos.add(
+												new UpdateEventInfo(
+														info.getEntityClass(),
+														entityId,
+														eventType,
+														info.getHints()
+												)
+										);
+									}
 									// TODO: maybe move this to a method as
 									// it is getting reused
 									if ( ++processed % this.batchSizeForUpdates == 0 ) {
@@ -270,11 +271,12 @@ public class JPAUpdateSource implements UpdateSource {
 											LOGGER.fine( "handled update-event: " + updateInfos );
 										}
 										for ( Object[] rem : toRemove ) {
-											// the class is in rem[0], the
-											// entity is in
-											// rem[1]
+											// the table is in rem[0], the
+											// id column for the update is in
+											// rem[1] and the id is in rem[2]
 											query.addToNextValuePosition( rem[0].toString(), -1L );
-											em.remove( rem[1] );
+											em.createNativeQuery( "DELETE FROM " + rem[0] + " WHERE " + rem[1] + " = " + rem[2] )
+													.executeUpdate();
 										}
 										toRemove.clear();
 										updateInfos.clear();
@@ -286,10 +288,12 @@ public class JPAUpdateSource implements UpdateSource {
 										LOGGER.fine( "handled update-event: " + updateInfos );
 									}
 									for ( Object[] rem : toRemove ) {
-										// the class is in rem[0], the
-										// entity is in rem[1]
+										// the table is in rem[0], the
+										// id column for the update is in
+										// rem[1] and the id is in rem[2]
 										query.addToNextValuePosition( rem[0].toString(), -1L );
-										em.remove( rem[1] );
+										em.createNativeQuery( "DELETE FROM " + rem[0] + " WHERE " + rem[1] + " = " + rem[2] )
+												.executeUpdate();
 									}
 									toRemove.clear();
 									updateInfos.clear();

@@ -43,25 +43,26 @@ public class AnnotationEventModelParser implements EventModelParser {
 		for ( Class<?> clazz : updateClasses ) {
 			{
 				UpdateInfo[] classUpdateInfos = clazz.getAnnotationsByType( UpdateInfo.class );
-				this.addUpdateInfosToList( ret, clazz, classUpdateInfos, handledOriginalTableNames, updateTableNames );
+				this.addUpdateInfosToList( clazz, ret, clazz, classUpdateInfos, handledOriginalTableNames, updateTableNames );
 			}
 
 			for ( Method method : clazz.getDeclaredMethods() ) {
 				UpdateInfo[] methodUpdateInfos = method.getAnnotationsByType( UpdateInfo.class );
-				this.addUpdateInfosToList( ret, null, methodUpdateInfos, handledOriginalTableNames, updateTableNames );
+				this.addUpdateInfosToList( method, ret, null, methodUpdateInfos, handledOriginalTableNames, updateTableNames );
 			}
 
 			for ( Field field : clazz.getDeclaredFields() ) {
 				UpdateInfo[] fieldUpdateInfos = field.getAnnotationsByType( UpdateInfo.class );
-				this.addUpdateInfosToList( ret, null, fieldUpdateInfos, handledOriginalTableNames, updateTableNames );
+				this.addUpdateInfosToList( field, ret, null, fieldUpdateInfos, handledOriginalTableNames, updateTableNames );
 			}
 		}
 		return ret;
 	}
 
 	private void addUpdateInfosToList(
+			Object specifiedOn,
 			List<EventModelInfo> eventModelInfos,
-			Class<?> classSpecifiedOn,
+			Class<?> classSpecifiedOnClass,
 			UpdateInfo[] infos,
 			Set<String> handledOriginalTableNames,
 			Set<String> updateTableNames) {
@@ -92,7 +93,6 @@ public class AnnotationEventModelParser implements EventModelParser {
 
 			updateTableNames.add( updateTableName );
 
-
 			String eventCaseColumn = info.updateTableEventTypeColumn().equals( "" ) ?
 					"eventcasehsearch" :
 					info.updateTableEventTypeColumn();
@@ -106,10 +106,10 @@ public class AnnotationEventModelParser implements EventModelParser {
 			for ( IdInfo annotationIdInfo : annotationIdInfos ) {
 				final Class<?> idInfoEntityClass;
 				if ( annotationIdInfo.entity().equals( void.class ) ) {
-					if ( classSpecifiedOn == null ) {
+					if ( classSpecifiedOnClass == null ) {
 						throw new SearchException( "IdInfo.entity must be specified for the member level!" );
 					}
-					idInfoEntityClass = classSpecifiedOn;
+					idInfoEntityClass = classSpecifiedOnClass;
 				}
 				else {
 					idInfoEntityClass = annotationIdInfo.entity();
@@ -138,7 +138,7 @@ public class AnnotationEventModelParser implements EventModelParser {
 				else {
 					if ( IdConverter.class.equals( annotationIdInfo.idConverter() ) ) {
 						throw new SearchException(
-								"if more than one column is specified, you have to specify an IdConverter"
+								specifiedOn + ": if more than one column is specified, you have to specify an IdConverter"
 						);
 					}
 					try {

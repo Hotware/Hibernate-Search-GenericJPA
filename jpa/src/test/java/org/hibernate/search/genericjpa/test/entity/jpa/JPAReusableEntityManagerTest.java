@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.entity.impl.JPAReusableEntityProvider;
 import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
 import org.hibernate.search.genericjpa.test.db.events.jpa.DatabaseIntegrationTest;
@@ -31,7 +32,7 @@ public class JPAReusableEntityManagerTest extends DatabaseIntegrationTest {
 
 	@Test
 	public void test() throws SQLException, IOException {
-		this.setup( "EclipseLink" );
+		this.setup( "EclipseLink_MySQL", new MySQLTriggerSQLStringSource() );
 		MetaModelParser metaModelParser = new MetaModelParser();
 		metaModelParser.parse( this.emf.getMetamodel() );
 		ReusableEntityProvider provider = new JPAReusableEntityProvider(

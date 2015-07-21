@@ -40,8 +40,8 @@ import org.hibernate.search.genericjpa.db.events.ColumnType;
 @Table(name = "PLACE")
 @Indexed
 @InIndex
-@UpdateInfo(tableName = "PLACE", idInfos = {
-		@IdInfo(columns = @IdColumn(column = "ID", columnType = ColumnType.INTEGER))
+@UpdateInfo(tableName = "PLACE", updateTableIdColumn = "updateid", updateTableEventTypeColumn = "eventCase", updateTableName = "PlaceUpdatesHsearch", idInfos = {
+		@IdInfo(columns = @IdColumn(column = "ID", updateTableColumn = "placefk", columnType = ColumnType.INTEGER))
 })
 public class Place {
 
@@ -90,7 +90,7 @@ public class Place {
 	@JoinTable(name = "Place_Sorcerer")
 	@UpdateInfo(tableName = "Place_Sorcerer", updateTableName = "PlaceSorcererUpdatesHsearch", updateTableIdColumn = "updateid", updateTableEventTypeColumn = "eventCase", idInfos = {
 			@IdInfo(entity = Place.class, columns = @IdColumn(column = "Place_ID", updateTableColumn = "placefk", columnType = ColumnType.INTEGER)),
-			@IdInfo(entity = Sorcerer.class, columns = @IdColumn(column = "Sorcerer_ID", updateTableColumn = "sorcererfk", columnType = ColumnType.INTEGER))
+			@IdInfo(entity = Sorcerer.class, columns = @IdColumn(column = "sorcerers_ID", updateTableColumn = "sorcererfk", columnType = ColumnType.INTEGER))
 	})
 	public Set<Sorcerer> getSorcerers() {
 		return sorcerers;

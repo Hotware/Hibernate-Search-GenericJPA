@@ -53,28 +53,4 @@
         </properties>
     </persistence-unit>
 
-    <persistence-unit name="EclipseLink" transaction-type="RESOURCE_LOCAL">
-        <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
-        <class>org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer</class>
-        <class>org.hibernate.search.genericjpa.test.jpa.entities.Place</class>
-        <class>org.hibernate.search.genericjpa.test.jpa.entities.AdditionalPlace</class>
-        <class>org.hibernate.search.genericjpa.test.jpa.entities.AdditionalPlace2</class>
-        <class>org.hibernate.search.genericjpa.test.jpa.entities.OneToManyWithoutTable</class>
-        <class>org.hibernate.search.genericjpa.test.jpa.entities.JoinTableOneToOne</class>
-
-        <class>org.hibernate.search.genericjpa.test.jpa.entities.CustomUpdatedEntity</class>
-
-        <class>org.hibernate.search.genericjpa.test.jpa.entities.MultipleColumnsIdEntity</class>
-        <properties>
-            <property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbcDriver"/>
-            <property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:mem:eclipselink"/>
-            <property name="javax.persistence.jdbc.user" value="sa"/>
-            <property name="javax.persistence.jdbc.password" value=""/>
-            <property name="eclipselink.ddl-generation" value="drop-and-create-tables"/>
-            <property name="eclipselink.logging.level" value="INFO"/>
-            <property name="eclipselink.ddl-generation.output-mode"
-                      value="both"/>
-        </properties>
-    </persistence-unit>
-
 </persistence>

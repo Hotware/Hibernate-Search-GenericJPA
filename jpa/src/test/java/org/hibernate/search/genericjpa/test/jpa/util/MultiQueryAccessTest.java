@@ -15,11 +15,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.hibernate.search.genericjpa.db.events.EventType;
+import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess;
 import org.hibernate.search.genericjpa.test.db.events.jpa.DatabaseIntegrationTest;
 import org.hibernate.search.genericjpa.test.db.events.jpa.JPAUpdateSourceTest;
-import org.hibernate.search.genericjpa.test.jpa.entities.PlaceSorcererUpdates;
-import org.hibernate.search.genericjpa.test.jpa.entities.PlaceUpdates;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -35,7 +34,7 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 
 	@Before
 	public void setup() throws NoSuchFieldException, SQLException {
-		this.setup( "EclipseLink" );
+		this.setup( "EclipseLink_MySQL", new MySQLTriggerSQLStringSource() );
 
 		EntityManager em = null;
 		try {
@@ -63,65 +62,54 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 
 			tx.begin();
 			{
-				PlaceSorcererUpdates up = new PlaceSorcererUpdates();
-				up.setEventType( EventType.INSERT );
-				up.setId( 1L );
-				up.setPlaceId( 123123 );
-				up.setSorcererId( 123 );
-				em.persist( up );
+				em.createNativeQuery(
+						String.format(
+								"INSERT INTO PlaceSorcererUpdatesHsearch(updateid, eventCase, placefk, sorcererfk) VALUES (1, %s, 123123, 123)",
+								String.valueOf( EventType.INSERT )
+						)
+				).executeUpdate();
 			}
 			em.flush();
 
 			{
-				PlaceSorcererUpdates up = new PlaceSorcererUpdates();
-				up.setEventType( EventType.INSERT );
-				up.setId( 2L );
-				up.setPlaceId( 123123 );
-				up.setSorcererId( 123 );
-				em.persist( up );
-				del.add( up );
+				em.createNativeQuery(
+						String.format(
+								"INSERT INTO PlaceSorcererUpdatesHsearch(updateid, eventCase, placefk, sorcererfk) VALUES (5, %s, 123123, 123)",
+								String.valueOf( EventType.INSERT )
+						)
+				).executeUpdate();
 			}
 			em.flush();
 
 			{
-				PlaceSorcererUpdates up = new PlaceSorcererUpdates();
-				up.setEventType( EventType.UPDATE );
-				up.setId( 3L );
-				up.setPlaceId( 123123 );
-				up.setSorcererId( 123 );
-				em.persist( up );
+				em.createNativeQuery(
+						String.format(
+								"INSERT INTO PlaceSorcererUpdatesHsearch(updateid, eventCase, placefk, sorcererfk) VALUES (4, %s, 123123, 123)",
+								String.valueOf( EventType.UPDATE )
+						)
+				).executeUpdate();
 			}
 			em.flush();
 
 			{
-				PlaceUpdates up = new PlaceUpdates();
-				up.setEventType( EventType.INSERT );
-				up.setId( 1 );
-				up.setPlaceId( 233 );
-				em.persist( up );
-				del.add( up );
+				em.createNativeQuery(
+						String.format(
+								"INSERT INTO PlaceUpdatesHsearch(updateid, eventCase, placefk) VALUES (3, %s, 233)",
+								String.valueOf( EventType.UPDATE )
+						)
+				).executeUpdate();
 			}
 			em.flush();
 
 			{
-				PlaceUpdates up = new PlaceUpdates();
-				up.setEventType( EventType.DELETE );
-				up.setId( 2 );
-				up.setPlaceId( 233 );
-				em.persist( up );
+				em.createNativeQuery(
+						String.format(
+								"INSERT INTO PlaceUpdatesHsearch(updateid, eventCase, placefk) VALUES (2, %s, 233)",
+								String.valueOf( EventType.DELETE )
+						)
+				).executeUpdate();
 			}
 			em.flush();
-
-			tx.commit();
-
-			tx.begin();
-
-			// we have to delete stuff here because of the autoincrement thingy
-			// in the Updates classes if this is changed, this Test is still
-			// correct because we set the ids right
-			for ( Object obj : del ) {
-				em.remove( obj );
-			}
 
 			tx.commit();
 		}
@@ -145,7 +133,9 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 					Arrays.asList(
 							EventType.INSERT,
 							EventType.DELETE,
-							EventType.UPDATE
+							EventType.UPDATE,
+							EventType.UPDATE,
+							EventType.INSERT
 					)
 			);
 
@@ -154,16 +144,16 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 				MultiQueryAccess access = this.query( em );
 				int cnt = 0;
 				while ( access.next() ) {
-					Object obj = access.get();
-					if ( obj instanceof PlaceUpdates ) {
-						assertEquals( eventOrder.remove( 0 ), ((PlaceUpdates) obj).getEventType() );
+					Object[] obj = (Object[]) access.get();
+					if ( access.identifier().equals( "PlaceUpdatesHsearch" ) ) {
+						assertEquals( eventOrder.remove( 0 ), obj[1] );
 					}
-					else if ( obj instanceof PlaceSorcererUpdates ) {
-						assertEquals( eventOrder.remove( 0 ), ((PlaceSorcererUpdates) obj).getEventType() );
+					else if ( access.identifier().equals( "PlaceSorcererUpdatesHsearch" ) ) {
+						assertEquals( eventOrder.remove( 0 ), obj[1] );
 					}
 					++cnt;
 				}
-				assertEquals( 3, cnt );
+				assertEquals( 5, cnt );
 			}
 			tx.commit();
 

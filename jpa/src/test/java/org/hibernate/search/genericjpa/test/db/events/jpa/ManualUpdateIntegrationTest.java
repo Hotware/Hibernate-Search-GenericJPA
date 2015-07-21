@@ -66,7 +66,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 			rehashedTypeMetadataPerIndexRoot.put( indexRootType, rehashed );
 		}
 		this.containedInIndexOf = MetadataUtil.calculateInIndexOf( rehashedTypeMetadatas );
-		this.setup( "EclipseLink_MySQL" );
+		this.setup( "EclipseLink_MySQL", new MySQLTriggerSQLStringSource() );
 		this.metaModelParser = new MetaModelParser();
 		this.metaModelParser.parse( this.emf.getMetamodel() );
 	}

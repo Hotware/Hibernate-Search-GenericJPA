@@ -53,12 +53,36 @@ public abstract class DatabaseIntegrationTest {
 	protected String exceptionString;
 	protected List<String> dropStrings;
 
+
 	private List<String> updateTableNames;
 
-	public void setup(String persistence) throws SQLException {
+	public void setup(String persistence, TriggerSQLStringSource triggerSource) throws SQLException {
 		this.emf = Persistence.createEntityManagerFactory( persistence );
 		EntityManager em = emf.createEntityManager();
 		try {
+			this.updateTableNames = new ArrayList<>();
+			List<EventModelInfo> infos = parser.parse(
+					new HashSet<>(
+							Arrays.asList(
+									Place.class,
+									Sorcerer.class
+							)
+					)
+			);
+			em.getTransaction().begin();
+			for ( EventModelInfo info : infos ) {
+				this.updateTableNames.add( info.getUpdateTableName() );
+				for ( String str : triggerSource.getUpdateTableDropCode( info ) ) {
+					System.out.println( str );
+					em.createNativeQuery( str ).executeUpdate();
+				}
+				for ( String str : triggerSource.getUpdateTableCreationCode( info ) ) {
+					System.out.println( str );
+					em.createNativeQuery( str ).executeUpdate();
+				}
+			}
+			em.getTransaction().commit();
+
 			this.deleteAllData( em );
 			this.setupData( em );
 		}
@@ -144,9 +168,11 @@ public abstract class DatabaseIntegrationTest {
 
 		tx.begin();
 		{
-			for ( String updateTableName : updateTableNames ) {
-				em.createNativeQuery( "DELETE FROM " + updateTableName ).executeUpdate();
-				em.flush();
+			if ( this.updateTableNames != null ) {
+				for ( String updateTableName : this.updateTableNames ) {
+					em.createNativeQuery( "DELETE FROM " + updateTableName ).executeUpdate();
+					em.flush();
+				}
 			}
 		}
 		tx.commit();
@@ -196,15 +222,6 @@ public abstract class DatabaseIntegrationTest {
 					}
 				}
 				for ( EventModelInfo info : infos ) {
-					this.updateTableNames.add( info.getUpdateTableName() );
-					for ( String str : triggerSource.getUpdateTableDropCode( info ) ) {
-						System.out.println( str );
-						em.createNativeQuery( str ).executeUpdate();
-					}
-					for ( String str : triggerSource.getUpdateTableCreationCode( info ) ) {
-						System.out.println( str );
-						em.createNativeQuery( str ).executeUpdate();
-					}
 					for ( String unSetupCode : triggerSource.getSpecificUnSetupCode( info ) ) {
 						System.out.println( unSetupCode );
 						em.createNativeQuery( unSetupCode ).executeUpdate();
@@ -285,7 +302,9 @@ public abstract class DatabaseIntegrationTest {
 			EntityTransaction tx = em.getTransaction();
 			tx.begin();
 
-			int countBefore = em.createNativeQuery( "SELECT * FROM PlaceSorcererUpdatesHsearch" ).getResultList().size();
+			int countBefore = em.createNativeQuery( "SELECT * FROM PlaceSorcererUpdatesHsearch" )
+					.getResultList()
+					.size();
 			em.flush();
 			tx.commit();
 
@@ -361,7 +380,9 @@ public abstract class DatabaseIntegrationTest {
 					100_000, () -> {
 						tx.begin();
 						try {
-							return em.createNativeQuery( "SELECT * FROM PlaceSorcererUpdatesHsearch" ).getResultList().size() == 0;
+							return em.createNativeQuery( "SELECT * FROM PlaceSorcererUpdatesHsearch" )
+									.getResultList()
+									.size() == 0;
 						}
 						finally {
 							tx.commit();

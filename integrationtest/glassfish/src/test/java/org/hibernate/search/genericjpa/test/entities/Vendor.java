@@ -29,7 +29,7 @@ import org.hibernate.search.genericjpa.db.events.ColumnType;
 @InIndex
 @Entity
 @Table(name = "Vendor")
-@UpdateInfo(tableName = "Vendor", idInfos = @IdInfo(columns = @IdColumn(column = "ID", columnType = ColumnType.INTEGER)))
+@UpdateInfo(tableName = "Vendor", idInfos = @IdInfo(columns = @IdColumn(column = "ID", columnType = ColumnType.LONG)))
 public class Vendor implements Serializable {
 
 	private static final long serialVersionUID = 1L;

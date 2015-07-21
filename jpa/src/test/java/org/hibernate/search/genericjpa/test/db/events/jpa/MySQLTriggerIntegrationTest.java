@@ -20,7 +20,7 @@ public class MySQLTriggerIntegrationTest extends DatabaseIntegrationTest {
 
 	@Before
 	public void setup() throws SQLException {
-		this.setup( "EclipseLink_MySQL" );
+		this.setup( "EclipseLink_MySQL", new MySQLTriggerSQLStringSource() );
 		this.setupTriggers( new MySQLTriggerSQLStringSource() );
 	}
 

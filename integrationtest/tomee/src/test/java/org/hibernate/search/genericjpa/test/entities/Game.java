@@ -32,7 +32,7 @@ import org.hibernate.search.genericjpa.db.events.ColumnType;
 @Indexed
 @Entity
 @Table(name = "Game")
-@UpdateInfo(tableName = "Game", idInfos = @IdInfo(columns = @IdColumn(column = "ID", columnType = ColumnType.INTEGER)))
+@UpdateInfo(tableName = "Game", idInfos = @IdInfo(columns = @IdColumn(column = "ID", columnType = ColumnType.LONG)))
 public class Game implements Serializable {
 
 	private static final long serialVersionUID = 1L;
@@ -73,10 +73,10 @@ public class Game implements Serializable {
 	@IndexedEmbedded(includeEmbeddedObjectId = true, targetElement = Vendor.class)
 	@ManyToMany
 	@JoinTable(name = "Game_Vendor")
-	@UpdateInfo(tableName = "Game_Vendor", idInfos = @IdInfo(columns = {
-			@IdColumn(column = "Game_ID", columnType = ColumnType.INTEGER),
-			@IdColumn(column = "vendor_ID", columnType = ColumnType.INTEGER)
-	}))
+	@UpdateInfo(tableName = "Game_Vendor", idInfos = {
+			@IdInfo(entity = Game.class, columns = @IdColumn(column = "Game_ID", columnType = ColumnType.LONG)),
+			@IdInfo(entity = Vendor.class, columns = @IdColumn(column = "vendors_ID", columnType = ColumnType.LONG))
+	})
 	public List<Vendor> getVendors() {
 		return vendors;
 	}

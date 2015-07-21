@@ -28,7 +28,7 @@ public class PostgreSQLTriggerSQLStringSource implements TriggerSQLStringSource 
 
 	private static final String CREATE_FUNCTION_FORMAT_SQL = "CREATE OR REPLACE FUNCTION %s() RETURNS TRIGGER AS $$\n" +
 			"    BEGIN\n" +
-			"        INSERT INTO %s(id, %s, %s)\n" +
+			"        INSERT INTO %s(%s, %s, %s)\n" +
 			"        VALUES(nextval('" + UNIQUE_ID_SEQUENCE_NAME + "'), %s, %s);\n" +
 			"        RETURN NEW;\n" +
 			"    END\n" +
@@ -96,6 +96,7 @@ public class PostgreSQLTriggerSQLStringSource implements TriggerSQLStringSource 
 						CREATE_FUNCTION_FORMAT_SQL,
 						functionName,
 						tableName,
+						eventModelInfo.getUpdateIdColumn(),
 						eventTypeColumn,
 						idColumnNames.toString(),
 						eventTypeValue,

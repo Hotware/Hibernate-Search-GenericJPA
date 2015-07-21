@@ -15,6 +15,7 @@ import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.genericjpa.annotations.CustomUpdateEntityProvider;
+import org.hibernate.search.genericjpa.annotations.Hint;
 import org.hibernate.search.genericjpa.annotations.IdColumn;
 import org.hibernate.search.genericjpa.annotations.IdInfo;
 import org.hibernate.search.genericjpa.annotations.InIndex;
@@ -30,7 +31,7 @@ import org.hibernate.search.genericjpa.db.events.ColumnType;
 @CustomUpdateEntityProvider(impl = CustomUpdatedEntityEntityProvider.class)
 @Table(name = "CustomUpdatedEntity")
 @UpdateInfo(tableName = "CustomUpdatedEntity", idInfos = @IdInfo(columns =
-	@IdColumn(column = "id", columnType = ColumnType.INTEGER)
+@IdColumn(column = "id", columnType = ColumnType.LONG), hints = @Hint(key = "test", value = "toast")
 ))
 public class CustomUpdatedEntity {
 
