@@ -111,7 +111,6 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 					LOGGER.info( str );
 					em.createNativeQuery( str ).executeUpdate();
 					if ( tx != null ) {
-						LOGGER.info( "commiting setup code!" );
 						tx.commitIgnoreExceptions();
 						tx.begin();
 					}

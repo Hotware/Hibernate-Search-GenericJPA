@@ -8,10 +8,6 @@
         <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
         <class>org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer</class>
         <class>org.hibernate.search.genericjpa.test.jpa.entities.Place</class>
-        <class>org.hibernate.search.genericjpa.test.jpa.entities.AdditionalPlace</class>
-        <class>org.hibernate.search.genericjpa.test.jpa.entities.AdditionalPlace2</class>
-        <class>org.hibernate.search.genericjpa.test.jpa.entities.OneToManyWithoutTable</class>
-        <class>org.hibernate.search.genericjpa.test.jpa.entities.JoinTableOneToOne</class>
 
         <class>org.hibernate.search.genericjpa.test.jpa.entities.CustomUpdatedEntity</class>
 
@@ -33,10 +29,6 @@
         <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
         <class>org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer</class>
         <class>org.hibernate.search.genericjpa.test.jpa.entities.Place</class>
-        <class>org.hibernate.search.genericjpa.test.jpa.entities.AdditionalPlace</class>
-        <class>org.hibernate.search.genericjpa.test.jpa.entities.AdditionalPlace2</class>
-        <class>org.hibernate.search.genericjpa.test.jpa.entities.OneToManyWithoutTable</class>
-        <class>org.hibernate.search.genericjpa.test.jpa.entities.JoinTableOneToOne</class>
 
         <class>org.hibernate.search.genericjpa.test.jpa.entities.CustomUpdatedEntity</class>
 

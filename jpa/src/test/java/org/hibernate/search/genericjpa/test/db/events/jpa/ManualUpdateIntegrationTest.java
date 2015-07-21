@@ -204,6 +204,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 								);
 							}
 						}
+						this.deleteAllData( em );
 					}
 					finally {
 						if ( em != null ) {
@@ -214,7 +215,8 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 				finally {
 					updateSource.stop();
 				}
-			} finally {
+			}
+			finally {
 				indexUpdater.close();
 			}
 		}

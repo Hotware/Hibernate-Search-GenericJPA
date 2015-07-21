@@ -326,13 +326,17 @@ public abstract class DatabaseIntegrationTest {
 			tx.commit();
 
 			tx.begin();
-			Place valinorDb = em.find( Place.class, this.valinorId );
-			Sorcerer randomNewGuy = new Sorcerer();
-			randomNewGuy.setId( -42 );
-			randomNewGuy.setName( "randomNewGuy" );
-			randomNewGuy.setPlace( valinorDb );
-			em.persist( randomNewGuy );
-			valinorDb.getSorcerers().add( randomNewGuy );
+			Place valinorDb;
+			{
+				valinorDb = em.find( Place.class, this.valinorId );
+				Sorcerer randomNewGuy = new Sorcerer();
+				randomNewGuy.setName( "randomNewGuy" );
+				randomNewGuy.setPlace( valinorDb );
+				em.persist( randomNewGuy );
+				valinorDb.getSorcerers().add( randomNewGuy );
+				valinorDb = em.merge( valinorDb );
+				em.flush();
+			}
 			tx.commit();
 
 			tx.begin();
@@ -350,8 +354,14 @@ public abstract class DatabaseIntegrationTest {
 			tx.commit();
 
 			tx.begin();
-			valinorDb.getSorcerers().remove( randomNewGuy );
-			em.remove( randomNewGuy );
+			valinorDb.getSorcerers()
+					.stream()
+					.filter( sorc -> sorc.getName().equals( "randomNewGuy" ) )
+					.forEach( sorc_ -> sorc_.setPlace( null ) );
+			valinorDb.getSorcerers().removeIf(
+					sorc ->
+							sorc.getName().equals( "randomNewGuy" )
+			);
 			tx.commit();
 
 			tx.begin();

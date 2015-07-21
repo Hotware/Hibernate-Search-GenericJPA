@@ -6,11 +6,14 @@
  */
 package org.hibernate.search.genericjpa.test.jpa.entities;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -65,7 +68,12 @@ public class Sorcerer {
 	}
 
 	@ContainedIn
-	@ManyToOne
+	@ManyToOne(cascade = CascadeType.ALL)
+	@JoinTable(name = "Place_Sorcerer")
+	@UpdateInfo(tableName = "Place_Sorcerer", updateTableName = "PlaceSorcererUpdatesHsearch", updateTableIdColumn = "updateid", updateTableEventTypeColumn = "eventCase", idInfos = {
+			@IdInfo(entity = Place.class, columns = @IdColumn(column = "Place_ID", updateTableColumn = "placefk", columnType = ColumnType.INTEGER)),
+			@IdInfo(entity = Sorcerer.class, columns = @IdColumn(column = "Sorcerer_ID", updateTableColumn = "sorcererfk", columnType = ColumnType.INTEGER))
+	})
 	@IndexedEmbedded(includeEmbeddedObjectId = true)
 	public Place getPlace() {
 		return place;

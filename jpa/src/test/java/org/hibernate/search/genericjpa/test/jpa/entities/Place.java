@@ -48,11 +48,7 @@ public class Place {
 	private Integer id;
 	private String name;
 	private Set<Sorcerer> sorcerers = new HashSet<>();
-	private List<AdditionalPlace> additionalPlace;
-	private List<EmbeddableInfo> info;
 	private boolean cool = true;
-	private List<OneToManyWithoutTable> oneToManyWithoutTable;
-	private JoinTableOneToOne jtoto;
 
 	@Id
 	@Column(name = "ID")
@@ -86,12 +82,7 @@ public class Place {
 
 	@IndexedEmbedded(depth = 3, includeEmbeddedObjectId = true)
 	@ContainedIn
-	@OneToMany(cascade = CascadeType.ALL)
-	@JoinTable(name = "Place_Sorcerer")
-	@UpdateInfo(tableName = "Place_Sorcerer", updateTableName = "PlaceSorcererUpdatesHsearch", updateTableIdColumn = "updateid", updateTableEventTypeColumn = "eventCase", idInfos = {
-			@IdInfo(entity = Place.class, columns = @IdColumn(column = "Place_ID", updateTableColumn = "placefk", columnType = ColumnType.INTEGER)),
-			@IdInfo(entity = Sorcerer.class, columns = @IdColumn(column = "sorcerers_ID", updateTableColumn = "sorcererfk", columnType = ColumnType.INTEGER))
-	})
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "place")
 	public Set<Sorcerer> getSorcerers() {
 		return sorcerers;
 	}
@@ -103,49 +94,6 @@ public class Place {
 	@Override
 	public String toString() {
 		return "Place [id=" + this.getId() + ", name=" + this.getName() + ", sorcerers=" + sorcerers + "]";
-	}
-
-	@ManyToMany(cascade = CascadeType.ALL)
-	@IndexedEmbedded(includeEmbeddedObjectId = true)
-	public List<AdditionalPlace> getAdditionalPlace() {
-		return additionalPlace;
-	}
-
-	public void setAdditionalPlace(List<AdditionalPlace> additionalPlace) {
-		this.additionalPlace = additionalPlace;
-	}
-
-	// TODO: test with this
-	// @ElementCollection
-	// @CollectionTable(name = "PHONE", joinColumns = @JoinColumn(name =
-	// "OWNER_ID"))
-	@Transient
-	public List<EmbeddableInfo> getInfo() {
-		return info;
-	}
-
-	public void setInfo(List<EmbeddableInfo> info) {
-		this.info = info;
-	}
-
-	@OneToMany(mappedBy = "place")
-	@JoinColumn(name = "place_id", referencedColumnName = "place_id")
-	public List<OneToManyWithoutTable> getOneToManyWithoutTable() {
-		return oneToManyWithoutTable;
-	}
-
-	public void setOneToManyWithoutTable(List<OneToManyWithoutTable> oneToManyWithoutTable) {
-		this.oneToManyWithoutTable = oneToManyWithoutTable;
-	}
-
-	@OneToOne
-	@JoinTable(name = "PLACE_JTOTO", joinColumns = @JoinColumn(name = "PLACE_ID", referencedColumnName = "ID"), inverseJoinColumns = @JoinColumn(name = "JTOTO_ID", referencedColumnName = "ID"))
-	public JoinTableOneToOne getJtoto() {
-		return jtoto;
-	}
-
-	public void setJtoto(JoinTableOneToOne jtoto) {
-		this.jtoto = jtoto;
 	}
 
 }

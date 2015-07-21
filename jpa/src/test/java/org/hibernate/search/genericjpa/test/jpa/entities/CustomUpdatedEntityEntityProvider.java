@@ -23,7 +23,6 @@ public class CustomUpdatedEntityEntityProvider implements EntityManagerEntityPro
 
 	@Override
 	public Object get(EntityManager em, Class<?> entityClass, Object id, Map<String, String> hints) {
-
 		CustomUpdatedEntity ret = (CustomUpdatedEntity) em.find( entityClass, id );
 		em.detach( ret );
 
