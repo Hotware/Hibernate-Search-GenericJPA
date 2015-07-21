@@ -27,6 +27,7 @@ import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
 
 import static org.hibernate.search.genericjpa.Constants.TRIGGER_CREATION_STRATEGY_CREATE;
+import static org.hibernate.search.genericjpa.Constants.TRIGGER_CREATION_STRATEGY_DONT_CREATE;
 import static org.hibernate.search.genericjpa.Constants.TRIGGER_CREATION_STRATEGY_DROP_CREATE;
 
 /**
@@ -71,6 +72,9 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 	}
 
 	private void setupTriggers(List<EventModelInfo> eventModelInfos) {
+		if(TRIGGER_CREATION_STRATEGY_DONT_CREATE.equals(this.triggerCreateStrategy)) {
+			return;
+		}
 		EntityManager em = null;
 		try {
 			em = this.emf.createEntityManager();
