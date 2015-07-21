@@ -213,7 +213,6 @@ public abstract class DatabaseIntegrationTest {
 					System.out.println( str );
 					em.createNativeQuery( str ).executeUpdate();
 					if ( tx != null ) {
-						System.out.println( "commiting setup code!" );
 						tx.commitIgnoreExceptions();
 						tx.begin();
 					}

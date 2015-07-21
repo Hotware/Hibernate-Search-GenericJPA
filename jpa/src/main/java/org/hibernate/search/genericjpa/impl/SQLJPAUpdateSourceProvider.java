@@ -206,9 +206,6 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 						e
 				);
 			}
-			else {
-				throw e;
-			}
 		}
 	}
 
