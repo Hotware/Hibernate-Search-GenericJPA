@@ -165,7 +165,7 @@ public class UpdateClassAnnotationEventModelParser implements EventModelParser {
 			}
 			if ( event != null ) {
 				if ( !this.getType( member ).equals( Integer.class ) ) {
-					throw new IllegalArgumentException( "Field hosting @Event is no Field of type Integer.  Class: " + clazz + ". Field: " + member );
+					throw new IllegalArgumentException( "Field hosting @Event is no Field of columnTypes Integer.  Class: " + clazz + ". Field: " + member );
 				}
 				if ( ret.eventTypeMember == null ) {
 					ret.eventTypeMember = member;

@@ -178,4 +178,15 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 		};
 	}
 
+	@Override
+	public String[] getUpdateTableCreationCode(EventModelInfo info) {
+		return new String[0];
+	}
+
+	@Override
+	public String[] getUpdateTableDropCode(EventModelInfo info) {
+		return new String[0];
+	}
+
+
 }

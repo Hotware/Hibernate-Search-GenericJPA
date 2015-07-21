@@ -13,11 +13,13 @@ import java.util.List;
 import java.util.Set;
 
 import org.hibernate.search.genericjpa.annotations.Hint;
+import org.hibernate.search.genericjpa.annotations.IdColumn;
 import org.hibernate.search.genericjpa.annotations.IdInfo;
 import org.hibernate.search.genericjpa.annotations.UpdateInfo;
 import org.hibernate.search.genericjpa.db.events.AnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventModelParser;
+import org.hibernate.search.genericjpa.db.events.IdType;
 import org.hibernate.search.genericjpa.db.id.IdConverter;
 import org.hibernate.search.genericjpa.exception.SearchException;
 
@@ -55,7 +57,7 @@ public class AnnotationEventModelParserTest {
 					(first, second) -> first.getColumnsInOriginal()[0].compareTo( second.getColumnsInOriginal()[0] )
 			);
 			Class<?>[] classes = {SomeEntity.class, SomeOtherEntity.class, YetAnotherEntity.class};
-			IdInfo.IdType[] idTypes = {IdInfo.IdType.INTEGER, IdInfo.IdType.LONG, IdInfo.IdType.STRING};
+			IdType[] idTypes = {IdType.INTEGER, IdType.LONG, IdType.STRING};
 			for ( int i = 0; i < idInfos.size(); ++i ) {
 				EventModelInfo.IdInfo cur = idInfos.get( i );
 				assertEquals( "column1_" + (i + 1), cur.getColumnsInOriginal()[0] );
@@ -88,12 +90,6 @@ public class AnnotationEventModelParserTest {
 		System.err.println( infos );
 	}
 
-	@Test(expected = SearchException.class)
-	public void testIdInfoAndConverterConflict() {
-		List<EventModelInfo> infos = parser.parse( new HashSet<>( Arrays.asList( IdInfoAndConverter.class ) ) );
-		System.err.println( infos );
-	}
-
 	@Test
 	public void testManualValues() {
 		List<EventModelInfo> infos = parser.parse( new HashSet<>( Arrays.asList( ManualValues.class ) ) );
@@ -115,22 +111,22 @@ public class AnnotationEventModelParserTest {
 
 	//this information doesn't make a whole lot of sense database wise, but we can test stuff properly still
 	@UpdateInfo(tableName = "table1", idInfos = {
-			@IdInfo(columns = "column1_1", hints = {@Hint(key = "key1", value = "value1")}, type = IdInfo.IdType.INTEGER),
-			@IdInfo(entity = SomeOtherEntity.class, columns = "column1_2", hints = {@Hint(key = "key2", value = "value2")}, type = IdInfo.IdType.LONG),
-			@IdInfo(entity = YetAnotherEntity.class, columns = "column1_3", hints = {@Hint(key = "key3", value = "value3")}, type = IdInfo.IdType.STRING)
+			@IdInfo(columns = @IdColumn(column = "column1_1", columnType = IdType.INTEGER), hints = @Hint(key = "key1", value = "value1")),
+			@IdInfo(entity = SomeOtherEntity.class, columns = @IdColumn(column = "column1_2", columnType = IdType.LONG), hints = @Hint(key = "key2", value = "value2")),
+			@IdInfo(entity = YetAnotherEntity.class, columns = @IdColumn(column = "column1_3", columnType = IdType.STRING), hints = @Hint(key = "key3", value = "value3"))
 	})
-	@UpdateInfo(tableName = "table2", idInfos = @IdInfo(columns = "column2_1", type = IdInfo.IdType.INTEGER))
+	@UpdateInfo(tableName = "table2", idInfos = @IdInfo(columns = @IdColumn(column = "column2_1", columnType = IdType.INTEGER)))
 	public static class SomeEntity {
 
 		@UpdateInfo(tableName = "table3", idInfos = {
-				@IdInfo(entity = SomeEntity.class, columns = "column3_1", type = IdInfo.IdType.INTEGER),
-				@IdInfo(entity = SomeOtherEntity.class, columns = "column3_2", type = IdInfo.IdType.LONG)
+				@IdInfo(entity = SomeEntity.class, columns = @IdColumn(column = "column3_1", columnType = IdType.INTEGER)),
+				@IdInfo(entity = SomeOtherEntity.class, columns = @IdColumn(column = "column3_2", columnType = IdType.LONG))
 		})
 		private Set<SomeOtherEntity> someOtherEntity;
 
 		@UpdateInfo(tableName = "table4", idInfos = {
-				@IdInfo(entity = SomeEntity.class, columns = "column4_1", type = IdInfo.IdType.INTEGER),
-				@IdInfo(entity = SomeOtherEntity.class, columns = "column4_2", type = IdInfo.IdType.LONG)
+				@IdInfo(entity = SomeEntity.class, columns = @IdColumn(column = "column4_1", columnType = IdType.INTEGER)),
+				@IdInfo(entity = SomeOtherEntity.class, columns = @IdColumn(column = "column4_2", columnType = IdType.LONG))
 		})
 		public Set<YetAnotherEntity> getYet() {
 			return null;
@@ -146,30 +142,25 @@ public class AnnotationEventModelParserTest {
 
 	}
 
-	@UpdateInfo(tableName = "table_toast", idInfos = @IdInfo(columns = "toast", type = IdInfo.IdType.INTEGER))
-	@UpdateInfo(tableName = "table_toast", idInfos = @IdInfo(columns = "toast2", type = IdInfo.IdType.INTEGER))
+	@UpdateInfo(tableName = "table_toast", idInfos = @IdInfo(columns = @IdColumn(column = "toast", columnType = IdType.INTEGER)))
+	@UpdateInfo(tableName = "table_toast", idInfos = @IdInfo(columns = @IdColumn(column = "toast2", columnType = IdType.INTEGER)))
 	public static class SameTableTwice {
 
 	}
 
-	@UpdateInfo(tableName = "namingconflict", updateTableName = "namingconflict", idInfos = @IdInfo(columns = "toast", type = IdInfo.IdType.INTEGER))
+	@UpdateInfo(tableName = "namingconflict", updateTableName = "namingconflict", idInfos = @IdInfo(columns = @IdColumn(column = "toast", columnType = IdType.INTEGER)))
 	public static class NamingConflictSameAnnotation {
 
 	}
 
-	@UpdateInfo(tableName = "namingconflict", idInfos = @IdInfo(columns = "toast", type = IdInfo.IdType.INTEGER))
-	@UpdateInfo(tableName = "no_conflict", updateTableName = "namingconflict", idInfos = @IdInfo(columns = "toast", type = IdInfo.IdType.INTEGER))
+	@UpdateInfo(tableName = "namingconflict", idInfos = @IdInfo(columns = @IdColumn(column = "toast", columnType = IdType.INTEGER)))
+	@UpdateInfo(tableName = "no_conflict", updateTableName = "namingconflict", idInfos = @IdInfo(columns = @IdColumn(column = "toast", columnType = IdType.INTEGER)))
 	public static class NamingConflictTwoAnnotations {
 
 	}
 
-	@UpdateInfo(tableName = "toast123", updateTableName = "toast12345", idInfos = @IdInfo(columns = "toast", type = IdInfo.IdType.INTEGER, idConverter = ManualIdConverter.class))
-	public static class IdInfoAndConverter {
-
-	}
-
 	@UpdateInfo(tableName = "manualvalues", updateTableName = "manualvalues_updates", updateTableIdColumn = "manualvalues_idcolumn", updateTableEventTypeColumn = "manualvalues_eventtypecolumn", idInfos = @IdInfo(
-			entity = Manual.class, columns = "manualcolumn", updateTableColumns = "manualcolumn_FOREIGN", idConverter = ManualIdConverter.class
+			entity = Manual.class, columns = @IdColumn(column = "manualcolumn", updateTableColumn = "manualcolumn_FOREIGN", columnType = IdType.INTEGER), idConverter = ManualIdConverter.class
 	))
 	public static class ManualValues {
 
@@ -182,7 +173,7 @@ public class AnnotationEventModelParserTest {
 	public static class ManualIdConverter implements IdConverter {
 
 		@Override
-		public Object convert(Object[] values, String[] fieldNames) {
+		public Object convert(Object[] values, String[] fieldNames, IdType[] idTypes) {
 			return null;
 		}
 

@@ -21,12 +21,12 @@ import org.hibernate.search.genericjpa.batchindexing.MassIndexer;
 public interface FullTextEntityManager extends EntityManager {
 
 	/**
-	 * Create a fulltext query on top of a native Lucene query returning the matching objects of type
+	 * Create a fulltext query on top of a native Lucene query returning the matching objects of columnTypes
 	 * <code>entities</code> and their respective subclasses.
 	 *
 	 * @param luceneQuery The native Lucene query to be rn against the Lucene index.
-	 * @param entities List of classes for type filtering. The query result will only return entities of the specified
-	 * types and their respective subtype. If no class is specified no type filtering will take place.
+	 * @param entities List of classes for columnTypes filtering. The query result will only return entities of the specified
+	 * types and their respective subtype. If no class is specified no columnTypes filtering will take place.
 	 *
 	 * @return A <code>FullTextQuery</code> wrapping around the native Lucene query.
 	 *
@@ -52,11 +52,11 @@ public interface FullTextEntityManager extends EntityManager {
 	SearchFactory getSearchFactory();
 
 	/**
-	 * Remove the entity with the type <code>entityType</code> and the identifier <code>id</code> from the index. If
-	 * <code>id == null</code> all indexed entities of this type and its indexed subclasses are deleted. In this case
+	 * Remove the entity with the columnTypes <code>entityType</code> and the identifier <code>id</code> from the index. If
+	 * <code>id == null</code> all indexed entities of this columnTypes and its indexed subclasses are deleted. In this case
 	 * this method behaves like {@link #purgeAll(Class)}.
 	 *
-	 * @param entityType The type of the entity to delete.
+	 * @param entityType The columnTypes of the entity to delete.
 	 * @param id The id of the entity to delete.
 	 *
 	 * @throws IllegalArgumentException if entityType is <code>null</code> or not a class or superclass annotated with

@@ -127,6 +127,16 @@ public class PostgreSQLTriggerSQLStringSource implements TriggerSQLStringSource 
 		};
 	}
 
+	@Override
+	public String[] getUpdateTableCreationCode(EventModelInfo info) {
+		return new String[0];
+	}
+
+	@Override
+	public String[] getUpdateTableDropCode(EventModelInfo info) {
+		return new String[0];
+	}
+
 	private String getTriggerName(String originalTableName, int eventType) {
 		return new StringBuilder().append( originalTableName ).append( "_updates_hsearch_" ).append(
 				EventType.toString(

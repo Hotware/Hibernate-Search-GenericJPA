@@ -9,22 +9,19 @@ package org.hibernate.search.genericjpa.annotations;
 import java.lang.annotation.Retention;
 
 import org.hibernate.search.genericjpa.db.events.IdType;
-import org.hibernate.search.genericjpa.db.id.IdConverter;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Created by Martin on 20.07.2015.
+ * Created by Martin on 21.07.2015.
  */
 @Retention(RUNTIME)
-public @interface IdInfo {
+public @interface IdColumn {
 
-	Class<?> entity() default void.class;
+	String column();
 
-	IdColumn[] columns();
+	String updateTableColumn() default "";
 
-	Class<? extends IdConverter> idConverter() default IdConverter.class;
-
-	Hint[] hints() default {};
+	IdType columnType();
 
 }

@@ -89,11 +89,11 @@ public final class Setup {
 			if ( additionalIndexedTypesValue != null ) {
 				for ( String entityClassName : additionalIndexedTypesValue.split( "," ) ) {
 					entityClassName = entityClassName.trim();
-					LOGGER.info( "using additional indexed type: " + entityClassName );
+					LOGGER.info( "using additional indexed columnTypes: " + entityClassName );
 					Class<?> entityClass = Class.forName( entityClassName );
 					if ( !entityClass.isAnnotationPresent( InIndex.class ) || !entityClass.isAnnotationPresent( Indexed.class ) ) {
 						throw new SearchException(
-								"additional indexed type specified that doesn't host both @InIndex and @Indexed!"
+								"additional indexed columnTypes specified that doesn't host both @InIndex and @Indexed!"
 						);
 					}
 					indexRootTypes.add( entityClass );

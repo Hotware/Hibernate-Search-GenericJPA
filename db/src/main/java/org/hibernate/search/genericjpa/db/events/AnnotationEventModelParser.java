@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.search.genericjpa.annotations.Hint;
+import org.hibernate.search.genericjpa.annotations.IdColumn;
 import org.hibernate.search.genericjpa.annotations.IdInfo;
 import org.hibernate.search.genericjpa.annotations.UpdateInfo;
 import org.hibernate.search.genericjpa.db.id.IdConverter;
@@ -114,33 +115,31 @@ public class AnnotationEventModelParser implements EventModelParser {
 					idInfoEntityClass = annotationIdInfo.entity();
 				}
 
-				final String[] columns = annotationIdInfo.columns();
-				final String[] updateTableColumns;
-				if ( annotationIdInfo.updateTableColumns().length != 0 ) {
-					if ( annotationIdInfo.updateTableColumns().length != columns.length ) {
-						throw new SearchException(
-								"the length of IdInfo.updateTableColumns must be equal to IdInfo.columns"
-						);
+				final String[] columns = new String[annotationIdInfo.columns().length];
+				final String[] updateTableColumns = new String[columns.length];
+				final IdType[] idTypes = new IdType[columns.length];
+				IdColumn[] idColumns = annotationIdInfo.columns();
+				for ( int i = 0; i < idColumns.length; ++i ) {
+					IdColumn cur = idColumns[i];
+					columns[i] = cur.column();
+					if ( !"".equals( cur.updateTableColumn() ) ) {
+						updateTableColumns[i] = cur.updateTableColumn();
 					}
-					updateTableColumns = annotationIdInfo.updateTableColumns();
-				}
-				else {
-					updateTableColumns = new String[columns.length];
-					for ( int i = 0; i < columns.length; ++i ) {
-						updateTableColumns[i] = columns[i] + "fk";
+					else {
+						updateTableColumns[i] = cur.column() + "fk";
 					}
+					idTypes[i] = cur.columnType();
 				}
 
 				IdConverter idConverter = null;
-				if ( annotationIdInfo.type() != IdInfo.IdType.NONE ) {
-					if ( !annotationIdInfo.idConverter().equals( IdConverter.class ) ) {
-						throw new SearchException( "please specify either IdInfo.type OR IdInfo.idConverter" );
-					}
-					idConverter = annotationIdInfo.type();
+				if ( IdConverter.class.equals( annotationIdInfo.idConverter() ) && idTypes.length == 1 ) {
+					idConverter = idTypes[0];
 				}
 				else {
-					if ( annotationIdInfo.idConverter().equals( IdConverter.class ) ) {
-						throw new SearchException( "please specify either IdInfo.type OR IdInfo.idConverter" );
+					if ( IdConverter.class.equals( annotationIdInfo.idConverter() ) ) {
+						throw new SearchException(
+								"if more than one column is specified, you have to specify an IdConverter"
+						);
 					}
 					try {
 						idConverter = annotationIdInfo.idConverter().newInstance();
@@ -160,6 +159,7 @@ public class AnnotationEventModelParser implements EventModelParser {
 								idInfoEntityClass,
 								updateTableColumns,
 								columns,
+								idTypes,
 								idConverter,
 								hints
 						)
