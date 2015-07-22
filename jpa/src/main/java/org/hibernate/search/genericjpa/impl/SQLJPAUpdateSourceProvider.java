@@ -8,13 +8,11 @@ package org.hibernate.search.genericjpa.impl;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
-import javax.persistence.FlushModeType;
 import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.hibernate.search.genericjpa.db.events.impl.AnnotationEventModelParser;
@@ -76,7 +74,7 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 								BATCH_SIZE_FOR_UPDATE_QUERIES_KEY,
 								BATCH_SIZE_FOR_UPDATE_QUERIES_DEFAULT_VALUE
 						)
-				)
+				), this.triggerSource.getDelimitedIdentifierToken()
 		);
 	}
 
@@ -85,81 +83,52 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 				.equals( this.triggerCreateStrategy ) && !TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy )) ) {
 			return;
 		}
-		EntityManager em = null;
 		try {
-			em = this.emf.createEntityManager();
-			JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.transactionManager );
-			if ( tx != null ) {
-				tx.setIgnoreExceptionsForJTATransaction( true );
-				tx.begin();
-			}
-
 			for ( EventModelInfo info : eventModelInfos ) {
-				if ( tx != null ) {
-					tx.commitIgnoreExceptions();
-					tx.begin();
-				}
 				if ( TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy ) ) {
 					for ( String str : triggerSource.getUpdateTableDropCode( info ) ) {
 						LOGGER.info( str );
-						em.createNativeQuery( str ).executeUpdate();
+						this.doQueryOrLogException( str );
 					}
-				}
-				if ( tx != null ) {
-					tx.commitIgnoreExceptions();
-					tx.begin();
 				}
 
 				for ( String str : triggerSource.getUpdateTableCreationCode( info ) ) {
 					LOGGER.info( str );
-					this.doQueryOrLogException( em, str );
-				}
-				if ( tx != null ) {
-					tx.commitIgnoreExceptions();
-					tx.begin();
+					this.doQueryOrLogException( str );
 				}
 			}
 
 			try {
-				for ( String str : triggerSource.getSetupCode() ) {
-					LOGGER.info( str );
-					em.createNativeQuery( str ).executeUpdate();
-					if ( tx != null ) {
-						tx.commitIgnoreExceptions();
-						tx.begin();
+				if ( TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy ) ) {
+					for ( String str : triggerSource.getUnSetupCode() ) {
+						LOGGER.info( str );
+						this.doQueryOrLogException( str );
 					}
 				}
+				for ( String str : triggerSource.getSetupCode() ) {
+					LOGGER.info( str );
+					this.doQueryOrLogException( str );
+				}
+
 				for ( EventModelInfo info : eventModelInfos ) {
 					if ( TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy ) ) {
 						for ( String unSetupCode : this.triggerSource.getSpecificUnSetupCode( info ) ) {
 							LOGGER.info( unSetupCode );
-							em.createNativeQuery( unSetupCode ).executeUpdate();
-							if ( tx != null ) {
-								tx.commitIgnoreExceptions();
-								tx.begin();
-							}
+							this.doQueryOrLogException( unSetupCode );
 						}
 					}
 
 					for ( String setupCode : this.triggerSource.getSpecificSetupCode( info ) ) {
 						LOGGER.info( setupCode );
-						this.doQueryOrLogException( em, setupCode );
-						if ( tx != null ) {
-							tx.commitIgnoreExceptions();
-							tx.begin();
-						}
+						this.doQueryOrLogException( setupCode );
 					}
 
 					if ( TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy ) ) {
 						for ( int eventType : EventType.values() ) {
 							String[] triggerDropStrings = this.triggerSource.getTriggerDropCode( info, eventType );
-							for ( String triggerCreationString : triggerDropStrings ) {
-								LOGGER.info( triggerCreationString );
-								em.createNativeQuery( triggerCreationString ).executeUpdate();
-								if ( tx != null ) {
-									tx.commitIgnoreExceptions();
-									tx.begin();
-								}
+							for ( String triggerDropString : triggerDropStrings ) {
+								LOGGER.info( triggerDropString );
+								this.doQueryOrLogException( triggerDropString );
 							}
 						}
 					}
@@ -168,52 +137,45 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 						String[] triggerCreationStrings = this.triggerSource.getTriggerCreationCode( info, eventType );
 						for ( String triggerCreationString : triggerCreationStrings ) {
 							LOGGER.info( triggerCreationString );
-							this.doQueryOrLogException( em, triggerCreationString );
-							if ( tx != null ) {
-								tx.commitIgnoreExceptions();
-								tx.begin();
-							}
+							this.doQueryOrLogException( triggerCreationString );
 						}
 					}
 				}
 			}
 			catch (Exception e) {
-				if ( tx != null ) {
-					tx.rollback();
-					LOGGER.log( Level.WARNING, "rolling back trigger setup!", e );
-				}
 				throw new SearchException( e );
 			}
-			if ( tx != null ) {
-				tx.commitIgnoreExceptions();
-				LOGGER.info( "commited trigger setup!" );
-			}
-			//TODO: what is this doing here? :D
-			em.setFlushMode( FlushModeType.COMMIT );
 			LOGGER.info( "finished setting up triggers!" );
 		}
 		catch (SecurityException e) {
 			throw new SearchException( e );
 		}
+	}
+
+	private void doQueryOrLogException(String query) {
+		EntityManager em = null;
+		try {
+			em = this.emf.createEntityManager();
+
+			JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.transactionManager );
+			tx.setIgnoreExceptionsForJTATransaction( true );
+			tx.begin();
+
+			em.createNativeQuery( query ).executeUpdate();
+
+			tx.commitIgnoreExceptions();
+		}
+		//FIXME: better message. maybe we should do this in our own connection...
+		catch (Exception e) {
+			LOGGER.warning(
+					"Exception occured during setup of triggers (most of the time, this is okay): " +
+							e.getCause().getMessage()
+			);
+		}
 		finally {
 			if ( em != null ) {
 				em.close();
 			}
-		}
-	}
-
-	private void doQueryOrLogException(EntityManager em, String query) {
-		try {
-			em.createNativeQuery( query ).executeUpdate();
-		}
-		//FIXME: better Exception, will this ever throw an Exception? even if triggers are not present
-		//this doesn't seem to throw anything (for MySQL at least, I think it's best to keep it for now)
-		catch (Exception e) {
-			LOGGER.log(
-					Level.WARNING,
-					"Exception while trying to create trigger (if triggers are not dropped before creating this might be okay)",
-					e
-			);
 		}
 	}
 

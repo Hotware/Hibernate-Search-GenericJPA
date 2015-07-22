@@ -7,47 +7,50 @@
 package org.hibernate.search.genericjpa.db.events.triggers;
 
 import org.hibernate.search.genericjpa.db.events.ColumnType;
-import org.hibernate.search.genericjpa.db.events.impl.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.EventType;
+import org.hibernate.search.genericjpa.db.events.impl.EventModelInfo;
 import org.hibernate.search.genericjpa.exception.AssertionFailure;
 
 /**
- * Created by Martin on 30.06.2015.
+ * We don't escape the column names that come from the EventModelInfos
+ * as we don't have any control over how these are defined
+ *
+ * @author Martin
  */
-public class PostgreSQLTriggerSQLStringSource implements TriggerSQLStringSource {
+public class HSQLDBTriggerSQLStringSource implements TriggerSQLStringSource {
 
-	private static final String UNIQUE_ID_SEQUENCE_NAME = "______unique_id_hsearch_____";
-	private static final String CREATE_UNIQUE_ID_SEQUENCE_SQL = "DO $$BEGIN \n" +
-			"    CREATE SEQUENCE \"" + UNIQUE_ID_SEQUENCE_NAME + "\";\n" +
-			"    EXCEPTION WHEN duplicate_table \n" +
-			"    THEN RAISE NOTICE 'Hibernate Search Unique ID Sequence already exists.';\n" +
-			"END;$$;";
 
-	private static final String DROP_SEQUENCE_SQL = "DO $$BEGIN\n" +
-			"    DROP SEQUENCE \"" + UNIQUE_ID_SEQUENCE_NAME + "\";\n" +
-			"    EXCEPTION WHEN undefined_table \n" +
-			"    THEN RAISE NOTICE 'Hibernate Search Unique ID Sequence did not exist.';\n" +
-			"END;$$;";
 
-	private static final String DROP_TRIGGER_FORMAT_SQL = "DROP TRIGGER IF EXISTS %s ON %s";
-	private static final String DROP_FUNCTION_FORMAT_SQL = "DROP FUNCTION IF EXISTS %s();";
+	private static final String UNIQUE_ID_SEQUENCE_NAME = "unique___id___hsearch";
+	private static final String CREATE_UNIQUE_ID_SEQUENCE_SQL = "CREATE SEQUENCE \"" + UNIQUE_ID_SEQUENCE_NAME + "\" AS BIGINT START WITH 1 INCREMENT BY 1;";
+	private static final String DROP_UNIQUE_ID_SEQUENCE_SQL = "DROP SEQUENCE \"" + UNIQUE_ID_SEQUENCE_NAME + "\"";
 
-	private static final String CREATE_FUNCTION_FORMAT_SQL = "CREATE OR REPLACE FUNCTION %s() RETURNS TRIGGER AS $$\n" +
-			"    BEGIN\n" +
-			"        INSERT INTO %s(%s, %s, %s)\n" +
-			"        VALUES(nextval('" + UNIQUE_ID_SEQUENCE_NAME + "'), %s, %s);\n" +
-			"        RETURN NEW;\n" +
-			"    END\n" +
-			"$$ LANGUAGE plpgsql;";
-	private static final String CREATE_TRIGGER_FORMAT_SQL = "CREATE TRIGGER %s\n" +
-			"    AFTER %s ON %s\n" +
-			"    FOR EACH ROW\n" +
-			"    EXECUTE PROCEDURE %s();";
+	private static final String DROP_TRIGGER_FORMAT_SQL = "DROP TRIGGER \"%s\"";
+
+	private static final String TRIGGER_CREATION_FORMAT_INSERT_UPDATE = "CREATE TRIGGER \"%s\" AFTER %s ON %s\n" +
+			"REFERENCING NEW AS \"newrow\"\n" +
+			"FOR EACH ROW\n" +
+			"BEGIN ATOMIC\n" +
+			"        DECLARE nextupdateid BIGINT;\n" +
+			"        SET nextupdateid = NEXT VALUE FOR \"" + UNIQUE_ID_SEQUENCE_NAME + "\";\n" +
+			"        INSERT INTO \"%s\"(\"%s\", \"%s\", %s) \n" +
+			"                VALUES (nextupdateid, %s, %s);\n" +
+			"END;";
+
+	private static final String TRIGGER_CREATION_FORMAT_DELETE = "CREATE TRIGGER \"%s\" AFTER %s ON %s\n" +
+			"REFERENCING OLD AS \"oldrow\"\n" +
+			"FOR EACH ROW\n" +
+			"BEGIN ATOMIC\n" +
+			"        DECLARE nextupdateid BIGINT;\n" +
+			"        SET nextupdateid = NEXT VALUE FOR \"" + UNIQUE_ID_SEQUENCE_NAME + "\";\n" +
+			"        INSERT INTO \"%s\"(\"%s\", \"%s\", %s) \n" +
+			"                VALUES (nextupdateid, %s, %s);\n" +
+			"END;";
 
 	@Override
 	public String[] getUnSetupCode() {
 		return new String[] {
-				DROP_SEQUENCE_SQL
+				DROP_UNIQUE_ID_SEQUENCE_SQL
 		};
 	}
 
@@ -74,10 +77,6 @@ public class PostgreSQLTriggerSQLStringSource implements TriggerSQLStringSource 
 	public String[] getTriggerCreationCode(EventModelInfo eventModelInfo, int eventType) {
 		String originalTableName = eventModelInfo.getOriginalTableName();
 		String triggerName = this.getTriggerName( eventModelInfo.getOriginalTableName(), eventType );
-		String functionName = this.getFunctionName(
-				eventModelInfo.getOriginalTableName(),
-				eventType
-		);
 		String tableName = eventModelInfo.getUpdateTableName();
 		String eventTypeColumn = eventModelInfo.getEventTypeColumn();
 		StringBuilder valuesFromOriginal = new StringBuilder();
@@ -90,13 +89,13 @@ public class PostgreSQLTriggerSQLStringSource implements TriggerSQLStringSource 
 					idColumnNames.append( ", " );
 				}
 				if ( eventType == EventType.DELETE ) {
-					valuesFromOriginal.append( "OLD." );
+					valuesFromOriginal.append( "\"oldrow\"." );
 				}
 				else {
-					valuesFromOriginal.append( "NEW." );
+					valuesFromOriginal.append( "\"newrow\"." );
 				}
 				valuesFromOriginal.append( idInfo.getColumnsInOriginal()[i] );
-				idColumnNames.append( idInfo.getColumnsInUpdateTable()[i] );
+				idColumnNames.append( "\"" + idInfo.getColumnsInUpdateTable()[i] + "\"" );
 				++addedVals;
 			}
 		}
@@ -104,25 +103,24 @@ public class PostgreSQLTriggerSQLStringSource implements TriggerSQLStringSource 
 			throw new IllegalArgumentException( "eventModelInfo didn't contain any idInfos" );
 		}
 		String eventTypeValue = String.valueOf( eventType );
-		return new String[] {
+		String createTriggerOriginalTableSQL = new StringBuilder().append(
 				String.format(
-						CREATE_FUNCTION_FORMAT_SQL,
-						functionName,
+						eventType == EventType.DELETE ?
+								TRIGGER_CREATION_FORMAT_DELETE :
+								TRIGGER_CREATION_FORMAT_INSERT_UPDATE,
+						triggerName,
+						EventType.toString( eventType ),
+						originalTableName,
 						tableName,
 						eventModelInfo.getUpdateIdColumn(),
 						eventTypeColumn,
 						idColumnNames.toString(),
 						eventTypeValue,
 						valuesFromOriginal.toString()
-				),
-				String.format(
-						CREATE_TRIGGER_FORMAT_SQL,
-						triggerName,
-						EventType.toString( eventType ),
-						originalTableName,
-						functionName
 				)
-		};
+		)
+				.toString();
+		return new String[] {createTriggerOriginalTableSQL};
 	}
 
 	@Override
@@ -130,12 +128,6 @@ public class PostgreSQLTriggerSQLStringSource implements TriggerSQLStringSource 
 		return new String[] {
 				String.format(
 						DROP_TRIGGER_FORMAT_SQL, this.getTriggerName(
-								eventModelInfo.getOriginalTableName(),
-								eventType
-						), eventModelInfo.getOriginalTableName()
-				),
-				String.format(
-						DROP_FUNCTION_FORMAT_SQL, this.getFunctionName(
 								eventModelInfo.getOriginalTableName(),
 								eventType
 						)
@@ -149,17 +141,17 @@ public class PostgreSQLTriggerSQLStringSource implements TriggerSQLStringSource 
 		String updateIdColumn = info.getUpdateIdColumn();
 		String eventTypeColumn = info.getEventTypeColumn();
 		String sql =
-				"CREATE TABLE IF NOT EXISTS " + tableName + " (\n" +
-						"    " + updateIdColumn + " BIGINT NOT NULL,\n" +
-						"    " + eventTypeColumn + " INT NOT NULL,\n";
+				"CREATE TABLE IF NOT EXISTS \"" + tableName + "\" (\n" +
+						"    \"" + updateIdColumn + "\" BIGINT NOT NULL,\n" +
+						"    \"" + eventTypeColumn + "\" INT NOT NULL,\n";
 		for ( EventModelInfo.IdInfo idInfo : info.getIdInfos() ) {
 			String[] columnsInUpdateTable = idInfo.getColumnsInUpdateTable();
 			ColumnType[] columnTypes = idInfo.getColumnTypes();
 			for ( int i = 0; i < columnsInUpdateTable.length; ++i ) {
-				sql += "    " + columnsInUpdateTable[i] + " " + toMySQLType( columnTypes[i] ) + " NOT NULL,\n";
+				sql += "    \"" + columnsInUpdateTable[i] + "\" " + toMySQLType( columnTypes[i] ) + " NOT NULL,\n";
 			}
 		}
-		sql += "    PRIMARY KEY (" + updateIdColumn + ")\n" +
+		sql += "    PRIMARY KEY (\"" + updateIdColumn + "\")\n" +
 				");";
 		return new String[] {
 				sql
@@ -182,25 +174,17 @@ public class PostgreSQLTriggerSQLStringSource implements TriggerSQLStringSource 
 	@Override
 	public String[] getUpdateTableDropCode(EventModelInfo info) {
 		return new String[] {
-				String.format( "DROP TABLE IF EXISTS %s;", info.getUpdateTableName() )
+				String.format( "DROP TABLE IF EXISTS \"%s\";", info.getUpdateTableName() )
 		};
 	}
 
 	@Override
 	public String getDelimitedIdentifierToken() {
-		return "";
+		return "\"";
 	}
 
 	private String getTriggerName(String originalTableName, int eventType) {
 		return new StringBuilder().append( originalTableName ).append( "_updates_hsearch_" ).append(
-				EventType.toString(
-						eventType
-				)
-		).toString();
-	}
-
-	private String getFunctionName(String originalTableName, int eventType) {
-		return new StringBuilder().append( originalTableName ).append( "_updates_hsearch_function_" ).append(
 				EventType.toString(
 						eventType
 				)

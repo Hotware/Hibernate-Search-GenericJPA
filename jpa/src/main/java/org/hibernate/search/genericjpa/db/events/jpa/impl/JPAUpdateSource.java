@@ -43,6 +43,8 @@ import org.hibernate.search.genericjpa.util.NamingThreadFactory;
  */
 public class JPAUpdateSource implements UpdateSource {
 
+	private final String delimitedIdentifierToken;
+
 	private static final Logger LOGGER = Logger.getLogger( JPAUpdateSource.class.getName() );
 
 	private final List<EventModelInfo> eventModelInfos;
@@ -70,7 +72,7 @@ public class JPAUpdateSource implements UpdateSource {
 			TransactionManager transactionManager,
 			long timeOut,
 			TimeUnit timeUnit,
-			int batchSizeForUpdates) {
+			int batchSizeForUpdates, String delimitedIdentifierToken) {
 		this(
 				eventModelInfos,
 				emf,
@@ -79,6 +81,7 @@ public class JPAUpdateSource implements UpdateSource {
 				timeUnit,
 				batchSizeForUpdates,
 				1,
+				delimitedIdentifierToken,
 				Executors.newSingleThreadScheduledExecutor( tf() )
 		);
 	}
@@ -93,7 +96,8 @@ public class JPAUpdateSource implements UpdateSource {
 			long timeOut,
 			TimeUnit timeUnit,
 			int batchSizeForUpdates,
-			int batchSizeForDatabaseQueries) {
+			int batchSizeForDatabaseQueries,
+			String delimitedIdentifierToken) {
 		this(
 				eventModelInfos,
 				emf,
@@ -102,6 +106,7 @@ public class JPAUpdateSource implements UpdateSource {
 				timeUnit,
 				batchSizeForUpdates,
 				batchSizeForDatabaseQueries,
+				delimitedIdentifierToken,
 				Executors
 						.newSingleThreadScheduledExecutor( tf() )
 		);
@@ -118,6 +123,7 @@ public class JPAUpdateSource implements UpdateSource {
 			TimeUnit timeUnit,
 			int batchSizeForUpdates,
 			int batchSizeForDatabaseQueries,
+			String delimitedIdentifierToken,
 			ScheduledExecutorService exec) {
 		this.eventModelInfos = eventModelInfos;
 		this.emf = emf;
@@ -140,6 +146,7 @@ public class JPAUpdateSource implements UpdateSource {
 		}
 		this.exec = exec;
 		this.transactionManager = transactionManager;
+		this.delimitedIdentifierToken = delimitedIdentifierToken;
 	}
 
 	private static ThreadFactory tf() {
@@ -155,24 +162,39 @@ public class JPAUpdateSource implements UpdateSource {
 			CriteriaBuilder cb = em.getCriteriaBuilder();
 			long count;
 			{
-				count = ((Number) em.createNativeQuery( "SELECT count(*) FROM " + evi.getUpdateTableName() )
+				count = ((Number) em.createNativeQuery(
+						"SELECT count(*) FROM " + updateSource.delimitedIdentifierToken + evi.getUpdateTableName() + updateSource.delimitedIdentifierToken
+				)
 						.getSingleResult()).longValue();
 			}
 			countMap.put( evi.getUpdateTableName(), count );
 
 			{
 				StringBuilder queryString = new StringBuilder().append( "SELECT " )
+						.append( updateSource.delimitedIdentifierToken )
 						.append( evi.getUpdateIdColumn() )
+						.append( updateSource.delimitedIdentifierToken )
 						.append( ", " )
-						.append( evi.getEventTypeColumn() );
+						.append( updateSource.delimitedIdentifierToken )
+						.append( evi.getEventTypeColumn() ).append( updateSource.delimitedIdentifierToken );
 				for ( EventModelInfo.IdInfo idInfo : evi.getIdInfos() ) {
 					for ( String column : idInfo.getColumnsInUpdateTable() ) {
-						queryString.append( ", " ).append( column );
+						queryString.append( ", " )
+								.append( updateSource.delimitedIdentifierToken )
+								.append( column )
+								.append(
+										updateSource.delimitedIdentifierToken
+								);
 					}
 				}
-				queryString.append( " FROM " ).append( evi.getUpdateTableName() ).append(
-						" ORDER BY "
-				).append( evi.getUpdateIdColumn() );
+				queryString.append( " FROM " ).append( updateSource.delimitedIdentifierToken )
+						.append( evi.getUpdateTableName() ).append( updateSource.delimitedIdentifierToken )
+						.append(
+								" ORDER BY "
+						)
+						.append( updateSource.delimitedIdentifierToken )
+						.append( evi.getUpdateIdColumn() )
+						.append( updateSource.delimitedIdentifierToken );
 
 				Query query = em.createNativeQuery(
 						queryString.toString()
@@ -252,7 +274,11 @@ public class JPAUpdateSource implements UpdateSource {
 										for ( int i = 0; i < columnTypes.length; ++i ) {
 											val[i] = valuesFromQuery[currentIndex++];
 										}
-										Object entityId = info.getIdConverter().convert( val, columnNames, columnTypes );
+										Object entityId = info.getIdConverter().convert(
+												val,
+												columnNames,
+												columnTypes
+										);
 										updateInfos.add(
 												new UpdateEventInfo(
 														info.getEntityClass(),
@@ -274,7 +300,7 @@ public class JPAUpdateSource implements UpdateSource {
 											// id column for the update is in
 											// rem[1] and the id is in rem[2]
 											query.addToNextValuePosition( rem[0].toString(), -1L );
-											em.createNativeQuery( "DELETE FROM " + rem[0] + " WHERE " + rem[1] + " = " + rem[2] )
+											em.createNativeQuery( "DELETE FROM " + this.delimitedIdentifierToken + rem[0] + this.delimitedIdentifierToken + " WHERE " + this.delimitedIdentifierToken + rem[1] + this.delimitedIdentifierToken + " = " + rem[2] )
 													.executeUpdate();
 										}
 										toRemove.clear();
@@ -291,7 +317,7 @@ public class JPAUpdateSource implements UpdateSource {
 										// id column for the update is in
 										// rem[1] and the id is in rem[2]
 										query.addToNextValuePosition( rem[0].toString(), -1L );
-										em.createNativeQuery( "DELETE FROM " + rem[0] + " WHERE " + rem[1] + " = " + rem[2] )
+										em.createNativeQuery( "DELETE FROM " + this.delimitedIdentifierToken + rem[0] + this.delimitedIdentifierToken + " WHERE " + this.delimitedIdentifierToken + rem[1] + this.delimitedIdentifierToken + " = " + rem[2] )
 												.executeUpdate();
 									}
 									toRemove.clear();

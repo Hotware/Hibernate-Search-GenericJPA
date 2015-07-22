@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 import org.hibernate.search.genericjpa.db.events.impl.AnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.impl.EventModelInfo;
@@ -46,6 +47,8 @@ import static org.junit.Assert.fail;
  */
 public abstract class DatabaseIntegrationTest {
 
+	private static final Logger LOGGER = Logger.getLogger( DatabaseIntegrationTest.class.getName() );
+
 	protected int valinorId = 0;
 	protected int helmsDeepId = 0;
 	protected Place valinor;
@@ -54,10 +57,13 @@ public abstract class DatabaseIntegrationTest {
 	protected String exceptionString;
 	protected List<String> dropStrings;
 
+	private TriggerSQLStringSource triggerSource;
+
 
 	private List<String> updateTableNames;
 
 	public void setup(String persistence, TriggerSQLStringSource triggerSource) throws SQLException {
+		this.triggerSource = triggerSource;
 		this.emf = Persistence.createEntityManagerFactory( persistence );
 		EntityManager em = emf.createEntityManager();
 		try {
@@ -172,7 +178,10 @@ public abstract class DatabaseIntegrationTest {
 		{
 			if ( this.updateTableNames != null ) {
 				for ( String updateTableName : this.updateTableNames ) {
-					em.createNativeQuery( "DELETE FROM " + updateTableName ).executeUpdate();
+					em.createNativeQuery(
+							"DELETE FROM " + this.triggerSource.getDelimitedIdentifierToken() + updateTableName + this.triggerSource
+									.getDelimitedIdentifierToken()
+					).executeUpdate();
 					em.flush();
 				}
 			}
@@ -209,9 +218,17 @@ public abstract class DatabaseIntegrationTest {
 			this.updateTableNames = new ArrayList<>();
 
 			try {
+				for ( String str : triggerSource.getUnSetupCode() ) {
+					System.out.println( str );
+					this.doQueryOrLogException( em, str );
+					if ( tx != null ) {
+						tx.commitIgnoreExceptions();
+						tx.begin();
+					}
+				}
 				for ( String str : triggerSource.getSetupCode() ) {
 					System.out.println( str );
-					em.createNativeQuery( str ).executeUpdate();
+					this.doQueryOrLogException( em, str );
 					if ( tx != null ) {
 						tx.commitIgnoreExceptions();
 						tx.begin();
@@ -220,7 +237,7 @@ public abstract class DatabaseIntegrationTest {
 				for ( EventModelInfo info : infos ) {
 					for ( String unSetupCode : triggerSource.getSpecificUnSetupCode( info ) ) {
 						System.out.println( unSetupCode );
-						em.createNativeQuery( unSetupCode ).executeUpdate();
+						this.doQueryOrLogException( em, unSetupCode );
 						if ( tx != null ) {
 							System.out.println( "commiting setup code!" );
 							tx.commitIgnoreExceptions();
@@ -229,7 +246,7 @@ public abstract class DatabaseIntegrationTest {
 					}
 					for ( String setupCode : triggerSource.getSpecificSetupCode( info ) ) {
 						System.out.println( setupCode );
-						em.createNativeQuery( setupCode ).executeUpdate();
+						this.doQueryOrLogException( em, setupCode );
 						if ( tx != null ) {
 							System.out.println( "commiting setup code!" );
 							tx.commitIgnoreExceptions();
@@ -238,9 +255,9 @@ public abstract class DatabaseIntegrationTest {
 					}
 					for ( int eventType : EventType.values() ) {
 						String[] triggerDropStrings = triggerSource.getTriggerDropCode( info, eventType );
-						for ( String triggerCreationString : triggerDropStrings ) {
-							System.out.println( triggerCreationString );
-							em.createNativeQuery( triggerCreationString ).executeUpdate();
+						for ( String triggerDropString : triggerDropStrings ) {
+							System.out.println( triggerDropString );
+							this.doQueryOrLogException( em, triggerDropString );
 							if ( tx != null ) {
 								System.out.println( "commiting setup code!" );
 								tx.commitIgnoreExceptions();
@@ -252,7 +269,7 @@ public abstract class DatabaseIntegrationTest {
 						String[] triggerCreationStrings = triggerSource.getTriggerCreationCode( info, eventType );
 						for ( String triggerCreationString : triggerCreationStrings ) {
 							System.out.println( triggerCreationString );
-							em.createNativeQuery( triggerCreationString ).executeUpdate();
+							this.doQueryOrLogException( em, triggerCreationString );
 							if ( tx != null ) {
 								System.out.println( "commiting setup code!" );
 								tx.commitIgnoreExceptions();
@@ -276,6 +293,20 @@ public abstract class DatabaseIntegrationTest {
 			if ( em != null ) {
 				em.close();
 			}
+		}
+	}
+
+	private void doQueryOrLogException(EntityManager em, String query) {
+		try {
+			em.createNativeQuery( query ).executeUpdate();
+		}
+		//FIXME: better Exception, will this ever throw an Exception? even if triggers are not present
+		//this doesn't seem to throw anything (for MySQL at least, I think it's best to keep it for now)
+		catch (Exception e) {
+			LOGGER.warning(
+					"Exception occured during setup of triggers (most of the time, this is okay): " +
+							e.getCause().getMessage()
+			);
 		}
 	}
 
@@ -318,7 +349,10 @@ public abstract class DatabaseIntegrationTest {
 			EntityTransaction tx = em.getTransaction();
 			tx.begin();
 
-			int countBefore = em.createNativeQuery( "SELECT * FROM PlaceSorcererUpdatesHsearch" )
+			int countBefore = em.createNativeQuery(
+					"SELECT * FROM " + this.triggerSource.getDelimitedIdentifierToken() + "PlaceSorcererUpdatesHsearch" + this.triggerSource
+							.getDelimitedIdentifierToken()
+			)
 					.getResultList()
 					.size();
 			em.flush();
@@ -341,14 +375,22 @@ public abstract class DatabaseIntegrationTest {
 			tx.begin();
 			assertEquals(
 					countBefore + 1,
-					em.createNativeQuery( "SELECT * FROM PlaceSorcererUpdatesHsearch" ).getResultList().size()
+					em.createNativeQuery(
+							"SELECT * FROM " + this.triggerSource.getDelimitedIdentifierToken() + "PlaceSorcererUpdatesHsearch" + this.triggerSource
+									.getDelimitedIdentifierToken()
+					)
+							.getResultList()
+							.size()
 			);
 			tx.commit();
 
 			tx.begin();
 			assertEquals(
 					1,
-					em.createNativeQuery( "SELECT * FROM PlaceSorcererUpdatesHsearch" ).getResultList().size()
+					em.createNativeQuery(
+							"SELECT * FROM " + this.triggerSource.getDelimitedIdentifierToken() + "PlaceSorcererUpdatesHsearch" + this.triggerSource
+									.getDelimitedIdentifierToken()
+					).getResultList().size()
 			);
 			tx.commit();
 
@@ -366,14 +408,21 @@ public abstract class DatabaseIntegrationTest {
 			tx.begin();
 			assertEquals(
 					countBefore + 2,
-					em.createNativeQuery( "SELECT * FROM PlaceSorcererUpdatesHsearch" ).getResultList().size()
+					em.createNativeQuery(
+							"SELECT * FROM " + this.triggerSource.getDelimitedIdentifierToken() + "PlaceSorcererUpdatesHsearch" + this.triggerSource
+									.getDelimitedIdentifierToken()
+					).getResultList().size()
 			);
 			tx.commit();
 
 			tx.begin();
 			assertEquals(
 					1,
-					em.createNativeQuery( "SELECT * FROM PlaceSorcererUpdatesHsearch WHERE eventCase = " + EventType.DELETE )
+					em.createNativeQuery(
+							"SELECT * FROM " + this.triggerSource.getDelimitedIdentifierToken() + "PlaceSorcererUpdatesHsearch" + this.triggerSource
+									.getDelimitedIdentifierToken() + " WHERE " + this.triggerSource.getDelimitedIdentifierToken() + "eventCase" + this.triggerSource
+									.getDelimitedIdentifierToken() + " = " + EventType.DELETE
+					)
 							.getResultList()
 							.size()
 			);
@@ -386,7 +435,8 @@ public abstract class DatabaseIntegrationTest {
 					1,
 					TimeUnit.SECONDS,
 					1,
-					1
+					1,
+					this.triggerSource.getDelimitedIdentifierToken()
 			);
 			updateSource.setUpdateConsumers(
 					Arrays.asList(
@@ -406,7 +456,10 @@ public abstract class DatabaseIntegrationTest {
 					100_000, () -> {
 						tx.begin();
 						try {
-							return em.createNativeQuery( "SELECT * FROM PlaceSorcererUpdatesHsearch" )
+							return em.createNativeQuery(
+									"SELECT * FROM " + this.triggerSource.getDelimitedIdentifierToken() + "PlaceSorcererUpdatesHsearch" + this.triggerSource
+											.getDelimitedIdentifierToken()
+							)
 									.getResultList()
 									.size() == 0;
 						}

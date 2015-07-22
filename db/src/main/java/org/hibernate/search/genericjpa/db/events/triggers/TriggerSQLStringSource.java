@@ -17,6 +17,8 @@ import org.hibernate.search.genericjpa.db.events.EventType;
  */
 public interface TriggerSQLStringSource {
 
+	String[] getUnSetupCode();
+
 	/**
 	 * this is executed first, this can not be undone
 	 */
@@ -55,5 +57,7 @@ public interface TriggerSQLStringSource {
 	String[] getUpdateTableCreationCode(EventModelInfo info);
 
 	String[] getUpdateTableDropCode(EventModelInfo info);
+
+	String getDelimitedIdentifierToken();
 
 }

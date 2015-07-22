@@ -13,6 +13,7 @@ import org.hibernate.search.genericjpa.db.events.impl.AnnotationEventModelParser
 import org.hibernate.search.genericjpa.db.events.impl.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.impl.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventType;
+import org.hibernate.search.genericjpa.db.events.triggers.HSQLDBTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.triggers.PostgreSQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource;
@@ -35,9 +36,15 @@ public class TriggerSQLStringSourceTest {
 		this.test( new PostgreSQLTriggerSQLStringSource() );
 	}
 
+	@Test
+	public void testHSQLDBTriggerSQLStringSource() {
+		this.test( new HSQLDBTriggerSQLStringSource() );
+	}
+
 	private void test(TriggerSQLStringSource triggerSource) {
 		EventModelParser parser = new AnnotationEventModelParser();
 		EventModelInfo info = parser.parse( new HashSet<>( Arrays.asList( Place.class ) ) ).get( 0 );
+		System.out.println( "UNSETUP CODE: " + Arrays.asList( triggerSource.getUnSetupCode() ) );
 		System.out.println( "SETUP CODE: " + Arrays.asList( triggerSource.getSetupCode() ) );
 		for ( int eventType : EventType.values() ) {
 			String[] updateTableCreationString = triggerSource.getUpdateTableCreationCode( info );

@@ -18,27 +18,31 @@ import org.hibernate.search.genericjpa.exception.AssertionFailure;
  * In order to provide uniqueness between the Update tables it uses a procedure that generates unique ids. This
  * procedure does this with auxilliary table that only has a autoincrement id. A row is inserted everytime a unique id
  * is needed and that id is retrieved via MySQLs last_insert_id() and then returned
+ * <br>
+ * <br>
+ * We don't escape the column names that come from the EventModelInfos
+ * as we don't have any control over how these are defined
  *
  * @author Martin Braun
  */
 public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 
-	public static final String DEFAULT_UNIQUE_ID_TABLE_NAME = "`_____unique____id____hsearch`";
+	public static final String DEFAULT_UNIQUE_ID_TABLE_NAME = "_____unique____id____hsearch";
 	public static final String DEFAULT_UNIQUE_ID_PROCEDURE_NAME = "get_unique_id_hsearch";
 
-	private static final String CREATE_TRIGGER_ORIGINAL_TABLE_SQL_FORMAT = "" + "CREATE TRIGGER %s AFTER %s ON %s                 \n"
+	private static final String CREATE_TRIGGER_ORIGINAL_TABLE_SQL_FORMAT = "" + "CREATE TRIGGER `%s` AFTER %s ON %s                 \n"
 			+ "FOR EACH ROW                                                                                                       \n"
 			+ "BEGIN                                                                                                              \n"
-			+ "    CALL %s(@unique_id);                                                                                           \n"
-			+ "    INSERT INTO %s(%s, %s, %s)                                                                                     \n"
+			+ "    CALL `%s`(@unique_id);                                                                                           \n"
+			+ "    INSERT INTO `%s`(`%s`, `%s`, %s)                                                                                     \n"
 			+ "		VALUES(@unique_id, %s, %s);                                                                                   \n"
 			+ "END;                                                                                                               \n";
-	private static final String CREATE_TRIGGER_CLEANUP_SQL_FORMAT = "" + "CREATE TRIGGER %s AFTER DELETE ON %s                    \n"
+	private static final String CREATE_TRIGGER_CLEANUP_SQL_FORMAT = "" + "CREATE TRIGGER `%s` AFTER DELETE ON `%s`                    \n"
 			+ "FOR EACH ROW                                                                                                       \n"
 			+ "BEGIN                                                                                                              \n"
-			+ "DELETE FROM #UNIQUE_ID_TABLE_NAME# WHERE id = OLD.#updatetableidcolumn#;                                           \n"
+			+ "DELETE FROM #UNIQUE_ID_TABLE_NAME# WHERE id = OLD.`#updatetableidcolumn#`;                                           \n"
 			+ "END;                                                                                                               \n";
-	private static final String DROP_TRIGGER_SQL_FORMAT = "" + "DROP TRIGGER IF EXISTS %s;\n";
+	private static final String DROP_TRIGGER_SQL_FORMAT = "" + "DROP TRIGGER IF EXISTS `%s`;\n";
 
 	private final String uniqueIdTableName;
 	private final String uniqueIdProcedureName;
@@ -64,22 +68,22 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 
 	private void init() {
 		this.createUniqueIdTable = String.format(
-				"CREATE TABLE IF NOT EXISTS %s (                                                 \n"
-						+ "id BIGINT(64) NOT NULL AUTO_INCREMENT,                                                                          \n"
+				"CREATE TABLE IF NOT EXISTS `%s` (                                                 \n"
+						+ "`id` BIGINT(64) NOT NULL AUTO_INCREMENT,                                                                          \n"
 						+ "PRIMARY KEY (id)                                                                                               \n"
 						+ ");                                                                                                              \n",
 				this.uniqueIdTableName
 		);
-		this.dropUniqueIdTable = String.format( "DROP TABLE IF EXISTS %s;", this.uniqueIdTableName );
+		this.dropUniqueIdTable = String.format( "DROP TABLE IF EXISTS `%s`;", this.uniqueIdTableName );
 		this.dropUniqueIdProcedure = String.format(
-				"DROP PROCEDURE IF EXISTS %s;                                                  \n",
+				"DROP PROCEDURE IF EXISTS `%s`;                                                  \n",
 				this.uniqueIdProcedureName
 		);
 		this.createUniqueIdProcedure = String.format(
-				"CREATE PROCEDURE %s                                                         \n"
+				"CREATE PROCEDURE `%s`                                                         \n"
 						+ "(OUT ret BIGINT)                                                                                                \n"
 						+ "BEGIN                                                                                                           \n"
-						+ "	INSERT INTO %s VALUES ();                                                                                      \n"
+						+ "	INSERT INTO `%s` VALUES ();                                                                                      \n"
 						+ "	SET ret = last_insert_id();                                                                                    \n"
 						+ "END;                                                                                                            \n",
 				this.uniqueIdProcedureName, this.uniqueIdTableName
@@ -91,8 +95,13 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 	}
 
 	@Override
+	public String[] getUnSetupCode() {
+		return new String[] {this.dropUniqueIdProcedure, this.dropUniqueIdTable};
+	}
+
+	@Override
 	public String[] getSetupCode() {
-		return new String[] {this.createUniqueIdTable, this.dropUniqueIdProcedure, this.createUniqueIdProcedure};
+		return new String[] {this.createUniqueIdTable, this.createUniqueIdProcedure};
 	}
 
 	@Override
@@ -117,7 +126,7 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 					valuesFromOriginal.append( "NEW." );
 				}
 				valuesFromOriginal.append( idInfo.getColumnsInOriginal()[i] );
-				idColumnNames.append( idInfo.getColumnsInUpdateTable()[i] );
+				idColumnNames.append( "`" + idInfo.getColumnsInUpdateTable()[i] + "`" );
 				++addedVals;
 			}
 		}
@@ -190,17 +199,17 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 		String updateIdColumn = info.getUpdateIdColumn();
 		String eventTypeColumn = info.getEventTypeColumn();
 		String sql =
-				"CREATE TABLE IF NOT EXISTS " + tableName + " (\n" +
-						"    " + updateIdColumn + " BIGINT(64) NOT NULL,\n" +
-						"    " + eventTypeColumn + " INT NOT NULL,\n";
+				"CREATE TABLE IF NOT EXISTS `" + tableName + "` (\n" +
+						"    `" + updateIdColumn + "` BIGINT(64) NOT NULL,\n" +
+						"    `" + eventTypeColumn + "` INT NOT NULL,\n";
 		for ( EventModelInfo.IdInfo idInfo : info.getIdInfos() ) {
 			String[] columnsInUpdateTable = idInfo.getColumnsInUpdateTable();
 			ColumnType[] columnTypes = idInfo.getColumnTypes();
 			for ( int i = 0; i < columnsInUpdateTable.length; ++i ) {
-				sql += "    " + columnsInUpdateTable[i] + " " + toMySQLType( columnTypes[i] ) + " NOT NULL,\n";
+				sql += "    `" + columnsInUpdateTable[i] + "` " + toMySQLType( columnTypes[i] ) + " NOT NULL,\n";
 			}
 		}
-		sql += "    PRIMARY KEY (" + updateIdColumn + ")\n" +
+		sql += "    PRIMARY KEY (`" + updateIdColumn + "`)\n" +
 				");";
 		return new String[] {
 				sql
@@ -223,8 +232,13 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 	@Override
 	public String[] getUpdateTableDropCode(EventModelInfo info) {
 		return new String[] {
-				String.format( "DROP TABLE IF EXISTS %s;", info.getUpdateTableName() )
+				String.format( "DROP TABLE IF EXISTS `%s`;", info.getUpdateTableName() )
 		};
+	}
+
+	@Override
+	public String getDelimitedIdentifierToken() {
+		return "`";
 	}
 
 }

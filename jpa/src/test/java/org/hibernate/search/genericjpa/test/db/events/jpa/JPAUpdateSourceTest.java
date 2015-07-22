@@ -43,7 +43,7 @@ public class JPAUpdateSourceTest {
 		EventModelParser parser = new AnnotationEventModelParser();
 		JPAUpdateSource updateSource = new JPAUpdateSource(
 				parser.parse( new HashSet<>( Arrays.asList( Place.class, Sorcerer.class ) ) ),
-				emf, null, 1, TimeUnit.SECONDS, 2, 2
+				emf, null, 1, TimeUnit.SECONDS, 2, 2, "`"
 		);
 		return JPAUpdateSource.query( updateSource, em );
 	}
@@ -86,7 +86,8 @@ public class JPAUpdateSourceTest {
 							1,
 							TimeUnit.SECONDS,
 							2,
-							2
+							2,
+							triggerSource.getDelimitedIdentifierToken()
 					);
 
 					EntityTransaction tx = em.getTransaction();

@@ -115,7 +115,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 						null,
 						100,
 						TimeUnit.MILLISECONDS,
-						10
+						10, new MySQLTriggerSQLStringSource().getDelimitedIdentifierToken()
 				);
 				updateSource.setUpdateConsumers( Arrays.asList( indexUpdater ) );
 				updateSource.start();
