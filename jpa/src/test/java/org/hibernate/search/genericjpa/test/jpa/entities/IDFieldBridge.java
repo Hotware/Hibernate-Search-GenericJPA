@@ -14,7 +14,7 @@ import org.hibernate.search.bridge.TwoWayStringBridge;
 public class IDFieldBridge implements TwoWayStringBridge {
 	@Override
 	public Object stringToObject(String stringValue) {
-		//yeah, hacky, we only allow certain strings, but this is a test, so who cares
+		//yeah, hacky, we only allow certain strings, but this is a testCustomUpdatedEntity, so who cares
 		String[] split = stringValue.split( "_" );
 		ID ret = new ID();
 		ret.setFirstId( split[0] );

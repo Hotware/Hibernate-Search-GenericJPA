@@ -149,7 +149,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 						{
 							List<Integer> places = this.queryPlaceIds( impl, "name", "Valinor" );
 							assertEquals(
-									"this test expects to have exactly one Place named Valinor!",
+									"this testCustomUpdatedEntity expects to have exactly one Place named Valinor!",
 									1,
 									places.size()
 							);

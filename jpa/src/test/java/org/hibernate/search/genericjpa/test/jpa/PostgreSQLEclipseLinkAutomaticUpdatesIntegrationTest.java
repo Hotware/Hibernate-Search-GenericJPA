@@ -7,17 +7,18 @@
 package org.hibernate.search.genericjpa.test.jpa;
 
 import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringSource;
+import org.hibernate.search.genericjpa.db.events.triggers.PostgreSQLTriggerSQLStringSource;
 
 import org.junit.Before;
 
 /**
- * Created by Martin on 02.07.2015.
+ * Created by Martin on 22.07.2015.
  */
-public class MySQLEclipseLinkIntegrationTest extends IntegrationTest {
+public class PostgreSQLEclipseLinkAutomaticUpdatesIntegrationTest extends AutomaticUpdatesIntegrationTest {
 
 	@Before
 	public void setup() {
-		this.setup( "EclipseLink_MySQL", MySQLTriggerSQLStringSource.class );
+		this.setup( "EclipseLink_PostgreSQL", PostgreSQLTriggerSQLStringSource.class );
 	}
 
 }

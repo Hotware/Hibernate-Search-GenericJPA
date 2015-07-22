@@ -133,9 +133,9 @@ public class HibernateWildFlyIntegrationTest {
 		fem.beginSearchTransaction();
 		fem.index( tmp );
 		fem.commitSearchTransaction();
-		//all the minimum stuff, so we can test with our little amount of entities
+		//all the minimum stuff, so we can testCustomUpdatedEntity with our little amount of entities
 		//the beefy tests are done in the jpa module anyways
-		//we just want to test whether we can do the indexing
+		//we just want to testCustomUpdatedEntity whether we can do the indexing
 		//in a EJB context :)
 		this.searchFactory.pauseUpdating( true );
 		try {
@@ -145,8 +145,8 @@ public class HibernateWildFlyIntegrationTest {
 					.batchSizeToLoadObjects( 1 )
 					.threadsToLoadIds( 1 )
 					.threadsToLoadObjects( 1 )
-							//just make sure there is no exception in setting this limit, we can't really test this properly as of now
-							//manual test showed this was done correctly
+							//just make sure there is no exception in setting this limit, we can't really testCustomUpdatedEntity this properly as of now
+							//manual testCustomUpdatedEntity showed this was done correctly
 					.idProducerTransactionTimeout( 1000 ).startAndWait();
 			assertEquals(
 					GAME_TITLES.length, this.searchFactory.getFullTextEntityManager( this.em ).createFullTextQuery(

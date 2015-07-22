@@ -280,7 +280,7 @@ public class MetaModelParser {
 							}
 							// Collections get updated in the owning entity (with
 							// EclipseLink) :)
-							// TODO: we should still test whether MANY_TO_MANY
+							// TODO: we should still testCustomUpdatedEntity whether MANY_TO_MANY
 							// are fine as well, but they should
 							// if (attrType == PersistentAttributeType.MANY_TO_MANY) {
 							// throw new UnsupportedOperationException(

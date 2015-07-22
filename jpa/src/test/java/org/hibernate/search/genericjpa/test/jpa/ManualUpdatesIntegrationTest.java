@@ -62,7 +62,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public abstract class IntegrationTest {
+public abstract class ManualUpdatesIntegrationTest {
 
 	private int valinorId = 0;
 	private int helmsDeepId = 0;
@@ -92,7 +92,7 @@ public abstract class IntegrationTest {
 		}
 	}
 
-	// TODO: different test class?
+	// TODO: different testCustomUpdatedEntity class?
 	@Test
 	public void testIdProducerTask() {
 		this.testIdProducerTask( 2, 1 );
@@ -110,14 +110,14 @@ public abstract class IntegrationTest {
 			public void updateEvent(List<UpdateEventInfo> batch) {
 				if ( !hadOne ) {
 					assertEquals(
-							"Helm's Deep", IntegrationTest.this.em.find( Place.class, batch.get( 0 ).getId() )
+							"Helm's Deep", ManualUpdatesIntegrationTest.this.em.find( Place.class, batch.get( 0 ).getId() )
 									.getName()
 					);
 					hadOne = true;
 				}
 				else {
 					assertEquals(
-							"Valinor", IntegrationTest.this.em.find( Place.class, batch.get( 0 ).getId() )
+							"Valinor", ManualUpdatesIntegrationTest.this.em.find( Place.class, batch.get( 0 ).getId() )
 									.getName()
 					);
 				}
@@ -172,7 +172,7 @@ public abstract class IntegrationTest {
 				assertEquals( 2, ftQuery.getResultSize() );
 				assertEquals( 2, ftQuery.queryDto( TestDto.class ).size() );
 			}
-			//TODO: do we really need to test this for purgeByTerm (?)
+			//TODO: do we really need to testCustomUpdatedEntity this for purgeByTerm (?)
 		}
 		catch (InterruptedException e) {
 			throw new SearchException( e );
@@ -242,7 +242,7 @@ public abstract class IntegrationTest {
 				}, 100, "coudln't find all entities in index!"
 		);
 
-		//assert for 0 is needed here, because we want to test if the query does filter out stuff
+		//assert for 0 is needed here, because we want to testCustomUpdatedEntity if the query does filter out stuff
 		//that is not found in the database anymore properly
 		assertEquals(
 				0, fem.createFullTextQuery( new MatchAllDocsQuery(), Place.class ).initializeObjectsWith(
@@ -258,7 +258,10 @@ public abstract class IntegrationTest {
 									}
 
 									@Override
-									public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
+									public List getBatch(
+											Class<?> entityClass,
+											List<Object> id,
+											Map<String, String> hints) {
 										// this should happen!
 										// an empty list is actually quite interesting for the backend.
 										// does it handle not finding anything for a given identifier right?
@@ -288,7 +291,10 @@ public abstract class IntegrationTest {
 									}
 
 									@Override
-									public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
+									public List getBatch(
+											Class<?> entityClass,
+											List<Object> id,
+											Map<String, String> hints) {
 										throw new AssertionError( "should have used get instead!" );
 									}
 
@@ -386,13 +392,13 @@ public abstract class IntegrationTest {
 	public void testDeleteByTerm() {
 		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
 
-		//TODO: test if all the Sorcerers still available?
+		//TODO: testCustomUpdatedEntity if all the Sorcerers still available?
 
 		fem.beginSearchTransaction();
 		fem.purgeByTerm( Place.class, "id", String.valueOf( this.valinorId ) );
 		fem.commitSearchTransaction();
 
-		//TODO: test this for the other query types
+		//TODO: testCustomUpdatedEntity this for the other query types
 
 		assertEquals(
 				0, fem.createFullTextQuery( new TermQuery( new Term( "name", "valinor" ) ), Place.class )
@@ -427,7 +433,7 @@ public abstract class IntegrationTest {
 
 		this.testFoundSorcererAndPlace( ftQuery );
 
-		//test this for FIND_BY_ID as well
+		//testCustomUpdatedEntity this for FIND_BY_ID as well
 		ftQuery.initializeObjectsWith( ObjectLookupMethod.SKIP, DatabaseRetrievalMethod.FIND_BY_ID );
 		this.testFoundSorcererAndPlace( ftQuery );
 	}
@@ -455,7 +461,7 @@ public abstract class IntegrationTest {
 	public void setup(String emfName, Class<? extends TriggerSQLStringSource> triggerSource) {
 		this.emf = Persistence.createEntityManagerFactory( emfName );
 		Properties properties = new Properties();
-		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.name", "test" );
+		properties.setProperty( "org.hibernate.search.genericjpa.searchfactory.name", "testCustomUpdatedEntity" );
 		properties.setProperty( Constants.ADDITIONAL_INDEXED_TYPES_KEY, NonJPAEntity.class.getName() );
 		//we do manual updates, so this will be ignored, but let's keep it here
 		//if we change our mind later
@@ -467,7 +473,8 @@ public abstract class IntegrationTest {
 				Constants.TRIGGER_CREATION_STRATEGY_KEY,
 				Constants.TRIGGER_CREATION_STRATEGY_DROP_CREATE
 		);
-		properties.setProperty( "hibernate.search.searchfactory.type", "manual-updates" );
+		properties.setProperty( Constants.SEARCH_FACTORY_TYPE_KEY, "manual-updates" );
+
 		this.searchFactory = (JPASearchFactoryAdapter) Setup.createSearchFactory( this.emf, properties );
 		EntityManager em = emf.createEntityManager();
 		try {

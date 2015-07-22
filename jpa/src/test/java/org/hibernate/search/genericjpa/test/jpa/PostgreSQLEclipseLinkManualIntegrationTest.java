@@ -13,7 +13,7 @@ import org.junit.Before;
 /**
  * Created by Martin on 02.07.2015.
  */
-public class PostgreSQLEclipseLinkIntegrationTest extends IntegrationTest {
+public class PostgreSQLEclipseLinkManualIntegrationTest extends ManualUpdatesIntegrationTest {
 
 	@Before
 	public void setup() {

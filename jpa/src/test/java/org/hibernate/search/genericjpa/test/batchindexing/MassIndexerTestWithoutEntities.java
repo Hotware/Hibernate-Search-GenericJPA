@@ -35,7 +35,7 @@ public class MassIndexerTestWithoutEntities {
 	public void setup() {
 		this.emf = Persistence.createEntityManagerFactory( "EclipseLink_MySQL" );
 		Properties properties = new Properties();
-		properties.setProperty( Constants.SEARCH_FACTORY_NAME_KEY, "test" );
+		properties.setProperty( Constants.SEARCH_FACTORY_NAME_KEY, "testCustomUpdatedEntity" );
 		properties.setProperty( Constants.TRIGGER_SOURCE_KEY, MySQLTriggerSQLStringSource.class.getName() );
 		properties.setProperty( Constants.SEARCH_FACTORY_TYPE_KEY, "manual-updates" );
 		properties.setProperty( "hibernate.search.default.directory_provider", "filesystem" );

@@ -27,7 +27,7 @@ public class CustomUpdatedEntityEntityProvider implements EntityManagerEntityPro
 		em.detach( ret );
 
 		//we somehow have to check whether this class was used.
-		if ( hints != null && hints.containsKey( "test" ) && hints.get( "test" ).equals( "toast" ) ) {
+		if ( hints != null && hints.containsKey( "testCustomUpdatedEntity" ) && hints.get( "testCustomUpdatedEntity" ).equals( "toast" ) ) {
 			ret.setText( CUSTOM_TEXT_HINTS );
 		}
 		else {

@@ -31,7 +31,7 @@ import org.hibernate.search.genericjpa.db.events.ColumnType;
 @CustomUpdateEntityProvider(impl = CustomUpdatedEntityEntityProvider.class)
 @Table(name = "CustomUpdatedEntity")
 @UpdateInfo(tableName = "CustomUpdatedEntity", idInfos = @IdInfo(columns =
-@IdColumn(column = "id", columnType = ColumnType.LONG), hints = @Hint(key = "test", value = "toast")
+@IdColumn(column = "id", columnType = ColumnType.LONG), hints = @Hint(key = "testCustomUpdatedEntity", value = "toast")
 ))
 public class CustomUpdatedEntity {
 
