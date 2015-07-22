@@ -29,20 +29,20 @@ public class PostgreSQLTriggerSQLStringSource implements TriggerSQLStringSource 
 			"    THEN RAISE NOTICE 'Hibernate Search Unique ID Sequence did not exist.';\n" +
 			"END;$$;";
 
-	private static final String DROP_TRIGGER_FORMAT_SQL = "DROP TRIGGER IF EXISTS %s ON %s";
-	private static final String DROP_FUNCTION_FORMAT_SQL = "DROP FUNCTION IF EXISTS %s();";
+	private static final String DROP_TRIGGER_FORMAT_SQL = "DROP TRIGGER IF EXISTS \"%s\" ON %s";
+	private static final String DROP_FUNCTION_FORMAT_SQL = "DROP FUNCTION IF EXISTS \"%s\"();";
 
-	private static final String CREATE_FUNCTION_FORMAT_SQL = "CREATE OR REPLACE FUNCTION %s() RETURNS TRIGGER AS $$\n" +
+	private static final String CREATE_FUNCTION_FORMAT_SQL = "CREATE OR REPLACE FUNCTION \"%s\"() RETURNS TRIGGER AS $$\n" +
 			"    BEGIN\n" +
-			"        INSERT INTO %s(%s, %s, %s)\n" +
+			"        INSERT INTO \"%s\"(\"%s\", \"%s\", %s)\n" +
 			"        VALUES(nextval('" + UNIQUE_ID_SEQUENCE_NAME + "'), %s, %s);\n" +
 			"        RETURN NEW;\n" +
 			"    END\n" +
 			"$$ LANGUAGE plpgsql;";
-	private static final String CREATE_TRIGGER_FORMAT_SQL = "CREATE TRIGGER %s\n" +
+	private static final String CREATE_TRIGGER_FORMAT_SQL = "CREATE TRIGGER \"%s\"\n" +
 			"    AFTER %s ON %s\n" +
 			"    FOR EACH ROW\n" +
-			"    EXECUTE PROCEDURE %s();";
+			"    EXECUTE PROCEDURE \"%s\"();";
 
 	@Override
 	public String[] getUnSetupCode() {
@@ -96,7 +96,7 @@ public class PostgreSQLTriggerSQLStringSource implements TriggerSQLStringSource 
 					valuesFromOriginal.append( "NEW." );
 				}
 				valuesFromOriginal.append( idInfo.getColumnsInOriginal()[i] );
-				idColumnNames.append( idInfo.getColumnsInUpdateTable()[i] );
+				idColumnNames.append( "\"" + idInfo.getColumnsInUpdateTable()[i] + "\"" );
 				++addedVals;
 			}
 		}
@@ -149,17 +149,17 @@ public class PostgreSQLTriggerSQLStringSource implements TriggerSQLStringSource 
 		String updateIdColumn = info.getUpdateIdColumn();
 		String eventTypeColumn = info.getEventTypeColumn();
 		String sql =
-				"CREATE TABLE IF NOT EXISTS " + tableName + " (\n" +
-						"    " + updateIdColumn + " BIGINT NOT NULL,\n" +
-						"    " + eventTypeColumn + " INT NOT NULL,\n";
+				"CREATE TABLE IF NOT EXISTS \"" + tableName + "\" (\n" +
+						"    \"" + updateIdColumn + "\" BIGINT NOT NULL,\n" +
+						"    \"" + eventTypeColumn + "\" INT NOT NULL,\n";
 		for ( EventModelInfo.IdInfo idInfo : info.getIdInfos() ) {
 			String[] columnsInUpdateTable = idInfo.getColumnsInUpdateTable();
 			ColumnType[] columnTypes = idInfo.getColumnTypes();
 			for ( int i = 0; i < columnsInUpdateTable.length; ++i ) {
-				sql += "    " + columnsInUpdateTable[i] + " " + toMySQLType( columnTypes[i] ) + " NOT NULL,\n";
+				sql += "    \"" + columnsInUpdateTable[i] + "\" " + toMySQLType( columnTypes[i] ) + " NOT NULL,\n";
 			}
 		}
-		sql += "    PRIMARY KEY (" + updateIdColumn + ")\n" +
+		sql += "    PRIMARY KEY (\"" + updateIdColumn + "\")\n" +
 				");";
 		return new String[] {
 				sql
@@ -182,13 +182,13 @@ public class PostgreSQLTriggerSQLStringSource implements TriggerSQLStringSource 
 	@Override
 	public String[] getUpdateTableDropCode(EventModelInfo info) {
 		return new String[] {
-				String.format( "DROP TABLE IF EXISTS %s;", info.getUpdateTableName() )
+				String.format( "DROP TABLE IF EXISTS \"%s\";", info.getUpdateTableName() )
 		};
 	}
 
 	@Override
 	public String getDelimitedIdentifierToken() {
-		return "";
+		return "\"";
 	}
 
 	private String getTriggerName(String originalTableName, int eventType) {
