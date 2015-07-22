@@ -44,17 +44,38 @@ public class AnnotationEventModelParser implements EventModelParser {
 		for ( Class<?> clazz : updateClasses ) {
 			{
 				UpdateInfo[] classUpdateInfos = clazz.getAnnotationsByType( UpdateInfo.class );
-				this.addUpdateInfosToList( clazz, ret, clazz, classUpdateInfos, handledOriginalTableNames, updateTableNames );
+				this.addUpdateInfosToList(
+						clazz,
+						ret,
+						clazz,
+						classUpdateInfos,
+						handledOriginalTableNames,
+						updateTableNames
+				);
 			}
 
 			for ( Method method : clazz.getDeclaredMethods() ) {
 				UpdateInfo[] methodUpdateInfos = method.getAnnotationsByType( UpdateInfo.class );
-				this.addUpdateInfosToList( method, ret, null, methodUpdateInfos, handledOriginalTableNames, updateTableNames );
+				this.addUpdateInfosToList(
+						method,
+						ret,
+						null,
+						methodUpdateInfos,
+						handledOriginalTableNames,
+						updateTableNames
+				);
 			}
 
 			for ( Field field : clazz.getDeclaredFields() ) {
 				UpdateInfo[] fieldUpdateInfos = field.getAnnotationsByType( UpdateInfo.class );
-				this.addUpdateInfosToList( field, ret, null, fieldUpdateInfos, handledOriginalTableNames, updateTableNames );
+				this.addUpdateInfosToList(
+						field,
+						ret,
+						null,
+						fieldUpdateInfos,
+						handledOriginalTableNames,
+						updateTableNames
+				);
 			}
 		}
 		return ret;
@@ -71,11 +92,11 @@ public class AnnotationEventModelParser implements EventModelParser {
 			String originalTableName = info.tableName();
 
 			if ( updateTableNames.contains( originalTableName ) ) {
-				throw new SearchException( "naming conflict with table " + originalTableName + ". a table of this name was marked to be created" );
+				throw new SearchException( specifiedOn + ": naming conflict with table " + originalTableName + ". a table of this name was marked to be created" );
 			}
 
 			if ( handledOriginalTableNames.contains( originalTableName ) ) {
-				throw new SearchException( "multiple @UpdateInfo specified for table " + originalTableName );
+				throw new SearchException( specifiedOn + ": multiple @UpdateInfo specified for table " + originalTableName );
 			}
 			handledOriginalTableNames.add( originalTableName );
 
@@ -85,7 +106,7 @@ public class AnnotationEventModelParser implements EventModelParser {
 					info.updateTableName();
 
 			if ( handledOriginalTableNames.contains( updateTableName ) ) {
-				throw new SearchException( "naming conflict with table " + updateTableName + ". a table of this name was marked to be created" );
+				throw new SearchException( specifiedOn + ": naming conflict with table " + updateTableName + ". a table of this name was marked to be created" );
 			}
 
 			if ( updateTableNames.contains( updateTableName ) ) {
@@ -108,7 +129,7 @@ public class AnnotationEventModelParser implements EventModelParser {
 				final Class<?> idInfoEntityClass;
 				if ( annotationIdInfo.entity().equals( void.class ) ) {
 					if ( classSpecifiedOnClass == null ) {
-						throw new SearchException( "IdInfo.entity must be specified for the member level!" );
+						throw new SearchException( specifiedOn + ": IdInfo.entity must be specified for the member level!" );
 					}
 					idInfoEntityClass = classSpecifiedOnClass;
 				}
@@ -116,9 +137,12 @@ public class AnnotationEventModelParser implements EventModelParser {
 					idInfoEntityClass = annotationIdInfo.entity();
 				}
 
+				boolean foundCustomType = false;
+
 				final String[] columns = new String[annotationIdInfo.columns().length];
 				final String[] updateTableColumns = new String[columns.length];
 				final ColumnType[] columnTypes = new ColumnType[columns.length];
+				final String[] columnDefinitions = new String[columns.length];
 				IdColumn[] idColumns = annotationIdInfo.columns();
 				for ( int i = 0; i < idColumns.length; ++i ) {
 					IdColumn cur = idColumns[i];
@@ -130,16 +154,23 @@ public class AnnotationEventModelParser implements EventModelParser {
 						updateTableColumns[i] = cur.column() + "fk";
 					}
 					columnTypes[i] = cur.columnType();
+					if ( cur.columnType() == ColumnType.CUSTOM && cur.columnDefinition().equals( "" ) ) {
+						throw new SearchException( specifiedOn + ": ColumnType.CUSTOM must be specified together with a columnDefinition" );
+					}
+					if ( cur.columnType() == ColumnType.CUSTOM ) {
+						foundCustomType = true;
+					}
+					columnDefinitions[i] = cur.columnDefinition();
 				}
 
 				final IdConverter idConverter;
-				if ( IdConverter.class.equals( annotationIdInfo.idConverter() ) && columnTypes.length == 1 ) {
+				if ( !foundCustomType && IdConverter.class.equals( annotationIdInfo.idConverter() ) && columnTypes.length == 1 ) {
 					idConverter = columnTypes[0];
 				}
 				else {
 					if ( IdConverter.class.equals( annotationIdInfo.idConverter() ) ) {
 						throw new SearchException(
-								specifiedOn + ": if more than one column is specified, you have to specify an IdConverter"
+								specifiedOn + ": if more than one column or a custom columntype is specified, you have to specify an IdConverter"
 						);
 					}
 					try {
@@ -161,6 +192,7 @@ public class AnnotationEventModelParser implements EventModelParser {
 								updateTableColumns,
 								columns,
 								columnTypes,
+								columnDefinitions,
 								idConverter,
 								hints
 						)

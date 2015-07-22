@@ -98,25 +98,25 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 							String[] triggerDropStrings = this.triggerSource.getTriggerDropCode( info, eventType );
 							for ( String triggerDropString : triggerDropStrings ) {
 								LOGGER.info( triggerDropString );
-								this.doQueryOrLogException( connection, triggerDropString );
+								this.doQueryOrLogException( connection, triggerDropString, true );
 							}
 						}
 
 						for ( String unSetupCode : this.triggerSource.getSpecificUnSetupCode( info ) ) {
 							LOGGER.info( unSetupCode );
-							this.doQueryOrLogException( connection, unSetupCode );
+							this.doQueryOrLogException( connection, unSetupCode, true );
 						}
 
 						for ( String str : triggerSource.getUpdateTableDropCode( info ) ) {
 							LOGGER.info( str );
-							this.doQueryOrLogException( connection, str );
+							this.doQueryOrLogException( connection, str, true );
 						}
 
 					}
 
 					for ( String str : triggerSource.getUnSetupCode() ) {
 						LOGGER.info( str );
-						this.doQueryOrLogException( connection, str );
+						this.doQueryOrLogException( connection, str, true );
 					}
 				}
 
@@ -124,18 +124,18 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 				try {
 					for ( String str : triggerSource.getSetupCode() ) {
 						LOGGER.info( str );
-						this.doQueryOrLogException( connection, str );
+						this.doQueryOrLogException( connection, str, false );
 					}
 
 					for ( EventModelInfo info : eventModelInfos ) {
 						for ( String str : triggerSource.getUpdateTableCreationCode( info ) ) {
 							LOGGER.info( str );
-							this.doQueryOrLogException( connection, str );
+							this.doQueryOrLogException( connection, str, false );
 						}
 
 						for ( String setupCode : this.triggerSource.getSpecificSetupCode( info ) ) {
 							LOGGER.info( setupCode );
-							this.doQueryOrLogException( connection, setupCode );
+							this.doQueryOrLogException( connection, setupCode, false );
 						}
 
 						for ( int eventType : EventType.values() ) {
@@ -145,7 +145,7 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 							);
 							for ( String triggerCreationString : triggerCreationStrings ) {
 								LOGGER.info( triggerCreationString );
-								this.doQueryOrLogException( connection, triggerCreationString );
+								this.doQueryOrLogException( connection, triggerCreationString, false );
 							}
 						}
 					}
@@ -166,7 +166,7 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 		}
 	}
 
-	private void doQueryOrLogException(Connection connection, String query) {
+	private void doQueryOrLogException(Connection connection, String query, boolean canFail) {
 		try {
 			if ( connection != null ) {
 				Statement statement = connection.createStatement();
@@ -195,10 +195,12 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 			}
 		}
 		catch (Exception e) {
-			LOGGER.warning(
-					"Exception occured during setup of triggers (most of the time, this is okay): " +
-							e.getMessage()
-			);
+			if ( canFail ) {
+				LOGGER.warning(
+						"Exception occured during setup of triggers (most of the time, this is okay): " +
+								e.getMessage()
+				);
+			}
 		}
 	}
 

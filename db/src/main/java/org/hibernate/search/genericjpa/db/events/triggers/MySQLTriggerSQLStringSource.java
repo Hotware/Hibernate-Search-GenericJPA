@@ -205,8 +205,13 @@ public class MySQLTriggerSQLStringSource implements TriggerSQLStringSource {
 		for ( EventModelInfo.IdInfo idInfo : info.getIdInfos() ) {
 			String[] columnsInUpdateTable = idInfo.getColumnsInUpdateTable();
 			ColumnType[] columnTypes = idInfo.getColumnTypes();
+			String[] columnDefinitions = idInfo.getColumnDefinitions();
 			for ( int i = 0; i < columnsInUpdateTable.length; ++i ) {
-				sql += "    `" + columnsInUpdateTable[i] + "` " + toMySQLType( columnTypes[i] ) + " NOT NULL,\n";
+				String columnDefinition = columnDefinitions[i];
+				if(columnDefinition.equals("")) {
+					columnDefinition = toMySQLType( columnTypes[i] );
+				}
+				sql += "    `" + columnsInUpdateTable[i] + "` " + columnDefinition + " NOT NULL,\n";
 			}
 		}
 		sql += "    PRIMARY KEY (`" + updateIdColumn + "`)\n" +

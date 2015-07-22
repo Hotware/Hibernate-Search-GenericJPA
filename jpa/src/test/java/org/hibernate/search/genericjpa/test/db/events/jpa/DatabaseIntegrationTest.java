@@ -158,21 +158,6 @@ public abstract class DatabaseIntegrationTest {
 			em.flush();
 		}
 		tx.commit();
-
-		//for the first pass this is okay anyways, as this table was killed.
-		tx.begin();
-		{
-			if ( this.updateTableNames != null ) {
-				for ( String updateTableName : this.updateTableNames ) {
-					em.createNativeQuery(
-							"DELETE FROM " + this.triggerSource.getDelimitedIdentifierToken() + updateTableName + this.triggerSource
-									.getDelimitedIdentifierToken()
-					).executeUpdate();
-					em.flush();
-				}
-			}
-		}
-		tx.commit();
 	}
 
 	public void setupTriggers(TriggerSQLStringSource triggerSource) throws SQLException {

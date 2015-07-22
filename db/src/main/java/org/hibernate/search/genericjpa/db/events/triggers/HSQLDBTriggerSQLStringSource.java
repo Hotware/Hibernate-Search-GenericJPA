@@ -20,7 +20,6 @@ import org.hibernate.search.genericjpa.exception.AssertionFailure;
 public class HSQLDBTriggerSQLStringSource implements TriggerSQLStringSource {
 
 
-
 	private static final String UNIQUE_ID_SEQUENCE_NAME = "unique___id___hsearch";
 	private static final String CREATE_UNIQUE_ID_SEQUENCE_SQL = "CREATE SEQUENCE \"" + UNIQUE_ID_SEQUENCE_NAME + "\" AS BIGINT START WITH 1 INCREMENT BY 1;";
 	private static final String DROP_UNIQUE_ID_SEQUENCE_SQL = "DROP SEQUENCE \"" + UNIQUE_ID_SEQUENCE_NAME + "\"";
@@ -147,8 +146,13 @@ public class HSQLDBTriggerSQLStringSource implements TriggerSQLStringSource {
 		for ( EventModelInfo.IdInfo idInfo : info.getIdInfos() ) {
 			String[] columnsInUpdateTable = idInfo.getColumnsInUpdateTable();
 			ColumnType[] columnTypes = idInfo.getColumnTypes();
+			String[] columnDefinitions = idInfo.getColumnDefinitions();
 			for ( int i = 0; i < columnsInUpdateTable.length; ++i ) {
-				sql += "    \"" + columnsInUpdateTable[i] + "\" " + toMySQLType( columnTypes[i] ) + " NOT NULL,\n";
+				String columnDefinition = columnDefinitions[i];
+				if ( columnDefinition.equals( "" ) ) {
+					columnDefinition = toMySQLType( columnTypes[i] );
+				}
+				sql += "    \"" + columnsInUpdateTable[i] + "\" " + columnDefinition + " NOT NULL,\n";
 			}
 		}
 		sql += "    PRIMARY KEY (\"" + updateIdColumn + "\")\n" +

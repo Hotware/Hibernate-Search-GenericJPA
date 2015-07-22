@@ -88,6 +88,7 @@ public class EventModelInfo {
 		private final String[] columnsInUpdateTable;
 		private final String[] columnsInOriginal;
 		private final ColumnType[] columnTypes;
+		private final String[] columnDefinitions;
 		private final IdConverter idConverter;
 		private final Map<String, String> hints;
 
@@ -96,6 +97,7 @@ public class EventModelInfo {
 				String[] columnsInUpdateTable,
 				String[] columnsInOriginal,
 				ColumnType[] columnTypes,
+				String[] columnDefinitions,
 				IdConverter idConverter, Map<String, String> hints) {
 			this.entityClass = entityClass;
 			this.columnsInUpdateTable = columnsInUpdateTable;
@@ -103,6 +105,11 @@ public class EventModelInfo {
 			this.hints = hints;
 			this.columnsInOriginal = columnsInOriginal;
 			this.columnTypes = columnTypes;
+			this.columnDefinitions = columnDefinitions;
+		}
+
+		public String[] getColumnDefinitions() {
+			return columnDefinitions;
 		}
 
 		public ColumnType[] getColumnTypes() {

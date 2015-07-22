@@ -60,5 +60,12 @@ public enum ColumnType implements IdConverter {
 				throw new SearchException( fieldNames[0] + " is no Number" );
 			}
 		}
+	},
+	CUSTOM {
+		@Override
+		public Object convert(
+				Object[] values, String[] fieldNames, ColumnType[] columnTypes) {
+			throw new AssertionFailure( "custom types can not be used on their own" );
+		}
 	}
 }

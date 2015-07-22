@@ -28,8 +28,8 @@ import org.hibernate.search.genericjpa.db.events.ColumnType;
 @Indexed
 @IdClass(ID.class)
 @UpdateInfo(tableName = "MultipleColumnsIdEntity", idInfos = @IdInfo(columns = {
-		@IdColumn( column = "firstId", columnType = ColumnType.STRING),
-		@IdColumn( column = "secondId", columnType = ColumnType.STRING)
+		@IdColumn(column = "firstId", columnType = ColumnType.CUSTOM, columnDefinition = "VARCHAR(123)"),
+		@IdColumn(column = "secondId", columnType = ColumnType.STRING)
 }, idConverter = MultipleColumnsIdEntityIdConverter.class))
 public class MultipleColumnsIdEntity {
 

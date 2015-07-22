@@ -24,4 +24,6 @@ public @interface IdColumn {
 
 	ColumnType columnType();
 
+	String columnDefinition() default "";
+
 }
