@@ -28,7 +28,7 @@ import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
-import org.hibernate.search.genericjpa.factory.SearchConfigurationImpl;
+import org.hibernate.search.genericjpa.factory.StandaloneSearchConfiguration;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchFactory;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchFactoryFactory;
 import org.hibernate.search.genericjpa.factory.Transaction;
@@ -45,7 +45,7 @@ public class SearchFactoryTest {
 
 	@Test
 	public void testWithoutNewClasses() {
-		SearchConfiguration searchConfiguration = new SearchConfigurationImpl();
+		SearchConfiguration searchConfiguration = new StandaloneSearchConfiguration();
 		List<Class<?>> classes = Arrays.asList( TopLevel.class );
 
 		SearchIntegratorBuilder builder = new SearchIntegratorBuilder();
@@ -93,7 +93,7 @@ public class SearchFactoryTest {
 	@Test
 	public void test() throws IOException {
 		StandaloneSearchFactory factory = StandaloneSearchFactoryFactory.createSearchFactory(
-				new SearchConfigurationImpl(),
+				new StandaloneSearchConfiguration(),
 				Arrays.asList( TopLevel.class, Embedded.class, Embedded2.class )
 		);
 		try {
@@ -240,7 +240,7 @@ public class SearchFactoryTest {
 	@Test
 	public void testNullInIndexNotReturned() throws IOException {
 		StandaloneSearchFactory factory = StandaloneSearchFactoryFactory.createSearchFactory(
-				new SearchConfigurationImpl(),
+				new StandaloneSearchConfiguration(),
 				Arrays.asList( TopLevel.class, Embedded.class, Embedded2.class )
 		);
 		try {

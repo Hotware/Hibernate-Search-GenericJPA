@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
-package org.hibernate.search.genericjpa.dto;
+package org.hibernate.search.genericjpa.dto.impl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,19 +12,19 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import org.hibernate.search.genericjpa.dto.DtoDescriptor.DtoDescription;
+import org.hibernate.search.genericjpa.annotations.DtoField;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.query.engine.spi.HSQuery;
 
 /**
  * projection utility class to automatically convert from projections back to a DtoObject. The projection to use is
- * specified via {@link org.hibernate.search.genericjpa.dto.annotations.DtoField}(s)
+ * specified via {@link DtoField}(s)
  *
  * @author Martin
  */
 public class DtoQueryExecutor {
 
-	private final Map<Class<?>, DtoDescription> dtoDescriptions;
+	private final Map<Class<?>, DtoDescriptor.DtoDescription> dtoDescriptions;
 	private final DtoDescriptor dtoDescriptor;
 
 	public DtoQueryExecutor() {
@@ -33,11 +33,11 @@ public class DtoQueryExecutor {
 	}
 
 	public <T> List<T> executeHSQuery(HSQuery hsQuery, Class<T> clazz) {
-		return this.executeHSQuery( hsQuery, clazz, DtoDescription.DEFAULT_PROFILE );
+		return this.executeHSQuery( hsQuery, clazz, DtoDescriptor.DtoDescription.DEFAULT_PROFILE );
 	}
 
 	public <T> List<T> executeHSQuery(HSQuery hsQuery, Class<T> returnedType, String profile) {
-		DtoDescription desc = this.dtoDescriptions.computeIfAbsent(
+		DtoDescriptor.DtoDescription desc = this.dtoDescriptions.computeIfAbsent(
 				returnedType, this.dtoDescriptor::getDtoDescription
 		);
 		String[] projectedFieldsBefore = hsQuery.getProjectedFields();

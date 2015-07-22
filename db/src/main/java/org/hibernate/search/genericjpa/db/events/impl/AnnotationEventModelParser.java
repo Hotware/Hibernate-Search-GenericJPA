@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
-package org.hibernate.search.genericjpa.db.events;
+package org.hibernate.search.genericjpa.db.events.impl;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -19,7 +19,8 @@ import org.hibernate.search.genericjpa.annotations.Hint;
 import org.hibernate.search.genericjpa.annotations.IdColumn;
 import org.hibernate.search.genericjpa.annotations.IdInfo;
 import org.hibernate.search.genericjpa.annotations.UpdateInfo;
-import org.hibernate.search.genericjpa.db.id.IdConverter;
+import org.hibernate.search.genericjpa.db.events.ColumnType;
+import org.hibernate.search.genericjpa.db.events.IdConverter;
 import org.hibernate.search.genericjpa.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.exception.SearchException;
 

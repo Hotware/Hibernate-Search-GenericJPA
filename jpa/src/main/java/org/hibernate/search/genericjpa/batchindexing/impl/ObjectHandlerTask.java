@@ -24,7 +24,7 @@ import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateEventInfo;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.exception.SearchException;
-import org.hibernate.search.genericjpa.factory.SubClassSupportInstanceInitializer;
+import org.hibernate.search.genericjpa.factory.impl.SubClassSupportInstanceInitializer;
 import org.hibernate.search.indexes.interceptor.EntityIndexingInterceptor;
 import org.hibernate.search.indexes.interceptor.IndexingOverride;
 import org.hibernate.search.spi.InstanceInitializer;

@@ -24,14 +24,14 @@ import org.hibernate.search.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateEventInfo;
-import org.hibernate.search.genericjpa.db.events.index.IndexUpdater;
-import org.hibernate.search.genericjpa.db.events.index.IndexUpdater.IndexWrapper;
+import org.hibernate.search.genericjpa.db.events.index.impl.IndexUpdater;
+import org.hibernate.search.genericjpa.db.events.index.impl.IndexUpdater.IndexWrapper;
 import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
-import org.hibernate.search.genericjpa.factory.SearchConfigurationImpl;
+import org.hibernate.search.genericjpa.factory.StandaloneSearchConfiguration;
 import org.hibernate.search.genericjpa.factory.Transaction;
-import org.hibernate.search.genericjpa.metadata.MetadataRehasher;
-import org.hibernate.search.genericjpa.metadata.MetadataUtil;
-import org.hibernate.search.genericjpa.metadata.RehashedTypeMetadata;
+import org.hibernate.search.genericjpa.metadata.impl.MetadataRehasher;
+import org.hibernate.search.genericjpa.metadata.impl.MetadataUtil;
+import org.hibernate.search.genericjpa.metadata.impl.RehashedTypeMetadata;
 import org.hibernate.search.genericjpa.test.db.entities.Place;
 import org.hibernate.search.genericjpa.test.db.entities.Sorcerer;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
@@ -58,7 +58,7 @@ public class IndexUpdaterTest {
 	public void setup() {
 		this.changed = false;
 		this.deletedSorcerer = false;
-		MetadataProvider metadataProvider = MetadataUtil.getDummyMetadataProvider( new SearchConfigurationImpl() );
+		MetadataProvider metadataProvider = MetadataUtil.getDummyMetadataProvider( new StandaloneSearchConfiguration() );
 		MetadataRehasher rehasher = new MetadataRehasher();
 		List<RehashedTypeMetadata> rehashedTypeMetadatas = new ArrayList<>();
 		rehashedTypeMetadataPerIndexRoot = new HashMap<>();
@@ -175,7 +175,7 @@ public class IndexUpdaterTest {
 
 	@Test
 	public void testWithIndex() {
-		SearchConfiguration searchConfiguration = new SearchConfigurationImpl();
+		SearchConfiguration searchConfiguration = new StandaloneSearchConfiguration();
 		List<Class<?>> classes = Arrays.asList( Place.class, Sorcerer.class );
 
 		SearchIntegratorBuilder builder = new SearchIntegratorBuilder();

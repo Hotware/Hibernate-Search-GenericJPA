@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
-package org.hibernate.search.genericjpa.dto;
+package org.hibernate.search.genericjpa.dto.impl;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-import org.hibernate.search.genericjpa.dto.annotations.DtoField;
+import org.hibernate.search.genericjpa.annotations.DtoField;
 
 /**
  * Parser Interface for Dto Objects to project from the index (no more manual projections)

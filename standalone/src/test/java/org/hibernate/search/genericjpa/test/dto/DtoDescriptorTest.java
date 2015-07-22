@@ -6,11 +6,11 @@
  */
 package org.hibernate.search.genericjpa.test.dto;
 
-import org.hibernate.search.genericjpa.dto.DtoDescriptor;
-import org.hibernate.search.genericjpa.dto.DtoDescriptor.DtoDescription;
-import org.hibernate.search.genericjpa.dto.DtoDescriptorImpl;
-import org.hibernate.search.genericjpa.dto.annotations.DtoField;
-import org.hibernate.search.genericjpa.dto.annotations.DtoOverEntity;
+import org.hibernate.search.genericjpa.dto.impl.DtoDescriptor;
+import org.hibernate.search.genericjpa.dto.impl.DtoDescriptor.DtoDescription;
+import org.hibernate.search.genericjpa.dto.impl.DtoDescriptorImpl;
+import org.hibernate.search.genericjpa.annotations.DtoField;
+import org.hibernate.search.genericjpa.annotations.DtoOverEntity;
 
 import junit.framework.TestCase;
 

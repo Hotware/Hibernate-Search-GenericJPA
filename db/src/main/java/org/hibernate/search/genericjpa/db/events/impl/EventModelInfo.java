@@ -4,15 +4,15 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
-package org.hibernate.search.genericjpa.db.events;
+package org.hibernate.search.genericjpa.db.events.impl;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import org.hibernate.search.genericjpa.db.id.IdConverter;
-import org.hibernate.search.genericjpa.db.id.ToOriginalIdBridge;
+import org.hibernate.search.genericjpa.db.events.ColumnType;
+import org.hibernate.search.genericjpa.db.events.IdConverter;
 
 /**
  * contains information about the EventModel. Instances of this class can be obtained by a {@link EventModelParser}.
@@ -90,19 +90,6 @@ public class EventModelInfo {
 		private final ColumnType[] columnTypes;
 		private final IdConverter idConverter;
 		private final Map<String, String> hints;
-
-		public IdInfo(
-				Function<Object, Object> idAccessor, Class<?> entityClass, String[] columns, String[] columnsInOriginal,
-				ToOriginalIdBridge toOriginalBridge, Map<String, String> hints) {
-			super();
-			this.entityClass = entityClass;
-			this.columnsInUpdateTable = columns;
-			this.columnsInOriginal = columnsInOriginal;
-			this.hints = hints;
-
-			this.idConverter = null;
-			this.columnTypes = null;
-		}
 
 		public IdInfo(
 				Class<?> entityClass,

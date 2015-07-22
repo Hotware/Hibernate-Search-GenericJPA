@@ -21,18 +21,18 @@ import java.util.stream.Collectors;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.metadata.impl.MetadataProvider;
-import org.hibernate.search.genericjpa.db.events.AnnotationEventModelParser;
-import org.hibernate.search.genericjpa.db.events.EventModelInfo;
-import org.hibernate.search.genericjpa.db.events.EventModelParser;
-import org.hibernate.search.genericjpa.db.events.index.IndexUpdater;
-import org.hibernate.search.genericjpa.db.events.jpa.JPAUpdateSource;
+import org.hibernate.search.genericjpa.db.events.impl.AnnotationEventModelParser;
+import org.hibernate.search.genericjpa.db.events.impl.EventModelInfo;
+import org.hibernate.search.genericjpa.db.events.impl.EventModelParser;
+import org.hibernate.search.genericjpa.db.events.index.impl.IndexUpdater;
+import org.hibernate.search.genericjpa.db.events.jpa.impl.JPAUpdateSource;
 import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
 import org.hibernate.search.genericjpa.entity.impl.JPAReusableEntityProvider;
-import org.hibernate.search.genericjpa.factory.SearchConfigurationImpl;
-import org.hibernate.search.genericjpa.metadata.MetadataRehasher;
-import org.hibernate.search.genericjpa.metadata.MetadataUtil;
-import org.hibernate.search.genericjpa.metadata.RehashedTypeMetadata;
+import org.hibernate.search.genericjpa.factory.StandaloneSearchConfiguration;
+import org.hibernate.search.genericjpa.metadata.impl.MetadataRehasher;
+import org.hibernate.search.genericjpa.metadata.impl.MetadataUtil;
+import org.hibernate.search.genericjpa.metadata.impl.RehashedTypeMetadata;
 import org.hibernate.search.genericjpa.test.jpa.entities.Place;
 import org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer;
 import org.hibernate.search.genericjpa.util.Sleep;
@@ -56,7 +56,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 
 	@Before
 	public void setup() throws SQLException {
-		MetadataProvider metadataProvider = MetadataUtil.getDummyMetadataProvider( new SearchConfigurationImpl() );
+		MetadataProvider metadataProvider = MetadataUtil.getDummyMetadataProvider( new StandaloneSearchConfiguration() );
 		MetadataRehasher rehasher = new MetadataRehasher();
 		List<RehashedTypeMetadata> rehashedTypeMetadatas = new ArrayList<>();
 		rehashedTypeMetadataPerIndexRoot = new HashMap<>();
@@ -78,7 +78,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 			if ( this.exceptionString != null ) {
 				fail( exceptionString );
 			}
-			SearchConfiguration searchConfiguration = new SearchConfigurationImpl();
+			SearchConfiguration searchConfiguration = new StandaloneSearchConfiguration();
 
 			SearchIntegratorBuilder builder = new SearchIntegratorBuilder();
 			// we have to build an integrator here (but we don't need it

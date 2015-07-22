@@ -6,9 +6,9 @@
  */
 package org.hibernate.search.genericjpa.test.jpa.entities;
 
-import org.hibernate.search.genericjpa.dto.annotations.DtoField;
-import org.hibernate.search.genericjpa.dto.annotations.DtoFields;
-import org.hibernate.search.genericjpa.dto.annotations.DtoOverEntity;
+import org.hibernate.search.genericjpa.annotations.DtoField;
+import org.hibernate.search.genericjpa.annotations.DtoFields;
+import org.hibernate.search.genericjpa.annotations.DtoOverEntity;
 
 /**
  * Created by Martin on 22.06.2015.

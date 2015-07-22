@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
-package org.hibernate.search.genericjpa.db.events.jpa;
+package org.hibernate.search.genericjpa.db.events.jpa.impl;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -24,9 +24,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.hibernate.search.genericjpa.annotations.IdInfo;
 import org.hibernate.search.genericjpa.db.events.ColumnType;
-import org.hibernate.search.genericjpa.db.events.EventModelInfo;
+import org.hibernate.search.genericjpa.db.events.impl.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateEventInfo;
 import org.hibernate.search.genericjpa.db.events.UpdateSource;

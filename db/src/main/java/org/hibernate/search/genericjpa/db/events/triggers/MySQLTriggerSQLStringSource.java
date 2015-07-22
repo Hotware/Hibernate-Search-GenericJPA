@@ -6,11 +6,9 @@
  */
 package org.hibernate.search.genericjpa.db.events.triggers;
 
-import org.h2.table.Column;
-
 import org.hibernate.search.genericjpa.db.events.ColumnType;
-import org.hibernate.search.genericjpa.db.events.EventModelInfo;
-import org.hibernate.search.genericjpa.db.events.EventModelInfo.IdInfo;
+import org.hibernate.search.genericjpa.db.events.impl.EventModelInfo;
+import org.hibernate.search.genericjpa.db.events.impl.EventModelInfo.IdInfo;
 import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.exception.AssertionFailure;
 

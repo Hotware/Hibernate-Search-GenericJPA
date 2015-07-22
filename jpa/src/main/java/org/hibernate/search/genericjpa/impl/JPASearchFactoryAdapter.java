@@ -35,19 +35,19 @@ import org.hibernate.search.genericjpa.batchindexing.MassIndexer;
 import org.hibernate.search.genericjpa.batchindexing.impl.MassIndexerImpl;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateSource;
-import org.hibernate.search.genericjpa.db.events.index.IndexUpdater;
+import org.hibernate.search.genericjpa.db.events.index.impl.IndexUpdater;
 import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.entity.impl.BasicEntityProvider;
 import org.hibernate.search.genericjpa.entity.impl.JPAReusableEntityProvider;
 import org.hibernate.search.genericjpa.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.exception.SearchException;
-import org.hibernate.search.genericjpa.factory.SearchConfigurationImpl;
+import org.hibernate.search.genericjpa.factory.StandaloneSearchConfiguration;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchFactory;
-import org.hibernate.search.genericjpa.factory.StandaloneSearchFactoryImpl;
-import org.hibernate.search.genericjpa.metadata.MetadataRehasher;
-import org.hibernate.search.genericjpa.metadata.MetadataUtil;
-import org.hibernate.search.genericjpa.metadata.RehashedTypeMetadata;
+import org.hibernate.search.genericjpa.factory.impl.StandaloneSearchFactoryImpl;
+import org.hibernate.search.genericjpa.metadata.impl.MetadataRehasher;
+import org.hibernate.search.genericjpa.metadata.impl.MetadataUtil;
+import org.hibernate.search.genericjpa.metadata.impl.RehashedTypeMetadata;
 import org.hibernate.search.genericjpa.query.HSearchQuery;
 import org.hibernate.search.genericjpa.transaction.TransactionContext;
 import org.hibernate.search.indexes.IndexReaderAccessor;
@@ -120,13 +120,13 @@ public final class JPASearchFactoryAdapter
 	}
 
 	public final void init() {
-		SearchConfigurationImpl config;
+		StandaloneSearchConfiguration config;
 		if ( this.properties != null ) {
 			LOGGER.info( "using config: " + this.properties );
-			config = new SearchConfigurationImpl( this.properties );
+			config = new StandaloneSearchConfiguration( this.properties );
 		}
 		else {
-			config = new SearchConfigurationImpl();
+			config = new StandaloneSearchConfiguration();
 		}
 
 		MetadataProvider metadataProvider = MetadataUtil.getDummyMetadataProvider( config );

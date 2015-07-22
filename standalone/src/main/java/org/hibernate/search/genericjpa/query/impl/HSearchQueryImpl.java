@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
-package org.hibernate.search.genericjpa.query;
+package org.hibernate.search.genericjpa.query.impl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,8 +21,9 @@ import org.apache.lucene.search.Sort;
 
 import org.hibernate.search.engine.ProjectionConstants;
 import org.hibernate.search.filter.FullTextFilter;
-import org.hibernate.search.genericjpa.dto.DtoQueryExecutor;
+import org.hibernate.search.genericjpa.dto.impl.DtoQueryExecutor;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
+import org.hibernate.search.genericjpa.query.HSearchQuery;
 import org.hibernate.search.query.engine.spi.FacetManager;
 import org.hibernate.search.query.engine.spi.HSQuery;
 import org.hibernate.search.spatial.Coordinates;

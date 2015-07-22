@@ -20,9 +20,9 @@ import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
-import org.hibernate.search.genericjpa.dto.annotations.DtoField;
-import org.hibernate.search.genericjpa.dto.annotations.DtoOverEntity;
-import org.hibernate.search.genericjpa.factory.SearchConfigurationImpl;
+import org.hibernate.search.genericjpa.annotations.DtoField;
+import org.hibernate.search.genericjpa.annotations.DtoOverEntity;
+import org.hibernate.search.genericjpa.factory.StandaloneSearchConfiguration;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchFactory;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchFactoryFactory;
 import org.hibernate.search.genericjpa.factory.Transaction;
@@ -44,7 +44,7 @@ public class IndexOperationsTest {
 	public void setup() {
 		LOGGER.info( "setting up IndexOperationsTest" );
 		this.factory = StandaloneSearchFactoryFactory.createSearchFactory(
-				new SearchConfigurationImpl(), Arrays.asList(
+				new StandaloneSearchConfiguration(), Arrays.asList(
 						Book.class
 				)
 		);

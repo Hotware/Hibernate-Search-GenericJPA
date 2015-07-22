@@ -6,7 +6,6 @@
  */
 package org.hibernate.search.genericjpa.db.events;
 
-import org.hibernate.search.genericjpa.db.id.IdConverter;
 import org.hibernate.search.genericjpa.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.exception.SearchException;
 

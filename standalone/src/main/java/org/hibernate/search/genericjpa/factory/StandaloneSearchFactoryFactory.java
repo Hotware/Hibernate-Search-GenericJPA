@@ -11,6 +11,7 @@ import java.util.Collection;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.exception.AssertionFailure;
+import org.hibernate.search.genericjpa.factory.impl.StandaloneSearchFactoryImpl;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
 

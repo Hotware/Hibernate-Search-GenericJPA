@@ -22,6 +22,7 @@ import org.hibernate.search.cfg.spi.SearchConfigurationBase;
 import org.hibernate.search.engine.service.classloading.impl.DefaultClassLoaderService;
 import org.hibernate.search.engine.service.classloading.spi.ClassLoaderService;
 import org.hibernate.search.engine.service.spi.Service;
+import org.hibernate.search.genericjpa.factory.impl.SubClassSupportInstanceInitializer;
 import org.hibernate.search.spi.InstanceInitializer;
 
 /**
@@ -29,9 +30,9 @@ import org.hibernate.search.spi.InstanceInitializer;
  *
  * @author Martin Braun (adaption), Emmanuel Bernard
  */
-public class SearchConfigurationImpl extends SearchConfigurationBase implements SearchConfiguration {
+public class StandaloneSearchConfiguration extends SearchConfigurationBase implements SearchConfiguration {
 
-	private final Logger LOGGER = Logger.getLogger( SearchConfigurationImpl.class.getName() );
+	private final Logger LOGGER = Logger.getLogger( StandaloneSearchConfiguration.class.getName() );
 	private final Map<String, Class<?>> classes;
 	private final Properties properties;
 	private final HashMap<Class<? extends Service>, Object> providedServices;
@@ -44,19 +45,19 @@ public class SearchConfigurationImpl extends SearchConfigurationBase implements 
 	private ClassLoaderService classLoaderService;
 	private ReflectionManager reflectionManager;
 
-	public SearchConfigurationImpl() {
+	public StandaloneSearchConfiguration() {
 		this( new Properties() );
 	}
 
-	public SearchConfigurationImpl(Properties properties) {
+	public StandaloneSearchConfiguration(Properties properties) {
 		this( SubClassSupportInstanceInitializer.INSTANCE, properties );
 	}
 
-	public SearchConfigurationImpl(InstanceInitializer init) {
+	public StandaloneSearchConfiguration(InstanceInitializer init) {
 		this( new Properties() );
 	}
 
-	public SearchConfigurationImpl(InstanceInitializer init, Properties properties) {
+	public StandaloneSearchConfiguration(InstanceInitializer init, Properties properties) {
 		this.initializer = init;
 		this.classes = new HashMap<>();
 		this.properties = properties;
@@ -78,12 +79,12 @@ public class SearchConfigurationImpl extends SearchConfigurationBase implements 
 		this.classLoaderService = new DefaultClassLoaderService();
 	}
 
-	public SearchConfigurationImpl addProperty(String key, String value) {
+	public StandaloneSearchConfiguration addProperty(String key, String value) {
 		properties.setProperty( key, value );
 		return this;
 	}
 
-	public SearchConfigurationImpl addClass(Class<?> indexed) {
+	public StandaloneSearchConfiguration addClass(Class<?> indexed) {
 		classes.put( indexed.getName(), indexed );
 		return this;
 	}
@@ -118,7 +119,7 @@ public class SearchConfigurationImpl extends SearchConfigurationBase implements 
 		return programmaticMapping;
 	}
 
-	public SearchConfigurationImpl setProgrammaticMapping(SearchMapping programmaticMapping) {
+	public StandaloneSearchConfiguration setProgrammaticMapping(SearchMapping programmaticMapping) {
 		this.programmaticMapping = programmaticMapping;
 		return this;
 	}
@@ -160,7 +161,7 @@ public class SearchConfigurationImpl extends SearchConfigurationBase implements 
 		return idProvidedImplicit;
 	}
 
-	public SearchConfigurationImpl setIdProvidedImplicit(boolean idProvidedImplicit) {
+	public StandaloneSearchConfiguration setIdProvidedImplicit(boolean idProvidedImplicit) {
 		this.idProvidedImplicit = idProvidedImplicit;
 		return this;
 	}

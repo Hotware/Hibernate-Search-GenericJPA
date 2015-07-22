@@ -22,12 +22,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.hibernate.search.genericjpa.db.events.AnnotationEventModelParser;
-import org.hibernate.search.genericjpa.db.events.EventModelInfo;
-import org.hibernate.search.genericjpa.db.events.EventModelParser;
+import org.hibernate.search.genericjpa.db.events.impl.AnnotationEventModelParser;
+import org.hibernate.search.genericjpa.db.events.impl.EventModelInfo;
+import org.hibernate.search.genericjpa.db.events.impl.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.EventType;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
-import org.hibernate.search.genericjpa.db.events.jpa.JPAUpdateSource;
+import org.hibernate.search.genericjpa.db.events.jpa.impl.JPAUpdateSource;
 import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource;
 import org.hibernate.search.genericjpa.exception.SearchException;

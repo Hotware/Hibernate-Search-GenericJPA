@@ -4,8 +4,9 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
-package org.hibernate.search.genericjpa.dto.annotations;
+package org.hibernate.search.genericjpa.annotations;
 
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -14,8 +15,11 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Target({FIELD})
 @Retention(RUNTIME)
-public @interface DtoFields {
+@Repeatable(DtoFields.class)
+public @interface DtoField {
 
-	DtoField[] value();
+	String profileName() default "__#DEFAULT_PROFILE#__";
+
+	String fieldName() default "__#DEFAULT_FIELD_NAME#__";
 
 }

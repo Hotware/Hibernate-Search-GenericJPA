@@ -16,10 +16,10 @@ import org.hibernate.search.backend.spi.SingularTermDeletionQuery;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.engine.metadata.impl.MetadataProvider;
 import org.hibernate.search.engine.metadata.impl.TypeMetadata;
-import org.hibernate.search.genericjpa.factory.SearchConfigurationImpl;
-import org.hibernate.search.genericjpa.metadata.MetadataRehasher;
-import org.hibernate.search.genericjpa.metadata.MetadataUtil;
-import org.hibernate.search.genericjpa.metadata.RehashedTypeMetadata;
+import org.hibernate.search.genericjpa.factory.StandaloneSearchConfiguration;
+import org.hibernate.search.genericjpa.metadata.impl.MetadataRehasher;
+import org.hibernate.search.genericjpa.metadata.impl.MetadataUtil;
+import org.hibernate.search.genericjpa.metadata.impl.RehashedTypeMetadata;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -37,7 +37,7 @@ public class MetadataRehasherTest {
 
 	@Before
 	public void setup() {
-		SearchConfiguration searchConfiguration = new SearchConfigurationImpl();
+		SearchConfiguration searchConfiguration = new StandaloneSearchConfiguration();
 		metadataProvider = MetadataUtil.getDummyMetadataProvider( searchConfiguration );
 		this.metadataRehasher = new MetadataRehasher();
 	}

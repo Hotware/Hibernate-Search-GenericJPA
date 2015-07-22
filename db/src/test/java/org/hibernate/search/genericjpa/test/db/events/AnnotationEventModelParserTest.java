@@ -16,11 +16,11 @@ import org.hibernate.search.genericjpa.annotations.Hint;
 import org.hibernate.search.genericjpa.annotations.IdColumn;
 import org.hibernate.search.genericjpa.annotations.IdInfo;
 import org.hibernate.search.genericjpa.annotations.UpdateInfo;
-import org.hibernate.search.genericjpa.db.events.AnnotationEventModelParser;
+import org.hibernate.search.genericjpa.db.events.impl.AnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.ColumnType;
-import org.hibernate.search.genericjpa.db.events.EventModelInfo;
-import org.hibernate.search.genericjpa.db.events.EventModelParser;
-import org.hibernate.search.genericjpa.db.id.IdConverter;
+import org.hibernate.search.genericjpa.db.events.impl.EventModelInfo;
+import org.hibernate.search.genericjpa.db.events.impl.EventModelParser;
+import org.hibernate.search.genericjpa.db.events.IdConverter;
 import org.hibernate.search.genericjpa.exception.SearchException;
 
 import org.junit.Test;

@@ -4,7 +4,7 @@
  * License: GNU Lesser General Public License (LGPL), version 2.1 or later
  * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
-package org.hibernate.search.genericjpa.dto;
+package org.hibernate.search.genericjpa.dto.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,16 +14,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.hibernate.search.genericjpa.dto.DtoDescriptor.DtoDescription.FieldDescription;
-import org.hibernate.search.genericjpa.dto.annotations.DtoField;
-import org.hibernate.search.genericjpa.dto.annotations.DtoFields;
-import org.hibernate.search.genericjpa.dto.annotations.DtoOverEntity;
+import org.hibernate.search.genericjpa.annotations.DtoField;
+import org.hibernate.search.genericjpa.annotations.DtoFields;
+import org.hibernate.search.genericjpa.annotations.DtoOverEntity;
 
 public class DtoDescriptorImpl implements DtoDescriptor {
 
 	@Override
 	public DtoDescription getDtoDescription(Class<?> clazz) {
-		final Map<String, Set<FieldDescription>> fieldDescriptionsForProfile = new HashMap<>();
+		final Map<String, Set<DtoDescription.FieldDescription>> fieldDescriptionsForProfile = new HashMap<>();
 		DtoOverEntity[] dtoOverEntity = clazz.getAnnotationsByType( DtoOverEntity.class );
 		if ( dtoOverEntity.length != 1 ) {
 			throw new IllegalArgumentException( "clazz must specify exactly one " + "DtoOverEntity annotation at a class level" );
@@ -57,12 +56,12 @@ public class DtoDescriptorImpl implements DtoDescriptor {
 									// change this!
 									fieldName = field.getName();
 								}
-								Set<FieldDescription> fieldDescriptions = fieldDescriptionsForProfile.computeIfAbsent(
+								Set<DtoDescription.FieldDescription> fieldDescriptions = fieldDescriptionsForProfile.computeIfAbsent(
 										profileName, (key) -> {
 											return new HashSet<>();
 										}
 								);
-								FieldDescription fieldDesc = new FieldDescription( fieldName, field );
+								DtoDescription.FieldDescription fieldDesc = new DtoDescription.FieldDescription( fieldName, field );
 								if ( fieldDescriptions.contains( fieldDesc ) ) {
 									throw new IllegalArgumentException( "profile " + profileName + " already has a field to project from for " + field );
 								}
