@@ -14,6 +14,7 @@ Currently supported Databases (others work as well, but don't have automatic upd
 
 * MySQL/MariaDB (only with InnoDB/XtraDB as they support full transactional behaviour)
 * PostgreSQL
+* HSQLDB
 
 http://hibernatesearchandjpa.blogspot.de/
 
