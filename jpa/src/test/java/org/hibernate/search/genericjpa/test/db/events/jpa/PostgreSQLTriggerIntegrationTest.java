@@ -16,7 +16,7 @@ import org.junit.Test;
 /**
  * Created by Martin on 02.07.2015.
  */
-public class PosgreSQLTriggerIntegrationTest extends DatabaseIntegrationTest {
+public class PostgreSQLTriggerIntegrationTest extends DatabaseIntegrationTest {
 
 	@Before
 	public void setup() throws SQLException {
