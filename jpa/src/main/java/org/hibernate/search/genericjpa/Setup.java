@@ -10,7 +10,6 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.metamodel.EntityType;
 import javax.transaction.TransactionManager;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -56,12 +55,12 @@ public final class Setup {
 		// can't touch this!
 	}
 
-	public static JPASearchFactoryController createSearchFactory(EntityManagerFactory emf) {
-		return createSearchFactory( emf, emf.getProperties() );
+	public static JPASearchFactoryController createSearchFactoryController(EntityManagerFactory emf) {
+		return createSearchFactoryController( emf, emf.getProperties() );
 	}
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public static JPASearchFactoryController createSearchFactory(EntityManagerFactory emf, Map properties) {
+	public static JPASearchFactoryController createSearchFactoryController(EntityManagerFactory emf, Map properties) {
 		try {
 			LOGGER.info( "using hibernate-search properties: " + properties );
 			LOGGER.info( "using EntityManagerFactory: " + emf );

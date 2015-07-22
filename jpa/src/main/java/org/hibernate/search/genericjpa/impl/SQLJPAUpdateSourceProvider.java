@@ -90,53 +90,52 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 		Connection connection = null;
 		try {
 			try {
-				for ( EventModelInfo info : eventModelInfos ) {
-					if ( TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy ) ) {
+				if ( TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy ) ) {
+					//DROP EVERYTHING IN THE EXACTLY INVERSED ORDER WE CREATE IT
+					for ( EventModelInfo info : eventModelInfos ) {
+
+						for ( int eventType : EventType.values() ) {
+							String[] triggerDropStrings = this.triggerSource.getTriggerDropCode( info, eventType );
+							for ( String triggerDropString : triggerDropStrings ) {
+								LOGGER.info( triggerDropString );
+								this.doQueryOrLogException( connection, triggerDropString );
+							}
+						}
+
+						for ( String unSetupCode : this.triggerSource.getSpecificUnSetupCode( info ) ) {
+							LOGGER.info( unSetupCode );
+							this.doQueryOrLogException( connection, unSetupCode );
+						}
+
 						for ( String str : triggerSource.getUpdateTableDropCode( info ) ) {
 							LOGGER.info( str );
 							this.doQueryOrLogException( connection, str );
 						}
+
 					}
 
-					for ( String str : triggerSource.getUpdateTableCreationCode( info ) ) {
+					for ( String str : triggerSource.getUnSetupCode() ) {
 						LOGGER.info( str );
 						this.doQueryOrLogException( connection, str );
 					}
 				}
 
+				//CREATE EVERYTHING
 				try {
-					if ( TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy ) ) {
-						for ( String str : triggerSource.getUnSetupCode() ) {
-							LOGGER.info( str );
-							this.doQueryOrLogException( connection, str );
-						}
-					}
 					for ( String str : triggerSource.getSetupCode() ) {
 						LOGGER.info( str );
 						this.doQueryOrLogException( connection, str );
 					}
 
 					for ( EventModelInfo info : eventModelInfos ) {
-						if ( TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy ) ) {
-							for ( String unSetupCode : this.triggerSource.getSpecificUnSetupCode( info ) ) {
-								LOGGER.info( unSetupCode );
-								this.doQueryOrLogException( connection, unSetupCode );
-							}
+						for ( String str : triggerSource.getUpdateTableCreationCode( info ) ) {
+							LOGGER.info( str );
+							this.doQueryOrLogException( connection, str );
 						}
 
 						for ( String setupCode : this.triggerSource.getSpecificSetupCode( info ) ) {
 							LOGGER.info( setupCode );
 							this.doQueryOrLogException( connection, setupCode );
-						}
-
-						if ( TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy ) ) {
-							for ( int eventType : EventType.values() ) {
-								String[] triggerDropStrings = this.triggerSource.getTriggerDropCode( info, eventType );
-								for ( String triggerDropString : triggerDropStrings ) {
-									LOGGER.info( triggerDropString );
-									this.doQueryOrLogException( connection, triggerDropString );
-								}
-							}
 						}
 
 						for ( int eventType : EventType.values() ) {

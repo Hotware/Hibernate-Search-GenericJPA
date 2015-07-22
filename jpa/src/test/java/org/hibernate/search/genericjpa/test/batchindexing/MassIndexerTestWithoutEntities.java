@@ -44,7 +44,7 @@ public class MassIndexerTestWithoutEntities {
 				Constants.TRIGGER_CREATION_STRATEGY_KEY,
 				Constants.TRIGGER_CREATION_STRATEGY_DROP_CREATE
 		);
-		this.searchFactory = (JPASearchFactoryAdapter) Setup.createSearchFactory( emf, properties );
+		this.searchFactory = (JPASearchFactoryAdapter) Setup.createSearchFactoryController( emf, properties );
 		this.searchFactory.pauseUpdating( true );
 		EntityManager em = emf.createEntityManager();
 		try {

@@ -58,7 +58,7 @@ public class InfinispanIntegrationTest {
 		catch (IOException e) {
 			throw new RuntimeException( e );
 		}
-		this.searchController = Setup.createSearchFactory( this.emf, properties );
+		this.searchController = Setup.createSearchFactoryController( this.emf, properties );
 
 
 		FullTextEntityManager fem = this.searchController.getFullTextEntityManager( this.em );

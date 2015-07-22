@@ -50,7 +50,7 @@ public class EJBJPASearchFactoryController implements JPASearchFactoryController
 					e
 			);
 		}
-		this.jpaSearchFactoryController = Setup.createSearchFactory( this.emf, properties );
+		this.jpaSearchFactoryController = Setup.createSearchFactoryController( this.emf, properties );
 	}
 
 	@PreDestroy

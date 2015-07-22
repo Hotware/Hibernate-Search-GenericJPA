@@ -475,7 +475,7 @@ public abstract class ManualUpdatesIntegrationTest {
 		);
 		properties.setProperty( Constants.SEARCH_FACTORY_TYPE_KEY, "manual-updates" );
 
-		this.searchFactory = (JPASearchFactoryAdapter) Setup.createSearchFactory( this.emf, properties );
+		this.searchFactory = (JPASearchFactoryAdapter) Setup.createSearchFactoryController( this.emf, properties );
 		EntityManager em = emf.createEntityManager();
 		try {
 			EntityTransaction tx = em.getTransaction();

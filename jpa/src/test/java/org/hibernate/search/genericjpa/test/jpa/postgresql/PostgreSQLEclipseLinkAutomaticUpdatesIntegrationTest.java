@@ -6,7 +6,6 @@
  */
 package org.hibernate.search.genericjpa.test.jpa.postgresql;
 
-import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.triggers.PostgreSQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.test.jpa.AutomaticUpdatesIntegrationTest;
 

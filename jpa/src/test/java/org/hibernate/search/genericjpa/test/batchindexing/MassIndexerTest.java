@@ -195,7 +195,7 @@ public class MassIndexerTest {
 		);
 		properties.setProperty( "hibernate.search.default.directory_provider", "filesystem" );
 		properties.setProperty( "hibernate.search.default.indexBase", "target/indexes" );
-		this.searchFactory = (JPASearchFactoryAdapter) Setup.createSearchFactory( emf, properties );
+		this.searchFactory = (JPASearchFactoryAdapter) Setup.createSearchFactoryController( emf, properties );
 		this.searchFactory.pauseUpdating( true );
 		EntityManager em = emf.createEntityManager();
 		try {

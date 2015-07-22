@@ -57,7 +57,7 @@ public abstract class AutomaticUpdatesIntegrationTest {
 				Constants.TRIGGER_CREATION_STRATEGY_DROP_CREATE
 		);
 		properties.setProperty( "hibernate.search.searchfactory.type", "sql" );
-		JPASearchFactoryController searchController = Setup.createSearchFactory( this.emf, properties );
+		JPASearchFactoryController searchController = Setup.createSearchFactoryController( this.emf, properties );
 		try {
 
 			FullTextEntityManager fem = searchController.getFullTextEntityManager( this.em );
@@ -108,7 +108,7 @@ public abstract class AutomaticUpdatesIntegrationTest {
 		);
 		properties.setProperty( Constants.BATCH_SIZE_FOR_UPDATES_KEY, "2" );
 		properties.setProperty( Constants.SEARCH_FACTORY_TYPE_KEY, "sql" );
-		JPASearchFactoryAdapter searchFactory = (JPASearchFactoryAdapter) Setup.createSearchFactory(
+		JPASearchFactoryAdapter searchFactory = (JPASearchFactoryAdapter) Setup.createSearchFactoryController(
 				this.emf,
 				properties
 		);

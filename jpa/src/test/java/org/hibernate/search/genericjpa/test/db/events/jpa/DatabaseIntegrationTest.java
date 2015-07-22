@@ -77,19 +77,6 @@ public abstract class DatabaseIntegrationTest {
 							)
 					)
 			);
-			em.getTransaction().begin();
-			for ( EventModelInfo info : infos ) {
-				this.updateTableNames.add( info.getUpdateTableName() );
-				for ( String str : triggerSource.getUpdateTableDropCode( info ) ) {
-					System.out.println( str );
-					em.createNativeQuery( str ).executeUpdate();
-				}
-				for ( String str : triggerSource.getUpdateTableCreationCode( info ) ) {
-					System.out.println( str );
-					em.createNativeQuery( str ).executeUpdate();
-				}
-			}
-			em.getTransaction().commit();
 
 			this.deleteAllData( em );
 			this.setupData( em );
@@ -153,7 +140,6 @@ public abstract class DatabaseIntegrationTest {
 	protected void deleteAllData(EntityManager em) {
 		EntityTransaction tx = em.getTransaction();
 		tx.begin();
-
 		{
 			@SuppressWarnings("unchecked")
 			List<Place> toDelete = new ArrayList<>( em.createQuery( "SELECT a FROM Place a" ).getResultList() );
@@ -171,9 +157,9 @@ public abstract class DatabaseIntegrationTest {
 			}
 			em.flush();
 		}
-
 		tx.commit();
 
+		//for the first pass this is okay anyways, as this table was killed.
 		tx.begin();
 		{
 			if ( this.updateTableNames != null ) {
@@ -218,41 +204,8 @@ public abstract class DatabaseIntegrationTest {
 			this.updateTableNames = new ArrayList<>();
 
 			try {
-				for ( String str : triggerSource.getUnSetupCode() ) {
-					System.out.println( str );
-					this.doQueryOrLogException( em, str );
-					if ( tx != null ) {
-						tx.commitIgnoreExceptions();
-						tx.begin();
-					}
-				}
-				for ( String str : triggerSource.getSetupCode() ) {
-					System.out.println( str );
-					this.doQueryOrLogException( em, str );
-					if ( tx != null ) {
-						tx.commitIgnoreExceptions();
-						tx.begin();
-					}
-				}
+				//UNSETUP
 				for ( EventModelInfo info : infos ) {
-					for ( String unSetupCode : triggerSource.getSpecificUnSetupCode( info ) ) {
-						System.out.println( unSetupCode );
-						this.doQueryOrLogException( em, unSetupCode );
-						if ( tx != null ) {
-							System.out.println( "commiting setup code!" );
-							tx.commitIgnoreExceptions();
-							tx.begin();
-						}
-					}
-					for ( String setupCode : triggerSource.getSpecificSetupCode( info ) ) {
-						System.out.println( setupCode );
-						this.doQueryOrLogException( em, setupCode );
-						if ( tx != null ) {
-							System.out.println( "commiting setup code!" );
-							tx.commitIgnoreExceptions();
-							tx.begin();
-						}
-					}
 					for ( int eventType : EventType.values() ) {
 						String[] triggerDropStrings = triggerSource.getTriggerDropCode( info, eventType );
 						for ( String triggerDropString : triggerDropStrings ) {
@@ -265,6 +218,57 @@ public abstract class DatabaseIntegrationTest {
 							}
 						}
 					}
+
+					for ( String unSetupCode : triggerSource.getSpecificUnSetupCode( info ) ) {
+						System.out.println( unSetupCode );
+						this.doQueryOrLogException( em, unSetupCode );
+						if ( tx != null ) {
+							System.out.println( "commiting setup code!" );
+							tx.commitIgnoreExceptions();
+							tx.begin();
+						}
+					}
+
+					for ( String str : triggerSource.getUpdateTableDropCode( info ) ) {
+						System.out.println( str );
+						em.createNativeQuery( str ).executeUpdate();
+					}
+				}
+				for ( String str : triggerSource.getUnSetupCode() ) {
+					System.out.println( str );
+					this.doQueryOrLogException( em, str );
+					if ( tx != null ) {
+						tx.commitIgnoreExceptions();
+						tx.begin();
+					}
+				}
+
+				//SETUP
+				for ( String str : triggerSource.getSetupCode() ) {
+					System.out.println( str );
+					this.doQueryOrLogException( em, str );
+					if ( tx != null ) {
+						tx.commitIgnoreExceptions();
+						tx.begin();
+					}
+				}
+				for ( EventModelInfo info : infos ) {
+					this.updateTableNames.add( info.getUpdateTableName() );
+					for ( String str : triggerSource.getUpdateTableCreationCode( info ) ) {
+						System.out.println( str );
+						em.createNativeQuery( str ).executeUpdate();
+					}
+
+					for ( String setupCode : triggerSource.getSpecificSetupCode( info ) ) {
+						System.out.println( setupCode );
+						this.doQueryOrLogException( em, setupCode );
+						if ( tx != null ) {
+							System.out.println( "commiting setup code!" );
+							tx.commitIgnoreExceptions();
+							tx.begin();
+						}
+					}
+
 					for ( int eventType : EventType.values() ) {
 						String[] triggerCreationStrings = triggerSource.getTriggerCreationCode( info, eventType );
 						for ( String triggerCreationString : triggerCreationStrings ) {
@@ -277,7 +281,6 @@ public abstract class DatabaseIntegrationTest {
 							}
 						}
 					}
-
 				}
 			}
 			catch (Exception e) {
