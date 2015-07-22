@@ -17,7 +17,6 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.hibernate.search.genericjpa.Constants;
 import org.hibernate.search.genericjpa.JPASearchFactoryController;
 import org.hibernate.search.genericjpa.Setup;
-import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource;
 import org.hibernate.search.genericjpa.entity.EntityManagerEntityProviderAdapter;
 import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
@@ -83,7 +82,8 @@ public abstract class AutomaticUpdatesIntegrationTest {
 					100,
 					""
 			);
-		} finally {
+		}
+		finally {
 			searchController.close();
 		}
 	}
@@ -196,7 +196,8 @@ public abstract class AutomaticUpdatesIntegrationTest {
 							)
 					).startAndWait();
 			this.assertEveryThingThereCustomUpdated( searchFactory );
-		} finally {
+		}
+		finally {
 			searchFactory.close();
 		}
 	}
@@ -237,7 +238,9 @@ public abstract class AutomaticUpdatesIntegrationTest {
 		);
 	}
 
-	public void setup(String persistenceUnit, Class<? extends TriggerSQLStringSource> triggerSourceClass) {
+	public void setup(
+			String persistenceUnit,
+			Class<? extends TriggerSQLStringSource> triggerSourceClass) {
 		this.emf = Persistence.createEntityManagerFactory( persistenceUnit );
 		this.em = emf.createEntityManager();
 		this.triggerSourceClass = triggerSourceClass;

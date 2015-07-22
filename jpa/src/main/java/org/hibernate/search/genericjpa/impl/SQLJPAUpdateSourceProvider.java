@@ -9,17 +9,19 @@ package org.hibernate.search.genericjpa.impl;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.transaction.TransactionManager;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import org.hibernate.search.genericjpa.db.events.EventType;
+import org.hibernate.search.genericjpa.db.events.UpdateSource;
 import org.hibernate.search.genericjpa.db.events.impl.AnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.impl.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.impl.EventModelParser;
-import org.hibernate.search.genericjpa.db.events.EventType;
-import org.hibernate.search.genericjpa.db.events.UpdateSource;
 import org.hibernate.search.genericjpa.db.events.jpa.impl.JPAUpdateSource;
 import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource;
 import org.hibernate.search.genericjpa.exception.SearchException;
@@ -61,7 +63,7 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 	public UpdateSource getUpdateSource(long delay, TimeUnit timeUnit, int batchSizeForUpdates, Properties properties) {
 		EventModelParser eventModelParser = new AnnotationEventModelParser();
 		List<EventModelInfo> eventModelInfos = eventModelParser.parse( new ArrayList<>( this.updateClasses ) );
-		this.setupTriggers( eventModelInfos );
+		this.setupTriggers( eventModelInfos, properties );
 		return new JPAUpdateSource(
 				eventModelInfos,
 				this.emf,
@@ -78,104 +80,126 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 		);
 	}
 
-	private void setupTriggers(List<EventModelInfo> eventModelInfos) {
+	private void setupTriggers(List<EventModelInfo> eventModelInfos, Properties properties) {
 		if ( TRIGGER_CREATION_STRATEGY_DONT_CREATE.equals( this.triggerCreateStrategy ) || (!TRIGGER_CREATION_STRATEGY_CREATE
 				.equals( this.triggerCreateStrategy ) && !TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy )) ) {
 			return;
 		}
+
+		//FIXME: obtain a real connection here
+		Connection connection = null;
 		try {
-			for ( EventModelInfo info : eventModelInfos ) {
-				if ( TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy ) ) {
-					for ( String str : triggerSource.getUpdateTableDropCode( info ) ) {
-						LOGGER.info( str );
-						this.doQueryOrLogException( str );
-					}
-				}
-
-				for ( String str : triggerSource.getUpdateTableCreationCode( info ) ) {
-					LOGGER.info( str );
-					this.doQueryOrLogException( str );
-				}
-			}
-
 			try {
-				if ( TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy ) ) {
-					for ( String str : triggerSource.getUnSetupCode() ) {
-						LOGGER.info( str );
-						this.doQueryOrLogException( str );
-					}
-				}
-				for ( String str : triggerSource.getSetupCode() ) {
-					LOGGER.info( str );
-					this.doQueryOrLogException( str );
-				}
-
 				for ( EventModelInfo info : eventModelInfos ) {
 					if ( TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy ) ) {
-						for ( String unSetupCode : this.triggerSource.getSpecificUnSetupCode( info ) ) {
-							LOGGER.info( unSetupCode );
-							this.doQueryOrLogException( unSetupCode );
+						for ( String str : triggerSource.getUpdateTableDropCode( info ) ) {
+							LOGGER.info( str );
+							this.doQueryOrLogException( connection, str );
 						}
 					}
 
-					for ( String setupCode : this.triggerSource.getSpecificSetupCode( info ) ) {
-						LOGGER.info( setupCode );
-						this.doQueryOrLogException( setupCode );
+					for ( String str : triggerSource.getUpdateTableCreationCode( info ) ) {
+						LOGGER.info( str );
+						this.doQueryOrLogException( connection, str );
+					}
+				}
+
+				try {
+					if ( TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy ) ) {
+						for ( String str : triggerSource.getUnSetupCode() ) {
+							LOGGER.info( str );
+							this.doQueryOrLogException( connection, str );
+						}
+					}
+					for ( String str : triggerSource.getSetupCode() ) {
+						LOGGER.info( str );
+						this.doQueryOrLogException( connection, str );
 					}
 
-					if ( TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy ) ) {
+					for ( EventModelInfo info : eventModelInfos ) {
+						if ( TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy ) ) {
+							for ( String unSetupCode : this.triggerSource.getSpecificUnSetupCode( info ) ) {
+								LOGGER.info( unSetupCode );
+								this.doQueryOrLogException( connection, unSetupCode );
+							}
+						}
+
+						for ( String setupCode : this.triggerSource.getSpecificSetupCode( info ) ) {
+							LOGGER.info( setupCode );
+							this.doQueryOrLogException( connection, setupCode );
+						}
+
+						if ( TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy ) ) {
+							for ( int eventType : EventType.values() ) {
+								String[] triggerDropStrings = this.triggerSource.getTriggerDropCode( info, eventType );
+								for ( String triggerDropString : triggerDropStrings ) {
+									LOGGER.info( triggerDropString );
+									this.doQueryOrLogException( connection, triggerDropString );
+								}
+							}
+						}
+
 						for ( int eventType : EventType.values() ) {
-							String[] triggerDropStrings = this.triggerSource.getTriggerDropCode( info, eventType );
-							for ( String triggerDropString : triggerDropStrings ) {
-								LOGGER.info( triggerDropString );
-								this.doQueryOrLogException( triggerDropString );
+							String[] triggerCreationStrings = this.triggerSource.getTriggerCreationCode(
+									info,
+									eventType
+							);
+							for ( String triggerCreationString : triggerCreationStrings ) {
+								LOGGER.info( triggerCreationString );
+								this.doQueryOrLogException( connection, triggerCreationString );
 							}
 						}
 					}
-
-					for ( int eventType : EventType.values() ) {
-						String[] triggerCreationStrings = this.triggerSource.getTriggerCreationCode( info, eventType );
-						for ( String triggerCreationString : triggerCreationStrings ) {
-							LOGGER.info( triggerCreationString );
-							this.doQueryOrLogException( triggerCreationString );
-						}
-					}
+				}
+				catch (Exception e) {
+					throw new SearchException( e );
+				}
+				LOGGER.info( "finished setting up triggers!" );
+			}
+			finally {
+				if ( connection != null ) {
+					connection.close();
 				}
 			}
-			catch (Exception e) {
-				throw new SearchException( e );
-			}
-			LOGGER.info( "finished setting up triggers!" );
 		}
-		catch (SecurityException e) {
+		catch (Exception e) {
 			throw new SearchException( e );
 		}
 	}
 
-	private void doQueryOrLogException(String query) {
-		EntityManager em = null;
+	private void doQueryOrLogException(Connection connection, String query) {
 		try {
-			em = this.emf.createEntityManager();
+			if ( connection != null ) {
+				Statement statement = connection.createStatement();
+				statement.execute( query );
+			}
+			else {
+				//we use a new EntityManager here everytime, because
+				//if we get an error during trigger creation
+				//(which is allowed, since we don't have logic
+				//to check with IF EXISTS on every database)
+				//the EntityManager can be in a RollbackOnly state
+				//which we dont want
+				EntityManager em = this.emf.createEntityManager();
+				try {
+					JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.transactionManager );
+					tx.setIgnoreExceptionsForJTATransaction( true );
+					tx.begin();
 
-			JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.transactionManager );
-			tx.setIgnoreExceptionsForJTATransaction( true );
-			tx.begin();
+					em.createNativeQuery( query ).executeUpdate();
 
-			em.createNativeQuery( query ).executeUpdate();
-
-			tx.commitIgnoreExceptions();
+					tx.commitIgnoreExceptions();
+				}
+				finally {
+					em.close();
+				}
+			}
 		}
-		//FIXME: better message. maybe we should do this in our own connection...
 		catch (Exception e) {
 			LOGGER.warning(
 					"Exception occured during setup of triggers (most of the time, this is okay): " +
-							e.getCause().getMessage()
+							e.getMessage()
 			);
-		}
-		finally {
-			if ( em != null ) {
-				em.close();
-			}
 		}
 	}
 
