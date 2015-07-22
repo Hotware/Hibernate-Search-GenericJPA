@@ -37,7 +37,6 @@ public class CustomUpdatedEntity {
 
 	@Id
 	@Column(name = "id")
-	@DocumentId
 	private Long id;
 
 	@Column(name = "text")
