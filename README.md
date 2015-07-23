@@ -47,7 +47,7 @@ Here is an example from the [Hibernate Search getting started page](http://hiber
       private Set<Author> authors = new HashSet<Author>();
       public Book() {
       }
-    
+     
       // standard getters/setters follow here
       
       // ...
