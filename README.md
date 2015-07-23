@@ -49,7 +49,8 @@ Here is an example from the [Hibernate Search getting started page](http://hiber
       }
     
       // standard getters/setters follow here
-      ...
+      
+      // ...
     }
     
 One of the few problems it has, is that once you decide to use Hibernate Search you have to use/stick with Hibernate ORM and lose the possibility to swap the JPA provider for something along the lines of EclipseLink (switching the JPA provider - in my eyes - is one of the big benefits of using JPA), i.e. because your (new) Jave EE Container ships with it and you don't want to change it. This is due to Hibernate Search relying on Hibernate ORM specific events to update its index. These are by far more sophisticated than the ones plain JPA provides and while other JPA providers might have similar features, there is no clear specification for these.
