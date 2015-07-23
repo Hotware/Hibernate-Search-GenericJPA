@@ -28,7 +28,7 @@ public class Book {
 
 	@Id
 	@DocumentId
-	@Column(name = "name", columnDefinition = "VARCHAR(255)")
+	@Column(name = "name", columnDefinition = "VARCHAR(100)")
 	private String name;
 
 	@Field
