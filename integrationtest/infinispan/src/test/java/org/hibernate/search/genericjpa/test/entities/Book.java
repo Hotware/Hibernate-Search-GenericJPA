@@ -23,11 +23,12 @@ import org.hibernate.search.genericjpa.annotations.InIndex;
 @Table(name = "Book")
 @InIndex
 @Indexed
+//we don't need updates in this test, so...
 public class Book {
 
 	@Id
 	@DocumentId
-	@Column(name = "name")
+	@Column(name = "name", columnDefinition = "VARCHAR(255)")
 	private String name;
 
 	@Field
