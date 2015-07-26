@@ -21,6 +21,7 @@ http://hibernatesearchandjpa.blogspot.de/
 Usage example
 =============
 
+A short example using this API using EclipseLink can be found here:
 https://github.com/Hotware/hibernate-search-genericjpa-example
 
 Introduction
