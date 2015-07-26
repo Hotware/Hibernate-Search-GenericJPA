@@ -18,6 +18,11 @@ Currently supported Databases (others work as well, but don't have automatic upd
 
 http://hibernatesearchandjpa.blogspot.de/
 
+Usage example
+=============
+
+https://github.com/Hotware/hibernate-search-genericjpa-example
+
 Introduction
 ============
 Hibernate Search is an awesome library if you have a JPA based application and want to add fully fletched fulltext search capabilities to your domain model. You simply add annotations to the fields you want to index and then you can generate a working Index from the JPA objects. When the database changes, the index is updated accordingly. This works just fine (TM).
