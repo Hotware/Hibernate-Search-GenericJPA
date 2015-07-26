@@ -11,7 +11,7 @@ import javax.transaction.TransactionManager;
 import java.util.List;
 import java.util.Map;
 
-import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
+import org.hibernate.search.genericjpa.jpa.util.impl.JPATransactionWrapper;
 
 public class TransactionWrappedEntityManagerEntityProvider extends BasicEntityProvider {
 

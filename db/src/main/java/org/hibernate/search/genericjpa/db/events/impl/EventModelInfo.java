@@ -9,10 +9,9 @@ package org.hibernate.search.genericjpa.db.events.impl;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
-import org.hibernate.search.genericjpa.db.events.ColumnType;
-import org.hibernate.search.genericjpa.db.events.IdConverter;
+import org.hibernate.search.genericjpa.db.ColumnType;
+import org.hibernate.search.genericjpa.db.IdConverter;
 
 /**
  * contains information about the EventModel. Instances of this class can be obtained by a {@link EventModelParser}.

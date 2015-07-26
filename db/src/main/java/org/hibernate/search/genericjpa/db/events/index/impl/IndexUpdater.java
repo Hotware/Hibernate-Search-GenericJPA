@@ -24,8 +24,9 @@ import org.hibernate.search.bridge.StringBridge;
 import org.hibernate.search.engine.ProjectionConstants;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.metadata.impl.DocumentFieldMetadata;
-import org.hibernate.search.genericjpa.db.events.EventType;
+import org.hibernate.search.genericjpa.db.EventType;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
+import org.hibernate.search.genericjpa.db.events.impl.UpdateSource;
 import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.factory.Transaction;
@@ -35,7 +36,7 @@ import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.hibernate.search.query.engine.spi.HSQuery;
 
 /**
- * This class is the "glue" between a {@link org.hibernate.search.genericjpa.db.events.UpdateSource} and the actual
+ * This class is the "glue" between a {@link UpdateSource} and the actual
  * Hibernate-Search index. It consumes Events coming from the UpdateSource and updates the Hibernate-Search index
  * accordingly
  *

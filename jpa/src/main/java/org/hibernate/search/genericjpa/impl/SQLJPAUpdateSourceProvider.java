@@ -17,15 +17,15 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import org.hibernate.search.genericjpa.db.events.EventType;
-import org.hibernate.search.genericjpa.db.events.UpdateSource;
+import org.hibernate.search.genericjpa.db.EventType;
+import org.hibernate.search.genericjpa.db.events.impl.UpdateSource;
 import org.hibernate.search.genericjpa.db.events.impl.AnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.impl.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.impl.EventModelParser;
 import org.hibernate.search.genericjpa.db.events.jpa.impl.JPAUpdateSource;
 import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource;
 import org.hibernate.search.genericjpa.exception.SearchException;
-import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
+import org.hibernate.search.genericjpa.jpa.util.impl.JPATransactionWrapper;
 
 import static org.hibernate.search.genericjpa.Constants.BATCH_SIZE_FOR_UPDATE_QUERIES_DEFAULT_VALUE;
 import static org.hibernate.search.genericjpa.Constants.BATCH_SIZE_FOR_UPDATE_QUERIES_KEY;

@@ -34,7 +34,7 @@ import org.hibernate.search.genericjpa.JPASearchFactoryController;
 import org.hibernate.search.genericjpa.batchindexing.MassIndexer;
 import org.hibernate.search.genericjpa.batchindexing.impl.MassIndexerImpl;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
-import org.hibernate.search.genericjpa.db.events.UpdateSource;
+import org.hibernate.search.genericjpa.db.events.impl.UpdateSource;
 import org.hibernate.search.genericjpa.db.events.index.impl.IndexUpdater;
 import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.entity.EntityProvider;

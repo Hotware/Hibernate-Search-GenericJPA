@@ -33,7 +33,7 @@ import org.hibernate.search.genericjpa.Constants;
 import org.hibernate.search.genericjpa.Setup;
 import org.hibernate.search.genericjpa.batchindexing.impl.IdProducerTask;
 import org.hibernate.search.genericjpa.batchindexing.impl.ObjectHandlerTask;
-import org.hibernate.search.genericjpa.db.events.EventType;
+import org.hibernate.search.genericjpa.db.EventType;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource;
 import org.hibernate.search.genericjpa.entity.EntityProvider;

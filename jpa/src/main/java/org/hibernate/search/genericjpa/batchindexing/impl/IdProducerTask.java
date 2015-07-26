@@ -18,10 +18,10 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
-import org.hibernate.search.genericjpa.db.events.EventType;
+import org.hibernate.search.genericjpa.db.EventType;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.exception.SearchException;
-import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
+import org.hibernate.search.genericjpa.jpa.util.impl.JPATransactionWrapper;
 
 /**
  * @author Martin Braun

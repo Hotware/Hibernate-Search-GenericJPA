@@ -19,8 +19,8 @@ import org.hibernate.search.genericjpa.annotations.Hint;
 import org.hibernate.search.genericjpa.annotations.IdColumn;
 import org.hibernate.search.genericjpa.annotations.IdInfo;
 import org.hibernate.search.genericjpa.annotations.UpdateInfo;
-import org.hibernate.search.genericjpa.db.events.ColumnType;
-import org.hibernate.search.genericjpa.db.events.IdConverter;
+import org.hibernate.search.genericjpa.db.ColumnType;
+import org.hibernate.search.genericjpa.db.IdConverter;
 import org.hibernate.search.genericjpa.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.exception.SearchException;
 

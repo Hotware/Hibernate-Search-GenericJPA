@@ -9,7 +9,7 @@ package org.hibernate.search.genericjpa.impl;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import org.hibernate.search.genericjpa.db.events.UpdateSource;
+import org.hibernate.search.genericjpa.db.events.impl.UpdateSource;
 
 
 /**

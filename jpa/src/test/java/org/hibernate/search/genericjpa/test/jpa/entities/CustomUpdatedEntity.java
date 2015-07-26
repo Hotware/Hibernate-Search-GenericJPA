@@ -12,7 +12,6 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.genericjpa.annotations.CustomUpdateEntityProvider;
 import org.hibernate.search.genericjpa.annotations.Hint;
@@ -20,7 +19,7 @@ import org.hibernate.search.genericjpa.annotations.IdColumn;
 import org.hibernate.search.genericjpa.annotations.IdInfo;
 import org.hibernate.search.genericjpa.annotations.InIndex;
 import org.hibernate.search.genericjpa.annotations.UpdateInfo;
-import org.hibernate.search.genericjpa.db.events.ColumnType;
+import org.hibernate.search.genericjpa.db.ColumnType;
 
 /**
  * Created by Martin on 08.07.2015.

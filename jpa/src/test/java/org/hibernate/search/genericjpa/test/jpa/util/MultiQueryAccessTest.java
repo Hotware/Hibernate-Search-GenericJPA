@@ -14,9 +14,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.hibernate.search.genericjpa.db.events.EventType;
+import org.hibernate.search.genericjpa.db.EventType;
 import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringSource;
-import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess;
+import org.hibernate.search.genericjpa.jpa.util.impl.MultiQueryAccess;
 import org.hibernate.search.genericjpa.test.db.events.jpa.DatabaseIntegrationTest;
 import org.hibernate.search.genericjpa.test.db.events.jpa.JPAUpdateSourceTest;
 

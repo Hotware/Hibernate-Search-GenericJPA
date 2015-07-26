@@ -24,15 +24,15 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.hibernate.search.genericjpa.db.events.ColumnType;
+import org.hibernate.search.genericjpa.db.ColumnType;
 import org.hibernate.search.genericjpa.db.events.impl.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateEventInfo;
-import org.hibernate.search.genericjpa.db.events.UpdateSource;
+import org.hibernate.search.genericjpa.db.events.impl.UpdateSource;
 import org.hibernate.search.genericjpa.exception.SearchException;
-import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
-import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess;
-import org.hibernate.search.genericjpa.jpa.util.MultiQueryAccess.ObjectIdentifierWrapper;
+import org.hibernate.search.genericjpa.jpa.util.impl.JPATransactionWrapper;
+import org.hibernate.search.genericjpa.jpa.util.impl.MultiQueryAccess;
+import org.hibernate.search.genericjpa.jpa.util.impl.MultiQueryAccess.ObjectIdentifierWrapper;
 import org.hibernate.search.genericjpa.util.NamingThreadFactory;
 
 /**

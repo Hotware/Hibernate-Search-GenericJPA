@@ -20,7 +20,7 @@ import org.hibernate.search.genericjpa.annotations.InIndex;
  * Created by Martin on 24.06.2015.
  */
 @Entity
-@Table(name = "Book")
+@Table(name = "Book_Infinispan")
 @InIndex
 @Indexed
 //we don't need updates in this test, so...

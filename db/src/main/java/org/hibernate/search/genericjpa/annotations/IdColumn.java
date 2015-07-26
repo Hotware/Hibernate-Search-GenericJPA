@@ -8,7 +8,7 @@ package org.hibernate.search.genericjpa.annotations;
 
 import java.lang.annotation.Retention;
 
-import org.hibernate.search.genericjpa.db.events.ColumnType;
+import org.hibernate.search.genericjpa.db.ColumnType;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 

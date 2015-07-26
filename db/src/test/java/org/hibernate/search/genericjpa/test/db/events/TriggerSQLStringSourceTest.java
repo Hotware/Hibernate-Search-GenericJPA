@@ -12,7 +12,7 @@ import java.util.HashSet;
 import org.hibernate.search.genericjpa.db.events.impl.AnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.impl.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.impl.EventModelParser;
-import org.hibernate.search.genericjpa.db.events.EventType;
+import org.hibernate.search.genericjpa.db.EventType;
 import org.hibernate.search.genericjpa.db.events.triggers.HSQLDBTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.db.events.triggers.PostgreSQLTriggerSQLStringSource;

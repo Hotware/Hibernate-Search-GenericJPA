@@ -18,7 +18,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.hibernate.search.genericjpa.exception.SearchException;
-import org.hibernate.search.genericjpa.jpa.util.JPATransactionWrapper;
+import org.hibernate.search.genericjpa.jpa.util.impl.JPATransactionWrapper;
 
 /**
  * Created by Martin on 08.07.2015.

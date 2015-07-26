@@ -7,7 +7,7 @@
 package org.hibernate.search.genericjpa.db.events.triggers;
 
 import org.hibernate.search.genericjpa.db.events.impl.EventModelInfo;
-import org.hibernate.search.genericjpa.db.events.EventType;
+import org.hibernate.search.genericjpa.db.EventType;
 
 /**
  * Classes that implement this interface provide means to create the Triggers needed on the database to write C_UD

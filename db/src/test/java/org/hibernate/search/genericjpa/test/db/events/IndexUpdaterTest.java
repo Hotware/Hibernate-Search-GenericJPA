@@ -21,7 +21,7 @@ import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.metadata.impl.MetadataProvider;
 import org.hibernate.search.exception.AssertionFailure;
-import org.hibernate.search.genericjpa.db.events.EventType;
+import org.hibernate.search.genericjpa.db.EventType;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateEventInfo;
 import org.hibernate.search.genericjpa.db.events.index.impl.IndexUpdater;

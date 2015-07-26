@@ -6,8 +6,8 @@
  */
 package org.hibernate.search.genericjpa.test.jpa.entities;
 
-import org.hibernate.search.genericjpa.db.events.ColumnType;
-import org.hibernate.search.genericjpa.db.events.IdConverter;
+import org.hibernate.search.genericjpa.db.ColumnType;
+import org.hibernate.search.genericjpa.db.IdConverter;
 
 /**
  * Created by Martin on 21.07.2015.

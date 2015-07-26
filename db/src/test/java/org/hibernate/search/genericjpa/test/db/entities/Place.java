@@ -19,7 +19,7 @@ import org.hibernate.search.genericjpa.annotations.IdColumn;
 import org.hibernate.search.genericjpa.annotations.IdInfo;
 import org.hibernate.search.genericjpa.annotations.InIndex;
 import org.hibernate.search.genericjpa.annotations.UpdateInfo;
-import org.hibernate.search.genericjpa.db.events.ColumnType;
+import org.hibernate.search.genericjpa.db.ColumnType;
 
 /**
  * @author Martin
