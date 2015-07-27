@@ -28,7 +28,6 @@ import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.metadata.impl.DocumentFieldMetadata;
 import org.hibernate.search.genericjpa.db.EventType;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateEventInfo;
-import org.hibernate.search.genericjpa.db.events.impl.AsyncUpdateSource;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
 import org.hibernate.search.genericjpa.exception.SearchException;
@@ -39,13 +38,13 @@ import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.hibernate.search.query.engine.spi.HSQuery;
 
 /**
- * This class is the "glue" between a {@link AsyncUpdateSource} and the actual
+ * This class is the "glue" between the updating mechanism and the actual
  * Hibernate-Search index. It consumes Events coming from the AsyncUpdateSource and updates the Hibernate-Search index
  * accordingly
  *
  * @author Martin Braun
  */
-public class IndexUpdater {
+public final class IndexUpdater {
 
 	// TODO: think of a clever way of doing batching here
 	// or maybe leave it as it is

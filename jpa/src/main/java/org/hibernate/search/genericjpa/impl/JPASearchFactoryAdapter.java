@@ -41,6 +41,7 @@ import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.entity.impl.BasicEntityProvider;
 import org.hibernate.search.genericjpa.entity.impl.JPAReusableEntityProvider;
+import org.hibernate.search.genericjpa.events.impl.SynchronizedUpdateSource;
 import org.hibernate.search.genericjpa.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchConfiguration;
@@ -72,15 +73,14 @@ public final class JPASearchFactoryAdapter
 	private final Set<UpdateConsumer> updateConsumers = new HashSet<>();
 	private final Lock lock = new ReentrantLock();
 
-	/**
-	 * null if should not be used
-	 */
-	ConcurrentHashMap<EntityManager, FullTextEntityManagerImpl> entityManagerToFullTextEntityManager;
-
 	private int updateDelay = 500;
 	private int batchSizeForUpdates = 5;
 	private AsyncUpdateSourceProvider asyncUpdateSourceProvider;
 	private AsyncUpdateSource asyncUpdateSource;
+
+	private SynchronizedUpdateSourceProvider synchronizedUpdateSourceProvider;
+	private SynchronizedUpdateSource synchronizedUpdateSource;
+
 	private IndexUpdater indexUpdater;
 	private Map<Class<?>, EntityManagerEntityProvider> customUpdateEntityProviders;
 
@@ -196,6 +196,17 @@ public final class JPASearchFactoryAdapter
 			);
 			this.asyncUpdateSource.start();
 		}
+		this.synchronizedUpdateSource = this.synchronizedUpdateSourceProvider.getUpdateSource(
+				this.indexUpdater,
+				this.properties,
+				this.emf,
+				this.transactionManager
+		);
+		if ( this.synchronizedUpdateSource != null ) {
+			if ( this.asyncUpdateSource != null ) {
+				LOGGER.warning( "using both async updating AND synchronized updating, updates will get handled twice!" );
+			}
+		}
 	}
 
 	public TransactionManager getTransactionManager() {
@@ -280,6 +291,15 @@ public final class JPASearchFactoryAdapter
 		return this;
 	}
 
+	public SynchronizedUpdateSourceProvider getSynchronizedUpdateSourceProvider() {
+		return synchronizedUpdateSourceProvider;
+	}
+
+	public JPASearchFactoryAdapter setSynchronizedUpdateSourceProvider(SynchronizedUpdateSourceProvider synchronizedUpdateSourceProvider) {
+		this.synchronizedUpdateSourceProvider = synchronizedUpdateSourceProvider;
+		return this;
+	}
+
 	public int getBatchSizeForUpdates() {
 		return this.batchSizeForUpdates;
 	}
@@ -312,19 +332,7 @@ public final class JPASearchFactoryAdapter
 			return (FullTextEntityManager) em;
 		}
 		else {
-			if ( this.entityManagerToFullTextEntityManager == null || em == null ) {
-				return ImplementationFactory.createFullTextEntityManager( em, this );
-			}
-			else {
-				synchronized (em) {
-					FullTextEntityManagerImpl fem = this.entityManagerToFullTextEntityManager.get( em );
-					if ( fem == null ) {
-						fem = (FullTextEntityManagerImpl) ImplementationFactory.createFullTextEntityManager( em, this );
-						this.entityManagerToFullTextEntityManager.put( em, fem );
-					}
-					return fem;
-				}
-			}
+			return ImplementationFactory.createFullTextEntityManager( em, this );
 		}
 	}
 
@@ -353,6 +361,9 @@ public final class JPASearchFactoryAdapter
 		try {
 			if ( this.asyncUpdateSource != null ) {
 				this.asyncUpdateSource.stop();
+			}
+			if ( this.synchronizedUpdateSource != null) {
+				this.synchronizedUpdateSource.close();
 			}
 			if ( this.indexUpdater != null ) {
 				this.indexUpdater.close();

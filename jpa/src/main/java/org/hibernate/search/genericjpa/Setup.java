@@ -22,9 +22,10 @@ import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource
 import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
-import org.hibernate.search.genericjpa.impl.SQLJPAAsyncUpdateSourceProvider;
+import org.hibernate.search.genericjpa.db.events.jpa.impl.SQLJPAAsyncUpdateSourceProvider;
 import org.hibernate.search.genericjpa.impl.SearchFactoryRegistry;
 import org.hibernate.search.genericjpa.impl.AsyncUpdateSourceProvider;
+import org.hibernate.search.genericjpa.impl.SynchronizedUpdateSourceProvider;
 import org.hibernate.search.genericjpa.transaction.TransactionManagerProvider;
 
 import static org.hibernate.search.genericjpa.Constants.ADDITIONAL_INDEXED_TYPES_KEY;
@@ -143,7 +144,7 @@ public final class Setup {
 					SEARCH_FACTORY_TYPE_DEFAULT_VALUE
 			);
 			//what AsyncUpdateSource to be used
-			AsyncUpdateSourceProvider updateSourceProvider;
+			AsyncUpdateSourceProvider asyncUpdateSourceProvider;
 			if ( "sql".equals( type ) ) {
 				if ( emf == null ) {
 					throw new SearchException( "EntityManagerFactory must not be null when using " + SEARCH_FACTORY_TYPE_KEY + " of \"sql\"" );
@@ -164,17 +165,19 @@ public final class Setup {
 					throw new SearchException( "unrecognized " + Constants.TRIGGER_CREATION_STRATEGY_KEY + " specified: " + createTriggerStrategy );
 				}
 
-				updateSourceProvider = new SQLJPAAsyncUpdateSourceProvider(
+				asyncUpdateSourceProvider = new SQLJPAAsyncUpdateSourceProvider(
 						(TriggerSQLStringSource) triggerSourceClass.newInstance(),
 						entities, createTriggerStrategy
 				);
 			}
 			else if ( "manual-updates".equals( type ) ) {
-				updateSourceProvider = (a, b, c, d, e, f) -> null;
+				asyncUpdateSourceProvider = (a, b, c, d, e, f) -> null;
 			}
 			else {
 				throw new SearchException( "unrecognized " + SEARCH_FACTORY_TYPE_KEY + ": " + type );
 			}
+
+			SynchronizedUpdateSourceProvider synchronizedUpdateSourceProvider = (a, b, c, d) -> null;
 
 			Integer batchSizeForUpdates = Integer
 					.parseInt(
@@ -219,7 +222,8 @@ public final class Setup {
 							indexRootTypes
 					)
 					.setProperties( properties )
-					.setAsyncUpdateSourceProvider( updateSourceProvider )
+					.setAsyncUpdateSourceProvider( asyncUpdateSourceProvider )
+					.setSynchronizedUpdateSourceProvider( synchronizedUpdateSourceProvider )
 					.setBatchSizeForUpdates(
 							batchSizeForUpdates
 					)
