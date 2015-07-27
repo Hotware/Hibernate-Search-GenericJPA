@@ -91,7 +91,7 @@
 		<dependency>
 			<groupId>org.eclipse.persistence</groupId>
 			<artifactId>eclipselink</artifactId>
-			<scope>test</scope>
+			<scope>provided</scope>
 		</dependency>
 
 		<!-- code gen -->

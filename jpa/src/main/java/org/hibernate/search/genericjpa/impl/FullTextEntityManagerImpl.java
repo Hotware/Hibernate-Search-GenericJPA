@@ -35,7 +35,7 @@ import org.hibernate.search.jpa.FullTextQuery;
  * @author Emmanuel Bernard
  * @author Martin Braun
  */
-final class FullTextEntityManagerImpl implements FullTextEntityManager, Serializable {
+public final class FullTextEntityManagerImpl implements FullTextEntityManager, Serializable {
 
 	private static final long serialVersionUID = 5348732906148044722L;
 
@@ -172,7 +172,7 @@ final class FullTextEntityManagerImpl implements FullTextEntityManager, Serializ
 		this.em.close();
 		if ( this.isTransactionInProgress() ) {
 			throw new IllegalStateException(
-					"search transaction is in progress, underlying entity-manager was still closed!"
+					"search transaction is in progress, underlying entity-manager was still closed to not generate a resource-leak!"
 			);
 		}
 	}

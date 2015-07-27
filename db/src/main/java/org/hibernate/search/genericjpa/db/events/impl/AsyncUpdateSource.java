@@ -16,7 +16,7 @@ import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
  *
  * @author Martin Braun
  */
-public interface UpdateSource {
+public interface AsyncUpdateSource {
 
 	void setUpdateConsumers(List<UpdateConsumer> updateConsumers);
 

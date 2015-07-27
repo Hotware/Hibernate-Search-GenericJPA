@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -34,7 +35,7 @@ import org.hibernate.search.genericjpa.JPASearchFactoryController;
 import org.hibernate.search.genericjpa.batchindexing.MassIndexer;
 import org.hibernate.search.genericjpa.batchindexing.impl.MassIndexerImpl;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
-import org.hibernate.search.genericjpa.db.events.impl.UpdateSource;
+import org.hibernate.search.genericjpa.db.events.impl.AsyncUpdateSource;
 import org.hibernate.search.genericjpa.db.events.index.impl.IndexUpdater;
 import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
@@ -71,10 +72,15 @@ public final class JPASearchFactoryAdapter
 	private final Set<UpdateConsumer> updateConsumers = new HashSet<>();
 	private final Lock lock = new ReentrantLock();
 
+	/**
+	 * null if should not be used
+	 */
+	ConcurrentHashMap<EntityManager, FullTextEntityManagerImpl> entityManagerToFullTextEntityManager;
+
 	private int updateDelay = 500;
 	private int batchSizeForUpdates = 5;
-	private UpdateSourceProvider updateSourceProvider;
-	private UpdateSource updateSource;
+	private AsyncUpdateSourceProvider asyncUpdateSourceProvider;
+	private AsyncUpdateSource asyncUpdateSource;
 	private IndexUpdater indexUpdater;
 	private Map<Class<?>, EntityManagerEntityProvider> customUpdateEntityProviders;
 
@@ -157,20 +163,22 @@ public final class JPASearchFactoryAdapter
 		this.searchIntegrator = impl.unwrap( ExtendedSearchIntegrator.class );
 		this.searchFactory = new StandaloneSearchFactoryImpl( this.searchIntegrator );
 
-		this.updateSource = this.updateSourceProvider.getUpdateSource(
+		this.asyncUpdateSource = this.asyncUpdateSourceProvider.getUpdateSource(
 				this.updateDelay,
 				TimeUnit.MILLISECONDS,
 				this.batchSizeForUpdates,
-				this.properties
+				this.properties,
+				this.emf,
+				this.transactionManager
 		);
-		if ( this.updateSource != null ) {
+		if ( this.asyncUpdateSource != null ) {
 			//TODO: we could allow this, but then we would need to change
 			//the way we get the entityProvider. it's safest to keep it like this
 			if ( this.emf == null ) {
-				throw new AssertionFailure( "emf may not be null when using an UpdateSource" );
+				throw new AssertionFailure( "emf may not be null when using an AsyncUpdateSource" );
 			}
 			this.containedInIndexOf = MetadataUtil.calculateInIndexOf( rehashedTypeMetadatas );
-			
+
 			JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider(
 					this.emf,
 					this.idProperties,
@@ -181,8 +189,12 @@ public final class JPASearchFactoryAdapter
 					this.rehashedTypeMetadataForIndexRoot, this.containedInIndexOf, entityProvider,
 					impl.unwrap( ExtendedSearchIntegrator.class )
 			);
-			this.updateSource.setUpdateConsumers( Arrays.asList( this.indexUpdater, this ) );
-			this.updateSource.start();
+			this.asyncUpdateSource.setUpdateConsumers(
+					Arrays.asList(
+							this.indexUpdater::updateEvent, this
+					)
+			);
+			this.asyncUpdateSource.start();
 		}
 	}
 
@@ -259,12 +271,12 @@ public final class JPASearchFactoryAdapter
 		return this;
 	}
 
-	public UpdateSourceProvider getUpdateSourceProvider() {
-		return this.updateSourceProvider;
+	public AsyncUpdateSourceProvider getAsyncUpdateSourceProvider() {
+		return this.asyncUpdateSourceProvider;
 	}
 
-	public JPASearchFactoryAdapter setUpdateSourceProvider(UpdateSourceProvider updateSourceProvider) {
-		this.updateSourceProvider = updateSourceProvider;
+	public JPASearchFactoryAdapter setAsyncUpdateSourceProvider(AsyncUpdateSourceProvider asyncUpdateSourceProvider) {
+		this.asyncUpdateSourceProvider = asyncUpdateSourceProvider;
 		return this;
 	}
 
@@ -288,8 +300,8 @@ public final class JPASearchFactoryAdapter
 
 	@Override
 	public void pauseUpdating(boolean pause) {
-		if ( this.updateSource != null ) {
-			this.updateSource.pause( pause );
+		if ( this.asyncUpdateSource != null ) {
+			this.asyncUpdateSource.pause( pause );
 		}
 	}
 
@@ -300,7 +312,19 @@ public final class JPASearchFactoryAdapter
 			return (FullTextEntityManager) em;
 		}
 		else {
-			return ImplementationFactory.createFullTextEntityManager( em, this );
+			if ( this.entityManagerToFullTextEntityManager == null || em == null ) {
+				return ImplementationFactory.createFullTextEntityManager( em, this );
+			}
+			else {
+				synchronized (em) {
+					FullTextEntityManagerImpl fem = this.entityManagerToFullTextEntityManager.get( em );
+					if ( fem == null ) {
+						fem = (FullTextEntityManagerImpl) ImplementationFactory.createFullTextEntityManager( em, this );
+						this.entityManagerToFullTextEntityManager.put( em, fem );
+					}
+					return fem;
+				}
+			}
 		}
 	}
 
@@ -327,10 +351,10 @@ public final class JPASearchFactoryAdapter
 	@Override
 	public void close() {
 		try {
-			if ( this.updateSource != null ) {
-				this.updateSource.stop();
+			if ( this.asyncUpdateSource != null ) {
+				this.asyncUpdateSource.stop();
 			}
-			if( this.indexUpdater != null) {
+			if ( this.indexUpdater != null ) {
 				this.indexUpdater.close();
 			}
 			this.searchFactory.close();

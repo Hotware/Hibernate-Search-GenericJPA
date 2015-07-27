@@ -7,7 +7,9 @@
 package org.hibernate.search.genericjpa.db.events.index.impl;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -25,8 +27,9 @@ import org.hibernate.search.engine.ProjectionConstants;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.metadata.impl.DocumentFieldMetadata;
 import org.hibernate.search.genericjpa.db.EventType;
-import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
-import org.hibernate.search.genericjpa.db.events.impl.UpdateSource;
+import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateEventInfo;
+import org.hibernate.search.genericjpa.db.events.impl.AsyncUpdateSource;
+import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.factory.Transaction;
@@ -36,13 +39,13 @@ import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.hibernate.search.query.engine.spi.HSQuery;
 
 /**
- * This class is the "glue" between a {@link UpdateSource} and the actual
- * Hibernate-Search index. It consumes Events coming from the UpdateSource and updates the Hibernate-Search index
+ * This class is the "glue" between a {@link AsyncUpdateSource} and the actual
+ * Hibernate-Search index. It consumes Events coming from the AsyncUpdateSource and updates the Hibernate-Search index
  * accordingly
  *
  * @author Martin Braun
  */
-public class IndexUpdater implements UpdateConsumer {
+public class IndexUpdater {
 
 	// TODO: think of a clever way of doing batching here
 	// or maybe leave it as it is
@@ -78,12 +81,30 @@ public class IndexUpdater implements UpdateConsumer {
 		this.indexWrapper = new DefaultIndexWrapper( searchIntegrator );
 	}
 
-	@Override
 	public void updateEvent(List<UpdateEventInfo> updateInfos) {
-		this.updateEvent( updateInfos, this.entityProvider );
+		Map<EntityProvider, List<UpdateEventInfo>> perEntityProvider = new HashMap<>();
+		List<UpdateEventInfo> infoWithoutEntityProvider = new ArrayList<>();
+		for ( UpdateEventInfo info : updateInfos ) {
+			EntityProvider entityProvider = info.getEntityProvider();
+			if ( entityProvider == null ) {
+				infoWithoutEntityProvider.add( info );
+			}
+			else {
+				perEntityProvider.computeIfAbsent( entityProvider, _1 -> new ArrayList<>() )
+						.add(
+								info
+						);
+			}
+		}
+		for ( Map.Entry<EntityProvider, List<UpdateEventInfo>> entry : perEntityProvider.entrySet() ) {
+			this.updateEvent( entry.getValue(), entry.getKey() );
+		}
+		if ( infoWithoutEntityProvider.size() > 0 ) {
+			this.updateEvent( infoWithoutEntityProvider, this.entityProvider );
+		}
 	}
 
-	public void updateEvent(List<UpdateEventInfo> updateInfos, ReusableEntityProvider provider) {
+	public void updateEvent(List<UpdateEventInfo> updateInfos, EntityProvider provider) {
 		//this is a hack so we can start/end our transactions properly in JTA
 		//as transactions are bound to threads
 		final SearchException[] exception = {null};
@@ -92,60 +113,66 @@ public class IndexUpdater implements UpdateConsumer {
 				() ->
 				{
 					try {
-						provider.open();
-						Transaction tx = new Transaction();
+						if ( provider instanceof ReusableEntityProvider ) {
+							((ReusableEntityProvider) provider).open();
+						}
 						try {
-							for ( UpdateEventInfo updateInfo : updateInfos ) {
-								Class<?> entityClass = updateInfo.getEntityClass();
-								Map<String, String> hints = Collections.unmodifiableMap( updateInfo.getHints() );
-								List<Class<?>> inIndexOf = IndexUpdater.this.containedInIndexOf.get( entityClass );
-								if ( inIndexOf != null && inIndexOf.size() != 0 ) {
-									int eventType = updateInfo.getEventType();
-									Object id = updateInfo.getId();
-									switch ( eventType ) {
-										case EventType.INSERT: {
-											Object obj = provider.get( entityClass, id, hints );
-											if ( obj != null ) {
-												IndexUpdater.this.indexWrapper.index( obj, tx );
+							Transaction tx = new Transaction();
+							try {
+								for ( UpdateEventInfo updateInfo : updateInfos ) {
+									Class<?> entityClass = updateInfo.getEntityClass();
+									Map<String, String> hints = Collections.unmodifiableMap( updateInfo.getHints() );
+									List<Class<?>> inIndexOf = IndexUpdater.this.containedInIndexOf.get( entityClass );
+									if ( inIndexOf != null && inIndexOf.size() != 0 ) {
+										int eventType = updateInfo.getEventType();
+										Object id = updateInfo.getId();
+										switch ( eventType ) {
+											case EventType.INSERT: {
+												Object obj = provider.get( entityClass, id, hints );
+												if ( obj != null ) {
+													IndexUpdater.this.indexWrapper.index( obj, tx );
+												}
+												break;
 											}
-											break;
-										}
-										case EventType.UPDATE: {
-											Object obj = provider.get( entityClass, id, hints );
-											if ( obj != null ) {
-												IndexUpdater.this.indexWrapper.update( obj, tx );
+											case EventType.UPDATE: {
+												Object obj = provider.get( entityClass, id, hints );
+												if ( obj != null ) {
+													IndexUpdater.this.indexWrapper.update( obj, tx );
+												}
+												break;
 											}
-											break;
-										}
-										case EventType.DELETE: {
-											IndexUpdater.this.indexWrapper.delete( entityClass, inIndexOf, id, tx );
-											break;
-										}
-										default: {
-											LOGGER.warning( "unknown eventType-id found: " + eventType );
+											case EventType.DELETE: {
+												IndexUpdater.this.indexWrapper.delete( entityClass, inIndexOf, id, tx );
+												break;
+											}
+											default: {
+												LOGGER.warning( "unknown eventType-id found: " + eventType );
+											}
 										}
 									}
+									else {
+										LOGGER.warning( "class: " + entityClass + " not found in any index!" );
+									}
 								}
-								else {
-									LOGGER.warning( "class: " + entityClass + " not found in any index!" );
-								}
+								tx.commit();
 							}
-							tx.commit();
-						}
-						catch (Exception e) {
-							tx.rollback();
-							LOGGER.log(
-									Level.WARNING,
-									"Error while updating the index! Your index might be corrupt!",
-									e
-							);
-							exception[0] = new SearchException(
-									"Error while updating the index! Your index might be corrupt!",
-									e
-							);
+							catch (Exception e) {
+								tx.rollback();
+								LOGGER.log(
+										Level.WARNING,
+										"Error while updating the index! Your index might be corrupt!",
+										e
+								);
+								exception[0] = new SearchException(
+										"Error while updating the index! Your index might be corrupt!",
+										e
+								);
+							}
 						}
 						finally {
-							provider.close();
+							if ( provider instanceof ReusableEntityProvider ) {
+								((ReusableEntityProvider) provider).close();
+							}
 						}
 					}
 					finally {
@@ -158,7 +185,7 @@ public class IndexUpdater implements UpdateConsumer {
 			latch.await();
 			//while we did things on a different thread we still
 			//want to throw the exceptions from there
-			//so the UpdateSource stumbles on this Exception
+			//so the AsyncUpdateSource stumbles on this Exception
 			if ( exception[0] != null ) {
 				throw exception[0];
 			}
@@ -166,6 +193,7 @@ public class IndexUpdater implements UpdateConsumer {
 		catch (InterruptedException e) {
 			throw new SearchException( e );
 		}
+
 	}
 
 	public void close() {

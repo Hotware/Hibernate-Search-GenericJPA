@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import org.hibernate.search.genericjpa.db.EventType;
-import org.hibernate.search.genericjpa.db.events.impl.UpdateSource;
+import org.hibernate.search.genericjpa.db.events.impl.AsyncUpdateSource;
 import org.hibernate.search.genericjpa.db.events.impl.AnnotationEventModelParser;
 import org.hibernate.search.genericjpa.db.events.impl.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.impl.EventModelParser;
@@ -36,38 +36,38 @@ import static org.hibernate.search.genericjpa.Constants.TRIGGER_CREATION_STRATEG
 /**
  * @author Martin Braun
  */
-public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
+public class SQLJPAAsyncUpdateSourceProvider implements AsyncUpdateSourceProvider {
 
-	private static final Logger LOGGER = Logger.getLogger( SQLJPAUpdateSourceProvider.class.getName() );
+	private static final Logger LOGGER = Logger.getLogger( SQLJPAAsyncUpdateSourceProvider.class.getName() );
+
 
 	private final TriggerSQLStringSource triggerSource;
 	private final List<Class<?>> updateClasses;
-	private final EntityManagerFactory emf;
-	private final TransactionManager transactionManager;
 	private final String triggerCreateStrategy;
 
-	public SQLJPAUpdateSourceProvider(
-			EntityManagerFactory emf,
-			TransactionManager transactionManager,
+	public SQLJPAAsyncUpdateSourceProvider(
 			TriggerSQLStringSource triggerSource,
 			List<Class<?>> updateClasses,
 			String triggerCreateStrategy) {
 		this.triggerSource = triggerSource;
 		this.updateClasses = updateClasses;
-		this.emf = emf;
-		this.transactionManager = transactionManager;
 		this.triggerCreateStrategy = triggerCreateStrategy;
 	}
 
 	@Override
-	public UpdateSource getUpdateSource(long delay, TimeUnit timeUnit, int batchSizeForUpdates, Properties properties) {
+	public AsyncUpdateSource getUpdateSource(
+			long delay,
+			TimeUnit timeUnit,
+			int batchSizeForUpdates,
+			Properties properties,
+			EntityManagerFactory emf, TransactionManager transactionManager) {
 		EventModelParser eventModelParser = new AnnotationEventModelParser();
 		List<EventModelInfo> eventModelInfos = eventModelParser.parse( new ArrayList<>( this.updateClasses ) );
-		this.setupTriggers( eventModelInfos, properties );
-		return new JPAUpdateSource(
+		this.setupTriggers( emf, transactionManager, eventModelInfos, properties );
+		JPAUpdateSource updateSource = new JPAUpdateSource(
 				eventModelInfos,
-				this.emf,
-				this.transactionManager,
+				emf,
+				transactionManager,
 				delay,
 				timeUnit,
 				batchSizeForUpdates,
@@ -78,9 +78,14 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 						)
 				), this.triggerSource.getDelimitedIdentifierToken()
 		);
+		return updateSource;
 	}
 
-	private void setupTriggers(List<EventModelInfo> eventModelInfos, Properties properties) {
+	private void setupTriggers(
+			EntityManagerFactory emf,
+			TransactionManager transactionManager,
+			List<EventModelInfo> eventModelInfos,
+			Properties properties) {
 		if ( TRIGGER_CREATION_STRATEGY_DONT_CREATE.equals( this.triggerCreateStrategy ) || (!TRIGGER_CREATION_STRATEGY_CREATE
 				.equals( this.triggerCreateStrategy ) && !TRIGGER_CREATION_STRATEGY_DROP_CREATE.equals( this.triggerCreateStrategy )) ) {
 			return;
@@ -98,25 +103,31 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 							String[] triggerDropStrings = this.triggerSource.getTriggerDropCode( info, eventType );
 							for ( String triggerDropString : triggerDropStrings ) {
 								LOGGER.info( triggerDropString );
-								this.doQueryOrLogException( connection, triggerDropString, true );
+								this.doQueryOrLogException(
+										emf,
+										transactionManager,
+										connection,
+										triggerDropString,
+										true
+								);
 							}
 						}
 
 						for ( String unSetupCode : this.triggerSource.getSpecificUnSetupCode( info ) ) {
 							LOGGER.info( unSetupCode );
-							this.doQueryOrLogException( connection, unSetupCode, true );
+							this.doQueryOrLogException( emf, transactionManager, connection, unSetupCode, true );
 						}
 
 						for ( String str : triggerSource.getUpdateTableDropCode( info ) ) {
 							LOGGER.info( str );
-							this.doQueryOrLogException( connection, str, true );
+							this.doQueryOrLogException( emf, transactionManager, connection, str, true );
 						}
 
 					}
 
 					for ( String str : triggerSource.getUnSetupCode() ) {
 						LOGGER.info( str );
-						this.doQueryOrLogException( connection, str, true );
+						this.doQueryOrLogException( emf, transactionManager, connection, str, true );
 					}
 				}
 
@@ -124,18 +135,18 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 				try {
 					for ( String str : triggerSource.getSetupCode() ) {
 						LOGGER.info( str );
-						this.doQueryOrLogException( connection, str, false );
+						this.doQueryOrLogException( emf, transactionManager, connection, str, false );
 					}
 
 					for ( EventModelInfo info : eventModelInfos ) {
 						for ( String str : triggerSource.getUpdateTableCreationCode( info ) ) {
 							LOGGER.info( str );
-							this.doQueryOrLogException( connection, str, false );
+							this.doQueryOrLogException( emf, transactionManager, connection, str, false );
 						}
 
 						for ( String setupCode : this.triggerSource.getSpecificSetupCode( info ) ) {
 							LOGGER.info( setupCode );
-							this.doQueryOrLogException( connection, setupCode, false );
+							this.doQueryOrLogException( emf, transactionManager, connection, setupCode, false );
 						}
 
 						for ( int eventType : EventType.values() ) {
@@ -145,7 +156,13 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 							);
 							for ( String triggerCreationString : triggerCreationStrings ) {
 								LOGGER.info( triggerCreationString );
-								this.doQueryOrLogException( connection, triggerCreationString, false );
+								this.doQueryOrLogException(
+										emf,
+										transactionManager,
+										connection,
+										triggerCreationString,
+										false
+								);
 							}
 						}
 					}
@@ -166,7 +183,12 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 		}
 	}
 
-	private void doQueryOrLogException(Connection connection, String query, boolean canFail) {
+	private void doQueryOrLogException(
+			EntityManagerFactory emf,
+			TransactionManager transactionManager,
+			Connection connection,
+			String query,
+			boolean canFail) {
 		try {
 			if ( connection != null ) {
 				Statement statement = connection.createStatement();
@@ -179,9 +201,9 @@ public class SQLJPAUpdateSourceProvider implements UpdateSourceProvider {
 				//to check with IF EXISTS on every database)
 				//the EntityManager can be in a RollbackOnly state
 				//which we dont want
-				EntityManager em = this.emf.createEntityManager();
+				EntityManager em = emf.createEntityManager();
 				try {
-					JPATransactionWrapper tx = JPATransactionWrapper.get( em, this.transactionManager );
+					JPATransactionWrapper tx = JPATransactionWrapper.get( em, transactionManager );
 					tx.setIgnoreExceptionsForJTATransaction( true );
 					tx.begin();
 

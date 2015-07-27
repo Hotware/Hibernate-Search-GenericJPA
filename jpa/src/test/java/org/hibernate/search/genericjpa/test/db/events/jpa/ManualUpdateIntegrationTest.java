@@ -117,7 +117,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 						TimeUnit.MILLISECONDS,
 						10, new MySQLTriggerSQLStringSource().getDelimitedIdentifierToken()
 				);
-				updateSource.setUpdateConsumers( Arrays.asList( indexUpdater ) );
+				updateSource.setUpdateConsumers( Arrays.asList( indexUpdater::updateEvent ) );
 				updateSource.start();
 
 				try {
@@ -228,7 +228,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 	private void writeAllIntoIndex(EntityManager em, ExtendedSearchIntegrator impl) throws InterruptedException {
 		// and write data in the index again
 		this.setupData( em );
-		// wait a bit until the UpdateSource sent the appropriate events
+		// wait a bit until the AsyncUpdateSource sent the appropriate events
 		Sleep.sleep(
 				100_000, () -> {
 					return this.assertCount( impl, 2 );

@@ -159,7 +159,7 @@ public class JPAUpdateSourceTest {
 				EntityTransaction tx = em.getTransaction();
 				tx.begin();
 				assertEquals(
-						"UpdateSource should delete all things after it has processed the updates but didn't do so",
+						"AsyncUpdateSource should delete all things after it has processed the updates but didn't do so",
 						0,
 						em.createNativeQuery( "SELECT * FROM PlaceSorcererUpdatesHsearch" ).getResultList().size()
 				);

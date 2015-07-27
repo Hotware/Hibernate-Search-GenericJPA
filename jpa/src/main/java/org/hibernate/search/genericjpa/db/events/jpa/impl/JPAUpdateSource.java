@@ -25,10 +25,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.hibernate.search.genericjpa.db.ColumnType;
+import org.hibernate.search.genericjpa.db.events.impl.AsyncUpdateSource;
 import org.hibernate.search.genericjpa.db.events.impl.EventModelInfo;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateEventInfo;
-import org.hibernate.search.genericjpa.db.events.impl.UpdateSource;
 import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.jpa.util.impl.JPATransactionWrapper;
 import org.hibernate.search.genericjpa.jpa.util.impl.MultiQueryAccess;
@@ -36,12 +36,15 @@ import org.hibernate.search.genericjpa.jpa.util.impl.MultiQueryAccess.ObjectIden
 import org.hibernate.search.genericjpa.util.NamingThreadFactory;
 
 /**
- * a {@link UpdateSource} implementation that uses JPA to retrieve the updates from the database. For this to work the
+ * a {@link AsyncUpdateSource} implementation that uses JPA to retrieve the updates from the database. For this to work the
  * entities have to be setup with JPA annotations
+ * <br>
+ * <br>
+ * <b>this implementation is async</b>
  *
  * @author Martin Braun
  */
-public class JPAUpdateSource implements UpdateSource {
+public class JPAUpdateSource implements AsyncUpdateSource {
 
 	private final String delimitedIdentifierToken;
 

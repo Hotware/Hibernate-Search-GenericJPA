@@ -25,7 +25,7 @@ public interface JPASearchFactoryController {
 	SearchFactory getSearchFactory();
 
 	/**
-	 * (un-)pauses updating
+	 * (un-)pauses updating if possible
 	 */
 	void pauseUpdating(boolean pause);
 

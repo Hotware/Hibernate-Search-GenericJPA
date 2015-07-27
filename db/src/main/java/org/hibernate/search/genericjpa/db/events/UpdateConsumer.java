@@ -10,6 +10,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.hibernate.search.genericjpa.entity.EntityProvider;
+import org.hibernate.search.genericjpa.transaction.TransactionContext;
+
 /**
  * @author Martin Braun
  */
@@ -28,17 +31,28 @@ public interface UpdateConsumer {
 		private final Object id;
 		private final int eventType;
 		private final Map<String, String> hints;
+		private final EntityProvider entityProvider;
 
 		public UpdateEventInfo(Class<?> entityClass, Object id, int eventType) {
 			this( entityClass, id, eventType, Collections.emptyMap() );
 		}
 
 		public UpdateEventInfo(Class<?> entityClass, Object id, int eventType, Map<String, String> hints) {
+			this( entityClass, id, eventType, hints, null );
+		}
+
+		public UpdateEventInfo(
+				Class<?> entityClass,
+				Object id,
+				int eventType,
+				Map<String, String> hints,
+				EntityProvider entityProvider) {
 			super();
 			this.entityClass = entityClass;
 			this.id = id;
 			this.eventType = eventType;
 			this.hints = hints;
+			this.entityProvider = entityProvider;
 		}
 
 		/**
@@ -66,6 +80,16 @@ public interface UpdateConsumer {
 			return hints;
 		}
 
+		/**
+		 * the entity provider that should be used to handle this event. this is only needed for native event access
+		 * and is null for the trigger event system
+		 *
+		 * @return
+		 */
+		public EntityProvider getEntityProvider() {
+			return entityProvider;
+		}
+
 		@Override
 		public boolean equals(Object o) {
 			if ( this == o ) {
@@ -86,7 +110,12 @@ public interface UpdateConsumer {
 			if ( id != null ? !id.equals( that.id ) : that.id != null ) {
 				return false;
 			}
-			return !(hints != null ? !hints.equals( that.hints ) : that.hints != null);
+			if ( hints != null ? !hints.equals( that.hints ) : that.hints != null ) {
+				return false;
+			}
+			return !(entityProvider != null ?
+					!entityProvider.equals( that.entityProvider ) :
+					that.entityProvider != null);
 
 		}
 
@@ -96,6 +125,7 @@ public interface UpdateConsumer {
 			result = 31 * result + (id != null ? id.hashCode() : 0);
 			result = 31 * result + eventType;
 			result = 31 * result + (hints != null ? hints.hashCode() : 0);
+			result = 31 * result + (entityProvider != null ? entityProvider.hashCode() : 0);
 			return result;
 		}
 
@@ -106,6 +136,7 @@ public interface UpdateConsumer {
 					", id=" + id +
 					", eventType=" + eventType +
 					", hints=" + hints +
+					", entityProvider=" + entityProvider +
 					'}';
 		}
 	}
