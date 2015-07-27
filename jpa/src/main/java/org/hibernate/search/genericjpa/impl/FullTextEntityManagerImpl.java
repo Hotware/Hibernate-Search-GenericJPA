@@ -48,6 +48,16 @@ final class FullTextEntityManagerImpl implements FullTextEntityManager, Serializ
 		this.searchFactory = searchFactory;
 	}
 
+	//FIXME: register a eventlistener for the current EM in here so we can listen
+	//for session events. this is at least possible for Hibernate and EclipseLink
+
+	//the search factory has to know about the currently used entitymanagers then,
+	//since the entitylisteners are built ontop of the EMF level. then we have
+	//to map back to the current EntityManager, use that for event handling
+	//(retrieve the changed data) and also wait for its transaction to be commited.
+	//only after the original TX is commited, we are allowed to automatically
+	//flush to the index (standaloneTransaction.commit())
+
 	private boolean isTransactionInProgress() {
 		return this.standaloneTransaction != null;
 	}
