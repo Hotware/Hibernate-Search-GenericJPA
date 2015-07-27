@@ -81,6 +81,7 @@ public final class MetadataRehasher {
 				if ( rehashed.documentFieldMetadataForIdFieldName.containsKey( documentFieldMetadata.getName() ) ) {
 					throw new AssertionFailure( "field handled twice!" );
 				}
+				rehashed.idPropertyAccessorForType.put( type, propertyMetadata.getPropertyAccessor() );
 				rehashed.documentFieldMetadataForIdFieldName.put(
 						documentFieldMetadata.getName(),
 						documentFieldMetadata

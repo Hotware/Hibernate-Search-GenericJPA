@@ -145,7 +145,7 @@ public final class Setup {
 					SEARCH_FACTORY_TYPE_DEFAULT_VALUE
 			);
 			//what AsyncUpdateSource to be used
-			SynchronizedUpdateSourceProvider synchronizedUpdateSourceProvider = (a, b, c, d, e) -> null;
+			SynchronizedUpdateSourceProvider synchronizedUpdateSourceProvider = (a, b, c, d, e, f, g) -> null;
 			AsyncUpdateSourceProvider asyncUpdateSourceProvider = (a, b, c, d, e, f) -> null;
 			if ( "sql".equals( type ) ) {
 				if ( emf == null ) {

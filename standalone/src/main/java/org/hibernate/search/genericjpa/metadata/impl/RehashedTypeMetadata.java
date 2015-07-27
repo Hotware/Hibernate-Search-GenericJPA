@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.hibernate.annotations.common.reflection.XProperty;
 import org.hibernate.search.backend.spi.SingularTermDeletionQuery;
 import org.hibernate.search.engine.metadata.impl.DocumentFieldMetadata;
 import org.hibernate.search.engine.metadata.impl.TypeMetadata;
@@ -36,6 +37,8 @@ public final class RehashedTypeMetadata {
 	 * the entity from the database
 	 */
 	Map<Class<?>, String> idPropertyNameForType = new HashMap<>();
+
+	Map<Class<?>, XProperty> idPropertyAccessorForType = new HashMap<>();
 
 	/**
 	 * this contains the DocumentFieldMetadata for each id-fieldname. This provides info about how each id is stored in
@@ -115,4 +118,11 @@ public final class RehashedTypeMetadata {
 		this.singularTermDeletionQueryTypeForIdFieldName = singularTermDeletionQueryTypeForIdFieldName;
 	}
 
+	public Map<Class<?>, XProperty> getIdPropertyAccessorForType() {
+		return idPropertyAccessorForType;
+	}
+
+	public void setIdPropertyAccessorForType(Map<Class<?>, XProperty> idPropertyAccessorForType) {
+		this.idPropertyAccessorForType = idPropertyAccessorForType;
+	}
 }

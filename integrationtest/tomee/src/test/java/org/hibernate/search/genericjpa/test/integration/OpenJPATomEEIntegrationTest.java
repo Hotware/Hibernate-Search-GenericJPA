@@ -235,6 +235,7 @@ public class OpenJPATomEEIntegrationTest {
 		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
 		fem.beginSearchTransaction();
 		Game newGame = new Game( "Legend of Zelda" );
+		newGame.setId( -10L );
 		fem.index( newGame );
 		fem.commitSearchTransaction();
 		Sleep.sleep(
@@ -260,6 +261,7 @@ public class OpenJPATomEEIntegrationTest {
 		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
 		fem.beginSearchTransaction();
 		Game newGame = new Game( "Pong" );
+		newGame.setId( -10L );
 		fem.index( newGame );
 		fem.rollbackSearchTransaction();
 		Sleep.sleep(

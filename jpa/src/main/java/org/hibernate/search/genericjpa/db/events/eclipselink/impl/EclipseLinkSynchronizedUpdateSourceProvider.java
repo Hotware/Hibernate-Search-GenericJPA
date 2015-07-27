@@ -8,6 +8,8 @@ package org.hibernate.search.genericjpa.db.events.eclipselink.impl;
 
 import javax.persistence.EntityManagerFactory;
 import javax.transaction.TransactionManager;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -17,6 +19,7 @@ import org.eclipse.persistence.sessions.Session;
 import org.hibernate.search.genericjpa.JPASearchFactoryController;
 import org.hibernate.search.genericjpa.events.impl.SynchronizedUpdateSource;
 import org.hibernate.search.genericjpa.impl.SynchronizedUpdateSourceProvider;
+import org.hibernate.search.genericjpa.metadata.impl.RehashedTypeMetadata;
 
 /**
  * Created by Martin on 27.07.2015.
@@ -26,6 +29,8 @@ public class EclipseLinkSynchronizedUpdateSourceProvider implements Synchronized
 	@Override
 	public SynchronizedUpdateSource getUpdateSource(
 			JPASearchFactoryController searchFactoryController,
+			Map<Class<?>, RehashedTypeMetadata> rehashedTypeMetadataPerIndexRoot,
+			Map<Class<?>, List<Class<?>>> containedInIndexOf,
 			Properties properties,
 			EntityManagerFactory emf,
 			TransactionManager transactionManager,
@@ -36,10 +41,12 @@ public class EclipseLinkSynchronizedUpdateSourceProvider implements Synchronized
 
 			EclipseLinkUpdateSource eclipseLinkUpdateSource = new EclipseLinkUpdateSource(
 					searchFactoryController,
-					indexRelevantEntities
+					indexRelevantEntities,
+					rehashedTypeMetadataPerIndexRoot,
+					containedInIndexOf
 			);
 			for ( Class<?> entity : indexRelevantEntities ) {
-				if(session.getDescriptor( entity ) == null) {
+				if ( session.getDescriptor( entity ) == null ) {
 					//no JPA entity
 					continue;
 				}
@@ -49,7 +56,8 @@ public class EclipseLinkSynchronizedUpdateSourceProvider implements Synchronized
 			}
 			session.getEventManager().addListener( eclipseLinkUpdateSource.sessionEventAspect );
 			return eclipseLinkUpdateSource;
-		} finally {
+		}
+		finally {
 			entityManager.close();
 		}
 	}

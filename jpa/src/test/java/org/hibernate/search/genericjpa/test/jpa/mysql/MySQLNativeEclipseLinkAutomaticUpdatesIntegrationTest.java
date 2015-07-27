@@ -36,6 +36,8 @@ public class MySQLNativeEclipseLinkAutomaticUpdatesIntegrationTest extends Autom
 		this.setup( "eclipselink", "EclipseLink_MySQL", MySQLTriggerSQLStringSource.class );
 	}
 
+	//TODO: test this for object hierarchies
+
 	@Test
 	public void testNativeEvents() {
 		if ( "sql".equals( this.searchFactoryType ) ) {
@@ -135,11 +137,11 @@ public class MySQLNativeEclipseLinkAutomaticUpdatesIntegrationTest extends Autom
 				this.em.remove( ent );
 				this.em.getTransaction().commit();
 
-				//assertEquals(
-				//		0, searchFactory.getFullTextEntityManager( this.em )
-				//				.createFullTextQuery( new MatchAllDocsQuery(), MultipleColumnsIdEntity.class )
-				//				.getResultSize()
-				//);
+				assertEquals(
+						0, searchFactory.getFullTextEntityManager( this.em )
+								.createFullTextQuery( new MatchAllDocsQuery(), MultipleColumnsIdEntity.class )
+								.getResultSize()
+				);
 			}
 		}
 		finally {

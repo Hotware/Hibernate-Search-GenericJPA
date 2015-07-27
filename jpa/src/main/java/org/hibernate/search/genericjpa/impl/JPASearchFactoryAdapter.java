@@ -152,6 +152,7 @@ public final class JPASearchFactoryAdapter
 				)
 		);
 		this.idProperties = MetadataUtil.calculateIdProperties( rehashedTypeMetadatas );
+		this.containedInIndexOf = MetadataUtil.calculateInIndexOf( rehashedTypeMetadatas );
 
 		SearchIntegratorBuilder builder = new SearchIntegratorBuilder();
 		// we have to build an integrator here (but we don't need it afterwards)
@@ -177,7 +178,6 @@ public final class JPASearchFactoryAdapter
 			if ( this.emf == null ) {
 				throw new AssertionFailure( "emf may not be null when using an AsyncUpdateSource" );
 			}
-			this.containedInIndexOf = MetadataUtil.calculateInIndexOf( rehashedTypeMetadatas );
 
 			JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider(
 					this.emf,
@@ -198,6 +198,8 @@ public final class JPASearchFactoryAdapter
 		}
 		this.synchronizedUpdateSource = this.synchronizedUpdateSourceProvider.getUpdateSource(
 				this,
+				this.rehashedTypeMetadataForIndexRoot,
+				this.containedInIndexOf,
 				this.properties,
 				this.emf,
 				this.transactionManager,

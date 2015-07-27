@@ -234,6 +234,7 @@ public class HibernateWildFlyIntegrationTest {
 		FullTextEntityManager fem = this.searchFactory.getFullTextEntityManager( this.em );
 		fem.beginSearchTransaction();
 		Game newGame = new Game( "Legend of Zelda" );
+		newGame.setId( -10L );
 		fem.index( newGame );
 		fem.commitSearchTransaction();
 		Sleep.sleep(
@@ -260,6 +261,7 @@ public class HibernateWildFlyIntegrationTest {
 		fem.beginSearchTransaction();
 		Game newGame = new Game( "Pong" );
 		fem.index( newGame );
+		newGame.setId( -10L );
 		fem.rollbackSearchTransaction();
 		Sleep.sleep(
 				MAX_SLEEP_TIME, () -> {

@@ -239,20 +239,6 @@ public final class IndexUpdater {
 					else {
 						idValueForDeletion = id;
 					}
-					HSQuery hsQuery = this.searchIntegrator
-							.createHSQuery()
-							.targetedEntities( Collections.singletonList( indexClass ) )
-							.luceneQuery(
-									this.searchIntegrator.buildQueryBuilder()
-											.forEntity( indexClass )
-											.get()
-											.keyword()
-											.onField( field )
-											.matching( idValueForDeletion )
-											.createQuery()
-							);
-					int count = hsQuery.queryResultSize();
-					int processed = 0;
 					if ( indexClass.equals( entityClass ) ) {
 						this.searchIntegrator.getWorker().performWork(
 								new Work(
@@ -263,6 +249,20 @@ public final class IndexUpdater {
 						);
 					}
 					else {
+						HSQuery hsQuery = this.searchIntegrator
+								.createHSQuery()
+								.targetedEntities( Collections.singletonList( indexClass ) )
+								.luceneQuery(
+										this.searchIntegrator.buildQueryBuilder()
+												.forEntity( indexClass )
+												.get()
+												.keyword()
+												.onField( field )
+												.matching( idValueForDeletion )
+												.createQuery()
+								);
+						int count = hsQuery.queryResultSize();
+						int processed = 0;
 						// this was just contained somewhere
 						// so we have to update the containing entity
 						while ( processed < count ) {
