@@ -58,13 +58,14 @@ public final class FullTextEntityManagerImpl implements FullTextEntityManager, S
 	//only after the original TX is commited, we are allowed to automatically
 	//flush to the index (standaloneTransaction.commit())
 
-	private boolean isTransactionInProgress() {
+	@Override
+	public boolean isSearchTransactionInProgress() {
 		return this.standaloneTransaction != null;
 	}
 
 	@Override
 	public void beginSearchTransaction() {
-		if ( this.isTransactionInProgress() ) {
+		if ( this.isSearchTransactionInProgress() ) {
 			throw new IllegalStateException( "a search transaction is already in progress!" );
 		}
 		this.standaloneTransaction = new Transaction();
@@ -72,7 +73,7 @@ public final class FullTextEntityManagerImpl implements FullTextEntityManager, S
 
 	@Override
 	public void commitSearchTransaction() {
-		if ( !this.isTransactionInProgress() ) {
+		if ( !this.isSearchTransactionInProgress() ) {
 			throw new IllegalStateException( "no search transaction is in progress!" );
 		}
 		this.standaloneTransaction.commit();
@@ -81,7 +82,7 @@ public final class FullTextEntityManagerImpl implements FullTextEntityManager, S
 
 	@Override
 	public void rollbackSearchTransaction() {
-		if ( !this.isTransactionInProgress() ) {
+		if ( !this.isSearchTransactionInProgress() ) {
 			throw new IllegalStateException( "no search transaction is in progress!" );
 		}
 		this.standaloneTransaction.rollback();
@@ -98,7 +99,7 @@ public final class FullTextEntityManagerImpl implements FullTextEntityManager, S
 
 	@Override
 	public <T> void index(T entity) {
-		if ( !this.isTransactionInProgress() ) {
+		if ( !this.isSearchTransactionInProgress() ) {
 			throw new IllegalStateException( "no search transaction is in progress!" );
 		}
 		this.searchFactory.index( entity, this.standaloneTransaction );
@@ -106,7 +107,7 @@ public final class FullTextEntityManagerImpl implements FullTextEntityManager, S
 
 	@Override
 	public <T> void purge(Class<T> entityType, Serializable id) {
-		if ( !this.isTransactionInProgress() ) {
+		if ( !this.isSearchTransactionInProgress() ) {
 			throw new IllegalStateException( "no search transaction is in progress!" );
 		}
 		this.searchFactory.purge( entityType, id, this.standaloneTransaction );
@@ -114,7 +115,7 @@ public final class FullTextEntityManagerImpl implements FullTextEntityManager, S
 
 	@Override
 	public <T> void purgeAll(Class<T> entityType) {
-		if ( !this.isTransactionInProgress() ) {
+		if ( !this.isSearchTransactionInProgress() ) {
 			throw new IllegalStateException( "no search transaction is in progress!" );
 		}
 		this.searchFactory.purgeAll( entityType, this.standaloneTransaction );
@@ -122,7 +123,7 @@ public final class FullTextEntityManagerImpl implements FullTextEntityManager, S
 
 	@Override
 	public <T> void purgeByTerm(Class<T> entityType, String field, Integer val) {
-		if ( !this.isTransactionInProgress() ) {
+		if ( !this.isSearchTransactionInProgress() ) {
 			throw new IllegalStateException( "no search transaction is in progress!" );
 		}
 		this.searchFactory.purgeByTerm( entityType, field, val );
@@ -130,7 +131,7 @@ public final class FullTextEntityManagerImpl implements FullTextEntityManager, S
 
 	@Override
 	public <T> void purgeByTerm(Class<T> entityType, String field, Long val) {
-		if ( !this.isTransactionInProgress() ) {
+		if ( !this.isSearchTransactionInProgress() ) {
 			throw new IllegalStateException( "no search transaction is in progress!" );
 		}
 		this.searchFactory.purgeByTerm( entityType, field, val );
@@ -138,7 +139,7 @@ public final class FullTextEntityManagerImpl implements FullTextEntityManager, S
 
 	@Override
 	public <T> void purgeByTerm(Class<T> entityType, String field, Float val) {
-		if ( !this.isTransactionInProgress() ) {
+		if ( !this.isSearchTransactionInProgress() ) {
 			throw new IllegalStateException( "no search transaction is in progress!" );
 		}
 		this.searchFactory.purgeByTerm( entityType, field, val );
@@ -146,7 +147,7 @@ public final class FullTextEntityManagerImpl implements FullTextEntityManager, S
 
 	@Override
 	public <T> void purgeByTerm(Class<T> entityType, String field, Double val) {
-		if ( !this.isTransactionInProgress() ) {
+		if ( !this.isSearchTransactionInProgress() ) {
 			throw new IllegalStateException( "no search transaction is in progress!" );
 		}
 		this.searchFactory.purgeByTerm( entityType, field, val );
@@ -154,7 +155,7 @@ public final class FullTextEntityManagerImpl implements FullTextEntityManager, S
 
 	@Override
 	public <T> void purgeByTerm(Class<T> entityType, String field, String val) {
-		if ( !this.isTransactionInProgress() ) {
+		if ( !this.isSearchTransactionInProgress() ) {
 			throw new IllegalStateException( "no search transaction is in progress!" );
 		}
 		this.searchFactory.purgeByTerm( entityType, field, val );
@@ -162,7 +163,7 @@ public final class FullTextEntityManagerImpl implements FullTextEntityManager, S
 
 	@Override
 	public void flushToIndexes() {
-		if ( !this.isTransactionInProgress() ) {
+		if ( !this.isSearchTransactionInProgress() ) {
 			throw new IllegalStateException( "no search transaction is in progress!" );
 		}
 		this.searchFactory.flushToIndexes( this.standaloneTransaction );
@@ -170,7 +171,7 @@ public final class FullTextEntityManagerImpl implements FullTextEntityManager, S
 
 	public void close() {
 		this.em.close();
-		if ( this.isTransactionInProgress() ) {
+		if ( this.isSearchTransactionInProgress() ) {
 			throw new IllegalStateException(
 					"search transaction is in progress, underlying entity-manager was still closed to not generate a resource-leak!"
 			);

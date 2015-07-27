@@ -18,7 +18,7 @@ public class MySQLEclipseLinkAutomaticUpdatesIntegrationTest extends AutomaticUp
 
 	@Before
 	public void setup() {
-		this.setup( "EclipseLink_MySQL", MySQLTriggerSQLStringSource.class );
+		this.setup( "sql", "EclipseLink_MySQL", MySQLTriggerSQLStringSource.class );
 	}
 
 }

@@ -46,7 +46,7 @@ public class StandaloneSearchFactoryImpl implements StandaloneSearchFactory {
 
 	@Override
 	public void index(Iterable<?> entities, TransactionContext tc) {
-		this.doIndexWork( entities, WorkType.ADD, tc );
+		this.doIndexWork( entities, WorkType.INDEX, tc );
 	}
 
 	@Override

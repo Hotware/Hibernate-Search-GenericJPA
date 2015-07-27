@@ -12,6 +12,7 @@ import org.hibernate.search.bridge.TwoWayStringBridge;
  * Created by Martin on 25.06.2015.
  */
 public class IDFieldBridge implements TwoWayStringBridge {
+
 	@Override
 	public Object stringToObject(String stringValue) {
 		//yeah, hacky, we only allow certain strings, but this is a testCustomUpdatedEntity, so who cares
@@ -27,4 +28,5 @@ public class IDFieldBridge implements TwoWayStringBridge {
 		ID id = (ID) object;
 		return id.getFirstId() + "_" + id.getSecondId();
 	}
+
 }

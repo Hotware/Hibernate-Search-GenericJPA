@@ -17,6 +17,15 @@ public class ID implements Serializable {
 	private String firstId;
 	private String secondId;
 
+	public ID() {
+		this( null, null );
+	}
+
+	public ID(String firstId, String secondId) {
+		this.firstId = firstId;
+		this.secondId = secondId;
+	}
+
 	public String getFirstId() {
 		return firstId;
 	}
@@ -33,4 +42,28 @@ public class ID implements Serializable {
 		this.secondId = secondId;
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if ( this == o ) {
+			return true;
+		}
+		if ( o == null || getClass() != o.getClass() ) {
+			return false;
+		}
+
+		ID id = (ID) o;
+
+		if ( firstId != null ? !firstId.equals( id.firstId ) : id.firstId != null ) {
+			return false;
+		}
+		return !(secondId != null ? !secondId.equals( id.secondId ) : id.secondId != null);
+
+	}
+
+	@Override
+	public int hashCode() {
+		int result = firstId != null ? firstId.hashCode() : 0;
+		result = 31 * result + (secondId != null ? secondId.hashCode() : 0);
+		return result;
+	}
 }

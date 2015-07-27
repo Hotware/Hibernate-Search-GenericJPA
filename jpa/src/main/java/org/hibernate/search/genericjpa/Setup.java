@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.genericjpa.annotations.CustomUpdateEntityProvider;
 import org.hibernate.search.genericjpa.annotations.InIndex;
+import org.hibernate.search.genericjpa.db.events.eclipselink.impl.EclipseLinkSynchronizedUpdateSourceProvider;
 import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource;
 import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.exception.SearchException;
@@ -144,7 +145,8 @@ public final class Setup {
 					SEARCH_FACTORY_TYPE_DEFAULT_VALUE
 			);
 			//what AsyncUpdateSource to be used
-			AsyncUpdateSourceProvider asyncUpdateSourceProvider;
+			SynchronizedUpdateSourceProvider synchronizedUpdateSourceProvider = (a, b, c, d, e) -> null;
+			AsyncUpdateSourceProvider asyncUpdateSourceProvider = (a, b, c, d, e, f) -> null;
 			if ( "sql".equals( type ) ) {
 				if ( emf == null ) {
 					throw new SearchException( "EntityManagerFactory must not be null when using " + SEARCH_FACTORY_TYPE_KEY + " of \"sql\"" );
@@ -171,13 +173,14 @@ public final class Setup {
 				);
 			}
 			else if ( "manual-updates".equals( type ) ) {
-				asyncUpdateSourceProvider = (a, b, c, d, e, f) -> null;
+				//do nothing
+			}
+			else if ( "eclipselink".equals( type ) ) {
+				synchronizedUpdateSourceProvider = new EclipseLinkSynchronizedUpdateSourceProvider();
 			}
 			else {
 				throw new SearchException( "unrecognized " + SEARCH_FACTORY_TYPE_KEY + ": " + type );
 			}
-
-			SynchronizedUpdateSourceProvider synchronizedUpdateSourceProvider = (a, b, c, d) -> null;
 
 			Integer batchSizeForUpdates = Integer
 					.parseInt(
@@ -239,11 +242,7 @@ public final class Setup {
 			return ret;
 		}
 
-		catch (
-				Exception e
-				)
-
-		{
+		catch (Exception e) {
 			if ( !(e instanceof SearchException) ) {
 				throw new SearchException( e );
 			}

@@ -121,6 +121,8 @@ public interface FullTextEntityManager extends EntityManager {
 	 */
 	void commitSearchTransaction();
 
+	boolean isSearchTransactionInProgress();
+
 	/**
 	 * @throws IllegalStateException if search-transaction is still in progress. underlying EntityManager is still
 	 * closed.

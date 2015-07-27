@@ -38,9 +38,10 @@ import static org.junit.Assert.assertEquals;
 public abstract class AutomaticUpdatesIntegrationTest {
 
 
-	private EntityManagerFactory emf;
-	private EntityManager em;
-	private Class<? extends TriggerSQLStringSource> triggerSourceClass;
+	protected EntityManagerFactory emf;
+	protected EntityManager em;
+	protected Class<? extends TriggerSQLStringSource> triggerSourceClass;
+	protected String searchFactoryType;
 
 	private static final int COUNT_MULTIPLE_COLUMNS = 100;
 
@@ -56,7 +57,7 @@ public abstract class AutomaticUpdatesIntegrationTest {
 				Constants.TRIGGER_CREATION_STRATEGY_KEY,
 				Constants.TRIGGER_CREATION_STRATEGY_DROP_CREATE
 		);
-		properties.setProperty( "hibernate.search.searchfactory.type", "sql" );
+		properties.setProperty( "hibernate.search.searchfactory.type", this.searchFactoryType );
 		JPASearchFactoryController searchController = Setup.createSearchFactoryController( this.emf, properties );
 		try {
 
@@ -93,6 +94,10 @@ public abstract class AutomaticUpdatesIntegrationTest {
 
 	@Test
 	public void testCustomUpdatedEntity() throws InterruptedException {
+		if ( !"sql".equals( this.searchFactoryType ) ) {
+			System.out.println( "skipping custom updated entity test for searchFactoryType: " + this.searchFactoryType );
+			return;
+		}
 		Properties properties = new Properties();
 		properties.setProperty( Constants.SEARCH_FACTORY_NAME_KEY, "testCustomUpdatedEntity" );
 		properties.setProperty( Constants.ADDITIONAL_INDEXED_TYPES_KEY, NonJPAEntity.class.getName() );
@@ -107,7 +112,7 @@ public abstract class AutomaticUpdatesIntegrationTest {
 				Constants.TRIGGER_CREATION_STRATEGY_DROP_CREATE
 		);
 		properties.setProperty( Constants.BATCH_SIZE_FOR_UPDATES_KEY, "2" );
-		properties.setProperty( Constants.SEARCH_FACTORY_TYPE_KEY, "sql" );
+		properties.setProperty( Constants.SEARCH_FACTORY_TYPE_KEY, this.searchFactoryType );
 		JPASearchFactoryAdapter searchFactory = (JPASearchFactoryAdapter) Setup.createSearchFactoryController(
 				this.emf,
 				properties
@@ -239,11 +244,13 @@ public abstract class AutomaticUpdatesIntegrationTest {
 	}
 
 	public void setup(
+			String searchFactoryType,
 			String persistenceUnit,
 			Class<? extends TriggerSQLStringSource> triggerSourceClass) {
 		this.emf = Persistence.createEntityManagerFactory( persistenceUnit );
 		this.em = emf.createEntityManager();
 		this.triggerSourceClass = triggerSourceClass;
+		this.searchFactoryType = searchFactoryType;
 	}
 
 	@After

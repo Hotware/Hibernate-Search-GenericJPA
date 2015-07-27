@@ -19,6 +19,7 @@ public class PostgreSQLEclipseLinkAutomaticUpdatesIntegrationTest extends Automa
 	@Before
 	public void setup() {
 		this.setup(
+				"sql",
 				"EclipseLink_PostgreSQL",
 				PostgreSQLTriggerSQLStringSource.class
 		);

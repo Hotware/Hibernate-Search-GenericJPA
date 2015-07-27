@@ -9,7 +9,9 @@ package org.hibernate.search.genericjpa.impl;
 import javax.persistence.EntityManagerFactory;
 import javax.transaction.TransactionManager;
 import java.util.Properties;
+import java.util.Set;
 
+import org.hibernate.search.genericjpa.JPASearchFactoryController;
 import org.hibernate.search.genericjpa.db.events.index.impl.IndexUpdater;
 import org.hibernate.search.genericjpa.events.impl.SynchronizedUpdateSource;
 
@@ -19,9 +21,10 @@ import org.hibernate.search.genericjpa.events.impl.SynchronizedUpdateSource;
 public interface SynchronizedUpdateSourceProvider {
 
 	SynchronizedUpdateSource getUpdateSource(
-			IndexUpdater indexUpdater,
+			JPASearchFactoryController searchFactoryController,
 			Properties properties,
 			EntityManagerFactory emf,
-			TransactionManager transactionManager);
+			TransactionManager transactionManager,
+			Set<Class<?>> indexRelevantEntities);
 
 }

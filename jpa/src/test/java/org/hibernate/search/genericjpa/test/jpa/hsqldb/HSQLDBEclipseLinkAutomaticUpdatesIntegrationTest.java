@@ -18,7 +18,7 @@ public class HSQLDBEclipseLinkAutomaticUpdatesIntegrationTest extends AutomaticU
 
 	@Before
 	public void setup() {
-		this.setup( "EclipseLink_HSQLDB", HSQLDBTriggerSQLStringSource.class );
+		this.setup( "sql", "EclipseLink_HSQLDB", HSQLDBTriggerSQLStringSource.class );
 	}
 
 }

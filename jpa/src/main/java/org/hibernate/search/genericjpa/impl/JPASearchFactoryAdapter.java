@@ -197,10 +197,11 @@ public final class JPASearchFactoryAdapter
 			this.asyncUpdateSource.start();
 		}
 		this.synchronizedUpdateSource = this.synchronizedUpdateSourceProvider.getUpdateSource(
-				this.indexUpdater,
+				this,
 				this.properties,
 				this.emf,
-				this.transactionManager
+				this.transactionManager,
+				this.indexRelevantEntities
 		);
 		if ( this.synchronizedUpdateSource != null ) {
 			if ( this.asyncUpdateSource != null ) {
