@@ -83,6 +83,12 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 		}
 
 		public void postDelete(DescriptorEvent event) {
+			//we have to do stuff similar to IndexUpdater here.
+			//we have to check in which index this object was found and
+			//and then work our way up.
+			//maybe we should allow for a purge method that takes
+			//objects in FullTextEntityManager?
+			//would make sense.
 			Object entity = event.getObject();
 			Class<?> entityClass = INSTANCE_INITIALIZER.getClass( entity );
 			if ( EclipseLinkUpdateSource.this.indexRelevantEntities.contains( entityClass ) ) {
