@@ -6,10 +6,16 @@
  */
 package org.hibernate.search.genericjpa.events.impl;
 
+import java.util.List;
+
+import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
+
 /**
  * Created by Martin on 27.07.2015.
  */
 public interface SynchronizedUpdateSource {
+
+	void setUpdateConsumers(List<UpdateConsumer> updateConsumers);
 
 	void close();
 

@@ -7,9 +7,7 @@
 package org.hibernate.search.genericjpa.db.events.index.impl;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -81,26 +79,10 @@ public final class IndexUpdater {
 	}
 
 	public void updateEvent(List<UpdateEventInfo> updateInfos) {
-		Map<EntityProvider, List<UpdateEventInfo>> perEntityProvider = new HashMap<>();
-		List<UpdateEventInfo> infoWithoutEntityProvider = new ArrayList<>();
-		for ( UpdateEventInfo info : updateInfos ) {
-			EntityProvider entityProvider = info.getEntityProvider();
-			if ( entityProvider == null ) {
-				infoWithoutEntityProvider.add( info );
-			}
-			else {
-				perEntityProvider.computeIfAbsent( entityProvider, _1 -> new ArrayList<>() )
-						.add(
-								info
-						);
-			}
+		if(updateInfos.size() == 0) {
+			return;
 		}
-		for ( Map.Entry<EntityProvider, List<UpdateEventInfo>> entry : perEntityProvider.entrySet() ) {
-			this.updateEvent( entry.getValue(), entry.getKey() );
-		}
-		if ( infoWithoutEntityProvider.size() > 0 ) {
-			this.updateEvent( infoWithoutEntityProvider, this.entityProvider );
-		}
+		this.updateEvent( updateInfos, this.entityProvider );
 	}
 
 	public void updateEvent(List<UpdateEventInfo> updateInfos, EntityProvider provider) {
@@ -204,7 +186,7 @@ public final class IndexUpdater {
 			Object id,
 			EntityProvider entityProvider,
 			Transaction tx) {
-		this.indexWrapper.delete( entityClass, inIndexOf, id, entityProvider , tx );
+		this.indexWrapper.delete( entityClass, inIndexOf, id, entityProvider, tx );
 	}
 
 	public void update(Object entity, Transaction tx) {

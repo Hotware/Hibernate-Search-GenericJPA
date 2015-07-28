@@ -7,11 +7,13 @@
 package org.hibernate.search.genericjpa.db.events.eclipselink.impl;
 
 import java.io.IOException;
-import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.persistence.descriptors.DescriptorEvent;
@@ -24,21 +26,16 @@ import org.eclipse.persistence.sessions.SessionEventAdapter;
 import org.eclipse.persistence.sessions.UnitOfWork;
 
 import org.hibernate.annotations.common.reflection.XProperty;
-import org.hibernate.search.backend.spi.SingularTermDeletionQuery;
-import org.hibernate.search.bridge.FieldBridge;
-import org.hibernate.search.bridge.StringBridge;
-import org.hibernate.search.engine.ProjectionConstants;
-import org.hibernate.search.engine.metadata.impl.DocumentFieldMetadata;
-import org.hibernate.search.genericjpa.JPASearchFactoryController;
+import org.hibernate.search.genericjpa.db.EventType;
+import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.index.impl.IndexUpdater;
 import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.events.impl.SynchronizedUpdateSource;
 import org.hibernate.search.genericjpa.exception.AssertionFailure;
+import org.hibernate.search.genericjpa.exception.SearchException;
 import org.hibernate.search.genericjpa.factory.Transaction;
 import org.hibernate.search.genericjpa.factory.impl.SubClassSupportInstanceInitializer;
 import org.hibernate.search.genericjpa.metadata.impl.RehashedTypeMetadata;
-import org.hibernate.search.jpa.FullTextEntityManager;
-import org.hibernate.search.jpa.FullTextQuery;
 import org.hibernate.search.spi.InstanceInitializer;
 
 /**
@@ -59,10 +56,13 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 	private final Map<Class<?>, RehashedTypeMetadata> rehashedTypeMetadataPerIndexRoot;
 	private final Map<Class<?>, List<Class<?>>> containedInIndexOf;
 
+	private List<UpdateConsumer> updateConsumers = new ArrayList<>();
+
 	final DescriptorEventAspect descriptorEventAspect;
 	final SessionEventAspect sessionEventAspect;
 
 	private final ConcurrentHashMap<Session, Transaction> transactions = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<Transaction, List<UpdateConsumer.UpdateEventInfo>> updateEventInfos = new ConcurrentHashMap<>();
 
 	public EclipseLinkUpdateSource(
 			IndexUpdater indexUpdater,
@@ -77,12 +77,48 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 		this.containedInIndexOf = containedInIndexOf;
 	}
 
+	@Override
+	public void setUpdateConsumers(List<UpdateConsumer> updateConsumers) {
+		this.updateConsumers = updateConsumers;
+	}
+
+	private void notify(List<UpdateConsumer.UpdateEventInfo> updateEventInfos) {
+		if ( updateEventInfos.size() > 0 ) {
+			for ( UpdateConsumer updateConsumer : EclipseLinkUpdateSource.this.updateConsumers ) {
+				try {
+					updateConsumer.updateEvent( updateEventInfos );
+				}
+				catch (Exception e) {
+					LOGGER.log( Level.WARNING, "Exception while notifying updateConsumers", e );
+				}
+			}
+		}
+	}
+
+	private Object getId(Class<?> entityClass, Object entity) {
+		List<Class<?>> inIndexOf = EclipseLinkUpdateSource.this.containedInIndexOf.get( entityClass );
+		if ( inIndexOf.size() > 0 ) {
+			//hack, but works
+			RehashedTypeMetadata metadata = EclipseLinkUpdateSource.this.rehashedTypeMetadataPerIndexRoot.get(
+					inIndexOf.get( 0 )
+			);
+			XProperty idProperty = metadata.getIdPropertyAccessorForType().get( entityClass );
+			Object id = idProperty.invoke( entity );
+			return id;
+		}
+		return null;
+	}
+
 	private class DescriptorEventAspect extends DescriptorEventAdapter {
 
 		@Override
 		public void postInsert(DescriptorEvent event) {
 			Object entity = event.getObject();
 			Class<?> entityClass = INSTANCE_INITIALIZER.getClass( entity );
+			Object id = EclipseLinkUpdateSource.this.getId( entityClass, entity );
+			if ( id == null ) {
+				throw new SearchException( "id was null for " + entity );
+			}
 			if ( EclipseLinkUpdateSource.this.indexRelevantEntities.contains( entityClass ) ) {
 				LOGGER.fine( "Insert Event for " + entity );
 				Session session = event.getSession();
@@ -90,16 +126,30 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 					session = ((UnitOfWork) session).getParent();
 				}
 				Transaction tx = EclipseLinkUpdateSource.this.transactions.get( session );
-				if(tx == null) {
+				if ( tx == null ) {
 					tx = new Transaction();
 					try {
 						EclipseLinkUpdateSource.this.indexUpdater.index( entity, tx );
 						tx.commit();
-					} catch(Exception e) {
+						EclipseLinkUpdateSource.this.notify(
+								Collections.singletonList(
+										new UpdateConsumer.UpdateEventInfo(
+												entityClass, id, EventType.INSERT
+										)
+								)
+						);
+					}
+					catch (Exception e) {
 						tx.rollback();
 					}
-				} else {
+				}
+				else {
 					EclipseLinkUpdateSource.this.indexUpdater.index( entity, tx );
+					EclipseLinkUpdateSource.this.updateEventInfos.get( tx ).add(
+							new UpdateConsumer.UpdateEventInfo(
+									entityClass, id, EventType.INSERT
+							)
+					);
 				}
 			}
 		}
@@ -108,6 +158,10 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 		public void postUpdate(DescriptorEvent event) {
 			Object entity = event.getObject();
 			Class<?> entityClass = INSTANCE_INITIALIZER.getClass( entity );
+			Object id = EclipseLinkUpdateSource.this.getId( entityClass, entity );
+			if ( id == null ) {
+				throw new SearchException( "id was null for " + entity );
+			}
 			if ( EclipseLinkUpdateSource.this.indexRelevantEntities.contains( entityClass ) ) {
 				LOGGER.fine( "Update Event for " + entity );
 				Session session = event.getSession();
@@ -115,16 +169,30 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 					session = ((UnitOfWork) session).getParent();
 				}
 				Transaction tx = EclipseLinkUpdateSource.this.transactions.get( session );
-				if(tx == null) {
+				if ( tx == null ) {
 					tx = new Transaction();
 					try {
 						EclipseLinkUpdateSource.this.indexUpdater.update( entity, tx );
 						tx.commit();
-					} catch(Exception e) {
+						EclipseLinkUpdateSource.this.notify(
+								Collections.singletonList(
+										new UpdateConsumer.UpdateEventInfo(
+												entityClass, id, EventType.UPDATE
+										)
+								)
+						);
+					}
+					catch (Exception e) {
 						tx.rollback();
 					}
-				} else {
+				}
+				else {
 					EclipseLinkUpdateSource.this.indexUpdater.update( entity, tx );
+					EclipseLinkUpdateSource.this.updateEventInfos.get( tx ).add(
+							new UpdateConsumer.UpdateEventInfo(
+									entityClass, id, EventType.UPDATE
+							)
+					);
 				}
 			}
 		}
@@ -148,7 +216,8 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 				final Session session = tmp;
 				Transaction tx = EclipseLinkUpdateSource.this.transactions.get( session );
 				boolean createdOwnTx = false;
-				if(tx == null) {
+				UpdateConsumer.UpdateEventInfo updateEventInfo = null;
+				if ( tx == null ) {
 					tx = new Transaction();
 					createdOwnTx = true;
 				}
@@ -156,11 +225,15 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 					List<Class<?>> inIndexOf = EclipseLinkUpdateSource.this.containedInIndexOf.get( entityClass );
 					if ( inIndexOf.size() > 0 ) {
 						//hack, but works
-						RehashedTypeMetadata metadata = EclipseLinkUpdateSource.this.rehashedTypeMetadataPerIndexRoot.get(
-								inIndexOf.get( 0 )
-						);
+						RehashedTypeMetadata metadata = EclipseLinkUpdateSource.this.rehashedTypeMetadataPerIndexRoot
+								.get(
+										inIndexOf.get( 0 )
+								);
 						XProperty idProperty = metadata.getIdPropertyAccessorForType().get( entityClass );
 						Object id = idProperty.invoke( entity );
+						updateEventInfo = new UpdateConsumer.UpdateEventInfo(
+								entityClass, id, EventType.DELETE
+						);
 						EclipseLinkUpdateSource.this.indexUpdater.delete(
 								entityClass, inIndexOf, id, new EntityProvider() {
 
@@ -190,11 +263,22 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 								}, tx
 						);
 					}
-					if(createdOwnTx) {
+					if ( createdOwnTx ) {
 						tx.commit();
+						if ( updateEventInfo != null ) {
+							EclipseLinkUpdateSource.this.notify( Collections.singletonList( updateEventInfo ) );
+						}
 					}
-				} catch(Exception e) {
-					if(createdOwnTx) {
+					else {
+						if ( updateEventInfo != null ) {
+							EclipseLinkUpdateSource.this.updateEventInfos.get( tx ).add(
+									updateEventInfo
+							);
+						}
+					}
+				}
+				catch (Exception e) {
+					if ( createdOwnTx ) {
 						tx.rollback();
 					}
 					throw e;
@@ -216,6 +300,7 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 			else {
 				tx = new Transaction();
 				EclipseLinkUpdateSource.this.transactions.put( session, tx );
+				EclipseLinkUpdateSource.this.updateEventInfos.put( tx, new ArrayList<>() );
 			}
 		}
 
@@ -225,6 +310,11 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 			Transaction tx = EclipseLinkUpdateSource.this.transactions.get( session );
 			if ( tx != null && tx.isTransactionInProgress() ) {
 				tx.commit();
+				List<UpdateConsumer.UpdateEventInfo> updateEventInfos = EclipseLinkUpdateSource.this.updateEventInfos
+						.remove(
+								tx
+						);
+				EclipseLinkUpdateSource.this.notify( updateEventInfos );
 				EclipseLinkUpdateSource.this.transactions.remove( session );
 			}
 			else {
@@ -240,6 +330,7 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 			Transaction tx = EclipseLinkUpdateSource.this.transactions.get( session );
 			if ( tx != null && tx.isTransactionInProgress() ) {
 				tx.rollback();
+				EclipseLinkUpdateSource.this.updateEventInfos.remove( tx );
 				EclipseLinkUpdateSource.this.transactions.remove( session );
 			}
 			else {
@@ -258,6 +349,7 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 						"rolling back transaction because session logged out..."
 				);
 				tx.rollback();
+				EclipseLinkUpdateSource.this.updateEventInfos.remove( tx );
 				EclipseLinkUpdateSource.this.transactions.remove( session );
 			}
 		}

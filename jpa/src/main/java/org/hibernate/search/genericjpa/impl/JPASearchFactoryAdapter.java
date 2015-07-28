@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -210,6 +209,7 @@ public final class JPASearchFactoryAdapter
 			if ( this.asyncUpdateSource != null ) {
 				LOGGER.warning( "using both async updating AND synchronized updating, updates will get handled twice!" );
 			}
+			this.synchronizedUpdateSource.setUpdateConsumers( Collections.singletonList( this ) );
 		}
 	}
 

@@ -8,12 +8,14 @@ package org.hibernate.search.genericjpa.test.jpa.mysql;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
 
 import org.hibernate.search.genericjpa.Constants;
 import org.hibernate.search.genericjpa.Setup;
+import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.triggers.MySQLTriggerSQLStringSource;
 import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
 import org.hibernate.search.genericjpa.test.jpa.AutomaticUpdatesIntegrationTest;
@@ -28,6 +30,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by Martin on 27.07.2015.
@@ -65,6 +68,17 @@ public class MySQLNativeEclipseLinkAutomaticUpdatesIntegrationTest extends Autom
 				this.emf,
 				properties
 		);
+
+		final boolean[] receivedEvent = {false};
+		searchFactory.addUpdateConsumer(
+				new UpdateConsumer() {
+					@Override
+					public void updateEvent(List<UpdateEventInfo> updateInfo) {
+						receivedEvent[0] = true;
+					}
+				}
+		);
+
 		try {
 			for ( int times = 0; times < 100; ++times ) {
 				this.em.getTransaction().begin();
@@ -271,6 +285,8 @@ public class MySQLNativeEclipseLinkAutomaticUpdatesIntegrationTest extends Autom
 						).getResultSize()
 				);
 			}
+
+			assertTrue( receivedEvent[0] );
 		}
 		finally {
 			searchFactory.close();

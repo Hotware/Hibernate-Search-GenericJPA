@@ -13,7 +13,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.hibernate.HibernateException;
@@ -43,7 +47,12 @@ import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.spi.AbstractDocumentBuilder;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
+import org.hibernate.search.genericjpa.db.EventType;
+import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.events.impl.SynchronizedUpdateSource;
+import org.hibernate.search.genericjpa.exception.AssertionFailure;
+import org.hibernate.search.genericjpa.factory.impl.SubClassSupportInstanceInitializer;
+import org.hibernate.search.spi.InstanceInitializer;
 import org.hibernate.search.util.impl.Maps;
 import org.hibernate.search.util.impl.ReflectionHelper;
 
@@ -64,7 +73,29 @@ public class HibernateUpdateSource implements SynchronizedUpdateSource, PostDele
 											  PostCollectionUpdateEventListener, FlushEventListener,
 											  Serializable {
 
+	private static final InstanceInitializer INITIALIZER = SubClassSupportInstanceInitializer.INSTANCE;
+
 	private static final Logger LOGGER = Logger.getLogger( HibernateUpdateSource.class.getName() );
+
+	private List<UpdateConsumer> updateConsumers = new ArrayList<>();
+
+	@Override
+	public void setUpdateConsumers(List<UpdateConsumer> updateConsumers) {
+		this.updateConsumers = updateConsumers;
+	}
+
+	private void notify(List<UpdateConsumer.UpdateEventInfo> updateEventInfos) {
+		if ( updateEventInfos.size() > 0 ) {
+			for ( UpdateConsumer updateConsumer : HibernateUpdateSource.this.updateConsumers ) {
+				try {
+					updateConsumer.updateEvent( updateEventInfos );
+				}
+				catch (Exception e) {
+					LOGGER.log( Level.WARNING, "Exception while notifying updateConsumers", e );
+				}
+			}
+		}
+	}
 
 	//only used by the FullTextIndexEventListener instance playing in the FlushEventListener role.
 	// transient because it's not serializable (and state doesn't need to live longer than a flush).
@@ -191,7 +222,43 @@ public class HibernateUpdateSource implements SynchronizedUpdateSource, PostDele
 			boolean identifierRollbackEnabled) {
 		Work work = new Work( entity, id, workType, identifierRollbackEnabled );
 		final EventSourceTransactionContext transactionContext = new EventSourceTransactionContext( event.getSession() );
+		transactionContext.registerSynchronization(
+				new Synchronization() {
+					@Override
+					public void beforeCompletion() {
+
+					}
+
+					@Override
+					public void afterCompletion(int status) {
+						if ( Status.STATUS_COMMITTED == status ) {
+							HibernateUpdateSource.this.notify(
+									Collections.singletonList(
+											new UpdateConsumer.UpdateEventInfo(
+													INITIALIZER.getClass( entity ), id, workTypeToEventType( workType )
+											)
+									)
+							);
+						}
+					}
+				}
+		);
 		extendedIntegrator.getWorker().performWork( work, transactionContext );
+	}
+
+	private static int workTypeToEventType(WorkType workType) {
+		switch ( workType ) {
+			case ADD:
+			case INDEX:
+				return EventType.INSERT;
+			case COLLECTION:
+			case UPDATE:
+				return EventType.UPDATE;
+			case DELETE:
+				return EventType.DELETE;
+			default:
+				throw new AssertionFailure( "unexpected WorkType:" + workType);
+		}
 	}
 
 	protected void processCollectionEvent(AbstractCollectionEvent event) {
