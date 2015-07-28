@@ -54,7 +54,8 @@ public class EclipseLinkSynchronizedUpdateSourceProvider implements Synchronized
 					indexUpdater,
 					indexRelevantEntities,
 					rehashedTypeMetadataPerIndexRoot,
-					containedInIndexOf
+					containedInIndexOf,
+					transactionManager
 			);
 			for ( Class<?> entity : indexRelevantEntities ) {
 				if ( session.getDescriptor( entity ) == null ) {
@@ -65,7 +66,10 @@ public class EclipseLinkSynchronizedUpdateSourceProvider implements Synchronized
 						.getDescriptorEventManager()
 						.addListener( eclipseLinkUpdateSource.descriptorEventAspect );
 			}
-			session.getEventManager().addListener( eclipseLinkUpdateSource.sessionEventAspect );
+			if(transactionManager == null) {
+				//equivalent to resource local tx
+				session.getEventManager().addListener( eclipseLinkUpdateSource.sessionEventAspect );
+			}
 			return eclipseLinkUpdateSource;
 		}
 		finally {
