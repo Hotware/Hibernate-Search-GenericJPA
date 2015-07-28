@@ -40,7 +40,6 @@ public class MySQLNativeEclipseLinkAutomaticUpdatesIntegrationTest extends Autom
 	}
 
 	//TODO: test this for object hierarchies
-
 	@Test
 	public void testNativeEvents() {
 		if ( "sql".equals( this.searchFactoryType ) ) {
@@ -69,14 +68,19 @@ public class MySQLNativeEclipseLinkAutomaticUpdatesIntegrationTest extends Autom
 		try {
 			for ( int times = 0; times < 100; ++times ) {
 				this.em.getTransaction().begin();
-				for ( int i = 0; i < 5; ++i ) {
-					MultipleColumnsIdEntity ent = new MultipleColumnsIdEntity();
-					ent.setFirstId( "first" + i );
-					ent.setSecondId( "second" + i );
-					ent.setInfo( "info" + i );
-					this.em.persist( ent );
+				try {
+					for ( int i = 0; i < 5; ++i ) {
+						MultipleColumnsIdEntity ent = new MultipleColumnsIdEntity();
+						ent.setFirstId( "first" + i );
+						ent.setSecondId( "second" + i );
+						ent.setInfo( "info" + i );
+						this.em.persist( ent );
+						this.em.flush();
+					}
 				}
-				this.em.getTransaction().rollback();
+				finally {
+					this.em.getTransaction().rollback();
+				}
 			}
 			assertEquals(
 					0, searchFactory.getFullTextEntityManager( this.em )
@@ -86,12 +90,19 @@ public class MySQLNativeEclipseLinkAutomaticUpdatesIntegrationTest extends Autom
 
 			{
 				this.em.getTransaction().begin();
-				MultipleColumnsIdEntity ent = new MultipleColumnsIdEntity();
-				ent.setFirstId( "first" );
-				ent.setSecondId( "second" );
-				ent.setInfo( "info" );
-				this.em.persist( ent );
-				this.em.getTransaction().commit();
+				try {
+					MultipleColumnsIdEntity ent = new MultipleColumnsIdEntity();
+					ent.setFirstId( "first" );
+					ent.setSecondId( "second" );
+					ent.setInfo( "info" );
+					this.em.persist( ent );
+					this.em.flush();
+					this.em.getTransaction().commit();
+				}
+				catch (Exception e) {
+					this.em.getTransaction().rollback();
+					throw e;
+				}
 
 				assertEquals(
 						1, searchFactory.getFullTextEntityManager( this.em )
@@ -102,14 +113,20 @@ public class MySQLNativeEclipseLinkAutomaticUpdatesIntegrationTest extends Autom
 
 			{
 				this.em.getTransaction().begin();
-				MultipleColumnsIdEntity ent = this.em.find(
-						MultipleColumnsIdEntity.class, new ID(
-								"first",
-								"second"
-						)
-				);
-				ent.setInfo( "info_new" );
-				this.em.getTransaction().commit();
+				try {
+					MultipleColumnsIdEntity ent = this.em.find(
+							MultipleColumnsIdEntity.class, new ID(
+									"first",
+									"second"
+							)
+					);
+					ent.setInfo( "info_new" );
+					this.em.getTransaction().commit();
+				}
+				catch (Exception e) {
+					this.em.getTransaction().rollback();
+					throw e;
+				}
 
 				assertEquals(
 						1, searchFactory.getFullTextEntityManager( this.em )
@@ -131,14 +148,21 @@ public class MySQLNativeEclipseLinkAutomaticUpdatesIntegrationTest extends Autom
 
 			{
 				this.em.getTransaction().begin();
-				MultipleColumnsIdEntity ent = this.em.find(
-						MultipleColumnsIdEntity.class, new ID(
-								"first",
-								"second"
-						)
-				);
-				this.em.remove( ent );
-				this.em.getTransaction().commit();
+				try {
+					MultipleColumnsIdEntity ent = this.em.find(
+							MultipleColumnsIdEntity.class, new ID(
+									"first",
+									"second"
+							)
+					);
+					this.em.remove( ent );
+					this.em.flush();
+					this.em.getTransaction().commit();
+				}
+				catch (Exception e) {
+					this.em.getTransaction().rollback();
+					throw e;
+				}
 
 				assertEquals(
 						0, searchFactory.getFullTextEntityManager( this.em )
@@ -149,15 +173,22 @@ public class MySQLNativeEclipseLinkAutomaticUpdatesIntegrationTest extends Autom
 
 			{
 				this.em.getTransaction().begin();
-				Place place = new Place();
-				place.setCool( true );
-				place.setName( "name" );
-				Sorcerer sorcerer = new Sorcerer();
-				sorcerer.setName( "sorcname" );
-				sorcerer.setPlace( place );
-				place.setSorcerers( new HashSet<>( Arrays.asList( sorcerer ) ) );
-				this.em.persist( place );
-				this.em.getTransaction().commit();
+				try {
+					Place place = new Place();
+					place.setCool( true );
+					place.setName( "name" );
+					Sorcerer sorcerer = new Sorcerer();
+					sorcerer.setName( "sorcname" );
+					sorcerer.setPlace( place );
+					place.setSorcerers( new HashSet<>( Arrays.asList( sorcerer ) ) );
+					this.em.persist( place );
+					this.em.flush();
+					this.em.getTransaction().commit();
+				}
+				catch (Exception e) {
+					this.em.getTransaction().rollback();
+					throw e;
+				}
 
 				assertEquals(
 						1, searchFactory.getFullTextEntityManager( this.em )
@@ -168,9 +199,17 @@ public class MySQLNativeEclipseLinkAutomaticUpdatesIntegrationTest extends Autom
 
 			{
 				this.em.getTransaction().begin();
-				Sorcerer sorc = (Sorcerer) this.em.createQuery( "SELECT a FROM Sorcerer a" ).getResultList().get( 0 );
-				sorc.setName( "newname" );
-				this.em.getTransaction().commit();
+				try {
+					Sorcerer sorc = (Sorcerer) this.em.createQuery( "SELECT a FROM Sorcerer a" )
+							.getResultList()
+							.get( 0 );
+					sorc.setName( "newname" );
+					this.em.getTransaction().commit();
+				}
+				catch (Exception e) {
+					this.em.getTransaction().rollback();
+					throw e;
+				}
 
 				assertEquals(
 						1, searchFactory.getFullTextEntityManager( this.em )
@@ -207,9 +246,16 @@ public class MySQLNativeEclipseLinkAutomaticUpdatesIntegrationTest extends Autom
 
 			{
 				this.em.getTransaction().begin();
-				Sorcerer sorc = (Sorcerer) this.em.createQuery( "SELECT a FROM Sorcerer a" ).getResultList().get( 0 );
-				sorc.setName( "sorcname" );
-				this.em.getTransaction().rollback();
+				try {
+					Sorcerer sorc = (Sorcerer) this.em.createQuery( "SELECT a FROM Sorcerer a" )
+							.getResultList()
+							.get( 0 );
+					sorc.setName( "sorcname" );
+					this.em.flush();
+				}
+				finally {
+					this.em.getTransaction().rollback();
+				}
 
 				FullTextEntityManager fem = searchFactory.getFullTextEntityManager( this.em );
 

@@ -440,26 +440,31 @@ public abstract class DatabaseIntegrationTest {
 			);
 
 			updateSource.start();
-			Sleep.sleep(
-					100_000, () -> {
-						tx.begin();
-						try {
-							return em.createNativeQuery(
-									"SELECT * FROM " + this.triggerSource.getDelimitedIdentifierToken() + "PlaceSorcererUpdatesHsearch" + this.triggerSource
-											.getDelimitedIdentifierToken()
-							)
-									.getResultList()
-									.size() == 0;
-						}
-						finally {
-							tx.commit();
-						}
-					},
-					100, ""
-			);
+			try {
+				Sleep.sleep(
+						100_000, () -> {
+							tx.begin();
+							try {
+								return em.createNativeQuery(
+										"SELECT * FROM " + this.triggerSource.getDelimitedIdentifierToken() + "PlaceSorcererUpdatesHsearch" + this.triggerSource
+												.getDelimitedIdentifierToken()
+								)
+										.getResultList()
+										.size() == 0;
+							}
+							finally {
+								tx.commit();
+							}
+						},
+						100, ""
+				);
 
-			if ( exceptionString != null ) {
-				fail( exceptionString );
+				if ( exceptionString != null ) {
+					fail( exceptionString );
+				}
+			}
+			finally {
+				updateSource.stop();
 			}
 		}
 		finally {

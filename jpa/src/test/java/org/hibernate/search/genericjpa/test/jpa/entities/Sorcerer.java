@@ -16,6 +16,8 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.hibernate.search.annotations.ContainedIn;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Index;
@@ -37,13 +39,16 @@ import org.hibernate.search.genericjpa.db.ColumnType;
 })
 public class Sorcerer {
 
-	private Integer id;
+	//automatic generation is a bitch if you want to have it accross multiple database types
+	//and/or persistence providers
+	private static final AtomicInteger HACK = new AtomicInteger();
+
+	private Integer id = HACK.incrementAndGet();
 	private String name;
 	private Place place;
 
 	@Id
 	@Column(name = "ID")
-	@GeneratedValue(strategy = GenerationType.TABLE)
 	public Integer getId() {
 		return id;
 	}

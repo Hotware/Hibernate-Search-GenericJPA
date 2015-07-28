@@ -90,7 +90,17 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 					session = ((UnitOfWork) session).getParent();
 				}
 				Transaction tx = EclipseLinkUpdateSource.this.transactions.get( session );
-				EclipseLinkUpdateSource.this.indexUpdater.index( entity, tx );
+				if(tx == null) {
+					tx = new Transaction();
+					try {
+						EclipseLinkUpdateSource.this.indexUpdater.index( entity, tx );
+						tx.commit();
+					} catch(Exception e) {
+						tx.rollback();
+					}
+				} else {
+					EclipseLinkUpdateSource.this.indexUpdater.index( entity, tx );
+				}
 			}
 		}
 
@@ -105,7 +115,17 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 					session = ((UnitOfWork) session).getParent();
 				}
 				Transaction tx = EclipseLinkUpdateSource.this.transactions.get( session );
-				EclipseLinkUpdateSource.this.indexUpdater.update( entity, tx );
+				if(tx == null) {
+					tx = new Transaction();
+					try {
+						EclipseLinkUpdateSource.this.indexUpdater.update( entity, tx );
+						tx.commit();
+					} catch(Exception e) {
+						tx.rollback();
+					}
+				} else {
+					EclipseLinkUpdateSource.this.indexUpdater.update( entity, tx );
+				}
 			}
 		}
 
@@ -127,39 +147,57 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 				}
 				final Session session = tmp;
 				Transaction tx = EclipseLinkUpdateSource.this.transactions.get( session );
-				List<Class<?>> inIndexOf = EclipseLinkUpdateSource.this.containedInIndexOf.get( entityClass );
-				if ( inIndexOf.size() > 0 ) {
-					//hack, but works
-					RehashedTypeMetadata metadata = EclipseLinkUpdateSource.this.rehashedTypeMetadataPerIndexRoot.get(
-							inIndexOf.get( 0 )
-					);
-					XProperty idProperty = metadata.getIdPropertyAccessorForType().get( entityClass );
-					Object id = idProperty.invoke( entity );
-					EclipseLinkUpdateSource.this.indexUpdater.delete(
-							entityClass, inIndexOf, id, new EntityProvider() {
+				boolean createdOwnTx = false;
+				if(tx == null) {
+					tx = new Transaction();
+					createdOwnTx = true;
+				}
+				try {
+					List<Class<?>> inIndexOf = EclipseLinkUpdateSource.this.containedInIndexOf.get( entityClass );
+					if ( inIndexOf.size() > 0 ) {
+						//hack, but works
+						RehashedTypeMetadata metadata = EclipseLinkUpdateSource.this.rehashedTypeMetadataPerIndexRoot.get(
+								inIndexOf.get( 0 )
+						);
+						XProperty idProperty = metadata.getIdPropertyAccessorForType().get( entityClass );
+						Object id = idProperty.invoke( entity );
+						EclipseLinkUpdateSource.this.indexUpdater.delete(
+								entityClass, inIndexOf, id, new EntityProvider() {
 
-								@Override
-								public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
-									ReadObjectQuery nativeQuery = new ReadObjectQuery();
-									nativeQuery.setReferenceClass( entityClass );
-									nativeQuery.setSelectionId( id );
-									nativeQuery.setCacheUsage( ObjectLevelReadQuery.DoNotCheckCache );
-									Object original = session.executeQuery( nativeQuery );
-									return original;
-								}
+									@Override
+									public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
+										ReadObjectQuery nativeQuery = new ReadObjectQuery();
+										nativeQuery.setReferenceClass( entityClass );
+										nativeQuery.setSelectionId( id );
+										nativeQuery.setCacheUsage( ObjectLevelReadQuery.DoNotCheckCache );
+										Object original = session.executeQuery( nativeQuery );
+										return original;
+									}
 
-								@Override
-								public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
-									throw new AssertionFailure( "normally not used in IndexUpdater" );
-								}
+									@Override
+									public List getBatch(
+											Class<?> entityClass,
+											List<Object> id,
+											Map<String, String> hints) {
+										throw new AssertionFailure( "normally not used in IndexUpdater" );
+									}
 
-								@Override
-								public void close() throws IOException {
-									//no-op
-								}
+									@Override
+									public void close() throws IOException {
+										//no-op
+									}
 
-							}, tx
-					);
+								}, tx
+						);
+					}
+					if(createdOwnTx) {
+						tx.commit();
+					}
+				} catch(Exception e) {
+					if(createdOwnTx) {
+						tx.rollback();
+					}
+					throw e;
 				}
 			}
 		}

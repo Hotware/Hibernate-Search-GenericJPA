@@ -118,22 +118,24 @@ public abstract class AutomaticUpdatesIntegrationTest {
 				properties
 		);
 		try {
-			EntityManager em = emf.createEntityManager();
-			em.getTransaction().begin();
-			try {
-				for ( int i = 1; i < ENTITY_COUNT_CUSTOM + 1; ++i ) {
-					CustomUpdatedEntity ent = new CustomUpdatedEntity();
-					ent.setId( (long) i );
-					ent.setText( ENT_NAME_SHOULD_NOT_FIND_CUSTOM );
-					em.persist( ent );
+			{
+				EntityManager em = emf.createEntityManager();
+				try {
+					em.getTransaction().begin();
+					for ( int i = 1; i < ENTITY_COUNT_CUSTOM + 1; ++i ) {
+						CustomUpdatedEntity ent = new CustomUpdatedEntity();
+						ent.setId( (long) i );
+						ent.setText( ENT_NAME_SHOULD_NOT_FIND_CUSTOM );
+						em.persist( ent );
+					}
+					em.getTransaction().commit();
 				}
-				em.getTransaction().commit();
-			}
-			catch (Exception e) {
-				em.getTransaction().rollback();
-			}
-			finally {
-				em.close();
+				catch (Exception e) {
+					em.getTransaction().rollback();
+				}
+				finally {
+					em.close();
+				}
 			}
 
 			Sleep.sleep(

@@ -16,6 +16,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.hibernate.search.annotations.ContainedIn;
 import org.hibernate.search.annotations.DocumentId;
@@ -39,7 +40,11 @@ import org.hibernate.search.genericjpa.db.ColumnType;
 })
 public class Place {
 
-	private Integer id;
+	//automatic generation is a bitch if you want to have it accross multiple database types
+	//and/or persistence providers
+	private static final AtomicInteger HACK = new AtomicInteger();
+
+	private Integer id = HACK.incrementAndGet();
 	private String name;
 	private Set<Sorcerer> sorcerers = new HashSet<>();
 	private boolean cool = true;
@@ -47,7 +52,6 @@ public class Place {
 	@Id
 	@Column(name = "ID")
 	@DocumentId
-	@GeneratedValue(strategy = GenerationType.AUTO)
 	public Integer getId() {
 		return id;
 	}

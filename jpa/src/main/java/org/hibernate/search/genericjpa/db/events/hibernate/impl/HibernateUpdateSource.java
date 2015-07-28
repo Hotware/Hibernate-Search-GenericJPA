@@ -6,6 +6,7 @@
  */
 package org.hibernate.search.genericjpa.db.events.hibernate.impl;
 
+import javax.transaction.Status;
 import javax.transaction.Synchronization;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -15,11 +16,15 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.hibernate.engine.spi.EntityEntry;
 import org.hibernate.event.spi.AbstractCollectionEvent;
 import org.hibernate.event.spi.AbstractEvent;
+import org.hibernate.event.spi.EventSource;
+import org.hibernate.event.spi.FlushEvent;
+import org.hibernate.event.spi.FlushEventListener;
 import org.hibernate.event.spi.PostCollectionRecreateEvent;
 import org.hibernate.event.spi.PostCollectionRecreateEventListener;
 import org.hibernate.event.spi.PostCollectionRemoveEvent;
@@ -56,10 +61,20 @@ import org.hibernate.search.util.impl.ReflectionHelper;
 public class HibernateUpdateSource implements SynchronizedUpdateSource, PostDeleteEventListener,
 											  PostInsertEventListener, PostUpdateEventListener,
 											  PostCollectionRecreateEventListener, PostCollectionRemoveEventListener,
-											  PostCollectionUpdateEventListener,
+											  PostCollectionUpdateEventListener, FlushEventListener,
 											  Serializable {
 
 	private static final Logger LOGGER = Logger.getLogger( HibernateUpdateSource.class.getName() );
+
+	//only used by the FullTextIndexEventListener instance playing in the FlushEventListener role.
+	// transient because it's not serializable (and state doesn't need to live longer than a flush).
+	// final because its initialization should be published to other threads.
+	// ! update the readObject() method in case of name changes !
+	// make sure the Synchronization doesn't contain references to Session, otherwise we'll leak memory.
+	private final transient Map<Session, Synchronization> flushSynch = Maps.createIdentityWeakKeyConcurrentMap(
+			64,
+			32
+	);
 
 	private boolean disabled = false;
 	private boolean skipDirtyChecks = true;
@@ -168,7 +183,8 @@ public class HibernateUpdateSource implements SynchronizedUpdateSource, PostDele
 		}
 	}
 
-	protected void processWork(Object entity,
+	protected void processWork(
+			Object entity,
 			Serializable id,
 			WorkType workType,
 			AbstractEvent event,
@@ -275,4 +291,33 @@ public class HibernateUpdateSource implements SynchronizedUpdateSource, PostDele
 	public void close() {
 
 	}
+
+	@Override
+	public void onFlush(FlushEvent event) throws HibernateException {
+		Session session = event.getSession();
+		Synchronization synchronization = flushSynch.get( session );
+		if ( synchronization != null ) {
+			//first cleanup
+			flushSynch.remove( session );
+			LOGGER.fine( "flush event causing index update out of transaction" );
+			synchronization.beforeCompletion();
+			synchronization.afterCompletion( Status.STATUS_COMMITTED );
+		}
+	}
+
+	/**
+	 * Adds a synchronization to be performed in the onFlush method;
+	 * should only be used as workaround for the case a flush is happening
+	 * out of transaction.
+	 * Warning: if the synchronization contains a hard reference
+	 * to the Session proper cleanup is not guaranteed and memory leaks
+	 * will happen.
+	 *
+	 * @param eventSource should be the Session doing the flush
+	 * @param synchronization the synchronisation instance
+	 */
+	public void addSynchronization(EventSource eventSource, Synchronization synchronization) {
+		this.flushSynch.put( eventSource, synchronization );
+	}
+
 }
