@@ -6,11 +6,11 @@ Hibernate-Search with the JPA provider you want.
 
 Currently supported JPA providers:
 
-* Hibernate
-* EclipseLink
-* OpenJPA
+* Hibernate (Sync & Async backend)
+* EclipseLink (Sync & Async backend)
+* OpenJPA (Async backend)
 
-Currently supported Databases (others work as well, but don't have automatic updating support):
+Currently supported Databases for the async backend (others work as well, but don't have automatic updating support):
 
 * MySQL/MariaDB
 * PostgreSQL
