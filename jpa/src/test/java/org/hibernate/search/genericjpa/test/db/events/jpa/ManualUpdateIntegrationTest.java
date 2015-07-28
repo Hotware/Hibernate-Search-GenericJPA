@@ -130,18 +130,16 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 						}
 						this.deleteAllData( em );
 						Sleep.sleep(
-								100_000, () -> {
-									return this.assertCount( impl, 0 );
-								}, 100, ""
+								100_000, () ->
+										this.assertCount( impl, 0 )
+								, 100, ""
 						);
 
 						this.writeAllIntoIndex( em, impl );
 
 						this.deleteAllData( em );
 						Sleep.sleep(
-								100_000, () -> {
-									return this.assertCount( impl, 0 );
-								}, 100, ""
+								100_000, () -> this.assertCount( impl, 0 ), 100, ""
 						);
 
 						this.writeAllIntoIndex( em, impl );
@@ -165,10 +163,9 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 							}
 							Sleep.sleep(
 									100_000,
-									() -> {
-										return this.queryPlaceIds( impl, "name", "Valinor" )
-												.size() == 0 && this.assertCount( impl, 2 );
-									},
+									() -> this.queryPlaceIds( impl, "name", "Valinor" )
+											.size() == 0 && this.assertCount( impl, 2 )
+									,
 									100,
 									"shouldn't have found \"Valinor\" in the index anymore, but overall count should have been equal to 2!"
 							);
@@ -187,19 +184,18 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 													impl,
 													"sorcerers.name",
 													oldName
-											)
-													.size()
+											).size()
 									);
 									someSorcerer.setName( "Odalbert" );
 									tx.commit();
 								}
 								Sleep.sleep(
 										100_000,
-										() -> {
-											return this.queryPlaceIds( impl, "sorcerers.name", oldName )
-													.size() == 0 && this
-													.assertCount( impl, 2 );
-										}, 100,
+										() ->
+												this.queryPlaceIds( impl, "sorcerers.name", oldName )
+														.size() == 0 && this
+														.assertCount( impl, 2 )
+										, 100,
 										"shouldn't have found \"" + oldName + "\" in the index anymore, but overall count should have been equal to 2!"
 								);
 							}
@@ -230,9 +226,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 		this.setupData( em );
 		// wait a bit until the AsyncUpdateSource sent the appropriate events
 		Sleep.sleep(
-				100_000, () -> {
-					return this.assertCount( impl, 2 );
-				}, 100, ""
+				100_000, () -> this.assertCount( impl, 2 ), 100, ""
 		);
 	}
 
@@ -255,9 +249,7 @@ public class ManualUpdateIntegrationTest extends DatabaseIntegrationTest {
 								.createQuery()
 				)
 				.queryEntityInfos().stream().map(
-						(entInfo) -> {
-							return (Integer) entInfo.getId();
-						}
+						(entInfo) -> (Integer) entInfo.getId()
 				).collect( Collectors.toList() );
 	}
 

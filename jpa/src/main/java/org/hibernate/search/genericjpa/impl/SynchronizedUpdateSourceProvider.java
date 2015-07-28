@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.genericjpa.JPASearchFactoryController;
 import org.hibernate.search.genericjpa.db.events.index.impl.IndexUpdater;
 import org.hibernate.search.genericjpa.events.impl.SynchronizedUpdateSource;
@@ -24,7 +25,7 @@ import org.hibernate.search.genericjpa.metadata.impl.RehashedTypeMetadata;
 public interface SynchronizedUpdateSourceProvider {
 
 	SynchronizedUpdateSource getUpdateSource(
-			JPASearchFactoryController searchFactoryController,
+			ExtendedSearchIntegrator searchIntegrator,
 			Map<Class<?>, RehashedTypeMetadata> rehashedTypeMetadataPerIndexRoot,
 			Map<Class<?>, List<Class<?>>> containedInIndexOf,
 			Properties properties,

@@ -19,6 +19,7 @@ import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.genericjpa.annotations.CustomUpdateEntityProvider;
 import org.hibernate.search.genericjpa.annotations.InIndex;
 import org.hibernate.search.genericjpa.db.events.eclipselink.impl.EclipseLinkSynchronizedUpdateSourceProvider;
+import org.hibernate.search.genericjpa.db.events.hibernate.impl.HibernateSynchronizedUpdateSourceProvider;
 import org.hibernate.search.genericjpa.db.events.triggers.TriggerSQLStringSource;
 import org.hibernate.search.genericjpa.entity.EntityManagerEntityProvider;
 import org.hibernate.search.genericjpa.exception.SearchException;
@@ -177,6 +178,9 @@ public final class Setup {
 			}
 			else if ( "eclipselink".equals( type ) ) {
 				synchronizedUpdateSourceProvider = new EclipseLinkSynchronizedUpdateSourceProvider();
+			}
+			else if ( "hibernate".equals( type ) ) {
+				synchronizedUpdateSourceProvider = new HibernateSynchronizedUpdateSourceProvider();
 			}
 			else {
 				throw new SearchException( "unrecognized " + SEARCH_FACTORY_TYPE_KEY + ": " + type );

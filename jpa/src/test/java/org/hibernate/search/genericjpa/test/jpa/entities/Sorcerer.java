@@ -82,4 +82,24 @@ public class Sorcerer {
 		this.place = place;
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if ( this == o ) {
+			return true;
+		}
+		if ( o == null || getClass() != o.getClass() ) {
+			return false;
+		}
+
+		Sorcerer sorcerer = (Sorcerer) o;
+
+		return !(id != null ? !id.equals( sorcerer.id ) : sorcerer.id != null);
+
+	}
+
+	@Override
+	public int hashCode() {
+		return id != null ? id.hashCode() : 0;
+	}
+
 }

@@ -45,6 +45,25 @@
         </properties>
     </persistence-unit>
 
+    <persistence-unit name="Hibernate_MySQL"
+                      transaction-type="RESOURCE_LOCAL">
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+        <class>org.hibernate.search.genericjpa.test.jpa.entities.Sorcerer</class>
+        <class>org.hibernate.search.genericjpa.test.jpa.entities.Place</class>
+
+        <class>org.hibernate.search.genericjpa.test.jpa.entities.CustomUpdatedEntity</class>
+
+        <class>org.hibernate.search.genericjpa.test.jpa.entities.MultipleColumnsIdEntity</class>
+        <properties>
+            <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver" />
+            <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/testingdb" />
+            <property name="javax.persistence.jdbc.user" value="hibernate_user" />
+            <property name="javax.persistence.jdbc.password" value="hibernate_password" />
+            <property name="hibernate.dialect" value="org.hibernate.dialect.MySQL5Dialect" />
+            <property name="hibernate.hbm2ddl.auto" value="create" />
+        </properties>
+    </persistence-unit>
+
     <persistence-unit name="EclipseLink_PostgreSQL"
                       transaction-type="RESOURCE_LOCAL">
         <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>

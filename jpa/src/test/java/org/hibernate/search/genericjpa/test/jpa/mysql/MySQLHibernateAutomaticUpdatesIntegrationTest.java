@@ -30,13 +30,13 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 /**
- * Created by Martin on 27.07.2015.
+ * Created by Martin on 28.07.2015.
  */
-public class MySQLNativeEclipseLinkAutomaticUpdatesIntegrationTest extends AutomaticUpdatesIntegrationTest {
+public class MySQLHibernateAutomaticUpdatesIntegrationTest extends AutomaticUpdatesIntegrationTest {
 
 	@Before
 	public void setup() {
-		this.setup( "eclipselink", "EclipseLink_MySQL", MySQLTriggerSQLStringSource.class );
+		this.setup( "hibernate", "Hibernate_MySQL", MySQLTriggerSQLStringSource.class );
 	}
 
 	//TODO: test this for object hierarchies
@@ -75,6 +75,7 @@ public class MySQLNativeEclipseLinkAutomaticUpdatesIntegrationTest extends Autom
 					ent.setSecondId( "second" + i );
 					ent.setInfo( "info" + i );
 					this.em.persist( ent );
+					this.em.flush();
 				}
 				this.em.getTransaction().rollback();
 			}
@@ -91,6 +92,7 @@ public class MySQLNativeEclipseLinkAutomaticUpdatesIntegrationTest extends Autom
 				ent.setSecondId( "second" );
 				ent.setInfo( "info" );
 				this.em.persist( ent );
+				this.em.flush();
 				this.em.getTransaction().commit();
 
 				assertEquals(
@@ -138,6 +140,7 @@ public class MySQLNativeEclipseLinkAutomaticUpdatesIntegrationTest extends Autom
 						)
 				);
 				this.em.remove( ent );
+				this.em.flush();
 				this.em.getTransaction().commit();
 
 				assertEquals(
@@ -157,6 +160,7 @@ public class MySQLNativeEclipseLinkAutomaticUpdatesIntegrationTest extends Autom
 				sorcerer.setPlace( place );
 				place.setSorcerers( new HashSet<>( Arrays.asList( sorcerer ) ) );
 				this.em.persist( place );
+				this.em.flush();
 				this.em.getTransaction().commit();
 
 				assertEquals(
@@ -209,6 +213,7 @@ public class MySQLNativeEclipseLinkAutomaticUpdatesIntegrationTest extends Autom
 				this.em.getTransaction().begin();
 				Sorcerer sorc = (Sorcerer) this.em.createQuery( "SELECT a FROM Sorcerer a" ).getResultList().get( 0 );
 				sorc.setName( "sorcname" );
+				this.em.flush();
 				this.em.getTransaction().rollback();
 
 				FullTextEntityManager fem = searchFactory.getFullTextEntityManager( this.em );
@@ -230,5 +235,4 @@ public class MySQLNativeEclipseLinkAutomaticUpdatesIntegrationTest extends Autom
 			searchFactory.close();
 		}
 	}
-
 }

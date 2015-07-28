@@ -164,6 +164,13 @@ public final class JPASearchFactoryAdapter
 		this.searchIntegrator = impl.unwrap( ExtendedSearchIntegrator.class );
 		this.searchFactory = new StandaloneSearchFactoryImpl( this.searchIntegrator );
 
+		JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider(
+				this.emf,
+				this.idProperties,
+				this.transactionManager,
+				this.customUpdateEntityProviders
+		);
+
 		this.asyncUpdateSource = this.asyncUpdateSourceProvider.getUpdateSource(
 				this.updateDelay,
 				TimeUnit.MILLISECONDS,
@@ -173,22 +180,16 @@ public final class JPASearchFactoryAdapter
 				this.transactionManager
 		);
 		if ( this.asyncUpdateSource != null ) {
+			this.indexUpdater = new IndexUpdater(
+					this.rehashedTypeMetadataForIndexRoot, this.containedInIndexOf, entityProvider,
+					impl.unwrap( ExtendedSearchIntegrator.class )
+			);
 			//TODO: we could allow this, but then we would need to change
 			//the way we get the entityProvider. it's safest to keep it like this
 			if ( this.emf == null ) {
 				throw new AssertionFailure( "emf may not be null when using an AsyncUpdateSource" );
 			}
 
-			JPAReusableEntityProvider entityProvider = new JPAReusableEntityProvider(
-					this.emf,
-					this.idProperties,
-					this.transactionManager,
-					this.customUpdateEntityProviders
-			);
-			this.indexUpdater = new IndexUpdater(
-					this.rehashedTypeMetadataForIndexRoot, this.containedInIndexOf, entityProvider,
-					impl.unwrap( ExtendedSearchIntegrator.class )
-			);
 			this.asyncUpdateSource.setUpdateConsumers(
 					Arrays.asList(
 							this.indexUpdater::updateEvent, this
@@ -197,7 +198,7 @@ public final class JPASearchFactoryAdapter
 			this.asyncUpdateSource.start();
 		}
 		this.synchronizedUpdateSource = this.synchronizedUpdateSourceProvider.getUpdateSource(
-				this,
+				impl.unwrap( ExtendedSearchIntegrator.class ),
 				this.rehashedTypeMetadataForIndexRoot,
 				this.containedInIndexOf,
 				this.properties,
@@ -365,7 +366,7 @@ public final class JPASearchFactoryAdapter
 			if ( this.asyncUpdateSource != null ) {
 				this.asyncUpdateSource.stop();
 			}
-			if ( this.synchronizedUpdateSource != null) {
+			if ( this.synchronizedUpdateSource != null ) {
 				this.synchronizedUpdateSource.close();
 			}
 			if ( this.indexUpdater != null ) {

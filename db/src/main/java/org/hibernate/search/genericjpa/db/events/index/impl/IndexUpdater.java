@@ -141,7 +141,10 @@ public final class IndexUpdater {
 												break;
 											}
 											case EventType.DELETE: {
-												IndexUpdater.this.indexWrapper.delete( entityClass, inIndexOf, id, tx );
+												IndexUpdater.this.indexWrapper.delete(
+														entityClass, inIndexOf, id, this.entityProvider,
+														tx
+												);
 												break;
 											}
 											default: {
@@ -195,13 +198,35 @@ public final class IndexUpdater {
 
 	}
 
+	public void delete(
+			Class<?> entityClass,
+			List<Class<?>> inIndexOf,
+			Object id,
+			EntityProvider entityProvider,
+			Transaction tx) {
+		this.indexWrapper.delete( entityClass, inIndexOf, id, entityProvider , tx );
+	}
+
+	public void update(Object entity, Transaction tx) {
+		this.indexWrapper.update( entity, tx );
+	}
+
+	public void index(Object entity, Transaction tx) {
+		this.indexWrapper.update( entity, tx );
+	}
+
 	public void close() {
 		this.exec.shutdown();
 	}
 
 	public interface IndexWrapper {
 
-		void delete(Class<?> entityClass, List<Class<?>> inIndexOf, Object id, Transaction tx);
+		void delete(
+				Class<?> entityClass,
+				List<Class<?>> inIndexOf,
+				Object id,
+				EntityProvider entityProvider,
+				Transaction tx);
 
 		void update(Object entity, Transaction tx);
 
@@ -218,7 +243,12 @@ public final class IndexUpdater {
 		}
 
 		@Override
-		public void delete(Class<?> entityClass, List<Class<?>> inIndexOf, Object id, Transaction tx) {
+		public void delete(
+				Class<?> entityClass,
+				List<Class<?>> inIndexOf,
+				Object id,
+				EntityProvider entityProvider,
+				Transaction tx) {
 			for ( Class<?> indexClass : inIndexOf ) {
 				RehashedTypeMetadata metadata = IndexUpdater.this.metadataForIndexRoot.get( indexClass );
 				List<String> fields = metadata.getIdFieldNamesForType().get( entityClass );
@@ -271,7 +301,7 @@ public final class IndexUpdater {
 							).maxResults( HSQUERY_BATCH )
 									.queryEntityInfos() ) {
 								Serializable originalId = (Serializable) entityInfo.getProjection()[0];
-								Object original = IndexUpdater.this.entityProvider.get( indexClass, originalId );
+								Object original = entityProvider.get( indexClass, originalId );
 								if ( original != null ) {
 									this.update( original, tx );
 								}

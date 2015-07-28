@@ -6,9 +6,8 @@
  */
 package org.hibernate.search.genericjpa.db.events.eclipselink.impl;
 
-import javax.persistence.EntityManagerFactory;
+import java.io.IOException;
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,8 +16,6 @@ import java.util.logging.Logger;
 
 import org.eclipse.persistence.descriptors.DescriptorEvent;
 import org.eclipse.persistence.descriptors.DescriptorEventAdapter;
-import org.eclipse.persistence.expressions.Expression;
-import org.eclipse.persistence.internal.sessions.UnitOfWorkImpl;
 import org.eclipse.persistence.queries.ObjectLevelReadQuery;
 import org.eclipse.persistence.queries.ReadObjectQuery;
 import org.eclipse.persistence.sessions.Session;
@@ -28,21 +25,20 @@ import org.eclipse.persistence.sessions.UnitOfWork;
 
 import org.hibernate.annotations.common.reflection.XProperty;
 import org.hibernate.search.backend.spi.SingularTermDeletionQuery;
-import org.hibernate.search.backend.spi.Work;
-import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.bridge.FieldBridge;
 import org.hibernate.search.bridge.StringBridge;
 import org.hibernate.search.engine.ProjectionConstants;
 import org.hibernate.search.engine.metadata.impl.DocumentFieldMetadata;
 import org.hibernate.search.genericjpa.JPASearchFactoryController;
+import org.hibernate.search.genericjpa.db.events.index.impl.IndexUpdater;
+import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.events.impl.SynchronizedUpdateSource;
+import org.hibernate.search.genericjpa.exception.AssertionFailure;
 import org.hibernate.search.genericjpa.factory.Transaction;
 import org.hibernate.search.genericjpa.factory.impl.SubClassSupportInstanceInitializer;
 import org.hibernate.search.genericjpa.metadata.impl.RehashedTypeMetadata;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.FullTextQuery;
-import org.hibernate.search.query.engine.spi.EntityInfo;
-import org.hibernate.search.query.engine.spi.HSQuery;
 import org.hibernate.search.spi.InstanceInitializer;
 
 /**
@@ -58,7 +54,7 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 
 	private static final InstanceInitializer INSTANCE_INITIALIZER = SubClassSupportInstanceInitializer.INSTANCE;
 
-	private final JPASearchFactoryController searchFactoryController;
+	private final IndexUpdater indexUpdater;
 	private final Set<Class<?>> indexRelevantEntities;
 	private final Map<Class<?>, RehashedTypeMetadata> rehashedTypeMetadataPerIndexRoot;
 	private final Map<Class<?>, List<Class<?>>> containedInIndexOf;
@@ -66,14 +62,14 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 	final DescriptorEventAspect descriptorEventAspect;
 	final SessionEventAspect sessionEventAspect;
 
-	private final ConcurrentHashMap<Session, FullTextEntityManager> fullTextEntityManagers = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<Session, Transaction> transactions = new ConcurrentHashMap<>();
 
 	public EclipseLinkUpdateSource(
-			JPASearchFactoryController searchFactoryController,
+			IndexUpdater indexUpdater,
 			Set<Class<?>> indexRelevantEntities,
 			Map<Class<?>, RehashedTypeMetadata> rehashedTypeMetadataPerIndexRoot,
 			Map<Class<?>, List<Class<?>>> containedInIndexOf) {
-		this.searchFactoryController = searchFactoryController;
+		this.indexUpdater = indexUpdater;
 		this.indexRelevantEntities = indexRelevantEntities;
 		this.descriptorEventAspect = new DescriptorEventAspect();
 		this.sessionEventAspect = new SessionEventAspect();
@@ -93,8 +89,8 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 				if ( session.isUnitOfWork() ) {
 					session = ((UnitOfWork) session).getParent();
 				}
-				FullTextEntityManager fem = EclipseLinkUpdateSource.this.fullTextEntityManagers.get( session );
-				fem.index( entity );
+				Transaction tx = EclipseLinkUpdateSource.this.transactions.get( session );
+				EclipseLinkUpdateSource.this.indexUpdater.index( entity, tx );
 			}
 		}
 
@@ -108,8 +104,8 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 				if ( session.isUnitOfWork() ) {
 					session = ((UnitOfWork) session).getParent();
 				}
-				FullTextEntityManager fem = EclipseLinkUpdateSource.this.fullTextEntityManagers.get( session );
-				fem.index( entity );
+				Transaction tx = EclipseLinkUpdateSource.this.transactions.get( session );
+				EclipseLinkUpdateSource.this.indexUpdater.update( entity, tx );
 			}
 		}
 
@@ -125,86 +121,45 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 			Class<?> entityClass = INSTANCE_INITIALIZER.getClass( entity );
 			if ( EclipseLinkUpdateSource.this.indexRelevantEntities.contains( entityClass ) ) {
 				LOGGER.fine( "Delete Event for " + entity );
-				Session session = event.getSession();
-				if ( session.isUnitOfWork() ) {
-					session = ((UnitOfWork) session).getParent();
+				Session tmp = event.getSession();
+				if ( tmp.isUnitOfWork() ) {
+					tmp = ((UnitOfWork) tmp).getParent();
 				}
-				FullTextEntityManager fem = EclipseLinkUpdateSource.this.fullTextEntityManagers.get( session );
+				final Session session = tmp;
+				Transaction tx = EclipseLinkUpdateSource.this.transactions.get( session );
 				List<Class<?>> inIndexOf = EclipseLinkUpdateSource.this.containedInIndexOf.get( entityClass );
-				for ( Class<?> indexClass : inIndexOf ) {
+				if ( inIndexOf.size() > 0 ) {
+					//hack, but works
 					RehashedTypeMetadata metadata = EclipseLinkUpdateSource.this.rehashedTypeMetadataPerIndexRoot.get(
-							indexClass
+							inIndexOf.get( 0 )
 					);
-
 					XProperty idProperty = metadata.getIdPropertyAccessorForType().get( entityClass );
 					Object id = idProperty.invoke( entity );
+					EclipseLinkUpdateSource.this.indexUpdater.delete(
+							entityClass, inIndexOf, id, new EntityProvider() {
 
-					List<String> fields = metadata.getIdFieldNamesForType().get( entityClass );
-					for ( String field : fields ) {
-						DocumentFieldMetadata metaDataForIdField = metadata.getDocumentFieldMetadataForIdFieldName()
-								.get(
-										field
-								);
-
-						SingularTermDeletionQuery.Type idType = metadata.getSingularTermDeletionQueryTypeForIdFieldName()
-								.get( entityClass );
-						Object idValueForDeletion;
-						if ( idType == SingularTermDeletionQuery.Type.STRING ) {
-							FieldBridge fb = metaDataForIdField.getFieldBridge();
-							if ( !(fb instanceof StringBridge) ) {
-								throw new IllegalArgumentException( "no TwoWayStringBridge found for field: " + field );
-							}
-							idValueForDeletion = ((StringBridge) fb).objectToString( id );
-						}
-						else {
-							idValueForDeletion = id;
-						}
-
-						if ( indexClass.equals( entityClass ) ) {
-							fem.purge( entityClass, (Serializable) id );
-						}
-						else {
-							FullTextQuery fullTextQuery = fem.createFullTextQuery(
-									fem.getSearchFactory()
-											.buildQueryBuilder()
-											.forEntity( indexClass )
-											.get()
-											.keyword()
-											.onField( field )
-											.matching( idValueForDeletion )
-											.createQuery(), indexClass
-							);
-
-							fullTextQuery.setMaxResults( HSQUERY_BATCH );
-							fullTextQuery.setProjection( ProjectionConstants.ID );
-
-							int count = fullTextQuery.getResultSize();
-							int processed = 0;
-							// this was just contained somewhere
-							// so we have to update the containing entity
-							while ( processed < count ) {
-								fullTextQuery.setFirstResult( processed );
-								for ( Object[] projection : (List<Object[]>) fullTextQuery.getResultList() ) {
-									Serializable originalId = (Serializable) projection[0];
+								@Override
+								public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
 									ReadObjectQuery nativeQuery = new ReadObjectQuery();
-									nativeQuery.setReferenceClass( indexClass );
-									nativeQuery.setSelectionId( originalId );
+									nativeQuery.setReferenceClass( entityClass );
+									nativeQuery.setSelectionId( id );
 									nativeQuery.setCacheUsage( ObjectLevelReadQuery.DoNotCheckCache );
 									Object original = session.executeQuery( nativeQuery );
-									if ( original != null ) {
-										fem.index( original );
-									}
-									else {
-										// original is not available in the
-										// database, but it will be deleted by its
-										// own delete event
-										// TODO: log this?
-									}
+									return original;
 								}
-								processed += HSQUERY_BATCH;
-							}
-						}
-					}
+
+								@Override
+								public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
+									throw new AssertionFailure( "normally not used in IndexUpdater" );
+								}
+
+								@Override
+								public void close() throws IOException {
+									//no-op
+								}
+
+							}, tx
+					);
 				}
 			}
 		}
@@ -216,24 +171,23 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 		@Override
 		public void postBeginTransaction(SessionEvent event) {
 			Session session = event.getSession();
-			FullTextEntityManager fem = EclipseLinkUpdateSource.this.fullTextEntityManagers.get( session );
-			if ( fem != null && fem.isSearchTransactionInProgress() ) {
+			Transaction tx = EclipseLinkUpdateSource.this.transactions.get( session );
+			if ( tx != null && tx.isTransactionInProgress() ) {
 				//we are fine
 			}
 			else {
-				fem = EclipseLinkUpdateSource.this.searchFactoryController.getFullTextEntityManager( null );
-				fem.beginSearchTransaction();
-				EclipseLinkUpdateSource.this.fullTextEntityManagers.put( session, fem );
+				tx = new Transaction();
+				EclipseLinkUpdateSource.this.transactions.put( session, tx );
 			}
 		}
 
 		@Override
 		public void postCommitTransaction(SessionEvent event) {
 			Session session = event.getSession();
-			FullTextEntityManager fem = EclipseLinkUpdateSource.this.fullTextEntityManagers.get( session );
-			if ( fem != null && fem.isSearchTransactionInProgress() ) {
-				fem.commitSearchTransaction();
-				EclipseLinkUpdateSource.this.fullTextEntityManagers.remove( session );
+			Transaction tx = EclipseLinkUpdateSource.this.transactions.get( session );
+			if ( tx != null && tx.isTransactionInProgress() ) {
+				tx.commit();
+				EclipseLinkUpdateSource.this.transactions.remove( session );
 			}
 			else {
 				LOGGER.warning(
@@ -245,10 +199,10 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 		@Override
 		public void postRollbackTransaction(SessionEvent event) {
 			Session session = event.getSession();
-			FullTextEntityManager fem = EclipseLinkUpdateSource.this.fullTextEntityManagers.get( session );
-			if ( fem != null && fem.isSearchTransactionInProgress() ) {
-				fem.rollbackSearchTransaction();
-				EclipseLinkUpdateSource.this.fullTextEntityManagers.remove( session );
+			Transaction tx = EclipseLinkUpdateSource.this.transactions.get( session );
+			if ( tx != null && tx.isTransactionInProgress() ) {
+				tx.rollback();
+				EclipseLinkUpdateSource.this.transactions.remove( session );
 			}
 			else {
 				LOGGER.warning(
@@ -257,11 +211,27 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 			}
 		}
 
+		@Override
+		public void postLogout(SessionEvent event) {
+			Session session = event.getSession();
+			Transaction tx = EclipseLinkUpdateSource.this.transactions.get( session );
+			if ( tx != null && tx.isTransactionInProgress() ) {
+				LOGGER.warning(
+						"rolling back transaction because session logged out..."
+				);
+				tx.rollback();
+				EclipseLinkUpdateSource.this.transactions.remove( session );
+			}
+		}
+
 	}
 
 	@Override
 	public void close() {
+		//just to make sure
+		this.transactions.clear();
 
+		this.indexUpdater.close();
 	}
 
 }

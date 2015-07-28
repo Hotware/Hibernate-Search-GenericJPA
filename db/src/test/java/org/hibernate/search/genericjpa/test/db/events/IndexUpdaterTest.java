@@ -26,6 +26,7 @@ import org.hibernate.search.genericjpa.db.events.UpdateConsumer;
 import org.hibernate.search.genericjpa.db.events.UpdateConsumer.UpdateEventInfo;
 import org.hibernate.search.genericjpa.db.events.index.impl.IndexUpdater;
 import org.hibernate.search.genericjpa.db.events.index.impl.IndexUpdater.IndexWrapper;
+import org.hibernate.search.genericjpa.entity.EntityProvider;
 import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
 import org.hibernate.search.genericjpa.factory.StandaloneSearchConfiguration;
 import org.hibernate.search.genericjpa.factory.Transaction;
@@ -102,7 +103,12 @@ public class IndexUpdaterTest {
 		IndexWrapper indexWrapper = new IndexWrapper() {
 
 			@Override
-			public void delete(Class<?> entityClass, List<Class<?>> inIndexOf, Object id, Transaction tx) {
+			public void delete(
+					Class<?> entityClass,
+					List<Class<?>> inIndexOf,
+					Object id,
+					EntityProvider entityProvider,
+					Transaction tx) {
 				Object obj = IndexUpdaterTest.this.obj( entityClass );
 				System.out.println( entityClass );
 				System.out.println( updateInfoSet );

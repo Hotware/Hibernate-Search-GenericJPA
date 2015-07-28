@@ -16,8 +16,12 @@ import java.util.Set;
 import org.eclipse.persistence.jpa.JpaEntityManager;
 import org.eclipse.persistence.sessions.Session;
 
+import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.genericjpa.JPASearchFactoryController;
+import org.hibernate.search.genericjpa.db.events.index.impl.IndexUpdater;
+import org.hibernate.search.genericjpa.entity.ReusableEntityProvider;
 import org.hibernate.search.genericjpa.events.impl.SynchronizedUpdateSource;
+import org.hibernate.search.genericjpa.impl.JPASearchFactoryAdapter;
 import org.hibernate.search.genericjpa.impl.SynchronizedUpdateSourceProvider;
 import org.hibernate.search.genericjpa.metadata.impl.RehashedTypeMetadata;
 
@@ -28,7 +32,7 @@ public class EclipseLinkSynchronizedUpdateSourceProvider implements Synchronized
 
 	@Override
 	public SynchronizedUpdateSource getUpdateSource(
-			JPASearchFactoryController searchFactoryController,
+			ExtendedSearchIntegrator searchIntegrator,
 			Map<Class<?>, RehashedTypeMetadata> rehashedTypeMetadataPerIndexRoot,
 			Map<Class<?>, List<Class<?>>> containedInIndexOf,
 			Properties properties,
@@ -39,8 +43,15 @@ public class EclipseLinkSynchronizedUpdateSourceProvider implements Synchronized
 		try {
 			Session session = entityManager.getServerSession();
 
+			IndexUpdater indexUpdater = new IndexUpdater(
+					rehashedTypeMetadataPerIndexRoot,
+					containedInIndexOf,
+					new DummyReusableEntityProvider(),
+					searchIntegrator
+			);
+
 			EclipseLinkUpdateSource eclipseLinkUpdateSource = new EclipseLinkUpdateSource(
-					searchFactoryController,
+					indexUpdater,
 					indexRelevantEntities,
 					rehashedTypeMetadataPerIndexRoot,
 					containedInIndexOf
