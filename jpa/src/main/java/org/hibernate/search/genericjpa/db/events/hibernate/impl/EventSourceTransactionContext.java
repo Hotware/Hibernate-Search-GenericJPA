@@ -89,6 +89,7 @@ public class EventSourceTransactionContext implements TransactionContext, Serial
 			//executed in all environments
 			actionQueue.registerProcess( new DelegateToSynchronizationOnAfterTx( synchronization ) );
 		}
+		//FIXME: should we support flush events?
 		//else {
 		//	//registerSynchronization is only called if isRealTransactionInProgress or if
 		//	// a flushListener was found; still we might need to find the listener again
