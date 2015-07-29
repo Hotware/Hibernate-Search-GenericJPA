@@ -65,7 +65,7 @@ import org.hibernate.search.util.impl.ReflectionHelper;
  * @author Mattias Arbin
  * @author Sanne Grinovero
  * @author Hardy Ferentschik
- * @author Martin Braun (adaption)
+ * @author Martin Braun (adaption to generic JPA)
  */
 public class HibernateUpdateSource implements SynchronizedUpdateSource, PostDeleteEventListener,
 											  PostInsertEventListener, PostUpdateEventListener,
