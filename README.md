@@ -10,7 +10,7 @@ Currently supported JPA providers:
 * EclipseLink (Sync & Async backend)
 * OpenJPA (Async backend)
 
-Currently supported Databases for the async backend (others work as well, but don't have automatic updating support):
+Currently supported Databases for the async backend:
 
 * MySQL/MariaDB
 * PostgreSQL
