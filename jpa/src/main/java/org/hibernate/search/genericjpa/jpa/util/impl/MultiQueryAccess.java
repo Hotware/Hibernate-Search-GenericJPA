@@ -20,7 +20,7 @@ import org.hibernate.search.exception.AssertionFailure;
  * Utility class that allows you to access multiple JPA queries at once. Data is retrieved from the database in batches
  * and ordered by a given comparator. No need for messy Unions on the database level! <br>
  * <br>
- * This is particularily useful if you scroll all the data from the database incrementally and if you can compare in
+ * This is particularly useful if you scroll all the data from the database incrementally and if you can compare in
  * Code.
  *
  * @author Martin
