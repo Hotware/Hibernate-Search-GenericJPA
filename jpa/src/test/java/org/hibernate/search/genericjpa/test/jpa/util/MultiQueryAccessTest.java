@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -149,7 +150,7 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 					}
 					++cnt;
 				}
-				assertEquals( eventOrder.size(), cnt );
+				assertTrue("did not get the exact amount of events", eventOrder.isEmpty());
 			}
 			tx.commit();
 
