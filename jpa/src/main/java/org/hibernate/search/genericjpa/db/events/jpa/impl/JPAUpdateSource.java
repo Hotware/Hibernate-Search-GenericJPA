@@ -162,63 +162,44 @@ public class JPAUpdateSource implements AsyncUpdateSource {
 		Map<String, Long> countMap = new HashMap<>();
 		Map<String, Query> queryMap = new HashMap<>();
 		for ( EventModelInfo evi : updateSource.eventModelInfos ) {
-			CriteriaBuilder cb = em.getCriteriaBuilder();
 			long count;
 			{
 				count = ((Number) em.createNativeQuery(
-						"SELECT count(*) FROM " + updateSource.delimitedIdentifierToken + evi.getUpdateTableName() + updateSource.delimitedIdentifierToken
-				)
-						.getSingleResult()).longValue();
+						"SELECT count(*) " + updateSource.fromPart( evi )
+				).getSingleResult()).longValue();
 			}
 			countMap.put( evi.getUpdateTableName(), count );
 
 			{
+				//SELECT part
 				StringBuilder queryString = new StringBuilder().append( "SELECT " )
-						.append( updateSource.delimitedIdentifierToken )
-						.append( "t1" )
-						.append( updateSource.delimitedIdentifierToken )
+						.append( updateSource.escape( "t1" ) )
 						.append( "." )
-						.append( updateSource.delimitedIdentifierToken )
-						.append( evi.getUpdateIdColumn() )
-						.append( updateSource.delimitedIdentifierToken )
+						.append( updateSource.escape( evi.getUpdateIdColumn() ) )
 						.append( ", " )
-						.append( updateSource.delimitedIdentifierToken )
-						.append( "t1" )
-						.append( updateSource.delimitedIdentifierToken )
+						.append( updateSource.escape( "t1" ) )
 						.append( "." )
-						.append( updateSource.delimitedIdentifierToken )
-						.append( evi.getEventTypeColumn() ).append( updateSource.delimitedIdentifierToken );
+						.append( updateSource.escape( evi.getEventTypeColumn() ) );
 				for ( EventModelInfo.IdInfo idInfo : evi.getIdInfos() ) {
 					for ( String column : idInfo.getColumnsInUpdateTable() ) {
 						queryString.append( ", " )
-								.append( updateSource.delimitedIdentifierToken )
-								.append( "t1" )
-								.append( updateSource.delimitedIdentifierToken )
+								.append( updateSource.escape( "t1" ) )
 								.append( "." )
-								.append( updateSource.delimitedIdentifierToken )
-								.append( column )
-								.append(
-										updateSource.delimitedIdentifierToken
-								);
+								.append( updateSource.escape( column ) );
 					}
 				}
-				queryString.append( " FROM " ).append( updateSource.delimitedIdentifierToken )
-						.append( evi.getUpdateTableName() ).append( updateSource.delimitedIdentifierToken )
-						.append( " " ).append( updateSource.delimitedIdentifierToken )
-						.append( "t1" ).append( updateSource.delimitedIdentifierToken )
-						.append( " " );
+				//FROM PART
+				queryString.append( updateSource.fromPart( evi ) );
+
+				//ORDER BY part
 				queryString.append(
 						" ORDER BY "
-				)
-						.append( updateSource.delimitedIdentifierToken )
-						.append( "t1" )
-						.append( updateSource.delimitedIdentifierToken )
+				).append( updateSource.escape( "t1" ) )
 						.append( "." )
-						.append( updateSource.delimitedIdentifierToken )
-						.append( evi.getUpdateIdColumn() )
-						.append( updateSource.delimitedIdentifierToken );
+						.append( updateSource.escape( evi.getUpdateIdColumn() ) )
+						.append( " ASC");
 
-				LOGGER.fine( "querying for updates: " + queryString.toString() );
+				LOGGER.finest( "querying for updates: " + queryString.toString() );
 				Query query = em.createNativeQuery(
 						queryString.toString()
 				);
@@ -330,8 +311,9 @@ public class JPAUpdateSource implements AsyncUpdateSource {
 									String tableName = toDelete.getKey();
 									Long updateId = toDelete.getValue();
 									EventModelInfo evi = this.updateTableToEventModelInfo.get( tableName );
-									String queryString = "DELETE FROM " + this.delimitedIdentifierToken + tableName + this.delimitedIdentifierToken + " WHERE " + this.delimitedIdentifierToken + evi
-											.getUpdateIdColumn() + this.delimitedIdentifierToken + " < " + (updateId + 1);
+									String queryString = "DELETE FROM " + this.escape( tableName ) + " WHERE " + this.escape(
+											evi.getUpdateIdColumn()
+									) + " < " + (updateId + 1);
 									LOGGER.info( "deleting handled updates: " + queryString );
 									em.createNativeQuery(
 											queryString
@@ -404,6 +386,72 @@ public class JPAUpdateSource implements AsyncUpdateSource {
 		finally {
 			this.lock.unlock();
 		}
+	}
+
+	private String fromPart(EventModelInfo evi) {
+		StringBuilder queryString = new StringBuilder();
+		JPAUpdateSource updateSource = this;
+		//FROM part
+		queryString.append( " FROM " )
+				.append( updateSource.escape( evi.getUpdateTableName() ) )
+				.append( " " )
+				.append( updateSource.escape( "t1" ) )
+				.append( " " );
+		//INNER JOIN part
+		{
+			queryString.append( " INNER JOIN ( " )
+					.append( " SELECT max(" )
+					.append( updateSource.escape( "t2" ) )
+					.append( "." )
+					.append( updateSource.escape( evi.getUpdateIdColumn() ) )
+					.append( ") " )
+					.append( updateSource.escape( "updateid" ) );
+			for ( EventModelInfo.IdInfo idInfo : evi.getIdInfos() ) {
+				for ( String column : idInfo.getColumnsInUpdateTable() ) {
+					queryString.append( ", " )
+							.append( updateSource.escape( "t2" ) )
+							.append( "." )
+							.append( updateSource.escape( column ) );
+				}
+			}
+			queryString.append( " FROM " )
+					.append( updateSource.escape( evi.getUpdateTableName() ) )
+					.append( " " )
+					.append( updateSource.escape( "t2" ) );
+			queryString.append( " GROUP BY " );
+			{
+				int i = 0;
+				for ( EventModelInfo.IdInfo idInfo : evi.getIdInfos() ) {
+					for ( String column : idInfo.getColumnsInUpdateTable() ) {
+						if ( i++ > 0 ) {
+							queryString.append( ", " );
+						}
+						queryString.append( updateSource.escape( "t2" ) )
+								.append( "." )
+								.append( updateSource.escape( column ) );
+					}
+				}
+			}
+			queryString.append( " ) " ).append( updateSource.escape( "t3" ) )
+					.append( " ON " ).append( updateSource.escape( "t1" ) )
+					.append( "." )
+					.append( updateSource.escape( evi.getUpdateIdColumn() ) )
+					.append( " = " )
+					.append( updateSource.escape( "t3" ) )
+					.append( "." ).append(
+					updateSource.escape(
+							"updateid"
+					)
+			);
+		}
+		return queryString.toString();
+	}
+
+	private String escape(String str) {
+		return new StringBuilder().append( this.delimitedIdentifierToken )
+				.append( str )
+				.append( this.delimitedIdentifierToken )
+				.toString();
 	}
 
 }

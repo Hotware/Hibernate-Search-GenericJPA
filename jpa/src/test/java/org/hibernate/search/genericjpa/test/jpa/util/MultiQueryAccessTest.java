@@ -35,6 +35,7 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 	@Before
 	public void setup() throws NoSuchFieldException, SQLException {
 		this.setup( "EclipseLink_MySQL", new MySQLTriggerSQLStringSource() );
+		this.setupTriggers( new MySQLTriggerSQLStringSource() );
 
 		EntityManager em = null;
 		try {
@@ -57,8 +58,6 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 			}
 			tx.commit();
 			System.out.println( "passed false MultiQueryAccessTest" );
-
-			List<Object> del = new ArrayList<>();
 
 			tx.begin();
 			{
@@ -131,9 +130,6 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 
 			List<Integer> eventOrder = new ArrayList<>(
 					Arrays.asList(
-							EventType.INSERT,
-							EventType.DELETE,
-							EventType.UPDATE,
 							EventType.UPDATE,
 							EventType.INSERT
 					)
@@ -153,7 +149,7 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 					}
 					++cnt;
 				}
-				assertEquals( 5, cnt );
+				assertEquals( eventOrder.size(), cnt );
 			}
 			tx.commit();
 

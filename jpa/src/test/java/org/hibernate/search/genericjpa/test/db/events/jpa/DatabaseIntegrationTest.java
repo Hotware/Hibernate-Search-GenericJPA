@@ -168,7 +168,7 @@ public abstract class DatabaseIntegrationTest {
 
 			dropStrings = new ArrayList<>();
 			// this is just for the unit tests to work properly.
-			// normally we shouldn'tdelete the unique_id table or we could run
+			// normally we shouldn't delete the unique_id table or we could run
 			// into trouble
 			{
 				if ( triggerSource instanceof MySQLTriggerSQLStringSource ) {
