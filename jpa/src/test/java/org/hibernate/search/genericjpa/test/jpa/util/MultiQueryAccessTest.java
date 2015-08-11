@@ -139,7 +139,6 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 			tx.begin();
 			{
 				MultiQueryAccess access = this.query( em );
-				int cnt = 0;
 				while ( access.next() ) {
 					Object[] obj = (Object[]) access.get();
 					if ( access.identifier().equals( "PlaceUpdatesHsearch" ) ) {
@@ -148,9 +147,8 @@ public class MultiQueryAccessTest extends DatabaseIntegrationTest {
 					else if ( access.identifier().equals( "PlaceSorcererUpdatesHsearch" ) ) {
 						assertEquals( eventOrder.remove( 0 ), obj[1] );
 					}
-					++cnt;
 				}
-				assertTrue("did not get the exact amount of events", eventOrder.isEmpty());
+				assertTrue("did not get the exactly right amount of events", eventOrder.isEmpty());
 			}
 			tx.commit();
 
