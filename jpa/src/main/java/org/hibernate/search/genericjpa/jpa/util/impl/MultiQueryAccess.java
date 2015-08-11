@@ -93,8 +93,7 @@ public class MultiQueryAccess {
 					Long processed = this.currentPosition.get( identifier );
 					// yay JPA...
 					query.setFirstResult( toInt( processed ) );
-					//FIXME: re-implement proper batching again
-					query.setMaxResults( Integer.MAX_VALUE );
+					query.setMaxResults( this.batchSize );
 					@SuppressWarnings("unchecked")
 					List<Object> list = query.getResultList();
 					this.values.get( identifier ).addAll( list );

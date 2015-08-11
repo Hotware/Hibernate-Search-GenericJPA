@@ -154,6 +154,9 @@ public final class JPASearchFactoryAdapter
 		this.containedInIndexOf = MetadataUtil.calculateInIndexOf( rehashedTypeMetadatas );
 
 		SearchIntegratorBuilder builder = new SearchIntegratorBuilder();
+		this.indexRelevantEntities.forEach(
+				config::addClass
+		);
 		// we have to build an integrator here (but we don't need it afterwards)
 		builder.configuration( config ).buildSearchIntegrator();
 		this.indexRelevantEntities.forEach(

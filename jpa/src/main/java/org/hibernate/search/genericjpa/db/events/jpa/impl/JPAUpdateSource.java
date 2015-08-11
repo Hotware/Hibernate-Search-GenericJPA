@@ -175,14 +175,26 @@ public class JPAUpdateSource implements AsyncUpdateSource {
 			{
 				StringBuilder queryString = new StringBuilder().append( "SELECT " )
 						.append( updateSource.delimitedIdentifierToken )
+						.append( "t1" )
+						.append( updateSource.delimitedIdentifierToken )
+						.append( "." )
+						.append( updateSource.delimitedIdentifierToken )
 						.append( evi.getUpdateIdColumn() )
 						.append( updateSource.delimitedIdentifierToken )
 						.append( ", " )
+						.append( updateSource.delimitedIdentifierToken )
+						.append( "t1" )
+						.append( updateSource.delimitedIdentifierToken )
+						.append( "." )
 						.append( updateSource.delimitedIdentifierToken )
 						.append( evi.getEventTypeColumn() ).append( updateSource.delimitedIdentifierToken );
 				for ( EventModelInfo.IdInfo idInfo : evi.getIdInfos() ) {
 					for ( String column : idInfo.getColumnsInUpdateTable() ) {
 						queryString.append( ", " )
+								.append( updateSource.delimitedIdentifierToken )
+								.append( "t1" )
+								.append( updateSource.delimitedIdentifierToken )
+								.append( "." )
 								.append( updateSource.delimitedIdentifierToken )
 								.append( column )
 								.append(
@@ -192,13 +204,21 @@ public class JPAUpdateSource implements AsyncUpdateSource {
 				}
 				queryString.append( " FROM " ).append( updateSource.delimitedIdentifierToken )
 						.append( evi.getUpdateTableName() ).append( updateSource.delimitedIdentifierToken )
-						.append(
-								" ORDER BY "
-						)
+						.append( " " ).append( updateSource.delimitedIdentifierToken )
+						.append( "t1" ).append( updateSource.delimitedIdentifierToken )
+						.append( " " );
+				queryString.append(
+						" ORDER BY "
+				)
+						.append( updateSource.delimitedIdentifierToken )
+						.append( "t1" )
+						.append( updateSource.delimitedIdentifierToken )
+						.append( "." )
 						.append( updateSource.delimitedIdentifierToken )
 						.append( evi.getUpdateIdColumn() )
 						.append( updateSource.delimitedIdentifierToken );
 
+				LOGGER.fine( "querying for updates: " + queryString.toString() );
 				Query query = em.createNativeQuery(
 						queryString.toString()
 				);
@@ -247,8 +267,10 @@ public class JPAUpdateSource implements AsyncUpdateSource {
 							tx.begin();
 							try {
 								MultiQueryAccess query = query( this, em );
-								List<Object[]> toRemove = new ArrayList<>( this.batchSizeForUpdates );
 								List<UpdateEventInfo> updateInfos = new ArrayList<>( this.batchSizeForUpdates );
+
+								Map<String, Long> lastUpdateIdPerTable = new HashMap<>();
+
 								long processed = 0;
 								while ( query.next() ) {
 									// we have no order problems here since
@@ -260,13 +282,7 @@ public class JPAUpdateSource implements AsyncUpdateSource {
 
 									EventModelInfo evi = this.updateTableToEventModelInfo.get( query.identifier() );
 
-									toRemove.add(
-											new Object[] {
-													evi.getUpdateTableName(),
-													evi.getUpdateIdColumn(),
-													updateId,
-											}
-									);
+									lastUpdateIdPerTable.put( query.identifier(), updateId );
 
 									//we skip the id and eventtype
 									int currentIndex = 2;
@@ -298,15 +314,6 @@ public class JPAUpdateSource implements AsyncUpdateSource {
 											consumer.updateEvent( updateInfos );
 											LOGGER.fine( "handled update-event: " + updateInfos );
 										}
-										for ( Object[] rem : toRemove ) {
-											// the table is in rem[0], the
-											// id column for the update is in
-											// rem[1] and the id is in rem[2]
-											query.addToNextValuePosition( rem[0].toString(), -1L );
-											em.createNativeQuery( "DELETE FROM " + this.delimitedIdentifierToken + rem[0] + this.delimitedIdentifierToken + " WHERE " + this.delimitedIdentifierToken + rem[1] + this.delimitedIdentifierToken + " = " + rem[2] )
-													.executeUpdate();
-										}
-										toRemove.clear();
 										updateInfos.clear();
 									}
 								}
@@ -315,16 +322,20 @@ public class JPAUpdateSource implements AsyncUpdateSource {
 										consumer.updateEvent( updateInfos );
 										LOGGER.fine( "handled update-event: " + updateInfos );
 									}
-									for ( Object[] rem : toRemove ) {
-										// the table is in rem[0], the
-										// id column for the update is in
-										// rem[1] and the id is in rem[2]
-										query.addToNextValuePosition( rem[0].toString(), -1L );
-										em.createNativeQuery( "DELETE FROM " + this.delimitedIdentifierToken + rem[0] + this.delimitedIdentifierToken + " WHERE " + this.delimitedIdentifierToken + rem[1] + this.delimitedIdentifierToken + " = " + rem[2] )
-												.executeUpdate();
-									}
-									toRemove.clear();
 									updateInfos.clear();
+								}
+
+
+								for ( Map.Entry<String, Long> toDelete : lastUpdateIdPerTable.entrySet() ) {
+									String tableName = toDelete.getKey();
+									Long updateId = toDelete.getValue();
+									EventModelInfo evi = this.updateTableToEventModelInfo.get( tableName );
+									String queryString = "DELETE FROM " + this.delimitedIdentifierToken + tableName + this.delimitedIdentifierToken + " WHERE " + this.delimitedIdentifierToken + evi
+											.getUpdateIdColumn() + this.delimitedIdentifierToken + " < " + (updateId + 1);
+									LOGGER.info( "deleting handled updates: " + queryString );
+									em.createNativeQuery(
+											queryString
+									).executeUpdate();
 								}
 
 								if ( processed > 0 ) {

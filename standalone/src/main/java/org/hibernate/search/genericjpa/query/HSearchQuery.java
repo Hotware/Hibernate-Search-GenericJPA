@@ -22,7 +22,6 @@ import org.hibernate.search.spatial.Coordinates;
 public interface HSearchQuery {
 
 	// TODO: check if more methods are from hsquery are needed here
-	// FIXME: faceting is definitely needed!
 
 	HSearchQuery sort(Sort sort);
 
@@ -71,7 +70,7 @@ public interface HSearchQuery {
 		return this.query( entityProvider, Fetch.FIND_BY_ID );
 	}
 
-	public enum Fetch {
+	enum Fetch {
 		BATCH, FIND_BY_ID
 	}
 

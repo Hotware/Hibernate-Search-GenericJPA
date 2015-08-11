@@ -24,7 +24,7 @@ public interface FullTextEntityManager extends EntityManager {
 	 * Create a fulltext query on top of a native Lucene query returning the matching objects of columnTypes
 	 * <code>entities</code> and their respective subclasses.
 	 *
-	 * @param luceneQuery The native Lucene query to be rn against the Lucene index.
+	 * @param luceneQuery The native Lucene query to be run against the Lucene index.
 	 * @param entities List of classes for columnTypes filtering. The query result will only return entities of the specified
 	 * types and their respective subtype. If no class is specified no columnTypes filtering will take place.
 	 *
