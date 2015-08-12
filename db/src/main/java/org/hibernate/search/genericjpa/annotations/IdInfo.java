@@ -18,12 +18,24 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 public @interface IdInfo {
 
+	/**
+	 * the Java type of the entity this corresponds to
+	 */
 	Class<?> entity() default void.class;
 
+	/**
+	 * the id-columns for the entity this corresponds to
+	 */
 	IdColumn[] columns();
 
+	/**
+	 * used for custom column types and multi valued keys
+	 */
 	Class<? extends IdConverter> idConverter() default IdConverter.class;
 
+	/**
+	 * hints for the entity-provider used while updating
+	 */
 	Hint[] hints() default {};
 
 }

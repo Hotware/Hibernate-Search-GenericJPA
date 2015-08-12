@@ -18,12 +18,23 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 public @interface IdColumn {
 
+	/**
+	 * the column-name in the original table
+	 *
+	 * @return
+	 */
 	String column();
 
+	/**
+	 * the column-name in the update table
+	 */
 	String updateTableColumn() default "";
 
 	ColumnType columnType();
 
+	/**
+	 * used to specify manual DDL code for the {@link IdColumn#updateTableColumn()}
+	 */
 	String columnDefinition() default "";
 
 }

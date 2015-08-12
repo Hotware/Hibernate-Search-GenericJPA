@@ -6,13 +6,16 @@
  */
 package org.hibernate.search.genericjpa.db;
 
-import org.hibernate.search.genericjpa.db.ColumnType;
-
 /**
  * Created by Martin on 20.07.2015.
  */
 public interface IdConverter {
 
+	/**
+	 * @param values the values from the database
+	 * @param fieldNames the fieldNames corresponding to the values
+	 * @param columnTypes the columnTypes corresponding to the values
+	 */
 	Object convert(Object[] values, String[] fieldNames, ColumnType[] columnTypes);
 
 }
