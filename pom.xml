@@ -123,7 +123,7 @@
             <dependency>
                 <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-directory-provider</artifactId>
-                <version>7.2.0.Final</version>
+                <version>8.0.0.Beta3</version>
             </dependency>
 
             <dependency>
