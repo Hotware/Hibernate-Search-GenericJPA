@@ -47,9 +47,11 @@ public class SubClassSupportInstanceInitializer implements InstanceInitializer {
 	public <T> Class<T> getClass(T entity) {
 		// get the first class in the hierarchy that is actually in the index
 		Class<T> clazz = (Class<T>) entity.getClass();
-		while ( (clazz = (Class<T>) clazz.getSuperclass()) != null ) {
-			if ( clazz.isAnnotationPresent( InIndex.class ) ) {
-				break;
+		if ( !clazz.isAnnotationPresent( InIndex.class ) ) {
+			while ( (clazz = (Class<T>) clazz.getSuperclass()) != null ) {
+				if ( clazz.isAnnotationPresent( InIndex.class ) ) {
+					break;
+				}
 			}
 		}
 		if ( clazz != null ) {
