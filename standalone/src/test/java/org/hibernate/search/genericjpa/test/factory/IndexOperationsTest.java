@@ -50,6 +50,26 @@ public class IndexOperationsTest {
 		);
 	}
 
+
+	@Test
+	public void testRollback() {
+		Book book = new Book( 1, "TestBook" );
+		Transaction tx = new Transaction();
+		this.factory.index( book, tx );
+		tx.rollback();
+		this.assertCount( 0 );
+	}
+
+	@Test
+	public void testRollbackFlush() {
+		Book book = new Book( 1, "TestBook" );
+		Transaction tx = new Transaction();
+		this.factory.index( book, tx );
+		this.factory.flushToIndexes( tx );
+		tx.rollback();
+		this.assertCount( 1 );
+	}
+
 	@Test
 	public void test() {
 		List<Book> l = new ArrayList<>();
