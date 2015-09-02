@@ -129,7 +129,6 @@
 	</build>
 
 	<properties>
-		<hibernate.version>4.3.7.Final</hibernate.version>
 		<org.wildfly>8.2.0.Final</org.wildfly>
 	</properties>
 
