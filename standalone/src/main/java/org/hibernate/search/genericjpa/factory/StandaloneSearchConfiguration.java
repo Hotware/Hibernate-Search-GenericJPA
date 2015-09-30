@@ -70,8 +70,8 @@ public class StandaloneSearchConfiguration extends SearchConfigurationBase imple
 		);
 		this.properties.computeIfAbsent(
 				"hibernate.search.lucene_version", (key) -> {
-					LOGGER.info( "defaulting to Lucene Version: " + Version.LUCENE_5_2_1.toString() );
-					return Version.LUCENE_5_2_1.toString();
+					LOGGER.info( "defaulting to Lucene Version: " + Version.LUCENE_5_3_0.toString() );
+					return Version.LUCENE_5_3_0.toString();
 				}
 		);
 		this.reflectionManager = new JavaReflectionManager();
