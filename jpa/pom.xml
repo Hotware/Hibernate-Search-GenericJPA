@@ -58,7 +58,7 @@
 
 		<dependency>
 			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-search-db</artifactId>
+			<artifactId>hibernate-search-genericjpa-db</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 
