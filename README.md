@@ -25,6 +25,11 @@ A short example using this API using EclipseLink can be found here:
 
 https://github.com/Hotware/hibernate-search-genericjpa-example
 
+How-To build
+============
+
+    mvn install -DskipTests
+
 Introduction
 ============
 Hibernate Search is an awesome library if you have a JPA based application and want to add fully fletched fulltext search capabilities to your domain model. You simply add annotations to the fields you want to index and then you can generate a working Index from the JPA objects. When the database changes, the index is updated accordingly. This works just fine (TM).
