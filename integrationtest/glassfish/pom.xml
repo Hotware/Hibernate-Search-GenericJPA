@@ -51,7 +51,7 @@
 
 		<dependency>
 			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-search-ejb</artifactId>
+			<artifactId>hibernate-search-genericjpa-ejb</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 
