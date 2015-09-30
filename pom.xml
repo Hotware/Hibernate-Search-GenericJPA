@@ -17,7 +17,6 @@
         <module>integrationtest/glassfish</module>
         <module>integrationtest/tomee</module>
         <module>integrationtest/wildfly</module>
-        <module>integrationtest/infinispan</module>
     </modules>
 
     <description>
