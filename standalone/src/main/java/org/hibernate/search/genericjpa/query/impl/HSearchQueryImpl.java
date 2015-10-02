@@ -7,6 +7,7 @@
 package org.hibernate.search.genericjpa.query.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +38,8 @@ public class HSearchQueryImpl implements HSearchQuery {
 	private final HSQuery hsquery;
 	private final DtoQueryExecutor queryExec;
 	private final SearchIntegrator searchIntegrator;
+
+	private Map<String, Object> hints = Collections.emptyMap();
 
 	public HSearchQueryImpl(HSQuery hsquery, DtoQueryExecutor queryExec, SearchIntegrator searchIntegrator) {
 		this.hsquery = hsquery;
@@ -131,7 +134,7 @@ public class HSearchQueryImpl implements HSearchQuery {
 							LOGGER.info( "null id in index ommited for query" );
 							return null;
 						}
-						Object obj = entityProvider.get( (Class<?>) arr[0], arr[1] );
+						Object obj = entityProvider.get( (Class<?>) arr[0], arr[1], this.hints );
 						if ( obj == null ) {
 							LOGGER.info( "ommiting object of class " + arr[0] + " and id " + arr[1] + " which was found in the index but not in the database!" );
 						}
@@ -164,7 +167,7 @@ public class HSearchQueryImpl implements HSearchQuery {
 			// get all entities of the same type in one batch
 			idsForClass.entrySet().forEach(
 					(entry) ->
-							entityProvider.getBatch( entry.getKey(), entry.getValue() ).stream().forEach(
+							entityProvider.getBatch( entry.getKey(), entry.getValue(), this.hints ).stream().forEach(
 									(object) -> {
 										Class<?> entityClass = entry.getKey();
 										Object id = this.searchIntegrator.getIndexBinding( entityClass )
@@ -239,6 +242,17 @@ public class HSearchQueryImpl implements HSearchQuery {
 	@Override
 	public HSearchQuery setSpatialParameters(Coordinates center, String fieldName) {
 		this.hsquery.setSpatialParameters( center, fieldName );
+		return this;
+	}
+
+	@Override
+	public HSearchQuery hints(Map<String, Object> hints) {
+		if ( hints == null ) {
+			this.hints = Collections.emptyMap();
+		}
+		else {
+			this.hints = Collections.unmodifiableMap( hints );
+		}
 		return this;
 	}
 

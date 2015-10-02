@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -39,6 +40,7 @@ import org.hibernate.search.spi.SearchIntegratorBuilder;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class SearchFactoryTest {
@@ -135,12 +137,12 @@ public class SearchFactoryTest {
 			{
 				final EntityProvider emptyProvider = new EntityProvider() {
 					@Override
-					public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
+					public Object get(Class<?> entityClass, Object id, Map<String, Object> hints) {
 						return null;
 					}
 
 					@Override
-					public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
+					public List getBatch(Class<?> entityClass, List<Object> id, Map<String, Object> hints) {
 						return Collections.emptyList();
 					}
 
@@ -167,7 +169,7 @@ public class SearchFactoryTest {
 				final EntityProvider dummyProvider = new EntityProvider() {
 
 					@Override
-					public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
+					public Object get(Class<?> entityClass, Object id, Map<String, Object> hints) {
 						if ( TopLevel.class.equals( entityClass ) ) {
 							TopLevel ret = new TopLevel();
 							ret.setId( 1 );
@@ -180,7 +182,7 @@ public class SearchFactoryTest {
 					}
 
 					@Override
-					public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
+					public List getBatch(Class<?> entityClass, List<Object> id, Map<String, Object> hints) {
 						return Collections.singletonList( this.get( entityClass, id.get( 0 ) ) );
 					}
 
@@ -200,6 +202,57 @@ public class SearchFactoryTest {
 						2, factory.createQuery( new MatchAllDocsQuery(), TopLevel.class, Embedded.class ).query(
 								dummyProvider, HSearchQuery.Fetch.FIND_BY_ID
 						).size()
+				);
+			}
+
+			//check if hints are propagated
+			{
+				final EntityProvider dummyProvider = new EntityProvider() {
+
+					@Override
+					public Object get(Class<?> entityClass, Object id, Map<String, Object> hints) {
+						assertTrue( hints.size() > 0 );
+						if ( TopLevel.class.equals( entityClass ) ) {
+							TopLevel ret = new TopLevel();
+							ret.setId( 1 );
+							return ret;
+						}
+						else {
+							Embedded ret = new Embedded( 1 );
+							return ret;
+						}
+					}
+
+					@Override
+					public List getBatch(Class<?> entityClass, List<Object> id, Map<String, Object> hints) {
+						return Collections.singletonList( this.get( entityClass, id.get( 0 ), hints ) );
+					}
+
+					@Override
+					public void close() throws IOException {
+
+					}
+				};
+
+				Map<String, Object> hints = new HashMap<>();
+				hints.put( "1", 1 );
+
+				//we should find everything with the dummies
+				assertEquals(
+						2, factory.createQuery( new MatchAllDocsQuery(), TopLevel.class, Embedded.class )
+								.hints( hints )
+								.query(
+										dummyProvider, HSearchQuery.Fetch.BATCH
+								)
+								.size()
+				);
+				assertEquals(
+						2, factory.createQuery( new MatchAllDocsQuery(), TopLevel.class, Embedded.class )
+								.hints( hints )
+								.query(
+										dummyProvider, HSearchQuery.Fetch.FIND_BY_ID
+								)
+								.size()
 				);
 			}
 
@@ -259,12 +312,12 @@ public class SearchFactoryTest {
 			final EntityProvider dummyProvider = new EntityProvider() {
 
 				@Override
-				public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
+				public Object get(Class<?> entityClass, Object id, Map<String, Object> hints) {
 					throw new AssertionError( "shoudn't try to load anything if the ids are null in the index" );
 				}
 
 				@Override
-				public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
+				public List getBatch(Class<?> entityClass, List<Object> id, Map<String, Object> hints) {
 					throw new AssertionError( "shoudn't try to load anything if the ids are null in the index" );
 				}
 

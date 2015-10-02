@@ -7,6 +7,7 @@
 package org.hibernate.search.genericjpa.query;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.search.Explanation;
@@ -38,6 +39,8 @@ public interface HSearchQuery {
 	HSearchQuery setSpatialParameters(double latitude, double longitude, String fieldName);
 
 	HSearchQuery setSpatialParameters(Coordinates center, String fieldName);
+
+	HSearchQuery hints(Map<String, Object> hints);
 
 	Query getLuceneQuery();
 

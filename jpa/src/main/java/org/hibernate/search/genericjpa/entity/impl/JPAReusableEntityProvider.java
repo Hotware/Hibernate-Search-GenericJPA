@@ -42,7 +42,7 @@ public class JPAReusableEntityProvider extends TransactionWrappedReusableEntityP
 	}
 
 	@Override
-	public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
+	public Object get(Class<?> entityClass, Object id, Map<String, Object> hints) {
 		if ( this.provider == null ) {
 			throw new IllegalStateException( "not open!" );
 		}
@@ -54,7 +54,7 @@ public class JPAReusableEntityProvider extends TransactionWrappedReusableEntityP
 
 	@Override
 	@SuppressWarnings("rawtypes")
-	public List getBatch(Class<?> entityClass, List<Object> ids, Map<String, String> hints) {
+	public List getBatch(Class<?> entityClass, List<Object> ids, Map<String, Object> hints) {
 		if ( this.provider == null ) {
 			throw new IllegalStateException( "not open!" );
 		}

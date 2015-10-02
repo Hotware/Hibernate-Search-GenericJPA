@@ -22,7 +22,7 @@ public class CustomUpdatedEntityEntityProvider implements EntityManagerEntityPro
 	public static final String CUSTOM_TEXT_HINTS = "customupdated_hints";
 
 	@Override
-	public Object get(EntityManager em, Class<?> entityClass, Object id, Map<String, String> hints) {
+	public Object get(EntityManager em, Class<?> entityClass, Object id, Map<String, Object> hints) {
 		CustomUpdatedEntity ret = (CustomUpdatedEntity) em.find( entityClass, id );
 		em.detach( ret );
 
@@ -37,7 +37,7 @@ public class CustomUpdatedEntityEntityProvider implements EntityManagerEntityPro
 	}
 
 	@Override
-	public List getBatch(EntityManager em, Class<?> entityClass, List<Object> id, Map<String, String> hints) {
+	public List getBatch(EntityManager em, Class<?> entityClass, List<Object> id, Map<String, Object> hints) {
 		List ret = id.stream().map( id_ -> this.get( em, entityClass, id_, hints ) ).collect( Collectors.toList() );
 		return ret;
 	}

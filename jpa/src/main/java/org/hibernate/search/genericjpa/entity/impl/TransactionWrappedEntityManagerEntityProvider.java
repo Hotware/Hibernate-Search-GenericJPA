@@ -26,7 +26,7 @@ public class TransactionWrappedEntityManagerEntityProvider extends BasicEntityPr
 	}
 
 	@Override
-	public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
+	public Object get(Class<?> entityClass, Object id, Map<String, Object> hints) {
 		JPATransactionWrapper tx = JPATransactionWrapper.get( this.getEm(), this.transactionManager );
 		tx.begin();
 		try {
@@ -42,7 +42,7 @@ public class TransactionWrappedEntityManagerEntityProvider extends BasicEntityPr
 
 	@SuppressWarnings("rawtypes")
 	@Override
-	public List getBatch(Class<?> entityClass, List<Object> ids, Map<String, String> hints) {
+	public List getBatch(Class<?> entityClass, List<Object> ids, Map<String, Object> hints) {
 		JPATransactionWrapper tx = JPATransactionWrapper.get( this.getEm(), this.transactionManager );
 		tx.begin();
 		try {

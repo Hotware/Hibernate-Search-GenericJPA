@@ -100,12 +100,12 @@ public class MassIndexerTest {
 		System.out.println( "**********************************************" );
 		final EntityProvider entityProvider = new EntityProvider() {
 			@Override
-			public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
+			public Object get(Class<?> entityClass, Object id, Map<String, Object> hints) {
 				throw new RuntimeException( "Exceptions are expected in this testCustomUpdatedEntity!" );
 			}
 
 			@Override
-			public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
+			public List getBatch(Class<?> entityClass, List<Object> id, Map<String, Object> hints) {
 				throw new RuntimeException( "Exceptions are expected in this testCustomUpdatedEntity!" );
 			}
 
@@ -132,13 +132,13 @@ public class MassIndexerTest {
 		boolean[] usedManual = new boolean[1];
 		final EntityProvider entityProvider = new EntityProvider() {
 			@Override
-			public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
+			public Object get(Class<?> entityClass, Object id, Map<String, Object> hints) {
 				usedManual[0] = true;
 				return null;
 			}
 
 			@Override
-			public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
+			public List getBatch(Class<?> entityClass, List<Object> id, Map<String, Object> hints) {
 				usedManual[0] = true;
 				return Collections.emptyList();
 			}

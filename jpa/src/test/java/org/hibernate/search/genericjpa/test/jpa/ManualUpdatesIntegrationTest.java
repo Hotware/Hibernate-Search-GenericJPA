@@ -261,7 +261,7 @@ public abstract class ManualUpdatesIntegrationTest {
 									public List getBatch(
 											Class<?> entityClass,
 											List<Object> id,
-											Map<String, String> hints) {
+											Map<String, Object> hints) {
 										// this should happen!
 										// an empty list is actually quite interesting for the backend.
 										// does it handle not finding anything for a given identifier right?
@@ -269,7 +269,7 @@ public abstract class ManualUpdatesIntegrationTest {
 									}
 
 									@Override
-									public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
+									public Object get(Class<?> entityClass, Object id, Map<String, Object> hints) {
 										throw new AssertionError( "should have used getBatch instead!" );
 									}
 
@@ -294,12 +294,12 @@ public abstract class ManualUpdatesIntegrationTest {
 									public List getBatch(
 											Class<?> entityClass,
 											List<Object> id,
-											Map<String, String> hints) {
+											Map<String, Object> hints) {
 										throw new AssertionError( "should have used get instead!" );
 									}
 
 									@Override
-									public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
+									public Object get(Class<?> entityClass, Object id, Map<String, Object> hints) {
 										return null;
 									}
 

@@ -83,7 +83,7 @@ public final class EntityManagerEntityProviderAdapter {
 		}
 
 		@Override
-		public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
+		public Object get(Class<?> entityClass, Object id, Map<String, Object> hints) {
 			EntityManagerAdapterProvider prov = this.providers.poll();
 			try {
 				return prov.get( entityClass, id, hints );
@@ -94,7 +94,7 @@ public final class EntityManagerEntityProviderAdapter {
 		}
 
 		@Override
-		public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
+		public List getBatch(Class<?> entityClass, List<Object> id, Map<String, Object> hints) {
 			EntityManagerAdapterProvider prov = this.providers.poll();
 			try {
 				return prov.getBatch( entityClass, id, hints );
@@ -131,7 +131,7 @@ public final class EntityManagerEntityProviderAdapter {
 		}
 
 		@Override
-		public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
+		public Object get(Class<?> entityClass, Object id, Map<String, Object> hints) {
 			this.lock.lock();
 			try {
 				if ( this.wrapInTransaction ) {
@@ -155,7 +155,7 @@ public final class EntityManagerEntityProviderAdapter {
 		}
 
 		@Override
-		public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
+		public List getBatch(Class<?> entityClass, List<Object> id, Map<String, Object> hints) {
 			this.lock.lock();
 			try {
 				if ( this.wrapInTransaction ) {

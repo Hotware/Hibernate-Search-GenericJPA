@@ -23,7 +23,7 @@ public interface EntityProvider extends Closeable {
 		return this.get( entityClass, id, Collections.emptyMap() );
 	}
 
-	Object get(Class<?> entityClass, Object id, Map<String, String> hints);
+	Object get(Class<?> entityClass, Object id, Map<String, Object> hints);
 
 	default List getBatch(Class<?> entityClass, List<Object> id) {
 		return this.getBatch( entityClass, id, Collections.emptyMap() );
@@ -33,6 +33,6 @@ public interface EntityProvider extends Closeable {
 	 * ATTENTION: ORDER IS NOT PRESERVED!
 	 */
 	@SuppressWarnings("rawtypes")
-	List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints);
+	List getBatch(Class<?> entityClass, List<Object> id, Map<String, Object> hints);
 
 }

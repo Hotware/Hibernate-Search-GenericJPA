@@ -63,12 +63,12 @@ public class NoJPAIntegrationTest {
 				.entityProvider(
 						new EntityProvider() {
 							@Override
-							public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
+							public Object get(Class<?> entityClass, Object id, Map<String, Object> hints) {
 								return tmp;
 							}
 
 							@Override
-							public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
+							public List getBatch(Class<?> entityClass, List<Object> id, Map<String, Object> hints) {
 								throw new AssertionError();
 							}
 

@@ -17,8 +17,8 @@ import java.util.Map;
  */
 public interface EntityManagerEntityProvider {
 
-	Object get(EntityManager em, Class<?> entityClass, Object id, Map<String, String> hints);
+	Object get(EntityManager em, Class<?> entityClass, Object id, Map<String, Object> hints);
 
-	List getBatch(EntityManager em, Class<?> entityClass, List<Object> id, Map<String, String> hints);
+	List getBatch(EntityManager em, Class<?> entityClass, List<Object> id, Map<String, Object> hints);
 
 }

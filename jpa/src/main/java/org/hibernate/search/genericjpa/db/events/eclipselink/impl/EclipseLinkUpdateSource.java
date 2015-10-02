@@ -263,7 +263,7 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 								entityClass, inIndexOf, id, new EntityProvider() {
 
 									@Override
-									public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
+									public Object get(Class<?> entityClass, Object id, Map<String, Object> hints) {
 										ReadObjectQuery nativeQuery = new ReadObjectQuery();
 										nativeQuery.setReferenceClass( entityClass );
 										nativeQuery.setSelectionId( id );
@@ -276,7 +276,7 @@ public class EclipseLinkUpdateSource implements SynchronizedUpdateSource {
 									public List getBatch(
 											Class<?> entityClass,
 											List<Object> id,
-											Map<String, String> hints) {
+											Map<String, Object> hints) {
 										throw new AssertionFailure( "normally not used in IndexUpdater" );
 									}
 

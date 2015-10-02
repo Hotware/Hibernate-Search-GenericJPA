@@ -123,10 +123,11 @@ final class FullTextQueryImpl implements FullTextQuery {
 	public List getResultList() {
 		try {
 			if ( this.projection == null ) {
-				return this.hsearchQuery.query( this.entityProvider, this.getFetch() );
+				return this.hsearchQuery.hints( this.hints ).query( this.entityProvider, this.getFetch() );
 			}
 			else {
-				return this.hsearchQuery.queryProjection( this.projection );
+				//passing hints is not really needed here, but it does no harm
+				return this.hsearchQuery.hints( this.hints ).queryProjection( this.projection );
 			}
 		}
 		catch (QueryTimeoutException e) {

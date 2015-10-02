@@ -30,13 +30,13 @@ public interface UpdateConsumer {
 		private final Class<?> entityClass;
 		private final Object id;
 		private final int eventType;
-		private final Map<String, String> hints;
+		private final Map<String, Object> hints;
 
 		public UpdateEventInfo(Class<?> entityClass, Object id, int eventType) {
 			this( entityClass, id, eventType, Collections.emptyMap() );
 		}
 
-		public UpdateEventInfo(Class<?> entityClass, Object id, int eventType, Map<String, String> hints) {
+		public UpdateEventInfo(Class<?> entityClass, Object id, int eventType, Map<String, Object> hints) {
 			super();
 			this.entityClass = entityClass;
 			this.id = id;
@@ -65,7 +65,7 @@ public interface UpdateConsumer {
 			return entityClass;
 		}
 
-		public Map<String, String> getHints() {
+		public Map<String, Object> getHints() {
 			return hints;
 		}
 

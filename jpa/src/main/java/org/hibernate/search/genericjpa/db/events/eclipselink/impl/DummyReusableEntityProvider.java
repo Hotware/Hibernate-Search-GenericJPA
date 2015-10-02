@@ -22,12 +22,12 @@ public class DummyReusableEntityProvider implements ReusableEntityProvider {
 	}
 
 	@Override
-	public Object get(Class<?> entityClass, Object id, Map<String, String> hints) {
+	public Object get(Class<?> entityClass, Object id, Map<String, Object> hints) {
 		throw new AssertionFailure( "should not have been used" );
 	}
 
 	@Override
-	public List getBatch(Class<?> entityClass, List<Object> id, Map<String, String> hints) {
+	public List getBatch(Class<?> entityClass, List<Object> id, Map<String, Object> hints) {
 		throw new AssertionFailure( "should not have been used" );
 	}
 

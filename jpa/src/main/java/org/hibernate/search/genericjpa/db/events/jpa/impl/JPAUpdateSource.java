@@ -279,12 +279,17 @@ public class JPAUpdateSource implements AsyncUpdateSource {
 												columnNames,
 												columnTypes
 										);
+										//hack, info at annotation level
+										//is string only, but on the programmatic
+										//level Map<String, Object> is needed
+										//so we abuse Java collections here.
+										Map hints = info.getHints();
 										updateInfos.add(
 												new UpdateEventInfo(
 														info.getEntityClass(),
 														entityId,
 														eventType,
-														info.getHints()
+														(Map<String, Object>) hints
 												)
 										);
 									}
