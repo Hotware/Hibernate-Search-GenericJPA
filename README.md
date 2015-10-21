@@ -1,6 +1,5 @@
 Hibernate-Search-JPA
 ====================
-[![Build Status](http://ci.hibernate.org/view/Personal%20runs/job/GSOC-hibernate-search-jpa/badge/icon)](http://ci.hibernate.org/view/Personal%20runs/job/GSOC-hibernate-search-jpa/)
 
 Hibernate-Search with the JPA provider you want.
 
