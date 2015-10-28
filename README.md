@@ -71,9 +71,3 @@ One of the few problems it has, is that once you decide to use Hibernate Search 
 The goal of Hibernate-Search-JPA is to fix this and provide an integration of Hibernate Search's Engine that works with (most) JPA providers (and for now only SQL databases):
 
 ![What we aim for](http://1.bp.blogspot.com/-U0osGoQE0DI/VUCemKbVoJI/AAAAAAAAALk/f1vt4Fln2ko/s1600/Basic%2BDesign%2B(1).png)
-
-Examples
-========
-
-An example on how to use this project can be found in the wiki: 
-https://github.com/Hotware/Hibernate-Search-JPA/wiki/How-To 
