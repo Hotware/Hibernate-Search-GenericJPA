@@ -28,8 +28,6 @@ repository as well:
 
 https://github.com/s4ke/Bachelor-Thesis/blob/Update-System-rework/Bachelor%20Thesis%20presentation%20(10).pdf
 
-http://hibernatesearchandjpa.blogspot.de/
-
 Usage example
 =============
 
