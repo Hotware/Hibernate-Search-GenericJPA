@@ -9,7 +9,6 @@ Currently supported JPA providers:
 * EclipseLink (Sync & Async backend)
 * OpenJPA (Async backend)
 
-
 The sync backend uses the existing update event systems from the specific providers. Therefore, not all of the providers are currently supported, yet.
 
 The async backend uses Triggers on the database levels to store information about the events in auxilliary tables. These are then queried by Hibernate-Search-GenericJPA periodically and applied to the index.
@@ -19,6 +18,13 @@ Currently supported Databases for the async backend:
 * MySQL/MariaDB
 * PostgreSQL
 * HSQLDB
+
+This project is the result of my Bachelors Thesis, which can be found here:
+https://github.com/s4ke/Bachelor-Thesis/blob/Update-System-rework/tex/src/bachelor_thesis.pdf
+
+As part of my Thesis I also had to do a short presentation. This can be found in the Thesis
+repository as well:
+https://github.com/s4ke/Bachelor-Thesis/blob/Update-System-rework/Bachelor%20Thesis%20presentation%20(10).pdf
 
 http://hibernatesearchandjpa.blogspot.de/
 
