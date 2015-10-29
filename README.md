@@ -21,12 +21,12 @@ Currently supported Databases for the async backend:
 
 This project is the result of my Bachelors Thesis, which can be found here:
 
-https://github.com/s4ke/Bachelor-Thesis/blob/Update-System-rework/tex/src/bachelor_thesis.pdf
+https://raw.githubusercontent.com/s4ke/Bachelor-Thesis/Update-System-rework/tex/src/bachelor_thesis.pdf
 
 As part of my Thesis I also had to do a short presentation. This can be found in the Thesis
 repository as well:
 
-https://github.com/s4ke/Bachelor-Thesis/blob/Update-System-rework/Bachelor%20Thesis%20presentation%20(10).pdf
+https://raw.githubusercontent.com/s4ke/Bachelor-Thesis/Update-System-rework/Bachelor%20Thesis%20presentation%20(10).pdf
 
 Usage example
 =============
