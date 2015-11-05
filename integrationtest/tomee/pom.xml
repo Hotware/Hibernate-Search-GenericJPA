@@ -32,6 +32,9 @@
 					<systemPropertyVariables>
 						<tomee.version>${tomee.version}</tomee.version>
 					</systemPropertyVariables>
+					<skipTests>
+						true
+					</skipTests>
 				</configuration>
 			</plugin>
 		</plugins>
