@@ -1,7 +1,7 @@
 Hibernate-Search-JPA
 ====================
 
-Development moved to https://github.com/s4ke/hibernate-search. Merging into Hibernate Search core started.
+Development moved to https://github.com/s4ke/hibernate-search. Merging into Hibernate Search core started. This version however can already be tried out :).
 
 Hibernate-Search with the JPA provider you want.
 
